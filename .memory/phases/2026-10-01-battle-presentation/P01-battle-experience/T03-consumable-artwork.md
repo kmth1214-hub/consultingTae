@@ -1,6 +1,6 @@
 # Task: T03 Consumable Item Artwork
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -70,12 +70,12 @@ Replace emoji placeholders for the four consumables with the artwork selected by
 
 ## Acceptance Criteria
 
-- [ ] The four selected local image copies exist under `assets/items/` and open successfully.
-- [ ] Battle inventory displays Fiery Candy Comet, Candy Cane Staff of Darkness, Gigawatt Cube, and Mini Energy Potion beside the correct Korean names and keys.
-- [ ] Round-reward cards display the corresponding icons for 불공, 창, and 회복.
-- [ ] Icon aspect ratios are preserved and no image is stretched or cropped.
-- [ ] No full Fan Kit source folders or unselected item assets are added.
-- [ ] Existing item hotkeys, descriptions, and counts are unchanged; each item name remains available to screen readers without duplicate icon announcements.
+- [x] The four selected local image copies exist under `assets/items/` and open successfully.
+- [x] Battle inventory displays Fiery Candy Comet, Candy Cane Staff of Darkness, Gigawatt Cube, and Mini Energy Potion beside the correct Korean names and keys.
+- [x] Round-reward cards display the corresponding icons for 불공, 창, and 회복.
+- [x] Icon aspect ratios are preserved and no image is stretched or cropped.
+- [x] No full Fan Kit source folders or unselected item assets are added.
+- [x] Existing item hotkeys, descriptions, and counts are unchanged; each item name remains available to screen readers without duplicate icon announcements.
 
 ## Validation
 
@@ -98,6 +98,7 @@ Task: T03-consumable-artwork
 
 ## Progress
 
-- [ ] Implementation complete
-- [ ] Validation passed
-- commit: pending
+- [x] Implementation complete
+- [x] Validation passed
+- Static checks and byte-for-byte asset comparisons passed; the user confirmed the browser image review on 2026-10-01.
+- commit: see Task-specific Git commit

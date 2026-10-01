@@ -213,7 +213,7 @@
     .inventory-title { display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:.82rem;font-weight:850; }
     .item-slot { display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 0;border-top:1px solid var(--border); }
     .item-key { width:25px;height:25px;display:grid;place-items:center;border-radius:7px;background:var(--surface-hover);font-size:.7rem;font-weight:900; }
-    .item-icon { font-size:1.3rem; }
+    .item-icon { width:32px;height:32px;display:block;object-fit:contain; }
     .item-name { font-size:.73rem;font-weight:800; }
     .item-count { min-width:24px;padding:3px 7px;border-radius:99px;background:var(--accent);color:#fff;text-align:center;font-size:.7rem;font-weight:900; }
     .item-use { margin-left:4px;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:transparent;font-size:.65rem;font-weight:800;cursor:pointer; }
@@ -223,7 +223,7 @@
     .reward-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px; }
     .reward-card { position:relative;min-height:205px;padding:18px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;border:1px solid var(--border);border-radius:17px;background:var(--surface); }
     .reward-card.selected { outline:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
-    .reward-art { width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:var(--surface-hover);font-size:2rem; }
+    .reward-art { width:54px;height:54px;display:block;object-fit:contain;padding:4px;border-radius:16px;background:var(--surface-hover); }
     .reward-card h3 { margin-top:13px;font-size:1rem; }
     .reward-card p { margin-top:4px;font-size:.75rem;color:var(--text-secondary); }
     .reward-card .btn { min-height:38px;margin-top:15px;padding:0 13px;font-size:.75rem; }
@@ -433,7 +433,7 @@
                 <p id="aimStageLabel" class="aim-stage" aria-live="polite">전장을 좌클릭해 조준을 시작하세요.</p>
                 <p class="aim-guidance">좌클릭 유지: 상하로 각도 조절 · Space 유지/해제: 파워 조절/확정 · 확정 후 좌우 이동: 조준 위치 · 좌클릭 해제: 발사</p>
               </section>
-              <section class="card inventory"><div class="inventory-title"><span>소모품</span><span class="muted">숫자키 1–4</span></div><div class="item-slot"><span class="item-key">1</span><span><span class="item-icon">🔥</span> <span class="item-name">불공</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(1)">사용</button></span></div><div class="item-slot"><span class="item-key">2</span><span><span class="item-icon">🔱</span> <span class="item-name">창</span></span><span><b class="item-count">2</b><button class="item-use" onclick="useItem(2)">사용</button></span></div><div class="item-slot"><span class="item-key">3</span><span><span class="item-icon">🛡</span> <span class="item-name">방어</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(3)">사용</button></span></div><div class="item-slot"><span class="item-key">4</span><span><span class="item-icon">♥</span> <span class="item-name">회복</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(4)">사용</button></span></div></section>
+              <section class="card inventory"><div class="inventory-title"><span>소모품</span><span class="muted">숫자키 1–4</span></div><div class="item-slot" data-consumable="fireball"><span class="item-key">1</span><span><span class="item-icon">🔥</span> <span class="item-name">불공</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(1)">사용</button></span></div><div class="item-slot" data-consumable="spear"><span class="item-key">2</span><span><span class="item-icon">🔱</span> <span class="item-name">창</span></span><span><b class="item-count">2</b><button class="item-use" onclick="useItem(2)">사용</button></span></div><div class="item-slot" data-consumable="defense"><span class="item-key">3</span><span><span class="item-icon">🛡</span> <span class="item-name">방어</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(3)">사용</button></span></div><div class="item-slot" data-consumable="heal"><span class="item-key">4</span><span><span class="item-icon">♥</span> <span class="item-name">회복</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(4)">사용</button></span></div></section>
             </aside>
           </div>
           <div class="status-bar"><span>다음 영구 무기: <strong>마력 구슬 · B</strong></span><span class="muted">명중 8회 · 마력 구슬 효과까지 1회</span></div>
@@ -447,9 +447,9 @@
             <article class="reward-card"><div><div class="reward-art">🪨</div><h3>딱딱한 쿠키</h3><p>C 등급 · 0 피해를 1로 변경</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
           </div></section>
           <section class="reward-section"><div class="section-head"><div><h3>소모품</h3><p>3개 중 1개 선택 · 가득 찬 종류별 슬롯은 최대 3개</p></div><span class="pill">슬롯 3 / 4</span></div><div class="reward-grid">
-            <article class="reward-card"><div><div class="reward-art">🔥</div><h3>불공</h3><p>다음 영구 무기 투사체 피해 2배</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
-            <article class="reward-card"><div><div class="reward-art">🔱</div><h3>창</h3><p>최대 3마리 관통 · 2–5 피해</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
-            <article class="reward-card"><div><div class="reward-art">♥</div><h3>회복</h3><p>체력 25 회복</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
+            <article class="reward-card" data-consumable="fireball"><div><div class="reward-art">🔥</div><h3>불공</h3><p>다음 영구 무기 투사체 피해 2배</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
+            <article class="reward-card" data-consumable="spear"><div><div class="reward-art">🔱</div><h3>창</h3><p>최대 3마리 관통 · 2–5 피해</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
+            <article class="reward-card" data-consumable="heal"><div><div class="reward-art">♥</div><h3>회복</h3><p>체력 25 회복</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
           </div></section>
           <div class="result-actions"><button class="btn" onclick="showScreen('transition')">선택 완료 · 계속 <span aria-hidden="true">→</span></button><span class="muted small" style="align-self:center">목업: 선택 버튼을 눌러 카드 강조를 확인하세요.</span></div>
         </section>
@@ -539,6 +539,34 @@
     });
     const AREA_LABELS = Object.freeze({forest:'숲 지역',snow:'눈길 지역',city:'도시 지역',chaos:'혼돈 지역'});
     const AREA_ICONS = Object.freeze({forest:'🌲',snow:'❄️',city:'🏙️',chaos:'🌀'});
+    /** @typedef {'fireball'|'defense'|'heal'|'spear'} ConsumableId */
+    /** @type {Readonly<Record<ConsumableId, {src: string}>>} */
+    const CONSUMABLE_ART = Object.freeze({
+      fireball: {src:'./assets/items/fiery-candy-comet.png'},
+      defense: {src:'./assets/items/gigawatt-cube.png'},
+      heal: {src:'./assets/items/mini-energy-potion.png'},
+      spear: {src:'./assets/items/candy-cane-staff-of-darkness.png'}
+    });
+    /** @param {ConsumableId|string} itemId @param {string} className @returns {HTMLImageElement|null} */
+    function renderConsumableImage(itemId,className) {
+      if (!Object.prototype.hasOwnProperty.call(CONSUMABLE_ART,itemId)) return null;
+      var image = document.createElement('img');
+      image.src = CONSUMABLE_ART[itemId].src;
+      image.alt = '';
+      image.setAttribute('aria-hidden','true');
+      image.className = className;
+      image.loading = 'eager';
+      return image;
+    }
+    function renderConsumableArtwork() {
+      document.querySelectorAll('[data-consumable]').forEach(function(container) {
+        var placeholder = container.querySelector('.item-icon,.reward-art');
+        if (!placeholder) return;
+        var image = renderConsumableImage(container.dataset.consumable,placeholder.className);
+        if (image) placeholder.replaceWith(image);
+      });
+    }
+    renderConsumableArtwork();
     const GAMEPLAY_SCREENS = new Set(['battle','reward','transition','clear','bonus','qr','defeat']);
     var currentArea = 'forest';
     var cameraAnimation = null;

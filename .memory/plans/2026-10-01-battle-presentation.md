@@ -24,7 +24,7 @@ Update the existing single-file browser prototype so its battle scene uses the f
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Integrate the immersive battle view, controllable firing sequence, and consumable artwork into the existing HTML prototype. | [P01](../phases/2026-10-01-battle-presentation/P01-battle-experience/phase.md) |
+| P01 | `done` | Integrate the immersive battle view, controllable firing sequence, and consumable artwork into the existing HTML prototype. | [P01](../phases/2026-10-01-battle-presentation/P01-battle-experience/phase.md) |
 
 ## Out of scope
 

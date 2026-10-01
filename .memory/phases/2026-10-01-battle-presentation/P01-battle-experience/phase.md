@@ -6,8 +6,8 @@
 | :--- | :--- | :--- | :--- |
 | T01 | `done` | Add area backgrounds, round-entry camera intro, and full-screen game presentation. | [T01](./T01-area-camera-fullscreen.md) |
 | T02 | `done` | Replace range sliders and the separate fire button with mouse aiming, Spacebar power timing, trajectory preview, and release-to-fire behavior. | [T02](./T02-mouse-space-aiming.md) |
-| T03 | `in_progress` | Copy and render the four selected consumable images in inventory and reward cards. | [T03](./T03-consumable-artwork.md) |
+| T03 | `done` | Copy and render the four selected consumable images in inventory and reward cards. | [T03](./T03-consumable-artwork.md) |
 
 ## Progress
 
-- done: 2/3 (active: T03)
+- done: 3/3 (complete)
