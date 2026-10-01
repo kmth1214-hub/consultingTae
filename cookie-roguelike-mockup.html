@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>쿠키 탈출 — 화면 목업</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script>Chart.defaults.animation = false;</script>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { interpolate-size: allow-keywords; }
+    html.theme-light {
+      --bg: #f5f0e6; --surface: #fffdf8; --surface-hover: #f4ead8;
+      --border: rgba(67,43,26,0.12); --text: #2d2119; --text-secondary: #806b58;
+      --accent: #e77e37; --accent-secondary: #477c61; --positive: #43875f;
+      --negative: #c84a3e; --warning: #d89b32;
+    }
+    html.theme-dark {
+      --bg: #171513; --surface: #24201d; --surface-hover: #302a25;
+      --border: rgba(255,242,224,0.12); --text: #f4eadb; --text-secondary: #b3a28e;
+      --accent: #f1944b; --accent-secondary: #7cb28e; --positive: #7ac793;
+      --negative: #ff7567; --warning: #efbd61;
+    }
+    body { font-family: 'Noto Sans KR','Inter',sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; letter-spacing: -0.01em; -webkit-font-smoothing: antialiased; transition: background .3s,color .3s; min-height: 100vh; }
+    button { font: inherit; color: inherit; }
+    h1,h2,h3,h4 { color: var(--text); letter-spacing: -.03em; line-height: 1.12; text-wrap: balance; }
+    h1 { font-size: 2.5rem; font-weight: 800; }
+    h2 { font-size: 2rem; font-weight: 700; }
+    h3 { font-size: 1.5rem; font-weight: 600; }
+    p,li,span,label,td,th { color: inherit; }
+    .muted { color: var(--text-secondary); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 22px; transition: box-shadow .2s ease,background .2s ease; }
+    .card:hover { box-shadow: 0 12px 26px rgba(64,43,25,.09); }
+    .animate { animation: fadeInUp .55s ease-out both; }
+    .animate.delay-1 { animation-delay: .08s; }
+    .animate.delay-2 { animation-delay: .16s; }
+    .animate.delay-3 { animation-delay: .24s; }
+    .animate.delay-4 { animation-delay: .32s; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes cookieBob { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
+    @keyframes shimmer { from { background-position: 0 0; } to { background-position: 42px 0; } }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation:none!important;transition:none!important;scroll-behavior:auto!important; } }
+    @media print { body { background:white!important;color:black!important; } .viz-menu,.mockup-controls,.sidebar { display:none!important; } .card { break-inside:avoid;border:1px solid #ddd;box-shadow:none; } .prototype-screen[hidden] { display:none!important; } }
+    @page { margin: .6in; }
+    .skip-to-content { position:absolute;top:-40px;left:8px;background:var(--accent);color:#fff;padding:8px 12px;border-radius:6px;z-index:10000; }
+    .skip-to-content:focus { top:8px; }
+    .viz-menu { position:fixed;right:16px;top:16px;z-index:9999; }
+    .viz-menu-toggle { width:44px;height:44px;border-radius:14px;background:var(--surface);border:1px solid var(--border);color:var(--text);display:grid;place-items:center;cursor:pointer;box-shadow:0 5px 16px rgba(40,27,17,.12); }
+    .viz-menu-dropdown { position:absolute;right:0;top:52px;min-width:190px;padding:8px;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:0 16px 36px rgba(40,27,17,.16);opacity:0;visibility:hidden;transform:translateY(-6px);transition:.2s; }
+    .viz-menu-dropdown.open { opacity:1;visibility:visible;transform:translateY(0); }
+    .viz-menu-dropdown button { width:100%;padding:10px;border:0;border-radius:9px;background:transparent;text-align:left;cursor:pointer; }
+    .viz-menu-dropdown button:hover { background:var(--surface-hover); }
+    .mockup-controls { max-width:1440px;margin:0 auto;padding:18px 28px 12px;display:flex;align-items:center;justify-content:space-between;gap:16px; }
+    .control-title { display:flex;align-items:center;gap:10px;font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);white-space:nowrap; }
+    .control-title svg { color:var(--accent); }
+    .screen-tabs { display:flex;gap:7px;overflow-x:auto;padding:3px 2px 8px;scrollbar-width:thin; }
+    .screen-tab { flex:none;border:1px solid var(--border);border-radius:999px;background:var(--surface);padding:8px 13px;font-size:.8rem;font-weight:700;cursor:pointer;transition:.18s; }
+    .screen-tab:hover,.screen-tab.active { background:var(--text);color:var(--bg);border-color:var(--text); }
+    .workspace { max-width:1440px;margin:0 auto;padding:0 28px 42px; }
+    .app-window { min-height:770px;display:grid;grid-template-columns:220px minmax(0,1fr);overflow:hidden;border:1px solid var(--border);border-radius:24px;background:var(--surface);box-shadow:0 24px 70px rgba(60,39,23,.12); }
+    .sidebar { padding:24px 16px;display:flex;flex-direction:column;gap:28px;background:color-mix(in srgb,var(--surface) 87%,var(--accent) 13%);border-right:1px solid var(--border); }
+    .brand { display:flex;align-items:center;gap:11px;padding:3px 9px; }
+    .brand-mark { width:38px;height:38px;display:grid;place-items:center;border-radius:13px;background:var(--accent);color:white;box-shadow:inset 0 -4px rgba(0,0,0,.12); }
+    .brand-name { font-size:.9rem;font-weight:900;letter-spacing:.04em;line-height:1.1; }
+    .brand-sub { display:block;margin-top:3px;font-size:.61rem;font-weight:700;letter-spacing:.17em;color:var(--text-secondary); }
+    .nav-group { display:grid;gap:6px; }
+    .nav-label { padding:0 12px 5px;font-size:.65rem;font-weight:800;letter-spacing:.13em;color:var(--text-secondary);text-transform:uppercase; }
+    .side-link { width:100%;display:flex;align-items:center;gap:12px;border:0;border-radius:12px;padding:11px 12px;background:transparent;text-align:left;font-size:.87rem;font-weight:650;color:var(--text-secondary);cursor:pointer; }
+    .side-link svg { flex:none; }
+    .side-link.active,.side-link:hover { background:var(--surface-hover);color:var(--text); }
+    .side-link.active { box-shadow:inset 3px 0 var(--accent); }
+    .sidebar-bottom { margin-top:auto; }
+    .profile-small { display:flex;gap:10px;align-items:center;padding:13px 10px;border-top:1px solid var(--border); }
+    .avatar { width:35px;height:35px;display:grid;place-items:center;border-radius:50%;background:#ead4ae;color:#5a321d;font-weight:900; }
+    .profile-name { font-size:.78rem;font-weight:750; }
+    .profile-role { font-size:.67rem;color:var(--text-secondary); }
+    .content { min-width:0;padding:30px 34px 40px; }
+    .content-header { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:30px; }
+    .eyebrow { display:flex;align-items:center;gap:8px;color:var(--accent);font-size:.73rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase; }
+    .content-header h2 { margin-top:5px; }
+    .header-right { display:flex;align-items:center;gap:10px; }
+    .pill { display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:7px 11px;background:var(--surface-hover);color:var(--text-secondary);font-size:.74rem;font-weight:750;white-space:nowrap; }
+    .pill.good { background:color-mix(in srgb,var(--positive) 14%,var(--surface));color:var(--positive); }
+    .pill.warn { background:color-mix(in srgb,var(--warning) 16%,var(--surface));color:var(--warning); }
+    .pill.danger { background:color-mix(in srgb,var(--negative) 13%,var(--surface));color:var(--negative); }
+    .prototype-screen[hidden] { display:none; }
+    .prototype-screen { animation:fadeIn .25s ease both; }
+    .section-head { display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:19px; }
+    .section-head p { margin-top:5px;color:var(--text-secondary);font-size:.9rem; }
+    .btn { min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:12px;padding:0 18px;background:var(--accent);color:white;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 6px 14px color-mix(in srgb,var(--accent) 24%,transparent);transition:filter .18s,transform .18s; }
+    .btn:hover { filter:brightness(1.05);transform:translateY(-1px); }
+    .btn.secondary { background:var(--surface-hover);color:var(--text);box-shadow:none;border:1px solid var(--border); }
+    .btn.green { background:var(--accent-secondary);color:#fff; }
+    .btn.ghost { background:transparent;color:var(--text-secondary);border:1px solid var(--border);box-shadow:none; }
+    .btn:disabled { opacity:.45;cursor:not-allowed;transform:none; }
+    .small { font-size:.77rem; }
+    .rule { height:1px;background:var(--border);margin:22px 0; }
+    .screen-login { min-height:690px;display:grid;grid-template-columns:minmax(300px,1.02fr) minmax(320px,.98fr);overflow:hidden;border:1px solid var(--border);border-radius:20px;background:var(--surface); }
+    .login-art { position:relative;min-height:600px;display:flex;flex-direction:column;justify-content:space-between;padding:40px;background:linear-gradient(145deg,#4b2e22,#74472c 55%,#b85d31);color:#fff;overflow:hidden; }
+    .login-art::after { content:"";position:absolute;width:440px;height:440px;border:1px solid rgba(255,255,255,.18);border-radius:50%;right:-105px;bottom:-160px;box-shadow:0 0 0 34px rgba(255,255,255,.04),0 0 0 82px rgba(255,255,255,.035); }
+    .oven-light { position:absolute;right:9%;top:16%;width:250px;height:285px;border:12px solid rgba(255,221,174,.32);border-radius:120px 120px 24px 24px;box-shadow:0 0 80px rgba(255,166,72,.5),inset 0 0 70px rgba(255,193,111,.42); }
+    .oven-light::before { content:"";position:absolute;inset:38px 28px 34px;border-radius:100px 100px 14px 14px;background:radial-gradient(ellipse at 50% 80%,rgba(255,222,142,.9),rgba(238,112,45,.28) 60%,transparent 72%); }
+    .cookie-hero { position:absolute;z-index:1;right:24%;top:35%;width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 16px 12px rgba(0,0,0,.25));animation:cookieBob 3.2s ease-in-out infinite; }
+    .login-art-copy { position:relative;z-index:2;max-width:430px;margin-top:auto; }
+    .login-art-copy .eyebrow { color:#ffd39a; }
+    .login-art-copy h2 { color:#fff;font-size:2.6rem;margin:13px 0; }
+    .login-art-copy p { max-width:380px;color:#f4ddc5;font-size:.95rem; }
+    .login-note { z-index:2;margin-top:26px;font-size:.7rem;color:#f1d9bd; }
+    .login-panel { display:flex;flex-direction:column;justify-content:center;padding:54px clamp(28px,6vw,78px); }
+    .login-panel h1 { margin:14px 0 10px;font-size:2.8rem; }
+    .login-panel>p { color:var(--text-secondary); }
+    .login-panel .btn { width:100%;margin-top:28px; }
+    .company-mark { width:45px;height:45px;display:grid;place-items:center;background:#2673c6;border-radius:12px;color:#fff;font-size:.75rem;font-weight:900;letter-spacing:-.05em; }
+    .auth-note { display:flex;gap:9px;align-items:flex-start;margin-top:15px;padding:12px;border-radius:12px;background:var(--surface-hover);font-size:.76rem;color:var(--text-secondary); }
+    .hero-banner { position:relative;display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:20px;align-items:center;min-height:230px;margin-bottom:28px;padding:30px 34px;border-radius:20px;overflow:hidden;background:linear-gradient(105deg,#4a2d21 0%,#70432b 65%,#a9572f 100%);color:#fff; }
+    .hero-banner::after { content:"";position:absolute;right:94px;top:-92px;width:330px;height:330px;border:1px solid rgba(255,255,255,.2);border-radius:50%;box-shadow:0 0 0 32px rgba(255,255,255,.04),0 0 0 68px rgba(255,255,255,.03); }
+    .hero-copy { position:relative;z-index:2; }
+    .hero-copy .eyebrow { color:#ffd5a4; }
+    .hero-copy h1 { max-width:610px;margin:10px 0;color:#fff; }
+    .hero-copy p { max-width:600px;color:#f4deca;font-size:.92rem; }
+    .hero-visual { position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;font-size:4rem; }
+    .hero-cookie { display:inline-block;width:118px;height:118px;object-fit:contain;animation:cookieBob 3s ease-in-out infinite;filter:drop-shadow(0 9px 8px rgba(0,0,0,.2)); }
+    .crumb-trail { color:#ffdcae;font-size:1.2rem;letter-spacing:.3em; }
+    .board-grid { display:grid;grid-template-columns:minmax(0,1.38fr) minmax(280px,.82fr);gap:20px; }
+    .game-card { display:grid;grid-template-columns:150px minmax(0,1fr);gap:20px;align-items:center; }
+    .game-art { min-height:176px;display:grid;place-items:center;border-radius:15px;background:linear-gradient(155deg,#d8e6cb,#85a97d 52%,#536f58);position:relative;overflow:hidden; }
+    .game-art::before { content:"";position:absolute;left:-20px;right:-20px;bottom:-36px;height:100px;border-radius:50% 50% 0 0;background:#3e6349; }
+    .game-art .cookie-figure { position:relative;z-index:1;width:118px;height:142px;object-fit:contain;filter:drop-shadow(0 8px 5px rgba(0,0,0,.2)); }
+    .game-copy h3 { margin:8px 0 5px; }
+    .game-copy p { margin-bottom:13px;font-size:.83rem;color:var(--text-secondary); }
+    .meta-row { display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 16px; }
+    .top-list { display:grid;gap:12px;margin-top:16px; }
+    .rank-row { display:grid;grid-template-columns:30px 34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border); }
+    .rank-row:last-child { border-bottom:0; }
+    .rank-number { width:27px;height:27px;display:grid;place-items:center;border-radius:9px;background:var(--surface-hover);font-size:.75rem;font-weight:900; }
+    .rank-number.gold { color:#8b5a10;background:#f5dfa8; }
+    .rank-cookie { width:34px;height:34px;object-fit:contain; }
+    .rank-person { font-size:.8rem;font-weight:750; }
+    .rank-character { font-size:.68rem;color:var(--text-secondary); }
+    .rank-score { font-size:.83rem;font-weight:850;font-variant-numeric:tabular-nums; }
+    .own-record { margin-top:16px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));display:flex;justify-content:space-between;gap:12px;align-items:center; }
+    .own-record strong { font-size:.78rem; }
+    .own-record span { font-size:.73rem;color:var(--text-secondary); }
+    .character-grid { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px; }
+    .character-card { min-width:0;position:relative;padding:18px 12px 14px;text-align:center;border:1px solid var(--border);border-radius:17px;background:var(--surface);cursor:pointer;transition:.18s; }
+    .character-card:hover { transform:translateY(-3px);box-shadow:0 12px 24px rgba(53,35,21,.1); }
+    .character-card.selected { outline:3px solid var(--accent);outline-offset:1px;background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
+    .character-card.locked { opacity:.62;filter:saturate(.6);cursor:not-allowed; }
+    .character-art { height:112px;display:grid;place-items:center;filter:drop-shadow(0 8px 5px rgba(59,36,22,.15)); }
+    .character-art img { width:100%;height:100%;object-fit:contain; }
+    .character-name { font-weight:850;font-size:.9rem; }
+    .character-weapon { margin-top:3px;font-size:.71rem;color:var(--text-secondary); }
+    .lock-label { display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:5px 8px;border-radius:99px;background:var(--surface-hover);font-size:.64rem;font-weight:800;color:var(--text-secondary); }
+    .character-bottom { display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:24px;padding:18px 20px; }
+    .selected-summary { display:flex;gap:12px;align-items:center; }
+    .selected-summary .big-cookie { width:64px;height:64px;object-fit:contain; }
+    .selected-summary strong { display:block;font-size:.86rem; }
+    .selected-summary small { color:var(--text-secondary);font-size:.75rem; }
+    .battle-top { display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px; }
+    .battle-title { display:flex;align-items:center;gap:12px; }
+    .area-icon { width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:#d9e6cc;color:#405e44;font-size:1.6rem; }
+    .battle-title h2 { font-size:1.6rem; }
+    .battle-title p { color:var(--text-secondary);font-size:.78rem; }
+    .battle-stats { display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end; }
+    .stat-chip { display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font-size:.77rem;font-weight:800; }
+    .heart { color:var(--negative); }
+    .ammo { color:var(--accent); }
+    .battle-grid { display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:18px;align-items:start; }
+    .arena { min-height:378px;position:relative;overflow:hidden;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,#d9e8d2 0%,#e9e2c1 67%,#b5c48e 100%); }
+    .arena-sun { position:absolute;top:26px;right:32px;width:56px;height:56px;border-radius:50%;background:#f6d887;box-shadow:0 0 0 16px rgba(255,255,255,.14); }
+    .mountains { position:absolute;left:0;right:0;bottom:95px;height:150px;background:#9bb48e;clip-path:polygon(0 70%,14% 34%,26% 63%,42% 19%,56% 61%,71% 28%,86% 62%,100% 32%,100% 100%,0 100%);opacity:.72; }
+    .hill { position:absolute;left:-8%;right:-7%;bottom:-71px;height:210px;background:#64845e;border-radius:50% 50% 0 0; }
+    .hill.front { left:27%;bottom:-125px;height:220px;background:#506f50; }
+    .arena-ground { position:absolute;left:0;right:0;bottom:0;height:55px;background:repeating-linear-gradient(90deg,#496547 0 28px,#527450 28px 54px); }
+    .launch-pad { position:absolute;left:38px;bottom:48px;width:130px;height:104px; }
+    .launcher-base { position:absolute;left:4px;bottom:0;width:105px;height:27px;border-radius:55% 45% 8px 8px;background:#66402b;transform:rotate(-9deg); }
+    .launcher-arm { position:absolute;left:54px;bottom:17px;width:86px;height:12px;border-radius:99px;background:#a96635;transform:rotate(-36deg);transform-origin:8px 50%;box-shadow:0 3px rgba(0,0,0,.16); }
+    .launcher-stone { position:absolute;left:107px;top:18px;width:26px;height:26px;border-radius:50%;background:#96765b;border:3px solid #72573f; }
+    .monster { position:absolute;z-index:4;display:grid;place-items:center;width:67px;height:76px;border-radius:48% 48% 38% 38%;background:#b98a63;border:3px solid rgba(81,52,35,.3);box-shadow:0 8px 8px rgba(48,43,26,.18);font-size:2.4rem; }
+    .monster::after { content:"4";position:absolute;right:-8px;top:-9px;min-width:25px;height:25px;display:grid;place-items:center;border:2px solid var(--surface);border-radius:50%;background:#fff9ec;color:#60412f;font-size:.69rem;font-weight:900; }
+    .monster.snake { left:44%;bottom:71px;background:#98b980; }
+    .monster.boar-one { left:65%;bottom:67px;background:#c6966a; }
+    .monster.boar-two { left:80%;bottom:96px;background:#cc9b71; }
+    .trajectory { position:absolute;z-index:3;left:145px;bottom:129px;width:48%;height:174px;border-top:2px dashed rgba(255,255,255,.88);border-radius:50% 50% 0 0;transform:rotate(-13deg); }
+    .trajectory-label { position:absolute;left:39%;top:42%;font-size:.68rem;font-weight:850;color:#35533a;background:rgba(255,255,255,.72);padding:5px 8px;border-radius:99px; }
+    .arena-caption { position:absolute;left:16px;top:15px;display:flex;gap:7px;align-items:center;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.72);color:#39533c;font-size:.7rem;font-weight:850; }
+    .combat-side { display:grid;gap:13px; }
+    .weapon-card { padding:16px; }
+    .weapon-head { display:flex;align-items:center;justify-content:space-between; }
+    .weapon-emoji { width:45px;height:45px;display:grid;place-items:center;border-radius:13px;background:var(--surface-hover);font-size:1.8rem; }
+    .grade { padding:4px 8px;border-radius:7px;background:#f0d99a;color:#634712;font-size:.7rem;font-weight:950; }
+    .weapon-name { margin-top:11px;font-size:.92rem;font-weight:850; }
+    .weapon-desc { margin-top:3px;font-size:.73rem;color:var(--text-secondary); }
+    .ammo-dots { display:flex;gap:5px;flex-wrap:wrap;margin-top:12px; }
+    .ammo-dot { width:13px;height:13px;border-radius:50%;background:var(--accent);box-shadow:inset 0 -2px rgba(0,0,0,.13); }
+    .ammo-dot.spent { background:var(--surface-hover);box-shadow:none;border:1px solid var(--border); }
+    .aim-controls { padding:15px; }
+    .control-row { display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.77rem;font-weight:750; }
+    input[type=range] { width:100%;margin:10px 0 13px;accent-color:var(--accent); }
+    .fire-btn { width:100%; }
+    .inventory { padding:15px; }
+    .inventory-title { display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:.82rem;font-weight:850; }
+    .item-slot { display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 0;border-top:1px solid var(--border); }
+    .item-key { width:25px;height:25px;display:grid;place-items:center;border-radius:7px;background:var(--surface-hover);font-size:.7rem;font-weight:900; }
+    .item-icon { font-size:1.3rem; }
+    .item-name { font-size:.73rem;font-weight:800; }
+    .item-count { min-width:24px;padding:3px 7px;border-radius:99px;background:var(--accent);color:#fff;text-align:center;font-size:.7rem;font-weight:900; }
+    .item-use { margin-left:4px;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:transparent;font-size:.65rem;font-weight:800;cursor:pointer; }
+    .item-use:hover { background:var(--surface-hover); }
+    .toast { position:fixed;left:50%;bottom:24px;z-index:10001;padding:12px 17px;border-radius:12px;background:var(--text);color:var(--bg);font-size:.84rem;font-weight:750;box-shadow:0 12px 35px rgba(0,0,0,.22);opacity:0;transform:translate(-50%,14px);pointer-events:none;transition:.25s; }
+    .toast.show { opacity:1;transform:translate(-50%,0); }
+    .reward-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px; }
+    .reward-card { position:relative;min-height:205px;padding:18px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;border:1px solid var(--border);border-radius:17px;background:var(--surface); }
+    .reward-card.selected { outline:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
+    .reward-art { width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:var(--surface-hover);font-size:2rem; }
+    .reward-card h3 { margin-top:13px;font-size:1rem; }
+    .reward-card p { margin-top:4px;font-size:.75rem;color:var(--text-secondary); }
+    .reward-card .btn { min-height:38px;margin-top:15px;padding:0 13px;font-size:.75rem; }
+    .reward-section { margin-top:24px; }
+    .reward-section .section-head { margin-bottom:13px; }
+    .transition-banner { padding:30px;border-radius:20px;background:linear-gradient(110deg,#49694d,#81966a);color:white; }
+    .transition-banner h1,.transition-banner p { color:white; }
+    .transition-banner p { margin-top:7px;color:#e4eedb; }
+    .choice-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:20px; }
+    .choice-card { min-height:220px;padding:24px;border:1px solid var(--border);border-radius:18px;background:var(--surface);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between; }
+    .choice-card .big-icon { font-size:2.8rem; }
+    .choice-card h3 { margin:10px 0 4px; }
+    .choice-card p { color:var(--text-secondary);font-size:.82rem; }
+    .clear-hero { padding:32px;border-radius:20px;background:linear-gradient(120deg,#513020,#8e4e2b);color:#fff;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:22px; }
+    .clear-hero h1 { color:#fff;margin:7px 0; }
+    .clear-hero p { color:#f1d5bd; }
+    .clear-stamp { width:124px;height:124px;display:grid;place-items:center;border:2px solid rgba(255,222,178,.72);border-radius:50%;color:#ffd89d;font-size:.78rem;font-weight:950;letter-spacing:.08em;transform:rotate(12deg); }
+    .result-stats { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0; }
+    .result-stat { padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface); }
+    .result-stat span { display:block;font-size:.7rem;color:var(--text-secondary);font-weight:750; }
+    .result-stat strong { display:block;margin-top:4px;font-size:1.15rem;font-weight:900;font-variant-numeric:tabular-nums; }
+    .result-cookie { width:31px;height:31px;object-fit:contain;vertical-align:middle;margin-right:4px; }
+    .result-actions { display:flex;gap:12px;flex-wrap:wrap;margin-top:19px; }
+    .leaderboard-table { width:100%;border-collapse:collapse;margin-top:10px; }
+    .leaderboard-table th { padding:10px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--text-secondary);font-size:.7rem;letter-spacing:.04em; }
+    .leaderboard-table td { padding:12px 8px;border-bottom:1px solid var(--border);font-size:.82rem;font-weight:650; }
+    .leaderboard-table tr:last-child td { border-bottom:0; }
+    .leaderboard-table tr.is-me { background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
+    .table-rank { font-weight:950; }
+    .table-cookie { font-size:1.3rem; }
+    .bonus-field { min-height:390px;position:relative;overflow:hidden;border-radius:19px;background:linear-gradient(130deg,#c9e4dc 0%,#e5d9ac 45%,#d8bba5 100%);border:1px solid var(--border); }
+    .chaos-stripe { position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 26px,rgba(255,255,255,.13) 26px 29px); }
+    .chaos-label { position:absolute;top:16px;left:17px;padding:7px 11px;border:1px solid rgba(255,255,255,.6);border-radius:99px;background:rgba(255,255,255,.58);color:#4c4736;font-size:.7rem;font-weight:950;letter-spacing:.08em; }
+    .bonus-cloud { position:absolute;top:86px;left:6%;width:170px;height:70px;border-radius:60px;background:rgba(255,255,255,.5);filter:blur(1px); }
+    .bonus-cloud.two { left:auto;right:11%;top:55px;width:125px;transform:scale(.8); }
+    .bonus-ground { position:absolute;left:0;right:0;bottom:0;height:88px;background:linear-gradient(0deg,#59634d,#778360); }
+    .bonus-ground::before { content:"";position:absolute;left:-5%;top:-57px;width:110%;height:95px;border-radius:50%;background:#778360; }
+    .bonus-monster { position:absolute;z-index:2;bottom:61px;font-size:2.5rem;filter:drop-shadow(0 6px 4px rgba(51,40,29,.18)); }
+    .bonus-monster:nth-of-type(4) { left:18%; }
+    .bonus-monster:nth-of-type(5) { left:34%;bottom:75px; }
+    .bonus-monster:nth-of-type(6) { left:51%; }
+    .bonus-monster:nth-of-type(7) { left:68%;bottom:79px; }
+    .bonus-monster:nth-of-type(8) { left:82%; }
+    .boss-lineup { display:flex;align-items:center;justify-content:center;gap:26px;padding:26px;border-radius:18px;background:linear-gradient(115deg,#e8d6bf,#d8e4cc,#ead9c9); }
+    .boss-token { display:grid;justify-items:center;gap:6px; }
+    .boss-token .emoji { font-size:4.1rem;filter:drop-shadow(0 7px 4px rgba(0,0,0,.16)); }
+    .boss-token strong { color:#392b20;font-size:.75rem; }
+    .boss-hp { width:100px;height:8px;border-radius:99px;background:rgba(88,60,39,.18);overflow:hidden; }
+    .boss-hp span { display:block;height:100%;border-radius:inherit;background:#c65343; }
+    .qr-card { display:grid;grid-template-columns:170px minmax(0,1fr);gap:23px;align-items:center; }
+    .qr-placeholder { width:160px;height:160px;display:grid;place-items:center;border:10px solid #fff;border-radius:10px;background:repeating-conic-gradient(#2f271f 0 25%,#fff 0 50%) 0 0/22px 22px;box-shadow:0 0 0 1px var(--border); }
+    .qr-placeholder span { padding:7px;border-radius:6px;background:#fff;color:#2d2119;font-size:.66rem;font-weight:900;text-align:center; }
+    .defeat-hero { padding:31px;border-radius:20px;background:linear-gradient(120deg,#4b2925,#7b3931);color:white; }
+    .defeat-hero h1 { color:white;margin:8px 0; }
+    .defeat-hero p { color:#f0d2c9; }
+    .status-bar { display:flex;align-items:center;justify-content:space-between;gap:10px;margin:19px 0;padding:13px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font-size:.8rem; }
+    .form-label { display:block;margin:12px 0 6px;font-size:.75rem;font-weight:800; }
+    .mockup-caption { margin:16px auto 0;max-width:1440px;color:var(--text-secondary);font-size:.72rem; }
+    @media (max-width:1080px) { .character-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .battle-grid { grid-template-columns:minmax(0,1fr) 260px; } .board-grid { grid-template-columns:minmax(0,1fr); } }
+    @media (max-width:760px) { .mockup-controls { align-items:flex-start;flex-direction:column;padding:13px 14px 8px; } .workspace { padding:0 12px 28px; } .app-window { display:block;min-height:0;border-radius:18px; } .sidebar { display:none; } .content { padding:22px 17px 28px; } .content-header { align-items:flex-start;flex-direction:column;margin-bottom:23px; } .screen-login { grid-template-columns:1fr; } .login-art { min-height:400px;padding:27px; } .oven-light { width:180px;height:205px;right:7%;top:11%; } .cookie-hero { right:24%;top:29%;font-size:5rem; } .login-panel { padding:34px 27px; } .hero-banner { grid-template-columns:1fr;min-height:280px;padding:25px; } .hero-visual { position:absolute;right:18px;bottom:16px;opacity:.55; } .game-card { grid-template-columns:112px minmax(0,1fr);gap:13px; } .game-art { min-height:150px; } .battle-grid { grid-template-columns:1fr; } .arena { min-height:340px; } .combat-side { grid-template-columns:repeat(2,minmax(0,1fr)); } .inventory { grid-column:1/-1; } .result-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .clear-hero { grid-template-columns:1fr; } .clear-stamp { position:absolute;right:28px;top:32px;width:83px;height:83px;font-size:.58rem; } .clear-hero { position:relative;padding:25px; } }
+    @media (max-width:520px) { body { overflow-x:hidden; } h1 { font-size:2.5rem; } h2 { font-size:2rem; } h3 { font-size:1.5rem; } .content { padding:19px 13px 25px; } .character-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .character-art { height:86px;font-size:3.4rem; } .character-bottom { align-items:flex-start;flex-direction:column; } .game-card { grid-template-columns:1fr; } .game-art { min-height:130px; } .reward-grid { grid-template-columns:1fr; } .reward-card { min-height:175px; } .choice-grid { grid-template-columns:1fr; } .battle-top { align-items:flex-start;flex-direction:column; } .battle-stats { justify-content:flex-start; } .arena { min-height:290px; } .monster { width:52px;height:59px;font-size:1.8rem; } .monster.snake { left:38%; } .monster.boar-one { left:61%; } .monster.boar-two { left:79%; } .trajectory { left:106px;width:52%;bottom:106px;height:132px; } .launch-pad { left:17px;bottom:44px;transform:scale(.8);transform-origin:bottom left; } .combat-side { grid-template-columns:1fr; } .inventory { grid-column:auto; } .boss-lineup { gap:10px;padding:19px 8px; } .boss-token .emoji { font-size:2.7rem; } .boss-hp { width:72px; } .qr-card { grid-template-columns:1fr;justify-items:center;text-align:center; } .result-actions .btn { width:100%; } .leaderboard-table th:nth-child(4),.leaderboard-table td:nth-child(4) { text-align:right; } }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-to-content">본문 바로가기</a>
+  <div class="viz-menu">
+    <button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="도구 메뉴 열기">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg>
+    </button>
+    <div class="viz-menu-dropdown" id="vizMenuDropdown">
+      <button onclick="cycleTheme()"><span id="themeIcon" aria-hidden="true">◐</span> <span id="themeLabel">테마 전환</span></button>
+      <button onclick="downloadImage()"><span aria-hidden="true">↓</span> PNG 저장</button>
+      <button onclick="window.print()"><span aria-hidden="true">▤</span> 인쇄 / PDF</button>
+    </div>
+  </div>
+  <div class="mockup-controls" aria-label="목업 화면 선택">
+    <div class="control-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h9"/><circle cx="18" cy="17" r="3"/></svg>
+      화면 목업 <span class="muted">/</span> COOKIE ESCAPE
+    </div>
+    <nav class="screen-tabs" aria-label="목업 화면 목록">
+      <button class="screen-tab active" data-screen-button="login">로그인</button>
+      <button class="screen-tab" data-screen-button="board">게임 게시판</button>
+      <button class="screen-tab" data-screen-button="characters">쿠키 선택</button>
+      <button class="screen-tab" data-screen-button="battle">전투</button>
+      <button class="screen-tab" data-screen-button="reward">라운드 보상</button>
+      <button class="screen-tab" data-screen-button="transition">지역 이동</button>
+      <button class="screen-tab" data-screen-button="clear">도시 클리어</button>
+      <button class="screen-tab" data-screen-button="bonus">혼돈 보너스</button>
+      <button class="screen-tab" data-screen-button="qr">QR 보상</button>
+      <button class="screen-tab" data-screen-button="defeat">패배 결과</button>
+    </nav>
+  </div>
+
+  <div class="workspace">
+    <div class="app-window" id="appWindow">
+      <aside class="sidebar" aria-label="게임 앱 메뉴">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="9" r="1" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1" fill="currentColor"/><circle cx="14" cy="15" r="1" fill="currentColor"/><path d="M8 14c1.5 1.8 3.5 2.2 5.4 1.5"/></svg>
+          </div>
+          <div class="brand-name">CRUMB RUN<span class="brand-sub">COOKIE ESCAPE</span></div>
+        </div>
+        <div class="nav-group">
+          <div class="nav-label">게임</div>
+          <button class="side-link" data-side="board" onclick="showScreen('board')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>게임 게시판</button>
+          <button class="side-link" data-side="board" onclick="showScreen('board')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 20V8l7-4 7 4v12M9 20v-7h6v7"/><path d="M3 20h18"/></svg>내 기록</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-label">관리</div>
+          <button class="side-link" onclick="showToast('관리자 그룹 전용 화면 목업입니다.')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 7v5c0 5 3.4 8 8 9 4.6-1 8-4 8-9V7l-8-4Z"/><path d="m9 12 2 2 4-4"/></svg>게임 관리</button>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="profile-small"><div class="avatar">김</div><div><div class="profile-name">김태화</div><div class="profile-role">회사 계정으로 로그인됨</div></div></div>
+        </div>
+      </aside>
+
+      <main id="main-content" class="content">
+        <section class="prototype-screen" data-screen="login" aria-labelledby="login-title">
+          <div class="screen-login animate">
+            <div class="login-art">
+              <div class="oven-light" aria-hidden="true"></div>
+              <img class="cookie-hero" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/GingerBrave.png" alt="용감한 쿠키">
+              <div class="login-art-copy">
+                <div class="eyebrow">ONE MORE TURN, ONE MORE ESCAPE</div>
+                <h2>오븐을 넘어,<br>도시 끝까지.</h2>
+                <p>숲과 눈길을 지나 오븐 로봇이 기다리는 도시로. 쿠키들과 함께 탈출의 길을 열어보세요.</p>
+                <div class="login-note">사내 계정으로 로그인해 게임을 시작하세요.</div>
+              </div>
+            </div>
+            <div class="login-panel">
+              <div class="company-mark" aria-label="회사 계정">ID</div>
+              <div class="eyebrow" style="margin-top:22px">COMPANY GAME BOARD</div>
+              <h1 id="login-title">다시 오븐 밖으로</h1>
+              <p>회사 계정으로 로그인하면 게임 게시판과 개인 기록을 이용할 수 있어요.</p>
+              <button class="btn" onclick="showScreen('board')"><span aria-hidden="true">↗</span> 회사 계정으로 로그인</button>
+              <div class="auth-note"><span aria-hidden="true">ⓘ</span><span>회사 Microsoft 계정만 이용할 수 있습니다. 이메일 주소는 랭킹에 표시되지 않아요.</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="prototype-screen" data-screen="board" hidden aria-labelledby="board-title">
+          <header class="content-header">
+            <div><div class="eyebrow">COOKIE GAME BOARD</div><h2 id="board-title">게임 게시판</h2></div>
+            <div class="header-right"><span class="pill good"><span>●</span> 사내 계정</span><button class="btn secondary small" onclick="showToast('게임별 개인 기록 화면 목업입니다.')">내 기록</button></div>
+          </header>
+          <section class="hero-banner animate">
+            <div class="hero-copy"><div class="eyebrow">NEW ADVENTURE · ROGUELIKE</div><h1>작은 쿠키의 큰 탈출</h1><p>오븐을 빠져나온 용감한 쿠키. 숲의 괴물과 눈보라를 뚫고 동료를 구해 도시의 오븐을 무너뜨리세요.</p></div>
+            <div class="hero-visual" aria-hidden="true"><img class="hero-cookie" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/GingerBrave.png" alt=""><span class="crumb-trail">· · ·</span><span>🌲</span><span>❄</span></div>
+          </section>
+          <div class="board-grid">
+            <section class="card game-card animate delay-1" aria-label="게임 소개">
+              <div class="game-art"><img class="cookie-figure" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/GingerBrave.png" alt=""></div>
+              <div class="game-copy"><span class="pill warn">가칭 · 턴제 로그라이크</span><h3>오븐 탈출: 쿠키 대작전</h3><p>각도와 힘을 조절해 투사체를 발사하세요. 숲·눈길·도시를 지나 세 보스를 무찌르는 쿠키런 스타일의 투석 전투입니다.</p><div class="meta-row"><span class="pill">3개 지역</span><span class="pill">15라운드</span><span class="pill">마우스 조작</span></div><button class="btn" onclick="showScreen('characters')">게임 플레이 <span aria-hidden="true">→</span></button></div>
+            </section>
+            <section class="card animate delay-2" aria-labelledby="leaderboard-title">
+              <div class="section-head"><div><div class="eyebrow">COMPANY TOP 10</div><h3 id="leaderboard-title">회사 랭킹</h3></div><button class="btn ghost small" onclick="showToast('상위 10위와 내 최고 기록을 표시합니다.')">전체 보기</button></div>
+              <div class="top-list">
+                <div class="rank-row"><span class="rank-number gold">1</span><img class="rank-cookie" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Strawberry%20Cookie.png" alt=""><div><div class="rank-person">이수진</div><div class="rank-character">딸기맛 쿠키</div></div><strong class="rank-score">2,480</strong></div>
+                <div class="rank-row"><span class="rank-number">2</span><img class="rank-cookie" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Wizard%20Cookie.png" alt=""><div><div class="rank-person">박도윤</div><div class="rank-character">마법사맛 쿠키</div></div><strong class="rank-score">2,210</strong></div>
+                <div class="rank-row"><span class="rank-number">3</span><img class="rank-cookie" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/GingerBrave.png" alt=""><div><div class="rank-person">김태화</div><div class="rank-character">용감한 쿠키</div></div><strong class="rank-score">1,860</strong></div>
+                <div class="rank-row"><span class="rank-number">4</span><img class="rank-cookie" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Milk%20Cookie.png" alt=""><div><div class="rank-person">정하린</div><div class="rank-character">우유맛 쿠키</div></div><strong class="rank-score">1,720</strong></div>
+              </div>
+              <div class="own-record"><div><strong>내 최고 기록</strong><br><span>현재 3위 · 용감한 쿠키</span></div><strong>1,860점</strong></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="prototype-screen" data-screen="characters" hidden aria-labelledby="characters-title">
+          <header class="content-header"><div><div class="eyebrow">RUN SETUP · 01</div><h2 id="characters-title">함께 탈출할 쿠키 선택</h2></div><span class="pill">새 런 · 체력 100</span></header>
+          <div class="section-head"><div><h3>쿠키런 친구들</h3><p>각 쿠키는 고유 무기와 효과를 가지고 시작합니다.</p></div><span class="pill good">3명 사용 가능</span></div>
+          <div class="character-grid" role="list">
+            <button class="character-card selected" data-character="용감한 쿠키" data-weapon="딱딱한 쿠키" data-art="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/GingerBrave.png" onclick="selectCharacter(this)"><div class="character-art"><img src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/GingerBrave.png" alt="용감한 쿠키"></div><div class="character-name">용감한 쿠키</div><div class="character-weapon">딱딱한 쿠키 · 0 피해 방지</div></button>
+            <button class="character-card" data-character="딸기맛 쿠키" data-weapon="딸기맛 쿠키의 무기" data-art="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Strawberry%20Cookie.png" onclick="selectCharacter(this)"><div class="character-art"><img src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Strawberry%20Cookie.png" alt="딸기맛 쿠키"></div><div class="character-name">딸기맛 쿠키</div><div class="character-weapon">라운드마다 공격 1회 방어</div></button>
+            <button class="character-card" data-character="마법사맛 쿠키" data-weapon="마력 구슬" data-art="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Wizard%20Cookie.png" onclick="selectCharacter(this)"><div class="character-art"><img src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Wizard%20Cookie.png" alt="마법사맛 쿠키"></div><div class="character-name">마법사맛 쿠키</div><div class="character-weapon">세 번째 명중에 피해 +1</div></button>
+            <button class="character-card locked" aria-disabled="true" data-character="우유맛 쿠키" data-weapon="우유맛 쿠키의 무기" data-art="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Milk%20Cookie.png" onclick="showToast('눈길 지역을 한 번 클리어하면 영구 해금됩니다.')"><div class="character-art"><img src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Milk%20Cookie.png" alt="우유맛 쿠키"></div><div class="character-name">우유맛 쿠키</div><div class="character-weapon">세 번째 명중에 회복 · 보스 방어</div><span class="lock-label">▣ 눈길 클리어 후 해금</span></button>
+            <button class="character-card locked" aria-disabled="true" data-character="바람궁수 쿠키" data-weapon="바람궁수의 무기" data-art="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Wind%20Archer%20Cookie.png" onclick="showToast('눈길 지역을 한 번 클리어하면 영구 해금됩니다.')"><div class="character-art"><img src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Wind%20Archer%20Cookie.png" alt="바람궁수 쿠키"></div><div class="character-name">바람궁수 쿠키</div><div class="character-weapon">유도 조준 · 보스 피해 +1</div><span class="lock-label">▣ 눈길 클리어 후 해금</span></button>
+          </div>
+          <section class="card character-bottom" aria-label="선택 쿠키 정보">
+            <div class="selected-summary"><img class="big-cookie" id="selectedCookieArt" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/GingerBrave.png" alt="용감한 쿠키"><div><strong id="selectedCookieName">용감한 쿠키</strong><small id="selectedCookieWeapon">시작 무기: 딱딱한 쿠키 (C등급)</small></div></div>
+            <button class="btn" onclick="showScreen('battle')">이 쿠키로 시작 <span aria-hidden="true">→</span></button>
+          </section>
+        </section>
+
+        <section class="prototype-screen" data-screen="battle" hidden aria-labelledby="battle-heading">
+          <div class="battle-top">
+            <div class="battle-title"><div class="area-icon" aria-hidden="true">🌲</div><div><div class="eyebrow">FOREST · ROUND 3 / 5</div><h2 id="battle-heading">숲속의 갈림길</h2><p>뱀 1마리 · 멧돼지 2마리</p></div></div>
+            <div class="battle-stats"><span class="stat-chip"><span class="heart">♥</span> <span id="hpValue">74</span> / 100</span><span class="stat-chip"><span class="ammo">●</span> <span id="ammoValue">5</span> / 9</span><span class="pill">적 차례: 뱀</span></div>
+          </div>
+          <div class="battle-grid">
+            <section class="arena" aria-label="숲 전투 장면">
+              <div class="arena-sun"></div><div class="mountains"></div><div class="hill"></div><div class="hill front"></div><div class="arena-ground"></div>
+              <div class="arena-caption"><span>●</span> 숲 지역 · 바람 약함</div>
+              <div class="launch-pad" aria-hidden="true"><div class="launcher-base"></div><div class="launcher-arm"></div><div class="launcher-stone"></div></div>
+              <div class="trajectory" aria-hidden="true"></div><span class="trajectory-label">조준 궤적</span>
+              <div class="monster snake" aria-label="뱀, 체력 4">🐍</div><div class="monster boar-one" aria-label="멧돼지, 체력 4">🐗</div><div class="monster boar-two" aria-label="멧돼지, 체력 4">🐗</div>
+            </section>
+            <aside class="combat-side" aria-label="전투 정보">
+              <section class="card weapon-card"><div class="weapon-head"><span class="weapon-emoji">🪨</span><span class="grade">C 등급</span></div><div class="weapon-name">딱딱한 쿠키</div><div class="weapon-desc">이번 투사체 · 피해 0–4</div><div class="ammo-dots" aria-label="남은 탄약 5발, 사용한 탄약 4발"><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i></div></section>
+              <section class="card aim-controls"><div class="control-row"><label for="angleRange">발사 각도</label><span id="angleValue">42°</span></div><input id="angleRange" type="range" min="10" max="80" value="42" oninput="document.getElementById('angleValue').textContent=this.value+'°'"><div class="control-row"><label for="powerRange">발사 세기</label><span id="powerValue">78%</span></div><input id="powerRange" type="range" min="20" max="100" value="78" oninput="document.getElementById('powerValue').textContent=this.value+'%'"><button class="btn fire-btn" onclick="fireShot()">투사체 발사 <span aria-hidden="true">➤</span></button></section>
+              <section class="card inventory"><div class="inventory-title"><span>소모품</span><span class="muted">숫자키 1–4</span></div><div class="item-slot"><span class="item-key">1</span><span><span class="item-icon">🔥</span> <span class="item-name">불공</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(1)">사용</button></span></div><div class="item-slot"><span class="item-key">2</span><span><span class="item-icon">🔱</span> <span class="item-name">창</span></span><span><b class="item-count">2</b><button class="item-use" onclick="useItem(2)">사용</button></span></div><div class="item-slot"><span class="item-key">3</span><span><span class="item-icon">🛡</span> <span class="item-name">방어</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(3)">사용</button></span></div><div class="item-slot"><span class="item-key">4</span><span><span class="item-icon">♥</span> <span class="item-name">회복</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(4)">사용</button></span></div></section>
+            </aside>
+          </div>
+          <div class="status-bar"><span>다음 영구 무기: <strong>마력 구슬 · B</strong></span><span class="muted">명중 8회 · 마력 구슬 효과까지 1회</span></div>
+        </section>
+
+        <section class="prototype-screen" data-screen="reward" hidden aria-labelledby="reward-title">
+          <header class="content-header"><div><div class="eyebrow">ROUND CLEAR · FOREST 3</div><h2 id="reward-title">전리품을 선택하세요</h2></div><span class="pill good">라운드 클리어</span></header>
+          <section class="card animate"><div class="section-head"><div><h3>영구 무기</h3><p>3개 중 1개 선택 · 중복 무기는 합성 여부를 직접 결정</p></div><span class="pill">현재 4개 보유</span></div><div class="reward-grid">
+            <article class="reward-card"><div><div class="reward-art">🪄</div><h3>마력 구슬</h3><p>C 등급 · 세 번째 명중 피해 +1</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
+            <article class="reward-card"><div><div class="reward-art">🍓</div><h3>딸기 방패</h3><p>C 등급 · 라운드당 공격 1회 방어</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
+            <article class="reward-card"><div><div class="reward-art">🪨</div><h3>딱딱한 쿠키</h3><p>C 등급 · 0 피해를 1로 변경</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
+          </div></section>
+          <section class="reward-section"><div class="section-head"><div><h3>소모품</h3><p>3개 중 1개 선택 · 가득 찬 종류별 슬롯은 최대 3개</p></div><span class="pill">슬롯 3 / 4</span></div><div class="reward-grid">
+            <article class="reward-card"><div><div class="reward-art">🔥</div><h3>불공</h3><p>다음 영구 무기 투사체 피해 2배</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
+            <article class="reward-card"><div><div class="reward-art">🔱</div><h3>창</h3><p>최대 3마리 관통 · 2–5 피해</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
+            <article class="reward-card"><div><div class="reward-art">♥</div><h3>회복</h3><p>체력 25 회복</p></div><button class="btn secondary" onclick="selectReward(this)">선택하기</button></article>
+          </div></section>
+          <div class="result-actions"><button class="btn" onclick="showScreen('transition')">선택 완료 · 계속 <span aria-hidden="true">→</span></button><span class="muted small" style="align-self:center">목업: 선택 버튼을 눌러 카드 강조를 확인하세요.</span></div>
+        </section>
+
+        <section class="prototype-screen" data-screen="transition" hidden aria-labelledby="transition-title">
+          <header class="content-header"><div><div class="eyebrow">FOREST CLEARED</div><h2 id="transition-title">다음 지역으로 이동합니다</h2></div><span class="pill">숲 → 눈길</span></header>
+          <section class="transition-banner animate"><div class="eyebrow" style="color:#e7f1da">CAMPFIRE DECISION</div><h1>잠시 숨을 고를까요?</h1><p>숲을 벗어나 눈길로 향하기 전, 회복하거나 무기를 강화할 수 있습니다.</p></section>
+          <div class="choice-grid">
+            <article class="choice-card"><div><div class="big-icon">♥</div><h3>체력 회복</h3><p>체력을 60 회복합니다. 최대 체력 100을 넘을 수 없어요.</p></div><button class="btn green" onclick="showToast('체력 60 회복 선택 · 다음 지역으로 이동합니다.')">회복 선택</button></article>
+            <article class="choice-card"><div><div class="big-icon">⚒</div><h3>무기 강화</h3><p>확률에 따라 C등급 무기 2개 또는 B등급 무기 1개를 얻습니다.</p><div class="meta-row"><span class="pill">90% · C 2개</span><span class="pill warn">10% · B 1개</span></div></div><button class="btn" onclick="showToast('무기 강화 선택 · 90% C 2개 / 10% B 1개 굴림')">강화 선택</button></article>
+          </div>
+        </section>
+
+        <section class="prototype-screen" data-screen="clear" hidden aria-labelledby="clear-title">
+          <header class="content-header"><div><div class="eyebrow">MAIN RUN COMPLETE</div><h2 id="clear-title">오븐 로봇을 무너뜨렸어요!</h2></div><span class="pill good">도시 보스 격파</span></header>
+          <section class="clear-hero animate"><div><div class="eyebrow" style="color:#ffd6a5">THE OVEN IS SILENT</div><h1>쿠키들의 탈출 성공</h1><p>용감한 쿠키와 동료들이 마지막 오븐을 파괴했습니다.<br>이 기록은 회사 랭킹에 저장됩니다.</p></div><div class="clear-stamp">CITY<br>CONQUERED</div></section>
+          <section class="result-stats" aria-label="런 결과"><div class="result-stat"><span>본편 점수</span><strong>3,240</strong></div><div class="result-stat"><span>진행 기록</span><strong>도시 5 / 5</strong></div><div class="result-stat"><span>사용한 쿠키</span><strong><img class="result-cookie" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/GingerBrave.png" alt="">용감한</strong></div><div class="result-stat"><span>플레이 시간</span><strong>18:42</strong></div></section>
+          <div class="status-bar"><span>★ 개인 최고 기록을 갱신했어요!</span><span class="muted">랭킹 반영 완료 · 보너스 점수 별도</span></div>
+          <div class="result-actions"><button class="btn secondary" onclick="showScreen('board')">회사 랭킹 보기</button><button class="btn" onclick="showScreen('bonus')">숨겨진 도전 이어하기 <span aria-hidden="true">→</span></button></div>
+          <p class="muted small" style="margin-top:12px">랭킹을 확인한 뒤에도 이 결과 화면으로 돌아와 보너스 도전을 선택할 수 있어요.</p>
+        </section>
+
+        <section class="prototype-screen" data-screen="bonus" hidden aria-labelledby="bonus-title">
+          <header class="content-header"><div><div class="eyebrow">SECRET CHALLENGE · 02 / 03</div><h2 id="bonus-title">혼돈의 들판</h2></div><span class="pill warn">보너스 점수 별도 집계</span></header>
+          <div class="battle-top"><div class="battle-title"><div class="area-icon" style="background:#e6d7bc">✦</div><div><div class="eyebrow">FOREST × SNOW × CITY</div><p>숲·눈길·도시 몬스터가 뒤섞여 나타납니다.</p></div></div><div class="battle-stats"><span class="stat-chip"><span class="heart">♥</span> 61 / 100</span><span class="stat-chip"><span class="ammo">●</span> 7 / 9</span><span class="pill">무작위 적 11마리</span></div></div>
+          <section class="bonus-field" aria-label="혼돈 보너스 전투 장면"><div class="chaos-stripe"></div><div class="bonus-cloud"></div><div class="bonus-cloud two"></div><div class="chaos-label">CHAOS FIELD · ROUND 2</div><span class="bonus-monster" aria-label="뱀">🐍</span><span class="bonus-monster" aria-label="눈덩이">❄</span><span class="bonus-monster" aria-label="세탁기 로봇">🤖</span><span class="bonus-monster" aria-label="멧돼지">🐗</span><span class="bonus-monster" aria-label="드라이아이스">🧊</span><div class="bonus-ground"></div></section>
+          <div class="status-bar"><span>남은 적 <strong>9</strong></span><span>보너스 점수 <strong>486</strong></span><span class="muted">QR 보상은 3라운드 보스전 클리어 후 공개</span></div>
+          <div class="result-actions"><button class="btn" onclick="showScreen('qr')">보너스 보스전 클리어 보기 <span aria-hidden="true">→</span></button></div>
+        </section>
+
+        <section class="prototype-screen" data-screen="qr" hidden aria-labelledby="qr-title">
+          <header class="content-header"><div><div class="eyebrow">SECRET CHALLENGE COMPLETE</div><h2 id="qr-title">세 보스를 모두 물리쳤어요!</h2></div><span class="pill good">최초 클리어 보상</span></header>
+          <section class="boss-lineup animate" aria-label="클리어한 보스"><div class="boss-token"><span class="emoji">🐗</span><strong>뾰족한 멧돼지</strong><div class="boss-hp"><span style="width:0"></span></div></div><div class="boss-token"><span class="emoji">⛄</span><strong>비겁한 눈사람</strong><div class="boss-hp"><span style="width:0"></span></div></div><div class="boss-token"><span class="emoji">🤖</span><strong>건방진 오븐 로봇</strong><div class="boss-hp"><span style="width:0"></span></div></div></section>
+          <section class="card qr-card" style="margin-top:20px"><div class="qr-placeholder" aria-label="기프티콘 QR 이미지 자리"><span>QR 이미지<br>업로드 예정</span></div><div><div class="eyebrow">FIRST CLEAR REWARD</div><h3 style="margin:8px 0">바나나우유 기프티콘</h3><p class="muted">보너스 구간 최초 클리어를 축하합니다. QR 이미지는 운영자가 등록한 뒤 이 자리에 표시됩니다.</p><div class="status-bar"><span>보너스 점수</span><strong>1,482</strong></div></div></section>
+          <div class="result-actions"><button class="btn" onclick="showScreen('board')">최종 결과 확인</button></div>
+          <p class="muted small" style="margin-top:10px">목업에는 실제 사용 가능한 QR이 포함되어 있지 않습니다.</p>
+        </section>
+
+        <section class="prototype-screen" data-screen="defeat" hidden aria-labelledby="defeat-title">
+          <header class="content-header"><div><div class="eyebrow">RUN ENDED</div><h2 id="defeat-title">이번 탈출은 여기까지</h2></div><span class="pill danger">런 종료</span></header>
+          <section class="defeat-hero animate"><div class="eyebrow" style="color:#f2b9a9">THE FOREST FIGHTS BACK</div><h1>다음엔 더 멀리 갈 수 있어요.</h1><p>탄약이 모두 떨어졌거나 체력이 0이 되어 런이 끝났습니다.<br>기록은 개인 최고 기록과 회사 랭킹에 반영됩니다.</p></section>
+          <section class="result-stats"><div class="result-stat"><span>획득 점수</span><strong>1,860</strong></div><div class="result-stat"><span>도달 지역·라운드</span><strong>눈길 2 / 5</strong></div><div class="result-stat"><span>사용한 쿠키</span><strong><img class="result-cookie" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/GingerBrave.png" alt="">용감한</strong></div><div class="result-stat"><span>플레이 시간</span><strong>09:14</strong></div></section>
+          <div class="status-bar"><span>회사 최고 기록 3위</span><span class="muted">이메일은 랭킹에 표시되지 않습니다.</span></div>
+          <div class="result-actions"><button class="btn" onclick="showScreen('characters')">새 런 시작 <span aria-hidden="true">↻</span></button><button class="btn secondary" onclick="showScreen('board')">랭킹 보기</button></div>
+        </section>
+      </main>
+    </div>
+    <p class="mockup-caption">화면 상단 탭으로 목업을 이동할 수 있습니다. 실제 로그인, 전투 저장, 랭킹 및 QR 검증은 연결되어 있지 않은 디자인 시안입니다.</p>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    function toggleMenu() {
+      var dropdown = document.getElementById('vizMenuDropdown');
+      if (dropdown) dropdown.classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var dropdown = document.getElementById('vizMenuDropdown');
+      if (!e.target.closest('.viz-menu') && dropdown) dropdown.classList.remove('open');
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var dropdown = document.getElementById('vizMenuDropdown');
+        if (dropdown) dropdown.classList.remove('open');
+      }
+      if (['1','2','3','4'].indexOf(e.key) !== -1 && !e.target.matches('input,textarea')) useItem(Number(e.key));
+    });
+    var savedTheme = localStorage.getItem('viz-theme');
+    var currentTheme = savedTheme || 'light';
+    function applyTheme(theme) {
+      document.documentElement.className = 'theme-' + theme;
+      document.getElementById('themeIcon').textContent = theme === 'light' ? '◐' : '◑';
+      document.getElementById('themeLabel').textContent = theme === 'light' ? '어두운 테마' : '밝은 테마';
+      localStorage.setItem('viz-theme', theme);
+      currentTheme = theme;
+      if (typeof onThemeChange === 'function') onThemeChange();
+    }
+    function cycleTheme() { applyTheme(currentTheme === 'light' ? 'dark' : 'light'); }
+    applyTheme(currentTheme);
+    function showScreen(name) {
+      document.querySelectorAll('.prototype-screen').forEach(function(screen) { screen.hidden = screen.dataset.screen !== name; });
+      document.querySelectorAll('[data-screen-button]').forEach(function(button) { button.classList.toggle('active',button.dataset.screenButton === name); });
+      document.querySelectorAll('.side-link').forEach(function(link) { link.classList.toggle('active',link.dataset.side === name || (name === 'clear' && link.dataset.side === 'board')); });
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    document.querySelectorAll('[data-screen-button]').forEach(function(button) { button.addEventListener('click',function() { showScreen(button.dataset.screenButton); }); });
+    var toastTimer;
+    function showToast(message) {
+      var toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function() { toast.classList.remove('show'); },2200);
+    }
+    function selectCharacter(button) {
+      if (button.classList.contains('locked')) return;
+      document.querySelectorAll('.character-card').forEach(function(card) { card.classList.remove('selected'); });
+      button.classList.add('selected');
+      var art = button.dataset.art;
+      var artElement = document.getElementById('selectedCookieArt');
+      artElement.src = art;
+      artElement.alt = button.dataset.character;
+      document.getElementById('selectedCookieName').textContent = button.dataset.character;
+      document.getElementById('selectedCookieWeapon').textContent = '시작 무기: ' + button.dataset.weapon + ' (C등급)';
+    }
+    function selectReward(button) {
+      var card = button.closest('.reward-card');
+      var grid = card.parentElement;
+      grid.querySelectorAll('.reward-card').forEach(function(item) { item.classList.remove('selected'); });
+      card.classList.add('selected');
+      button.textContent = '선택됨';
+      showToast(card.querySelector('h3').textContent + ' 선택');
+    }
+    function fireShot() {
+      var ammo = document.getElementById('ammoValue');
+      var count = Math.max(0,Number(ammo.textContent) - 1);
+      ammo.textContent = count;
+      if (count === 0) showToast('탄약을 모두 사용했어요. 적이 남으면 패배입니다.');
+      else showToast('발사 완료 · 배정된 영구 무기를 소모했습니다.');
+    }
+    function useItem(key) {
+      var battle = document.querySelector('[data-screen="battle"]');
+      if (battle.hidden) return;
+      var labels = {1:'불공 사용 · 다음 영구 무기 투사체 피해 2배',2:'창 사용 · 최대 3마리 관통',3:'방어 사용 · 다음 적 공격을 모두 차단',4:'회복 사용 · 체력 25 회복'};
+      showToast(labels[key] + ' · 적의 차례');
+    }
+    async function downloadImage() {
+      var menu = document.querySelector('.viz-menu');
+      menu.style.display = 'none';
+      try {
+        var url = await htmlToImage.toPng(document.querySelector('.app-window'),{quality:1,pixelRatio:2});
+        var anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'cookie-roguelike-mockup.png';
+        anchor.click();
+      } catch(error) { console.error('PNG export failed:',error);showToast('PNG 저장에 실패했습니다.'); }
+      menu.style.display = '';
+    }
+    function onThemeChange() {}
+  </script>
+</body>
+</html>
