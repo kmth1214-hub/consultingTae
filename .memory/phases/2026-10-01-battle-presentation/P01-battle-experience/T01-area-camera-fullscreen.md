@@ -1,6 +1,6 @@
 # Task: T01 Area Maps, Camera Intro, and Full-Screen Battle
 
-## Status: in_progress
+## Status: done
 
 ## Goal
 
@@ -106,16 +106,17 @@ Make the battle scene use the approved Forest, Snow, City, and Chaos map images,
 
 ## Acceptance Criteria
 
-- [ ] Four selected map files exist under `assets/maps/`; no other Fan Kit files are copied.
-- [ ] `setArenaArea('forest'|'snow'|'city'|'chaos')` applies the matching image and updates the area label.
-- [ ] Unknown area names do not corrupt the current area.
-- [ ] Every entry to the battle screen plays enemy close-up → catapult pan → complete play view, with no repeated overlapping animation.
-- [ ] Reduced-motion users see the final battle composition without the pan.
-- [ ] The game view requests browser full screen on a user-initiated entry to battle, remains full screen through run screens, and returns inline when leaving gameplay screens or pressing Escape.
-- [ ] The full-screen layout exposes the whole arena and combat HUD without horizontal page overflow at 1366×768 and 1920×1080.
+- [x] Four selected map files exist under `assets/maps/`; no other Fan Kit files are copied.
+- [x] `setArenaArea('forest'|'snow'|'city'|'chaos')` applies the matching image and updates the area label.
+- [x] Unknown area names do not corrupt the current area.
+- [x] Every entry to the battle screen plays enemy close-up → catapult pan → complete play view, with no repeated overlapping animation.
+- [x] Reduced-motion users see the final battle composition without the pan.
+- [x] The game view requests browser full screen on a user-initiated entry to battle, remains full screen through run screens, and returns inline when leaving gameplay screens or pressing Escape.
+- [x] The full-screen layout exposes the whole arena and combat HUD without horizontal page overflow at 1366×768 and 1920×1080.
 
 ## Validation
 
+- Browser visual review of the camera and full-screen presentation was confirmed by the user on 2026-10-01.
 - `Start-Process .\cookie-roguelike-mockup.html` — open the prototype in the default browser, click through to battle, and inspect the camera/full-screen sequence.
 - In browser DevTools Console, run `setArenaArea('forest'); setArenaArea('snow'); setArenaArea('city'); setArenaArea('chaos');` — verify each matching background and label, then run `setArenaArea('invalid')` and verify the current scene stays unchanged.
 - In browser DevTools Console, run `showScreen('battle')` after leaving full screen — verify any browser permission restriction is handled without a console error; use the actual UI click to verify full-screen entry.
@@ -137,5 +138,5 @@ Task: T01-area-camera-fullscreen
 ## Progress
 
 - [x] Implementation complete
-- [ ] Validation passed
-- commit: pending (browser visual validation blocked)
+- [x] Validation passed
+- commit: see Task-specific Git commit
