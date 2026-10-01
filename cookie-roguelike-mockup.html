@@ -177,7 +177,7 @@
     .arena-world { position:absolute;left:0;top:0;width:160%;height:160%;overflow:hidden;transform:translate(0,0) scale(.625);transform-origin:0 0;will-change:transform;background-image:linear-gradient(180deg,rgba(17,24,32,.06),rgba(17,24,32,.2)),var(--arena-image,url('./assets/maps/forest_theme.png'));background-size:cover;background-position:center; }
     .launch-pad { position:absolute;left:38px;bottom:48px;width:130px;height:104px; }
     .launcher-base { position:absolute;left:4px;bottom:0;width:105px;height:27px;border-radius:55% 45% 8px 8px;background:#66402b;transform:rotate(-9deg); }
-    .launcher-arm { position:absolute;left:54px;bottom:17px;width:86px;height:12px;border-radius:99px;background:#a96635;transform:rotate(-36deg);transform-origin:8px 50%;box-shadow:0 3px rgba(0,0,0,.16); }
+    .launcher-arm { position:absolute;left:54px;bottom:17px;width:86px;height:12px;border-radius:99px;background:#a96635;transform:rotate(-42deg);transform-origin:8px 50%;box-shadow:0 3px rgba(0,0,0,.16); }
     .launcher-stone { position:absolute;left:107px;top:18px;width:26px;height:26px;border-radius:50%;background:#96765b;border:3px solid #72573f; }
     .enemy-group { position:absolute;left:43%;right:4%;bottom:62px;height:112px; }
     .monster { position:absolute;z-index:4;display:grid;place-items:center;width:67px;height:76px;border-radius:48% 48% 38% 38%;background:#b98a63;border:3px solid rgba(81,52,35,.3);box-shadow:0 8px 8px rgba(48,43,26,.18);font-size:2.4rem; }
@@ -185,8 +185,15 @@
     .monster.snake { left:5%;bottom:18px;background:#98b980; }
     .monster.boar-one { left:43%;bottom:14px;background:#c6966a; }
     .monster.boar-two { left:77%;bottom:43px;background:#cc9b71; }
-    .trajectory { position:absolute;z-index:3;left:145px;bottom:129px;width:48%;height:174px;border-top:2px dashed rgba(255,255,255,.88);border-radius:50% 50% 0 0;transform:rotate(-13deg); }
-    .trajectory-label { position:absolute;left:39%;top:42%;font-size:.68rem;font-weight:850;color:#35533a;background:rgba(255,255,255,.72);padding:5px 8px;border-radius:99px; }
+    .trajectory-preview { position:absolute;inset:0;z-index:3;width:100%;height:100%;overflow:visible;pointer-events:none; }
+    .trajectory-preview path { fill:none;stroke:rgba(255,255,255,.48);stroke-width:3;stroke-dasharray:7 9;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)); }
+    #projectileDot { fill:#f6d783;stroke:#684a30;stroke-width:3;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+    .aim-controls { display:grid;gap:11px; }
+    .power-meter { height:14px;overflow:hidden;border:1px solid var(--border);border-radius:99px;background:var(--surface-hover); }
+    .power-meter-fill { width:20%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#96c27a,#efbd58,#e27759);transition:width 70ms linear; }
+    .aim-stage { min-height:18px;margin:0;color:var(--text-secondary);font-size:.75rem;font-weight:800; }
+    .aim-guidance { margin:0;color:var(--text-secondary);font-size:.7rem;line-height:1.55; }
+    .aim-value { font-variant-numeric:tabular-nums; }
     .arena-caption { position:absolute;z-index:6;left:16px;top:15px;display:flex;gap:7px;align-items:center;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.84);color:#263a2e;font-size:.7rem;font-weight:850;box-shadow:0 2px 10px rgba(0,0,0,.12); }
     .combat-side { display:grid;gap:13px; }
     .weapon-card { padding:16px; }
@@ -200,8 +207,8 @@
     .ammo-dot.spent { background:var(--surface-hover);box-shadow:none;border:1px solid var(--border); }
     .aim-controls { padding:15px; }
     .control-row { display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.77rem;font-weight:750; }
-    input[type=range] { width:100%;margin:10px 0 13px;accent-color:var(--accent); }
-    .fire-btn { width:100%; }
+    #arena { cursor:crosshair;touch-action:pan-y; }
+    #arena:focus-visible { outline:3px solid var(--accent);outline-offset:3px; }
     .inventory { padding:15px; }
     .inventory-title { display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:.82rem;font-weight:850; }
     .item-slot { display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 0;border-top:1px solid var(--border); }
@@ -277,7 +284,7 @@
     .mockup-caption { margin:16px auto 0;max-width:1440px;color:var(--text-secondary);font-size:.72rem; }
     @media (max-width:1080px) { .character-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .battle-grid { grid-template-columns:minmax(0,1fr) 260px; } .board-grid { grid-template-columns:minmax(0,1fr); } }
     @media (max-width:760px) { .mockup-controls { align-items:flex-start;flex-direction:column;padding:13px 14px 8px; } .workspace { padding:0 12px 28px; } .app-window { display:block;min-height:0;border-radius:18px; } .sidebar { display:none; } .content { padding:22px 17px 28px; } .content-header { align-items:flex-start;flex-direction:column;margin-bottom:23px; } .screen-login { grid-template-columns:1fr; } .login-art { min-height:400px;padding:27px; } .oven-light { width:180px;height:205px;right:7%;top:11%; } .cookie-hero { right:24%;top:29%;font-size:5rem; } .login-panel { padding:34px 27px; } .hero-banner { grid-template-columns:1fr;min-height:280px;padding:25px; } .hero-visual { position:absolute;right:18px;bottom:16px;opacity:.55; } .game-card { grid-template-columns:112px minmax(0,1fr);gap:13px; } .game-art { min-height:150px; } .battle-grid { grid-template-columns:1fr; } .arena { min-height:340px; } .combat-side { grid-template-columns:repeat(2,minmax(0,1fr)); } .inventory { grid-column:1/-1; } .result-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .clear-hero { grid-template-columns:1fr; } .clear-stamp { position:absolute;right:28px;top:32px;width:83px;height:83px;font-size:.58rem; } .clear-hero { position:relative;padding:25px; } }
-    @media (max-width:520px) { body { overflow-x:hidden; } h1 { font-size:2.5rem; } h2 { font-size:2rem; } h3 { font-size:1.5rem; } .content { padding:19px 13px 25px; } .character-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .character-art { height:86px;font-size:3.4rem; } .character-bottom { align-items:flex-start;flex-direction:column; } .game-card { grid-template-columns:1fr; } .game-art { min-height:130px; } .reward-grid { grid-template-columns:1fr; } .reward-card { min-height:175px; } .choice-grid { grid-template-columns:1fr; } .battle-top { align-items:flex-start;flex-direction:column; } .battle-stats { justify-content:flex-start; } .arena { min-height:290px; } .monster { width:52px;height:59px;font-size:1.8rem; } .monster.snake { left:5%; } .monster.boar-one { left:43%; } .monster.boar-two { left:77%; } .trajectory { left:106px;width:52%;bottom:106px;height:132px; } .launch-pad { left:17px;bottom:44px;transform:scale(.8);transform-origin:bottom left; } .combat-side { grid-template-columns:1fr; } .inventory { grid-column:auto; } .boss-lineup { gap:10px;padding:19px 8px; } .boss-token .emoji { font-size:2.7rem; } .boss-hp { width:72px; } .qr-card { grid-template-columns:1fr;justify-items:center;text-align:center; } .result-actions .btn { width:100%; } .leaderboard-table th:nth-child(4),.leaderboard-table td:nth-child(4) { text-align:right; } }
+    @media (max-width:520px) { body { overflow-x:hidden; } h1 { font-size:2.5rem; } h2 { font-size:2rem; } h3 { font-size:1.5rem; } .content { padding:19px 13px 25px; } .character-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .character-art { height:86px;font-size:3.4rem; } .character-bottom { align-items:flex-start;flex-direction:column; } .game-card { grid-template-columns:1fr; } .game-art { min-height:130px; } .reward-grid { grid-template-columns:1fr; } .reward-card { min-height:175px; } .choice-grid { grid-template-columns:1fr; } .battle-top { align-items:flex-start;flex-direction:column; } .battle-stats { justify-content:flex-start; } .arena { min-height:290px; } .monster { width:52px;height:59px;font-size:1.8rem; } .monster.snake { left:5%; } .monster.boar-one { left:43%; } .monster.boar-two { left:77%; } .launch-pad { left:17px;bottom:44px; } .combat-side { grid-template-columns:1fr; } .inventory { grid-column:auto; } .boss-lineup { gap:10px;padding:19px 8px; } .boss-token .emoji { font-size:2.7rem; } .boss-hp { width:72px; } .qr-card { grid-template-columns:1fr;justify-items:center;text-align:center; } .result-actions .btn { width:100%; } .leaderboard-table th:nth-child(4),.leaderboard-table td:nth-child(4) { text-align:right; } }
   </style>
 </head>
 <body>
@@ -407,10 +414,10 @@
             <div class="battle-stats"><span class="stat-chip"><span class="heart">♥</span> <span id="hpValue">74</span> / 100</span><span class="stat-chip"><span class="ammo">●</span> <span id="ammoValue">5</span> / 9</span><span class="pill">적 차례: 뱀</span></div>
           </div>
           <div class="battle-grid">
-            <section class="arena" id="arena" data-area="forest" aria-label="숲 지역 전투 장면">
+            <section class="arena" id="arena" data-area="forest" tabindex="0" aria-label="숲 지역 전투 장면">
               <div class="arena-world" id="arenaWorld">
                 <div class="launch-pad" id="launchPad" aria-hidden="true"><div class="launcher-base"></div><div class="launcher-arm"></div><div class="launcher-stone"></div></div>
-                <div class="trajectory" aria-hidden="true"></div><span class="trajectory-label">조준 궤적</span>
+                <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryPath" d=""></path><circle id="projectileDot" r="8" hidden></circle></svg>
                 <div class="enemy-group" id="enemyGroup" role="group" aria-label="현재 라운드의 적">
                   <div class="monster snake" aria-label="뱀, 체력 4">🐍</div><div class="monster boar-one" aria-label="멧돼지, 체력 4">🐗</div><div class="monster boar-two" aria-label="멧돼지, 체력 4">🐗</div>
                 </div>
@@ -419,7 +426,13 @@
             </section>
             <aside class="combat-side" aria-label="전투 정보">
               <section class="card weapon-card"><div class="weapon-head"><span class="weapon-emoji">🪨</span><span class="grade">C 등급</span></div><div class="weapon-name">딱딱한 쿠키</div><div class="weapon-desc">이번 투사체 · 피해 0–4</div><div class="ammo-dots" aria-label="남은 탄약 5발, 사용한 탄약 4발"><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i></div></section>
-              <section class="card aim-controls"><div class="control-row"><label for="angleRange">발사 각도</label><span id="angleValue">42°</span></div><input id="angleRange" type="range" min="10" max="80" value="42" oninput="document.getElementById('angleValue').textContent=this.value+'°'"><div class="control-row"><label for="powerRange">발사 세기</label><span id="powerValue">78%</span></div><input id="powerRange" type="range" min="20" max="100" value="78" oninput="document.getElementById('powerValue').textContent=this.value+'%'"><button class="btn fire-btn" onclick="fireShot()">투사체 발사 <span aria-hidden="true">➤</span></button></section>
+              <section class="card aim-controls" aria-label="투사체 조준">
+                <div class="control-row"><span>발사 각도</span><span id="angleValue" class="aim-value">42°</span></div>
+                <div class="control-row"><span>발사 파워</span><span id="powerValue" class="aim-value">20%</span></div>
+                <div id="powerMeter" class="power-meter" role="meter" aria-label="발사 파워" aria-valuemin="20" aria-valuemax="100" aria-valuenow="20"><div id="powerMeterFill" class="power-meter-fill"></div></div>
+                <p id="aimStageLabel" class="aim-stage" aria-live="polite">전장을 좌클릭해 조준을 시작하세요.</p>
+                <p class="aim-guidance">좌클릭 유지: 상하로 각도 조절 · Space 유지/해제: 파워 조절/확정 · 확정 후 좌우 이동: 조준 위치 · 좌클릭 해제: 발사</p>
+              </section>
               <section class="card inventory"><div class="inventory-title"><span>소모품</span><span class="muted">숫자키 1–4</span></div><div class="item-slot"><span class="item-key">1</span><span><span class="item-icon">🔥</span> <span class="item-name">불공</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(1)">사용</button></span></div><div class="item-slot"><span class="item-key">2</span><span><span class="item-icon">🔱</span> <span class="item-name">창</span></span><span><b class="item-count">2</b><button class="item-use" onclick="useItem(2)">사용</button></span></div><div class="item-slot"><span class="item-key">3</span><span><span class="item-icon">🛡</span> <span class="item-name">방어</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(3)">사용</button></span></div><div class="item-slot"><span class="item-key">4</span><span><span class="item-icon">♥</span> <span class="item-name">회복</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(4)">사용</button></span></div></section>
             </aside>
           </div>
@@ -501,8 +514,11 @@
         var dropdown = document.getElementById('vizMenuDropdown');
         if (dropdown) dropdown.classList.remove('open');
       }
-      if (['1','2','3','4'].indexOf(e.key) !== -1 && !e.target.matches('input,textarea')) useItem(Number(e.key));
+      onPowerKeyDown(e);
+      var editing = e.target.closest && e.target.closest('input,textarea,select,[contenteditable="true"]');
+      if (['1','2','3','4'].indexOf(e.key) !== -1 && !editing) useItem(Number(e.key));
     });
+    document.addEventListener('keyup', onPowerKeyUp);
     var savedTheme = localStorage.getItem('viz-theme');
     var currentTheme = savedTheme || 'light';
     function applyTheme(theme) {
@@ -605,6 +621,7 @@
       }
     }
     function showScreen(name) {
+      if (name !== 'battle' && aimState.phase !== 'idle') cancelAim('pointer-cancel');
       document.querySelectorAll('.prototype-screen').forEach(function(screen) { screen.hidden = screen.dataset.screen !== name; });
       document.querySelectorAll('[data-screen-button]').forEach(function(button) { button.classList.toggle('active',button.dataset.screenButton === name); });
       document.querySelectorAll('.side-link').forEach(function(link) { link.classList.toggle('active',link.dataset.side === name || (name === 'clear' && link.dataset.side === 'board')); });
@@ -659,6 +676,256 @@
       if (count === 0) showToast('탄약을 모두 사용했어요. 적이 남으면 패배입니다.');
       else showToast('발사 완료 · 배정된 영구 무기를 소모했습니다.');
     }
+    const ANGLE_MIN_DEG = 10;
+    const ANGLE_MAX_DEG = 80;
+    const ANGLE_DEG_PER_PIXEL = 0.25;
+    const POWER_MIN_PERCENT = 20;
+    const POWER_MAX_PERCENT = 100;
+    const POWER_GAUGE_RATE_PERCENT_PER_SECOND = 80;
+    const AIM_SVG_NS = 'http://www.w3.org/2000/svg';
+    var aimState = createIdleAimState();
+    var launchSequence = 0;
+    function createIdleAimState() {
+      return {phase:'idle',angleDeg:42,powerPercent:20,powerDirection:1,targetX:0,pointerId:null,lastClientY:0,isPointerHeld:false,isPowerLocked:false,animationFrameId:null,lastPowerFrameTime:null,hasSelectedDirection:false};
+    }
+    function clamp(value,min,max) { return Math.min(max,Math.max(min,value)); }
+    function getAimElements() {
+      return {
+        arena:document.getElementById('arena'),
+        world:document.getElementById('arenaWorld'),
+        path:document.getElementById('trajectoryPath'),
+        dot:document.getElementById('projectileDot'),
+        launcher:document.getElementById('launchPad'),
+        stone:document.querySelector('#launchPad .launcher-stone'),
+        arm:document.querySelector('#launchPad .launcher-arm')
+      };
+    }
+    function syncTrajectoryViewBox() {
+      var elements = getAimElements();
+      if (!elements.world) return;
+      var width = elements.world.offsetWidth;
+      var height = elements.world.offsetHeight;
+      var preview = document.getElementById('trajectoryPreview');
+      if (preview && width && height) preview.setAttribute('viewBox','0 0 ' + width + ' ' + height);
+    }
+    function getWorldPointFromPointer(event) {
+      var elements = getAimElements();
+      if (!elements.arena || !elements.world) return {x:0,y:0};
+      var arenaRect = elements.arena.getBoundingClientRect();
+      var point = new DOMPoint(event.clientX - arenaRect.left - elements.arena.clientLeft,event.clientY - arenaRect.top - elements.arena.clientTop);
+      var transform = getComputedStyle(elements.world).transform;
+      if (transform && transform !== 'none' && typeof DOMMatrix === 'function') point = point.matrixTransform(new DOMMatrix(transform).inverse());
+      return {x:point.x,y:point.y};
+    }
+    function getStoneCenter() {
+      var elements = getAimElements();
+      if (!elements.launcher || !elements.stone) return {x:0,y:0};
+      return {
+        x:elements.launcher.offsetLeft + elements.stone.offsetLeft + elements.stone.offsetWidth / 2,
+        y:elements.launcher.offsetTop + elements.stone.offsetTop + elements.stone.offsetHeight / 2
+      };
+    }
+    function updateAimState() {
+      var angle = document.getElementById('angleValue');
+      var power = document.getElementById('powerValue');
+      var meter = document.getElementById('powerMeter');
+      var fill = document.getElementById('powerMeterFill');
+      var stage = document.getElementById('aimStageLabel');
+      var arm = getAimElements().arm;
+      var angleText = Math.round(aimState.angleDeg) + '°';
+      var powerText = Math.round(aimState.powerPercent) + '%';
+      if (angle && angle.textContent !== angleText) angle.textContent = angleText;
+      if (power && power.textContent !== powerText) power.textContent = powerText;
+      if (meter) meter.setAttribute('aria-valuenow',String(Math.round(aimState.powerPercent)));
+      if (fill) fill.style.width = aimState.powerPercent + '%';
+      if (arm) arm.style.transform = 'rotate(' + (-aimState.angleDeg) + 'deg)';
+      var stageText = {
+        idle:'전장을 좌클릭해 조준을 시작하세요.',
+        angle:'1/3 각도 조절 · 좌클릭을 유지하고 마우스를 상하로 움직이세요.',
+        power:'2/3 파워 충전 중 · Space를 놓으면 파워가 확정됩니다.',
+        direction:aimState.hasSelectedDirection ? '발사 준비 완료 · 좌클릭을 놓으면 발사합니다.' : '3/3 조준 위치 선택 · 마우스를 좌우로 움직이세요.',
+        launching:'발사 중…'
+      }[aimState.phase];
+      if (stage && stage.textContent !== stageText) stage.textContent = stageText;
+      if (stage) stage.dataset.stage = aimState.phase === 'direction' && aimState.hasSelectedDirection ? 'ready' : aimState.phase;
+    }
+    function drawTrajectoryPreview() {
+      var elements = getAimElements();
+      if (!elements.path || !elements.world || !elements.arena) return;
+      if (aimState.phase !== 'direction' && aimState.phase !== 'launching') {
+        elements.path.setAttribute('d','');
+        return;
+      }
+      syncTrajectoryViewBox();
+      var start = getStoneCenter();
+      var height = elements.world.offsetHeight;
+      var horizontalDistance = Math.max(40,(aimState.targetX - start.x) * aimState.powerPercent / 100);
+      var verticalLift = clamp((aimState.targetX - start.x) * Math.tan(aimState.angleDeg * Math.PI / 180) * 0.45,24,height * 0.82);
+      var controlX = start.x + horizontalDistance;
+      var controlY = start.y - verticalLift;
+      elements.path.setAttribute('d','M ' + start.x + ' ' + start.y + ' Q ' + controlX + ' ' + controlY + ' ' + aimState.targetX + ' ' + start.y);
+    }
+    function aimPointFromPointer(event) {
+      var elements = getAimElements();
+      var point = getWorldPointFromPointer(event);
+      var start = getStoneCenter();
+      aimState.targetX = clamp(point.x,start.x + 24,elements.world.offsetWidth - 16);
+      aimState.hasSelectedDirection = true;
+      drawTrajectoryPreview();
+      updateAimState();
+    }
+    function onArenaPointerDown(event) {
+      var elements = getAimElements();
+      if (event.pointerType !== 'mouse' || event.button !== 0 || aimState.phase !== 'idle') return;
+      var battle = document.querySelector('[data-screen="battle"]');
+      if (!battle || battle.hidden || Number(document.getElementById('ammoValue').textContent) <= 0) return;
+      event.preventDefault();
+      syncTrajectoryViewBox();
+      var start = getStoneCenter();
+      aimState = createIdleAimState();
+      aimState.phase = 'angle';
+      aimState.pointerId = event.pointerId;
+      aimState.lastClientY = event.clientY;
+      aimState.isPointerHeld = true;
+      aimState.targetX = elements.launcher.offsetLeft + elements.launcher.offsetWidth;
+      try { elements.arena.setPointerCapture(event.pointerId); } catch(error) { /* Pointer capture can be unavailable in an embedded preview. */ }
+      elements.arena.focus({preventScroll:true});
+      updateAimState();
+    }
+    function onArenaPointerMove(event) {
+      if (!aimState.isPointerHeld || event.pointerId !== aimState.pointerId) return;
+      if (aimState.phase === 'angle') {
+        aimState.angleDeg = clamp(aimState.angleDeg + (aimState.lastClientY - event.clientY) * ANGLE_DEG_PER_PIXEL,ANGLE_MIN_DEG,ANGLE_MAX_DEG);
+        aimState.lastClientY = event.clientY;
+        updateAimState();
+      } else if (aimState.phase === 'direction') {
+        aimPointFromPointer(event);
+      }
+    }
+    function stopAimAnimation() {
+      if (aimState.animationFrameId !== null) cancelAnimationFrame(aimState.animationFrameId);
+      aimState.animationFrameId = null;
+      aimState.lastPowerFrameTime = null;
+    }
+    function animatePowerGauge(now) {
+      if (aimState.phase !== 'power' || !aimState.isPointerHeld) return;
+      if (aimState.lastPowerFrameTime === null) aimState.lastPowerFrameTime = now;
+      var elapsedSeconds = Math.min(0.1,(now - aimState.lastPowerFrameTime) / 1000);
+      aimState.lastPowerFrameTime = now;
+      var next = aimState.powerPercent + aimState.powerDirection * POWER_GAUGE_RATE_PERCENT_PER_SECOND * elapsedSeconds;
+      while (next > POWER_MAX_PERCENT || next < POWER_MIN_PERCENT) {
+        if (next > POWER_MAX_PERCENT) { next = POWER_MAX_PERCENT - (next - POWER_MAX_PERCENT); aimState.powerDirection = -1; }
+        if (next < POWER_MIN_PERCENT) { next = POWER_MIN_PERCENT + (POWER_MIN_PERCENT - next); aimState.powerDirection = 1; }
+      }
+      aimState.powerPercent = next;
+      updateAimState();
+      aimState.animationFrameId = requestAnimationFrame(animatePowerGauge);
+    }
+    function isSpaceKey(event) { return event.code === 'Space' || event.key === ' ' || event.key === 'Spacebar'; }
+    function onPowerKeyDown(event) {
+      if (!isSpaceKey(event) || !aimState.isPointerHeld || aimState.phase === 'idle' || aimState.phase === 'launching') return;
+      event.preventDefault();
+      if (event.repeat || aimState.phase === 'power' || aimState.isPowerLocked) return;
+      aimState.phase = 'power';
+      aimState.lastPowerFrameTime = null;
+      updateAimState();
+      aimState.animationFrameId = requestAnimationFrame(animatePowerGauge);
+    }
+    function onPowerKeyUp(event) {
+      if (!isSpaceKey(event) || aimState.phase !== 'power' || !aimState.isPointerHeld) return;
+      event.preventDefault();
+      stopAimAnimation();
+      aimState.isPowerLocked = true;
+      aimState.phase = 'direction';
+      var elements = getAimElements();
+      var start = getStoneCenter();
+      aimState.targetX = clamp(aimState.targetX,start.x + 24,elements.world.offsetWidth - 16);
+      drawTrajectoryPreview();
+      updateAimState();
+    }
+    function resetAimAfterShot() {
+      var elements = getAimElements();
+      if (elements.path) elements.path.setAttribute('d','');
+      if (elements.dot) elements.dot.hidden = true;
+      aimState = createIdleAimState();
+      updateAimState();
+    }
+    function cancelAim(reason) {
+      var elements = getAimElements();
+      var pointerId = aimState.pointerId;
+      stopAimAnimation();
+      launchSequence++;
+      if (elements.arena && pointerId !== null) {
+        try { if (elements.arena.hasPointerCapture(pointerId)) elements.arena.releasePointerCapture(pointerId); } catch(error) { /* The pointer may already have been released by the browser. */ }
+      }
+      if (elements.path) elements.path.setAttribute('d','');
+      if (elements.dot) elements.dot.hidden = true;
+      aimState = createIdleAimState();
+      updateAimState();
+      if (reason === 'early-release') showToast('발사 파워를 확정하려면 Space를 놓은 뒤 좌클릭을 떼세요.');
+    }
+    function onArenaPointerCancel(event) {
+      if (event.pointerId === aimState.pointerId) cancelAim('pointer-cancel');
+    }
+    function animateProjectile(path) {
+      var elements = getAimElements();
+      if (!elements.dot || !path || !path.getAttribute('d')) return Promise.resolve(false);
+      var sequence = ++launchSequence;
+      var startedAt = performance.now();
+      var duration = 450;
+      var length = path.getTotalLength();
+      elements.dot.hidden = false;
+      return new Promise(function(resolve) {
+        function step(now) {
+          if (sequence !== launchSequence || aimState.phase !== 'launching') { resolve(false); return; }
+          var progress = clamp((now - startedAt) / duration,0,1);
+          var point = path.getPointAtLength(length * progress);
+          elements.dot.setAttribute('cx',point.x);
+          elements.dot.setAttribute('cy',point.y);
+          if (progress >= 1) { aimState.animationFrameId = null; resolve(true); return; }
+          aimState.animationFrameId = requestAnimationFrame(step);
+        }
+        aimState.animationFrameId = requestAnimationFrame(step);
+      });
+    }
+    async function onArenaPointerUp(event) {
+      if (event.pointerId !== aimState.pointerId || !aimState.isPointerHeld) return;
+      var elements = getAimElements();
+      if (aimState.phase === 'direction') aimPointFromPointer(event);
+      var canLaunch = aimState.phase === 'direction' && aimState.isPowerLocked;
+      if (!canLaunch) { cancelAim('early-release'); return; }
+      aimState.phase = 'launching';
+      aimState.isPointerHeld = false;
+      stopAimAnimation();
+      try { if (elements.arena.hasPointerCapture(event.pointerId)) elements.arena.releasePointerCapture(event.pointerId); } catch(error) { /* The browser may have released capture already. */ }
+      updateAimState();
+      var sequence = launchSequence;
+      var completed = await animateProjectile(elements.path);
+      if (!completed || aimState.phase !== 'launching' || sequence + 1 !== launchSequence) return;
+      fireShot();
+      resetAimAfterShot();
+    }
+    function setupAimControls() {
+      var elements = getAimElements();
+      if (!elements.arena) return;
+      syncTrajectoryViewBox();
+      elements.arena.addEventListener('pointerdown',onArenaPointerDown);
+      elements.arena.addEventListener('pointermove',onArenaPointerMove);
+      elements.arena.addEventListener('pointerup',onArenaPointerUp);
+      elements.arena.addEventListener('pointercancel',onArenaPointerCancel);
+      window.addEventListener('blur',function() { if (aimState.phase !== 'idle') cancelAim('window-blur'); });
+      document.addEventListener('visibilitychange',function() { if (document.hidden && aimState.phase !== 'idle') cancelAim('window-blur'); });
+      document.addEventListener('fullscreenchange',function() {
+        var battle = document.querySelector('[data-screen="battle"]');
+        if (!document.fullscreenElement && battle && battle.hidden && aimState.phase !== 'idle') cancelAim('pointer-cancel');
+      });
+      window.addEventListener('resize',function() {
+        syncTrajectoryViewBox();
+        if (aimState.phase === 'direction' || aimState.phase === 'launching') drawTrajectoryPreview();
+      });
+      updateAimState();
+    }
+    setupAimControls();
     function useItem(key) {
       var battle = document.querySelector('[data-screen="battle"]');
       if (battle.hidden) return;

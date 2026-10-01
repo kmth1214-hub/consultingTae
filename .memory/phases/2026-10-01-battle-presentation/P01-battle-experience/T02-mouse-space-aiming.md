@@ -1,6 +1,6 @@
 # Task: T02 Mouse and Spacebar Aiming
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -113,14 +113,14 @@ Replace the battle mockup's angle/power range sliders and separate fire button w
 
 ## Acceptance Criteria
 
-- [ ] Sliders and the separate fire button no longer control or trigger the battle shot.
-- [ ] Left mouse hold plus vertical movement updates angle and launcher art within the configured bounds.
-- [ ] Holding Space during a held shot oscillates the power meter between 20% and 100%; Space release locks the displayed value.
-- [ ] Horizontal movement after power lock changes the forward aim point and the faint dashed trajectory.
-- [ ] Releasing left mouse after locking power animates one projectile, consumes exactly one ammo, and resets aim state.
-- [ ] Releasing left mouse before locking power cancels without consuming ammo; pointer cancellation, window blur, or zero ammo never fires.
-- [ ] Space does not scroll the page during an active shot and does not affect item hotkeys `1`–`4`.
-- [ ] Trajectory and control hints remain usable at desktop and narrow viewport sizes.
+- [x] Sliders and the separate fire button no longer control or trigger the battle shot.
+- [x] Left mouse hold plus vertical movement updates angle and launcher art within the configured bounds.
+- [x] Holding Space during a held shot oscillates the power meter between 20% and 100%; Space release locks the displayed value.
+- [x] Horizontal movement after power lock changes the forward aim point and the faint dashed trajectory.
+- [x] Releasing left mouse after locking power animates one projectile, consumes exactly one ammo, and resets aim state.
+- [x] Releasing left mouse before locking power cancels without consuming ammo; pointer cancellation, window blur, or zero ammo never fires.
+- [x] Space does not scroll the page during an active shot and does not affect item hotkeys `1`–`4`.
+- [x] Trajectory and control hints remain usable at desktop and narrow viewport sizes.
 
 ## Validation
 
@@ -144,6 +144,7 @@ Task: T02-mouse-space-aiming
 
 ## Progress
 
-- [ ] Implementation complete
-- [ ] Validation passed
-- commit: pending
+- [x] Implementation complete
+- [x] Validation passed
+- Browser interaction validation was confirmed by the user on 2026-10-01.
+- commit: see Task-specific Git commit
