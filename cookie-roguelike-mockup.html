@@ -175,14 +175,21 @@
     .battle-grid { display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:18px;align-items:start; }
     .arena { min-height:378px;position:relative;overflow:hidden;border:1px solid var(--border);border-radius:18px;background:#18222c;isolation:isolate; }
     .arena-world { position:absolute;left:0;top:0;width:160%;height:160%;overflow:hidden;transform:translate(0,0) scale(.625);transform-origin:0 0;will-change:transform;background-image:linear-gradient(180deg,rgba(17,24,32,.06),rgba(17,24,32,.2)),var(--arena-image,url('./assets/maps/forest_theme.png'));background-size:cover;background-position:center; }
-    .chaos-depth-layer { position:absolute;inset:0;z-index:1;display:none;pointer-events:none;background:linear-gradient(180deg,rgba(12,8,35,.06) 0%,transparent 40%,rgba(13,8,37,.18) 100%),radial-gradient(ellipse at 50% 44%,rgba(133,96,255,.08) 0%,transparent 68%); }
-    #arena[data-area="chaos"] .chaos-depth-layer { display:block; }
-    .chaos-road { position:absolute;inset:0;z-index:2;width:100%;height:100%;display:none;pointer-events:none; }
-    #arena[data-area="chaos"] .chaos-road { display:block; }
-    .chaos-road-shadow { fill:rgba(7,4,23,.58); }
-    .chaos-road-edge { fill:#352c68; }
-    .chaos-road-surface { fill:url(#chaosRoadSurface); }
-    .chaos-road-highlight { fill:none;stroke:rgba(234,221,255,.55);stroke-width:5;stroke-linecap:round; }
+    #arena[data-area="forest"] { --area-road-shadow:rgba(12,29,16,.58);--area-road-edge:#596541;--area-road-top:#d8a77d;--area-road-middle:#a66f58;--area-road-bottom:#62494a;--area-road-highlight:rgba(255,237,200,.62);--area-depth-background:linear-gradient(180deg,rgba(17,34,22,.06) 0%,transparent 40%,rgba(17,33,25,.16) 100%),radial-gradient(ellipse at 50% 44%,rgba(111,194,122,.08) 0%,transparent 68%); }
+    #arena[data-area="snow"] { --area-road-shadow:rgba(14,28,48,.56);--area-road-edge:#45617f;--area-road-top:#b8d9ed;--area-road-middle:#779dbb;--area-road-bottom:#475f83;--area-road-highlight:rgba(235,248,255,.66);--area-depth-background:linear-gradient(180deg,rgba(10,22,46,.04) 0%,transparent 40%,rgba(12,28,52,.14) 100%),radial-gradient(ellipse at 50% 44%,rgba(180,220,255,.10) 0%,transparent 68%); }
+    #arena[data-area="city"] { --area-road-shadow:rgba(34,17,37,.60);--area-road-edge:#57445c;--area-road-top:#d8ac83;--area-road-middle:#a87780;--area-road-bottom:#4b3d5c;--area-road-highlight:rgba(255,225,176,.64);--area-depth-background:linear-gradient(180deg,rgba(38,15,31,.05) 0%,transparent 40%,rgba(24,14,37,.16) 100%),radial-gradient(ellipse at 50% 44%,rgba(255,183,105,.08) 0%,transparent 68%); }
+    #arena[data-area="chaos"] { --area-road-shadow:rgba(7,4,23,.58);--area-road-edge:#352c68;--area-road-top:#7770b8;--area-road-middle:#625ca5;--area-road-bottom:#36305f;--area-road-highlight:rgba(234,221,255,.55);--area-depth-background:linear-gradient(180deg,rgba(12,8,35,.06) 0%,transparent 40%,rgba(13,8,37,.18) 100%),radial-gradient(ellipse at 50% 44%,rgba(133,96,255,.08) 0%,transparent 68%); }
+    .area-depth-layer { position:absolute;inset:0;z-index:1;display:none;pointer-events:none;background:var(--area-depth-background); }
+    #arena[data-area="forest"] .area-depth-layer,#arena[data-area="snow"] .area-depth-layer,#arena[data-area="city"] .area-depth-layer,#arena[data-area="chaos"] .area-depth-layer { display:block; }
+    .area-road { position:absolute;inset:0;z-index:2;width:100%;height:100%;display:none;pointer-events:none; }
+    #arena[data-area="forest"] .area-road,#arena[data-area="snow"] .area-road,#arena[data-area="city"] .area-road,#arena[data-area="chaos"] .area-road { display:block; }
+    .area-road-shadow { fill:var(--area-road-shadow); }
+    .area-road-edge { fill:var(--area-road-edge); }
+    .area-road-surface { fill:url(#areaRoadSurface); }
+    .area-road-stop-top { stop-color:var(--area-road-top); }
+    .area-road-stop-middle { stop-color:var(--area-road-middle); }
+    .area-road-stop-bottom { stop-color:var(--area-road-bottom); }
+    .area-road-highlight { fill:none;stroke:var(--area-road-highlight);stroke-width:5;stroke-linecap:round; }
     .launch-pad { position:absolute;z-index:3;left:38px;bottom:48px;width:130px;height:104px; }
     .launcher-base { position:absolute;left:4px;bottom:0;width:105px;height:27px;border-radius:55% 45% 8px 8px;background:#66402b;transform:rotate(-9deg); }
     .launcher-arm { position:absolute;left:54px;bottom:17px;width:86px;height:12px;border-radius:99px;background:#a96635;transform:rotate(-42deg);transform-origin:8px 50%;box-shadow:0 3px rgba(0,0,0,.16); }
@@ -424,8 +431,8 @@
           <div class="battle-grid">
             <section class="arena" id="arena" data-area="forest" tabindex="0" aria-label="숲 지역 전투 장면">
               <div class="arena-world" id="arenaWorld">
-                <div class="chaos-depth-layer" aria-hidden="true"></div>
-                <svg id="chaosRoad" class="chaos-road" aria-hidden="true" viewBox="0 0 1000 600" preserveAspectRatio="none"><defs><linearGradient id="chaosRoadSurface" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7770b8"></stop><stop offset="16%" stop-color="#625ca5"></stop><stop offset="100%" stop-color="#36305f"></stop></linearGradient></defs><rect class="chaos-road-shadow" x="90" y="411" width="820" height="138" rx="69"></rect><rect class="chaos-road-edge" x="90" y="405" width="820" height="132" rx="66"></rect><rect class="chaos-road-surface" x="90" y="412" width="820" height="118" rx="59"></rect><path class="chaos-road-highlight" d="M 150 431 H 850"></path></svg>
+                <div class="area-depth-layer" aria-hidden="true"></div>
+                <svg id="areaRoad" class="area-road" aria-hidden="true" viewBox="0 0 1000 600" preserveAspectRatio="none"><defs><linearGradient id="areaRoadSurface" x1="0" y1="0" x2="0" y2="1"><stop class="area-road-stop-top" offset="0%"></stop><stop class="area-road-stop-middle" offset="16%"></stop><stop class="area-road-stop-bottom" offset="100%"></stop></linearGradient></defs><rect class="area-road-shadow" x="90" y="411" width="820" height="138" rx="69"></rect><rect class="area-road-edge" x="90" y="405" width="820" height="132" rx="66"></rect><rect class="area-road-surface" x="90" y="412" width="820" height="118" rx="59"></rect><path class="area-road-highlight" d="M 150 431 H 850"></path></svg>
                 <div class="launch-pad" id="launchPad" aria-hidden="true"><div class="launcher-base"></div><div class="launcher-arm"></div><div class="launcher-stone"></div></div>
                 <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryPath" d=""></path></svg>
                 <div id="projectileSprite" class="projectile-sprite" aria-hidden="true" hidden></div>

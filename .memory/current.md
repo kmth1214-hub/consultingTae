@@ -1,17 +1,17 @@
 # Current Context
 
 ## Active Plan
-[Chaos Theme Depth and Flat Route](./plans/2026-10-06-chaos-theme-depth-flat-route.md)
+[Area Background Depth and Flat Routes](./plans/2026-10-06-area-background-depth.md)
 
 ## Active Phase
-[P01 Chaos Scene](./phases/2026-10-06-chaos-theme-depth-flat-route/P01-chaos-scene/phase.md)
+[P01 Area Scenes](./phases/2026-10-06-area-background-depth/P01-area-scenes/phase.md)
 
 ## Active Task
-[T01 Chaos Depth Cues and Flat Road](./phases/2026-10-06-chaos-theme-depth-flat-route/P01-chaos-scene/T01-chaos-depth-flat-road.md)
+[T01 Shared Area Depth and Flat Roads](./phases/2026-10-06-area-background-depth/P01-area-scenes/T01-area-depth-flat-roads.md)
 
 ## Status
-- T01 implementation complete; inline JavaScript syntax and diff checks passed. Manual visual browser validation was blocked by file URL policy.
-- The previous Battle Presentation Refinement plan remains available with T02 pending.
+- T01 implementation complete; inline script syntax and diff checks passed. Manual browser inspection was blocked by local file URL policy.
+- Chaos depth cues and the first flat road are already implemented; this task extends the visual treatment to Forest, Snow, and City while keeping their own palettes.
 
 ## Next Step (IMPORTANT)
-This one-task plan is complete. The previous Battle Presentation Refinement plan remains available with T02 pending.
+This one-task plan is complete. The earlier Battle Presentation Refinement plan remains available with T02 pending.
