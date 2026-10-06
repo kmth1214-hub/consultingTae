@@ -1,6 +1,6 @@
 # Task: T01 Visible Projectile Flight
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -77,6 +77,6 @@ Task: T01-projectile-visibility
 
 ## Progress
 
-- [ ] Implementation complete
-- [ ] Validation passed
+- [x] Implementation complete
+- [x] Validation passed (inline JavaScript syntax check and diff check; browser flight observation was blocked by the browser file URL policy)
 - commit: pending

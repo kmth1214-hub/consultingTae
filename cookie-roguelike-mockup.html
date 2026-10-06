@@ -187,7 +187,7 @@
     .monster.boar-two { left:77%;bottom:43px;background:#cc9b71; }
     .trajectory-preview { position:absolute;inset:0;z-index:3;width:100%;height:100%;overflow:visible;pointer-events:none; }
     .trajectory-preview path { fill:none;stroke:rgba(255,255,255,.48);stroke-width:3;stroke-dasharray:7 9;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)); }
-    #projectileDot { fill:#f6d783;stroke:#684a30;stroke-width:3;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+    .projectile-sprite { position:absolute;left:0;top:0;z-index:6;width:24px;height:24px;display:block;border:3px solid #493522;border-radius:50%;background:radial-gradient(circle at 31% 27%,#fff2bd 0 12%,#e9c875 13% 46%,#92724e 72%,#59432f 100%);box-shadow:0 3px 7px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.75);will-change:transform;pointer-events:none; }
     .aim-controls { display:grid;gap:11px; }
     .power-meter { height:14px;overflow:hidden;border:1px solid var(--border);border-radius:99px;background:var(--surface-hover); }
     .power-meter-fill { width:20%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#96c27a,#efbd58,#e27759);transition:width 70ms linear; }
@@ -417,7 +417,8 @@
             <section class="arena" id="arena" data-area="forest" tabindex="0" aria-label="숲 지역 전투 장면">
               <div class="arena-world" id="arenaWorld">
                 <div class="launch-pad" id="launchPad" aria-hidden="true"><div class="launcher-base"></div><div class="launcher-arm"></div><div class="launcher-stone"></div></div>
-                <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryPath" d=""></path><circle id="projectileDot" r="8" hidden></circle></svg>
+                <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryPath" d=""></path></svg>
+                <div id="projectileSprite" class="projectile-sprite" aria-hidden="true" hidden></div>
                 <div class="enemy-group" id="enemyGroup" role="group" aria-label="현재 라운드의 적">
                   <div class="monster snake" aria-label="뱀, 체력 4">🐍</div><div class="monster boar-one" aria-label="멧돼지, 체력 4">🐗</div><div class="monster boar-two" aria-label="멧돼지, 체력 4">🐗</div>
                 </div>
@@ -713,6 +714,7 @@
     const AIM_SVG_NS = 'http://www.w3.org/2000/svg';
     var aimState = createIdleAimState();
     var launchSequence = 0;
+    var projectileAnimationCancel = null;
     function createIdleAimState() {
       return {phase:'idle',angleDeg:42,powerPercent:20,powerDirection:1,targetX:0,pointerId:null,lastClientY:0,isPointerHeld:false,isPowerLocked:false,animationFrameId:null,lastPowerFrameTime:null,hasSelectedDirection:false};
     }
@@ -722,7 +724,7 @@
         arena:document.getElementById('arena'),
         world:document.getElementById('arenaWorld'),
         path:document.getElementById('trajectoryPath'),
-        dot:document.getElementById('projectileDot'),
+        sprite:document.getElementById('projectileSprite'),
         launcher:document.getElementById('launchPad'),
         stone:document.querySelector('#launchPad .launcher-stone'),
         arm:document.querySelector('#launchPad .launcher-arm')
@@ -874,20 +876,21 @@
     function resetAimAfterShot() {
       var elements = getAimElements();
       if (elements.path) elements.path.setAttribute('d','');
-      if (elements.dot) elements.dot.hidden = true;
+      if (elements.sprite) elements.sprite.hidden = true;
       aimState = createIdleAimState();
       updateAimState();
     }
     function cancelAim(reason) {
       var elements = getAimElements();
       var pointerId = aimState.pointerId;
+      if (projectileAnimationCancel) projectileAnimationCancel();
       stopAimAnimation();
       launchSequence++;
       if (elements.arena && pointerId !== null) {
         try { if (elements.arena.hasPointerCapture(pointerId)) elements.arena.releasePointerCapture(pointerId); } catch(error) { /* The pointer may already have been released by the browser. */ }
       }
       if (elements.path) elements.path.setAttribute('d','');
-      if (elements.dot) elements.dot.hidden = true;
+      if (elements.sprite) elements.sprite.hidden = true;
       aimState = createIdleAimState();
       updateAimState();
       if (reason === 'early-release') showToast('발사 파워를 확정하려면 Space를 놓은 뒤 좌클릭을 떼세요.');
@@ -897,20 +900,31 @@
     }
     function animateProjectile(path) {
       var elements = getAimElements();
-      if (!elements.dot || !path || !path.getAttribute('d')) return Promise.resolve(false);
+      if (!elements.sprite || !path || !path.getAttribute('d')) return Promise.resolve(false);
       var sequence = ++launchSequence;
       var startedAt = performance.now();
-      var duration = 450;
+      var duration = 700;
       var length = path.getTotalLength();
-      elements.dot.hidden = false;
+      elements.sprite.hidden = false;
       return new Promise(function(resolve) {
+        var settled = false;
+        function finish(completed) {
+          if (settled) return;
+          settled = true;
+          if (aimState.animationFrameId !== null) cancelAnimationFrame(aimState.animationFrameId);
+          aimState.animationFrameId = null;
+          if (!completed) elements.sprite.hidden = true;
+          if (projectileAnimationCancel === cancel) projectileAnimationCancel = null;
+          resolve(completed);
+        }
+        function cancel() { finish(false); }
+        projectileAnimationCancel = cancel;
         function step(now) {
-          if (sequence !== launchSequence || aimState.phase !== 'launching') { resolve(false); return; }
+          if (sequence !== launchSequence || aimState.phase !== 'launching') { finish(false); return; }
           var progress = clamp((now - startedAt) / duration,0,1);
           var point = path.getPointAtLength(length * progress);
-          elements.dot.setAttribute('cx',point.x);
-          elements.dot.setAttribute('cy',point.y);
-          if (progress >= 1) { aimState.animationFrameId = null; resolve(true); return; }
+          elements.sprite.style.transform = 'translate3d(' + (point.x - 12) + 'px,' + (point.y - 12) + 'px,0)';
+          if (progress >= 1) { finish(true); return; }
           aimState.animationFrameId = requestAnimationFrame(step);
         }
         aimState.animationFrameId = requestAnimationFrame(step);
