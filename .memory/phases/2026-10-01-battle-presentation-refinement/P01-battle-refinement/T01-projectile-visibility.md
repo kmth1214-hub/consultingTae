@@ -79,4 +79,4 @@ Task: T01-projectile-visibility
 
 - [x] Implementation complete
 - [x] Validation passed (inline JavaScript syntax check and diff check; browser flight observation was blocked by the browser file URL policy)
-- commit: pending
+- commit: 192df29
