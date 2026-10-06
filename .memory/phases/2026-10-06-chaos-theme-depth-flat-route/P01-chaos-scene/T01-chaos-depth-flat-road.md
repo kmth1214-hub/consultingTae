@@ -77,4 +77,4 @@ Task: T01-chaos-depth-flat-road
 
 - [x] Implementation complete
 - [x] Validation passed (inline script syntax and diff checks passed; manual browser visual inspection unavailable because file URL access is blocked)
-- commit: pending
+- commit: 56ad730
