@@ -1,0 +1,8 @@
+feat(forest): build layered side-view scenery and dirt road
+
+Plan: 2026-10-12-forest-layered-background
+Phase: P01-forest-scene
+Task: T01-static-layered-scene
+
+- Add independent forest scenery artwork with transparent decoration
+- Preserve combat coordinates and other area backgrounds
