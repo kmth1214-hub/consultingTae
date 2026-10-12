@@ -7,12 +7,12 @@
 [P01 Forest Scene](./phases/2026-10-12-forest-layered-background/P01-forest-scene/phase.md)
 
 ## Active Task
-[T01 Static Layered Forest Scene](./phases/2026-10-12-forest-layered-background/P01-forest-scene/T01-static-layered-scene.md)
+[T02 Camera Parallax](./phases/2026-10-12-forest-layered-background/P01-forest-scene/T02-camera-parallax.md)
 
 ## Status
-- T01 구현 시작 준비 완료. 계획만 생성했으며 구현 코드/이미지는 변경하지 않았다.
-- 순서: T01 레이어 그림과 정적 장면 → T02 카메라 시차 → T03 환경 움직임과 최종 검증.
+- T01 완료 — a7bc1bb. 별도 PNG 세 장, 정적인 숲 무대·흙길, 이미지 실패 fallback 구현. PNG/alpha·JavaScript 문법·보호된 함수 보존·실제 Chrome 구도/지역/fallback 검증 통과.
+- 진행률 1/3. 다음은 T02 카메라 시차이며 T03 환경 움직임은 대기 중.
 - 이전 area-background-depth 계획은 완료 상태이며 문서를 보존한다. 기존 Battle Presentation Refinement 미완료 작업은 이번 계획과 별개다.
 
 ## Next Step (IMPORTANT)
-T01 청사진을 읽고 imagegen 스킬에 따라 `assets/maps/forest-layers/` 그림을 제작한 뒤 `cookie-roguelike-mockup.html`에 정적 숲 장면을 통합한다. 구현 전 기존 HTML 수정/줄바꿈 상태를 확인하여 사용자 변경을 보존한다. `/memory-execute` 또는 "current 보고 이어서 해줘"로 순차 실행을 시작한다.
+T02 청사진을 읽고 기존 world 카메라의 실제 행렬에서 장식 시차를 계산한다. T01 검증 기록 `.memory/validation/2026-10-12-forest-layered-background/assets.md`의 Layout Clarifications를 적용해야 한다: distant는 overscan100%, 투명 중경/전경은55.555556%와 가장자리 mask를 유지하며 ready forest world overflow:visible 유지. ::before로 옮길 때 이 차이를 보존하고 waterfall은 world-normalized 좌표를 사용한다. T01용 보호 함수 검사는 T02에서 camera 함수를 의도적으로 수정하므로 그대로 사용하지 않는다. 기존 idle projectile hidden/display 문제는 범위 밖 발견으로 기록되어 있고 임의로 고치지 않는다. `/memory-execute` 또는 "current 보고 이어서 해줘"로 T02를 실행한다.

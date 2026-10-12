@@ -75,7 +75,7 @@ Task: T01-static-layered-scene
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — PNG/alpha, syntax, diff, real Chrome full/focus/other-area/image-error checks. Evidence: `.memory/validation/2026-10-12-forest-layered-background/assets.md`.
-- commit: pending
+- commit: a7bc1bb
 
 ## Implementation Notes
 - Transparent midground/foreground use centered background-size55.555556% inside the180% overscan box to keep their edge motifs visible; opaque distant uses100%.
