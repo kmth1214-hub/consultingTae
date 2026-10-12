@@ -2,6 +2,9 @@
 
 ## Status: pending
 
+## Superseding T01R01 Layout Contract
+Foreground is a separate direct `#arenaWorld` child z5; put leaves there. Midground remains inside forestScenery z0; put fog/waterfall there. Path z2 and actors lie between middle and foreground layers, trajectoryz6/projectilez7. Transparent images occupy world-normalized canvas despite their overscan container; do NOT use `-40+180*u` for the current midground waterfall. Use actual world-normalized waterfall anchor (see assets.md) and retain transparent-frame sizing/masks established by T01R01. Reuse existing `fitArenaWorld()` for reduced-motion/resize refresh with T02 updates, not an additional competing camera fit path. Current ready-forest dimensions240%×200%, mobile actor size40×46px. Earlier contradictory artwork-coordinate assumptions are superseded.
+
 ## Goal
 숲 전투에 안개·나뭇잎·폭포 움직임을 더하고 카메라·가독성·반응형·접근성·다른 지역을 실제 브라우저에서 검증한다.
 

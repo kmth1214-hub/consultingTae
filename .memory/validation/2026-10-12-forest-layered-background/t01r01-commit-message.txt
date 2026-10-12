@@ -1,0 +1,8 @@
+feat(forest): add a panoramic illustrated path between scenery layers
+
+Plan: 2026-10-12-forest-layered-background
+Phase: P01-forest-scene
+Task: T01R01-panoramic-path-revision
+
+- Rebuild the forest path from the original artwork reference
+- Expand the forest world and separate launcher and enemies

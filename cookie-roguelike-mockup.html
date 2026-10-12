@@ -182,13 +182,23 @@
     .forest-layer[data-forest-layer="midground"] { background-image:url('./assets/maps/forest-layers/midground.png');background-size:55.555556% 55.555556%; }
     .forest-layer[data-forest-layer="foreground"] { background-image:url('./assets/maps/forest-layers/foreground.png');background-size:55.555556% 55.555556%; }
     .forest-layer[data-forest-layer="midground"],.forest-layer[data-forest-layer="foreground"] { mask-image:linear-gradient(90deg,transparent 22.222222%,#000 27%,#000 73%,transparent 77.777778%),linear-gradient(180deg,transparent 22.222222%,#000 25%,#000 74%,transparent 77.777778%);mask-composite:intersect; }
-    .forest-road { display:none; }
+    .forest-path { position:absolute;inset:0;z-index:2;display:none;background:url('./assets/maps/forest-layers/path.png') center/100% 100% no-repeat;pointer-events:none; }
+    .forest-foreground { z-index:5;display:none; }
     #arena[data-area="forest"][data-forest-ready="true"] .forest-scenery { display:block; }
-    #arena[data-area="forest"][data-forest-ready="true"] .arena-world { background-image:none;background-color:#bad8bb;overflow:visible; }
+    #arena[data-area="forest"][data-forest-ready="true"] .forest-path,
+    #arena[data-area="forest"][data-forest-ready="true"] .forest-foreground { display:block; }
+    #arena[data-area="forest"][data-forest-ready="true"] .arena-world { width:240%;height:200%;background-image:none;background-color:#bad8bb;overflow:visible; }
+    #arena[data-area="forest"][data-forest-ready="true"] .launch-pad { left:14%;bottom:26%; }
+    #arena[data-area="forest"][data-forest-ready="true"] .enemy-group { left:73%;right:16%;bottom:26%; }
+    #arena[data-area="forest"][data-forest-ready="true"] .monster { bottom:0; }
+    #arena[data-area="forest"][data-forest-ready="true"] .trajectory-preview { z-index:6; }
+    #arena[data-area="forest"][data-forest-ready="true"] .projectile-sprite { z-index:7; }
     #arena[data-area="forest"][data-forest-ready="true"] .area-depth-layer,
-    #arena[data-area="forest"][data-forest-ready="true"] .area-road > rect,
-    #arena[data-area="forest"][data-forest-ready="true"] .area-road > path { display:none; }
-    #arena[data-area="forest"][data-forest-ready="true"] .forest-road { display:inline; }
+    #arena[data-area="forest"][data-forest-ready="true"] .area-road { display:none; }
+    @media (max-width:520px) {
+      #arena[data-area="forest"][data-forest-ready="true"] .enemy-group { left:68%;right:14%; }
+      #arena[data-area="forest"][data-forest-ready="true"] .monster { width:40px;height:46px;font-size:1.3rem; }
+    }
     #arena[data-area="forest"] { --area-road-shadow:rgba(12,29,16,.58);--area-road-edge:#596541;--area-road-top:#d8a77d;--area-road-middle:#a66f58;--area-road-bottom:#62494a;--area-road-highlight:rgba(255,237,200,.62);--area-depth-background:linear-gradient(180deg,rgba(17,34,22,.06) 0%,transparent 40%,rgba(17,33,25,.16) 100%),radial-gradient(ellipse at 50% 44%,rgba(111,194,122,.08) 0%,transparent 68%); }
     #arena[data-area="snow"] { --area-road-shadow:rgba(14,28,48,.56);--area-road-edge:#45617f;--area-road-top:#b8d9ed;--area-road-middle:#779dbb;--area-road-bottom:#475f83;--area-road-highlight:rgba(235,248,255,.66);--area-depth-background:linear-gradient(180deg,rgba(10,22,46,.04) 0%,transparent 40%,rgba(12,28,52,.14) 100%),radial-gradient(ellipse at 50% 44%,rgba(180,220,255,.10) 0%,transparent 68%); }
     #arena[data-area="city"] { --area-road-shadow:rgba(34,17,37,.60);--area-road-edge:#57445c;--area-road-top:#d8ac83;--area-road-middle:#a87780;--area-road-bottom:#4b3d5c;--area-road-highlight:rgba(255,225,176,.64);--area-depth-background:linear-gradient(180deg,rgba(38,15,31,.05) 0%,transparent 40%,rgba(24,14,37,.16) 100%),radial-gradient(ellipse at 50% 44%,rgba(255,183,105,.08) 0%,transparent 68%); }
@@ -448,23 +458,14 @@
                 <div id="forestScenery" class="forest-scenery" aria-hidden="true">
                   <div class="forest-layer" data-forest-layer="distant" data-parallax="0.18"></div>
                   <div class="forest-layer" data-forest-layer="midground" data-parallax="0.50"></div>
-                  <div class="forest-layer" data-forest-layer="foreground" data-parallax="1.08"></div>
                 </div>
+                <div id="forestPath" class="forest-path" aria-hidden="true"></div>
                 <div class="area-depth-layer" aria-hidden="true"></div>
                 <svg id="areaRoad" class="area-road" aria-hidden="true" viewBox="0 0 1000 600" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="areaRoadSurface" x1="0" y1="0" x2="0" y2="1"><stop class="area-road-stop-top" offset="0%"></stop><stop class="area-road-stop-middle" offset="16%"></stop><stop class="area-road-stop-bottom" offset="100%"></stop></linearGradient>
-                    <linearGradient id="forestRoadEarth" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#bd8d58"></stop><stop offset="25%" stop-color="#79523b"></stop><stop offset="100%" stop-color="#49392d"></stop></linearGradient>
                   </defs>
                   <rect class="area-road-shadow" x="90" y="411" width="820" height="138" rx="69"></rect><rect class="area-road-edge" x="90" y="405" width="820" height="132" rx="66"></rect><rect class="area-road-surface" x="90" y="412" width="820" height="118" rx="59"></rect><path class="area-road-highlight" d="M 150 431 H 850"></path>
-                  <g class="forest-road">
-                    <rect x="90" y="419" width="820" height="118" rx="18" fill="#49392d" opacity=".45"></rect>
-                    <path d="M90 411 Q90 405 108 405 H892 Q910 405 910 411 V518 Q910 530 892 530 H108 Q90 530 90 518 Z" fill="url(#forestRoadEarth)"></path>
-                    <rect x="92" y="405" width="816" height="28" rx="9" fill="#bd8d58"></rect>
-                    <path d="M105 412 H895" fill="none" stroke="#dfb57c" stroke-width="3" stroke-linecap="round"></path>
-                    <path d="M95 405 H905 M108 405 l-4 -9 m9 9 l4 -12 m36 12 l-3 -7 m12 7 l5 -11 m43 11 l-5 -9 m10 9 l4 -6 m72 6 l-3 -10 m10 10 l5 -7 m64 7 l-5 -8 m12 8 l3 -11 m89 11 l-4 -9 m12 9 l5 -7 m77 7 l-3 -11 m10 11 l4 -8 m68 8 l-4 -7 m10 7 l3 -10 m66 10 l-3 -9 m11 9 l5 -6 m66 6 l-4 -10 m10 10 l4 -8" fill="none" stroke="#638451" stroke-width="5" stroke-linecap="round"></path>
-                    <path d="M127 457 h18 m84 23 h27 m62 -22 h16 m97 32 h21 m74 -29 h27 m75 29 h18 m84 -34 h22 m69 30 h25" fill="none" stroke="#bb9064" stroke-width="3" stroke-linecap="round" opacity=".45"></path>
-                  </g>
                 </svg>
                 <div class="launch-pad" id="launchPad" aria-hidden="true"><div class="launcher-base"></div><div class="launcher-arm"></div><div class="launcher-stone"></div></div>
                 <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryPath" d=""></path></svg>
@@ -472,6 +473,7 @@
                 <div class="enemy-group" id="enemyGroup" role="group" aria-label="현재 라운드의 적">
                   <div class="monster snake" aria-label="뱀, 체력 4">🐍</div><div class="monster boar-one" aria-label="멧돼지, 체력 4">🐗</div><div class="monster boar-two" aria-label="멧돼지, 체력 4">🐗</div>
                 </div>
+                <div class="forest-layer forest-foreground" data-forest-layer="foreground" data-parallax="1.08" aria-hidden="true"></div>
               </div>
               <div class="arena-caption" id="arenaCaption"><span id="areaIcon" aria-hidden="true">🌲</span><span id="areaCaptionText">숲 지역</span></div>
             </section>
@@ -633,6 +635,7 @@
       world.style.setProperty('--arena-image', 'url("' + AREA_BACKGROUNDS[area] + '")');
       document.getElementById('areaIcon').textContent = AREA_ICONS[area];
       document.getElementById('areaCaptionText').textContent = AREA_LABELS[area];
+      fitArenaWorld();
       return true;
     }
     window.setArenaArea = setArenaArea;
@@ -642,7 +645,7 @@
       var scenery = document.getElementById('forestScenery');
       if (!arena || !scenery) return false;
       arena.dataset.forestReady = 'false';
-      var loaded = await Promise.all(['distant','midground','foreground'].map(function(layer) {
+      var loaded = await Promise.all(['distant','midground','path','foreground'].map(function(layer) {
         return new Promise(function(resolve) {
           var image = new Image();
           image.onload = function() { resolve(image.naturalWidth > 0); };
@@ -652,9 +655,22 @@
       }));
       var ready = loaded.every(function(success) { return success; });
       arena.dataset.forestReady = String(ready);
+      fitArenaWorld();
       return ready;
     }
     prepareForestScenery();
+    /** @returns {void} Refit an idle scene after its layout or area changes. */
+    function fitArenaWorld() {
+      var arena = document.getElementById('arena');
+      var world = document.getElementById('arenaWorld');
+      var battle = document.querySelector('[data-screen="battle"]');
+      if (!arena || !world || !battle || battle.hidden || cameraAnimation) return;
+      if (aimState && aimState.phase !== 'idle') return;
+      if (!world.offsetWidth || !world.offsetHeight || !arena.clientWidth || !arena.clientHeight) return;
+      var fitScale = Math.min(arena.clientWidth / world.offsetWidth,arena.clientHeight / world.offsetHeight);
+      world.style.transform = cameraTransformFor(world,fitScale);
+      syncTrajectoryViewBox();
+    }
     function cameraTransformFor(target, scale) {
       var arena = document.getElementById('arena');
       var world = document.getElementById('arenaWorld');
@@ -701,6 +717,7 @@
       if (introId !== roundIntroId) return;
       await focusCameraOn(launcher,1.35,1600);
       if (introId !== roundIntroId) return;
+      fitScale = Math.min(arena.clientWidth / world.offsetWidth, arena.clientHeight / world.offsetHeight);
       await focusCameraOn(world,fitScale,700);
     }
     async function setGameFullscreen(active) {
@@ -1029,8 +1046,10 @@
       document.addEventListener('fullscreenchange',function() {
         var battle = document.querySelector('[data-screen="battle"]');
         if (!document.fullscreenElement && battle && battle.hidden && aimState.phase !== 'idle') cancelAim('pointer-cancel');
+        fitArenaWorld();
       });
       window.addEventListener('resize',function() {
+        fitArenaWorld();
         syncTrajectoryViewBox();
         if (aimState.phase === 'direction' || aimState.phase === 'launching') drawTrajectoryPreview();
       });

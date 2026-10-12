@@ -2,6 +2,9 @@
 
 ## Status: pending
 
+## Superseding T01R01 Layout Contract
+User requested path between layers2/3 and a broader map after T01. Ready forest world now240%×200%; launcher left14%/bottom26%, enemy group left73%/right16%/bottom26% (mobile≤520px left68%/right14%, monsters40×46px). `#forestScenery` contains distant/midground only, `#forestPath` z2 and actors share the world, foreground is a direct world child z5. Query decorative layers under `#arenaWorld`, not only `#forestScenery`. Keep path/actors on the unmodified world camera, trajectory z6/projectilez7. Reuse `fitArenaWorld()` for idle fit refresh, adding parallax updates to that function and existing listeners rather than duplicating fit logic. Distant background fills180% overscan; midground/foreground use55.555556% centered within that expanded artwork box, with feather mask. When converting to wrappers/::before, move sizing AND mask to artwork pseudo-elements. Waterfall coordinates are world-normalized. This section overrides earlier contradictory DOM/sizing assumptions; see path-revision.md for evidence.
+
 ## Goal
 기존 카메라가 적 → 발사대 → 전체 장면으로 이동할 때 숲의 먼 풍경은 작게, 가까운 풍경은 크게 움직이게 한다. 조준·투사체 좌표 기준은 유지한다.
 
