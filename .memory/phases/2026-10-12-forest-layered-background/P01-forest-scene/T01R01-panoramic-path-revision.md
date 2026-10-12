@@ -45,4 +45,4 @@ Task: T01R01-panoramic-path-revision
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — check-path-revision.cjs, real Chrome layout/shot/fallback/other-area checks, fixed390px iframe overlap verification. See path-revision.md.
-- commit: pending
+- commit: e74d642
