@@ -84,4 +84,4 @@ Task: T02-camera-parallax
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — final16 camera assertions,9 coverage cases, actual hidden lifecycle, completed shot integration, syntax and diff. Fullscreen success unavailable; existing fallback recorded.
-- commit: pending
+- commit: 6990718
