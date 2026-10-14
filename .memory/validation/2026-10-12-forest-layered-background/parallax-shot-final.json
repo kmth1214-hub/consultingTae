@@ -1,0 +1,12 @@
+[
+  {
+    "name": "PASS shot follows existing aiming flow",
+    "detail": {
+      "before": 5,
+      "after": "4",
+      "trajectory": "M 350 428 Q 599.917984053405 -36.56818866368894 1312.7040988189717 428",
+      "phase": "idle",
+      "hidden": false
+    }
+  }
+]

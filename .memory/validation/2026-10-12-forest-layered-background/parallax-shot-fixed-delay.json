@@ -1,0 +1,26 @@
+[
+  {
+    "name": "fullscreen",
+    "detail": false
+  },
+  {
+    "name": "view",
+    "detail": "fit"
+  },
+  {
+    "name": "view",
+    "detail": "enemy"
+  },
+  {
+    "name": "view",
+    "detail": "launcher"
+  },
+  {
+    "name": "FAIL shot follows existing aiming flow",
+    "detail": {
+      "before": 5,
+      "after": "5",
+      "trajectory": "M 350 428 Q 549.0872076357633 -36.56818866368894 1312.7040988189717 428"
+    }
+  }
+]

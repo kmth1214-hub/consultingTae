@@ -1,6 +1,6 @@
 # Task: T02 Camera Parallax
 
-## Status: pending
+## Status: done
 
 ## Superseding T01R01 Layout Contract
 User requested path between layers2/3 and a broader map after T01. Ready forest world now240%×200%; launcher left14%/bottom26%, enemy group left73%/right16%/bottom26% (mobile≤520px left68%/right14%, monsters40×46px). `#forestScenery` contains distant/midground only, `#forestPath` z2 and actors share the world, foreground is a direct world child z5. Query decorative layers under `#arenaWorld`, not only `#forestScenery`. Keep path/actors on the unmodified world camera, trajectory z6/projectilez7. Reuse `fitArenaWorld()` for idle fit refresh, adding parallax updates to that function and existing listeners rather than duplicating fit logic. Distant background fills180% overscan; midground/foreground use55.555556% centered within that expanded artwork box, with feather mask. When converting to wrappers/::before, move sizing AND mask to artwork pseudo-elements. Waterfall coordinates are world-normalized. This section overrides earlier contradictory DOM/sizing assumptions; see path-revision.md for evidence.
@@ -55,13 +55,14 @@ User requested path between layers2/3 and a broader map after T01. Ready forest 
   7. On document hidden/window blur invalidate introId and stop camera while battle active. On visible refresh decoration without replaying intro. T03 shares visibility listener for ambient state. No lingering frame loop after leave/cancel/completion.
 
 ## Acceptance Criteria
-- [ ] Enemy focus, launcher focus and fit return show continuous layer speed differences.
-- [ ] Fit aligns layers; zoom and wide/tall layouts expose no blank edges.
-- [ ] Cancellation preserves current frame; replaced camera cannot cancel a newer sampler.
-- [ ] Hidden/non-forest/reduced-motion states have no sampling loop.
-- [ ] Pointer conversion, launcher coordinates, projectile path and ammunition remain unchanged.
+- [x] Enemy focus, launcher focus and fit return show continuous layer speed differences.
+- [x] Fit aligns layers; zoom and wide/tall layouts expose no blank edges.
+- [x] Cancellation preserves current frame; replaced camera cannot cancel a newer sampler.
+- [x] Hidden/non-forest/reduced-motion states have no sampling loop.
+- [x] Pointer conversion, launcher coordinates, projectile path and ammunition remain unchanged.
 
 ## Validation
+- Windows execution result: use `node .memory/validation/2026-10-12-forest-layered-background/check-parallax.cjs` for equivalent syntax and coordinate regression checks. Use built-in Node server `serve-parallax.cjs` because npx PowerShell policy/cache prevented the original command. See parallax.md for real browser results and fullscreen limitation.
 - `node -e 'const fs=require("fs"),vm=require("vm"); const h=fs.readFileSync("cookie-roguelike-mockup.html","utf8"); for(const m of h.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi))if(m[1].trim())new vm.Script(m[1]); console.log("inline scripts OK");'` — syntax passes.
 - `git diff --check` — passes.
 - `npx --yes http-server . -a 127.0.0.1 -p 4173 -c-1` — open HTTP page. Widths1440/760/390, fullscreen, battle→reward during intro, forest→snow→forest, blur/hide during intro, rapid battle reentry: no stale animation/jumps/holes.
@@ -81,6 +82,6 @@ Task: T02-camera-parallax
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과 — final16 camera assertions,9 coverage cases, actual hidden lifecycle, completed shot integration, syntax and diff. Fullscreen success unavailable; existing fallback recorded.
 - commit: pending

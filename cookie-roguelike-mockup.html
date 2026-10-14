@@ -176,12 +176,13 @@
     .arena { min-height:378px;position:relative;overflow:hidden;border:1px solid var(--border);border-radius:18px;background:#18222c;isolation:isolate; }
     .arena-world { position:absolute;left:0;top:0;width:160%;height:160%;overflow:hidden;transform:translate(0,0) scale(.625);transform-origin:0 0;will-change:transform;background-image:linear-gradient(180deg,rgba(17,24,32,.06),rgba(17,24,32,.2)),var(--arena-image,url('./assets/maps/forest_theme.png'));background-size:cover;background-position:center; }
     .forest-scenery { position:absolute;inset:0;z-index:0;display:none;pointer-events:none; }
-    .forest-layer { position:absolute;inset:-40%;background-size:100% 100%;background-position:center;background-repeat:no-repeat;transform-origin:50% 50%;pointer-events:none; }
-    .forest-layer[data-forest-layer="distant"] { background-image:url('./assets/maps/forest-layers/distant.png'); }
+    .forest-layer { position:absolute;inset:0;transform-origin:0 0;pointer-events:none; }
+    .forest-layer::before { content:"";position:absolute;inset:-40%;background-size:100% 100%;background-position:center;background-repeat:no-repeat;pointer-events:none; }
+    .forest-layer[data-forest-layer="distant"]::before { background-image:url('./assets/maps/forest-layers/distant.png'); }
     /* Transparent frames occupy the world itself; only the opaque backdrop needs overscan. */
-    .forest-layer[data-forest-layer="midground"] { background-image:url('./assets/maps/forest-layers/midground.png');background-size:55.555556% 55.555556%; }
-    .forest-layer[data-forest-layer="foreground"] { background-image:url('./assets/maps/forest-layers/foreground.png');background-size:55.555556% 55.555556%; }
-    .forest-layer[data-forest-layer="midground"],.forest-layer[data-forest-layer="foreground"] { mask-image:linear-gradient(90deg,transparent 22.222222%,#000 27%,#000 73%,transparent 77.777778%),linear-gradient(180deg,transparent 22.222222%,#000 25%,#000 74%,transparent 77.777778%);mask-composite:intersect; }
+    .forest-layer[data-forest-layer="midground"]::before { background-image:url('./assets/maps/forest-layers/midground.png');background-size:55.555556% 55.555556%; }
+    .forest-layer[data-forest-layer="foreground"]::before { background-image:url('./assets/maps/forest-layers/foreground.png');background-size:55.555556% 55.555556%; }
+    .forest-layer[data-forest-layer="midground"]::before,.forest-layer[data-forest-layer="foreground"]::before { mask-image:linear-gradient(90deg,transparent 22.222222%,#000 27%,#000 73%,transparent 77.777778%),linear-gradient(180deg,transparent 22.222222%,#000 25%,#000 74%,transparent 77.777778%);mask-composite:intersect; }
     .forest-path { position:absolute;inset:0;z-index:2;display:none;background:url('./assets/maps/forest-layers/path.png') center/100% 100% no-repeat;pointer-events:none; }
     .forest-foreground { z-index:5;display:none; }
     #arena[data-area="forest"][data-forest-ready="true"] .forest-scenery { display:block; }
@@ -624,6 +625,70 @@
     var currentArea = 'forest';
     var cameraAnimation = null;
     var roundIntroId = 0;
+    var screenNavigationId = 0;
+    /** @type {number|null} */
+    var forestParallaxFrameId = null;
+    var forestMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    /** @returns {void} Compensate only scenery for the existing world camera. */
+    function updateForestParallax() {
+      var arena = document.getElementById('arena');
+      var world = document.getElementById('arenaWorld');
+      if (!arena || !world) return;
+      var layers = world.querySelectorAll('[data-forest-layer]');
+      if (arena.dataset.area !== 'forest' || arena.dataset.forestReady !== 'true') {
+        layers.forEach(function(layer) { layer.style.transform = ''; });
+        return;
+      }
+      if (!world.offsetWidth || !world.offsetHeight || !arena.clientWidth || !arena.clientHeight) return;
+      var matrix;
+      try {
+        var transform = getComputedStyle(world).transform;
+        matrix = new DOMMatrixReadOnly(transform === 'none' ? undefined : transform);
+      } catch(error) { return; }
+      var scale = matrix.a;
+      if (![scale,matrix.d,matrix.e,matrix.f,matrix.b,matrix.c].every(Number.isFinite) || scale <= 0 || Math.abs(matrix.d - scale) > 0.000001 || Math.abs(matrix.b) > 0.000001 || Math.abs(matrix.c) > 0.000001) return;
+      var fitScale = Math.min(arena.clientWidth / world.offsetWidth,arena.clientHeight / world.offsetHeight);
+      var baseX = (arena.clientWidth - world.offsetWidth * fitScale) / 2;
+      var baseY = (arena.clientHeight - world.offsetHeight * fitScale) / 2;
+      layers.forEach(function(layer) {
+        var multiplier = Number(layer.dataset.parallax);
+        if (!Number.isFinite(multiplier) || multiplier <= 0) return;
+        var desiredScale = fitScale + multiplier * (scale - fitScale);
+        var x = (baseX + multiplier * (matrix.e - baseX) - matrix.e) / scale;
+        var y = (baseY + multiplier * (matrix.f - baseY) - matrix.f) / scale;
+        if (desiredScale <= 0 || ![x,y,desiredScale].every(Number.isFinite)) return;
+        layer.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + (desiredScale / scale) + ')';
+      });
+    }
+    /** @returns {boolean} Only sample a visible, moving forest camera. */
+    function canSampleForestParallax() {
+      var arena = document.getElementById('arena');
+      var battle = document.querySelector('[data-screen="battle"]');
+      return Boolean(arena && battle && !battle.hidden && !document.hidden && !forestMotionQuery.matches && arena.dataset.area === 'forest' && arena.dataset.forestReady === 'true' && cameraAnimation && (cameraAnimation.playState === 'running' || cameraAnimation.pending));
+    }
+    function stopForestParallaxSampling() {
+      if (forestParallaxFrameId !== null) cancelAnimationFrame(forestParallaxFrameId);
+      forestParallaxFrameId = null;
+    }
+    function startForestParallaxSampling() {
+      if (!canSampleForestParallax()) { stopForestParallaxSampling(); return; }
+      if (forestParallaxFrameId !== null) return;
+      function sample() {
+        forestParallaxFrameId = null;
+        if (!canSampleForestParallax()) return;
+        updateForestParallax();
+        forestParallaxFrameId = requestAnimationFrame(sample);
+      }
+      updateForestParallax();
+      forestParallaxFrameId = requestAnimationFrame(sample);
+    }
+    forestMotionQuery.addEventListener('change',function(event) {
+      if (event.matches) {
+        roundIntroId++;
+        stopCameraAnimation();
+        fitArenaWorld();
+      } else updateForestParallax();
+    });
     function setArenaArea(area) {
       if (!Object.prototype.hasOwnProperty.call(AREA_BACKGROUNDS, area)) return false;
       var arena = document.getElementById('arena');
@@ -636,6 +701,8 @@
       document.getElementById('areaIcon').textContent = AREA_ICONS[area];
       document.getElementById('areaCaptionText').textContent = AREA_LABELS[area];
       fitArenaWorld();
+      updateForestParallax();
+      startForestParallaxSampling();
       return true;
     }
     window.setArenaArea = setArenaArea;
@@ -656,6 +723,8 @@
       var ready = loaded.every(function(success) { return success; });
       arena.dataset.forestReady = String(ready);
       fitArenaWorld();
+      updateForestParallax();
+      startForestParallaxSampling();
       return ready;
     }
     prepareForestScenery();
@@ -664,12 +733,13 @@
       var arena = document.getElementById('arena');
       var world = document.getElementById('arenaWorld');
       var battle = document.querySelector('[data-screen="battle"]');
-      if (!arena || !world || !battle || battle.hidden || cameraAnimation) return;
-      if (aimState && aimState.phase !== 'idle') return;
+      if (!arena || !world || !battle) return;
+      if (battle.hidden || cameraAnimation || (aimState && aimState.phase !== 'idle')) { updateForestParallax(); return; }
       if (!world.offsetWidth || !world.offsetHeight || !arena.clientWidth || !arena.clientHeight) return;
       var fitScale = Math.min(arena.clientWidth / world.offsetWidth,arena.clientHeight / world.offsetHeight);
       world.style.transform = cameraTransformFor(world,fitScale);
       syncTrajectoryViewBox();
+      updateForestParallax();
     }
     function cameraTransformFor(target, scale) {
       var arena = document.getElementById('arena');
@@ -681,21 +751,36 @@
       return 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ')';
     }
     function stopCameraAnimation() {
-      if (cameraAnimation) cameraAnimation.cancel();
+      var world = document.getElementById('arenaWorld');
+      if (cameraAnimation) {
+        if (world) world.style.transform = getComputedStyle(world).transform;
+        cameraAnimation.cancel();
+      }
       cameraAnimation = null;
+      stopForestParallaxSampling();
+      updateForestParallax();
     }
     async function focusCameraOn(target, scale, durationMs) {
       var world = document.getElementById('arenaWorld');
-      var to = cameraTransformFor(target, scale);
-      var from = world.style.transform || getComputedStyle(world).transform;
       stopCameraAnimation();
+      if (!world || !target) return;
+      var to = cameraTransformFor(target, scale);
+      var from = getComputedStyle(world).transform;
+      if (forestMotionQuery.matches || durationMs <= 0) {
+        world.style.transform = to;
+        updateForestParallax();
+        return;
+      }
       var animation = world.animate([{transform:from},{transform:to}],{duration:durationMs,easing:'ease-in-out',fill:'forwards'});
       cameraAnimation = animation;
+      startForestParallaxSampling();
       try { await animation.finished; } catch(error) { return; }
       if (cameraAnimation === animation) {
         world.style.transform = to;
         cameraAnimation = null;
         animation.cancel();
+        stopForestParallaxSampling();
+        updateForestParallax();
       }
     }
     async function playRoundIntro() {
@@ -703,16 +788,19 @@
       var world = document.getElementById('arenaWorld');
       var enemies = document.getElementById('enemyGroup');
       var launcher = document.getElementById('launchPad');
-      if (!arena || !world || !enemies || !launcher) return;
+      var battle = document.querySelector('[data-screen="battle"]');
+      if (!arena || !world || !enemies || !launcher || !battle || battle.hidden || document.hidden) return;
       var introId = ++roundIntroId;
       stopCameraAnimation();
       var fitScale = Math.min(arena.clientWidth / world.offsetWidth, arena.clientHeight / world.offsetHeight);
       var fitTransform = cameraTransformFor(world, fitScale);
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (forestMotionQuery.matches) {
         world.style.transform = fitTransform;
+        updateForestParallax();
         return;
       }
       world.style.transform = cameraTransformFor(enemies, 1.35);
+      updateForestParallax();
       await new Promise(function(resolve) { setTimeout(resolve,900); });
       if (introId !== roundIntroId) return;
       await focusCameraOn(launcher,1.35,1600);
@@ -736,6 +824,11 @@
       }
     }
     function showScreen(name) {
+      var navigationId = ++screenNavigationId;
+      if (name !== 'battle') {
+        roundIntroId++;
+        stopCameraAnimation();
+      }
       if (name !== 'battle' && aimState.phase !== 'idle') cancelAim('pointer-cancel');
       document.querySelectorAll('.prototype-screen').forEach(function(screen) { screen.hidden = screen.dataset.screen !== name; });
       document.querySelectorAll('[data-screen-button]').forEach(function(button) { button.classList.toggle('active',button.dataset.screenButton === name); });
@@ -743,16 +836,13 @@
       if (GAMEPLAY_SCREENS.has(name)) {
         setGameFullscreen(true).then(function() {
           if (name === 'battle') {
+            if (navigationId !== screenNavigationId || document.hidden) return;
             setArenaArea(currentArea);
-            requestAnimationFrame(function() { playRoundIntro(); });
+            requestAnimationFrame(function() { if (navigationId === screenNavigationId) playRoundIntro(); });
           }
         });
       } else {
         setGameFullscreen(false);
-        if (name !== 'battle') {
-          roundIntroId++;
-          stopCameraAnimation();
-        }
       }
       window.scrollTo({top:0,behavior:'smooth'});
     }
@@ -1041,8 +1131,21 @@
       elements.arena.addEventListener('pointermove',onArenaPointerMove);
       elements.arena.addEventListener('pointerup',onArenaPointerUp);
       elements.arena.addEventListener('pointercancel',onArenaPointerCancel);
-      window.addEventListener('blur',function() { if (aimState.phase !== 'idle') cancelAim('window-blur'); });
-      document.addEventListener('visibilitychange',function() { if (document.hidden && aimState.phase !== 'idle') cancelAim('window-blur'); });
+      window.addEventListener('blur',function() {
+        if (aimState.phase !== 'idle') cancelAim('window-blur');
+        screenNavigationId++;
+        roundIntroId++;
+        stopCameraAnimation();
+      });
+      window.addEventListener('focus',function() { if (!document.hidden) fitArenaWorld(); });
+      document.addEventListener('visibilitychange',function() {
+        if (document.hidden) {
+          if (aimState.phase !== 'idle') cancelAim('window-blur');
+          screenNavigationId++;
+          roundIntroId++;
+          stopCameraAnimation();
+        } else fitArenaWorld();
+      });
       document.addEventListener('fullscreenchange',function() {
         var battle = document.querySelector('[data-screen="battle"]');
         if (!document.fullscreenElement && battle && battle.hidden && aimState.phase !== 'idle') cancelAim('pointer-cancel');

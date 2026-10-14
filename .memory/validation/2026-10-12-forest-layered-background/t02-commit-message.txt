@@ -1,0 +1,8 @@
+feat(forest): synchronize scenery parallax with the battle camera
+
+Plan: 2026-10-12-forest-layered-background
+Phase: P01-forest-scene
+Task: T02-camera-parallax
+
+- Derive decorative transforms from the existing world camera
+- Clean up camera sampling on completion and battle exit

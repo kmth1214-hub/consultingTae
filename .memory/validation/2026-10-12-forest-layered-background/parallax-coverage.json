@@ -1,0 +1,295 @@
+[
+  {
+    "name": "PASS fit identity",
+    "detail": [
+      {
+        "name": "distant",
+        "a": 1,
+        "x": 0,
+        "y": -0.0000704912
+      },
+      {
+        "name": "midground",
+        "a": 1,
+        "x": 0,
+        "y": -0.0000429825
+      },
+      {
+        "name": "foreground",
+        "a": 1,
+        "x": 0,
+        "y": 0.00000687719
+      }
+    ]
+  },
+  {
+    "name": "PASS depth-specific scale",
+    "detail": [
+      {
+        "name": "distant",
+        "globalScale": 0.58479165
+      },
+      {
+        "name": "midground",
+        "globalScale": 0.8834089500000001
+      },
+      {
+        "name": "foreground",
+        "globalScale": 1.424655
+      }
+    ]
+  },
+  {
+    "name": "PASS one active sampler",
+    "detail": 9
+  },
+  {
+    "name": "PASS cancel freezes current frame",
+    "detail": {
+      "before": {
+        "x": -1396.8,
+        "y": -431.75
+      },
+      "after": {
+        "x": -1396.8,
+        "y": -431.75
+      }
+    }
+  },
+  {
+    "name": "PASS cancel releases handles",
+    "detail": {
+      "camera": null,
+      "frame": null
+    }
+  },
+  {
+    "name": "PASS old completion preserves new animation",
+    "detail": {}
+  },
+  {
+    "name": "PASS finished fit releases handles",
+    "detail": {}
+  },
+  {
+    "name": "PASS battle-to-reward cancels intro",
+    "detail": {}
+  },
+  {
+    "name": "FAIL rapid reentry settles once",
+    "detail": {}
+  },
+  {
+    "name": "ERROR",
+    "detail": "rapid reentry settles once"
+  },
+  {
+    "name": "width",
+    "detail": 1440
+  },
+  {
+    "name": "view",
+    "detail": "enemy"
+  },
+  {
+    "name": "PASS opaque backdrop covers 1440 enemy",
+    "detail": {
+      "bounds": {
+        "left": -436.2079590559006,
+        "right": 1520.858080983162,
+        "top": -42.597332763671886,
+        "bottom": 749.8984802246093
+      },
+      "arena": {
+        "left": 282.8000183105469,
+        "right": 1059.0000305175781,
+        "top": 195.16250610351562,
+        "bottom": 573.1625061035156
+      }
+    }
+  },
+  {
+    "name": "view",
+    "detail": "launcher"
+  },
+  {
+    "name": "PASS opaque backdrop covers 1440 launcher",
+    "detail": {
+      "bounds": {
+        "left": -160.52861328125005,
+        "right": 1796.537646484375,
+        "top": -43.56940917968751,
+        "bottom": 748.9264038085937
+      },
+      "arena": {
+        "left": 282.8000183105469,
+        "right": 1059.0000305175781,
+        "top": 195.16250610351562,
+        "bottom": 573.1625061035156
+      }
+    }
+  },
+  {
+    "name": "view",
+    "detail": "fit"
+  },
+  {
+    "name": "PASS opaque backdrop covers 1440 fit",
+    "detail": {
+      "bounds": {
+        "left": -26.406097412109375,
+        "right": 1368.6213684082031,
+        "top": 101.46900939941406,
+        "bottom": 666.3725433349609
+      },
+      "arena": {
+        "left": 282.8000183105469,
+        "right": 1059.0000305175781,
+        "top": 195.16250610351562,
+        "bottom": 573.1625061035156
+      }
+    }
+  },
+  {
+    "name": "width",
+    "detail": 760
+  },
+  {
+    "name": "view",
+    "detail": "enemy"
+  },
+  {
+    "name": "PASS opaque backdrop covers 760 enemy",
+    "detail": {
+      "bounds": {
+        "left": -604.5964569091798,
+        "right": 1122.3795074462892,
+        "top": 12.216281127929676,
+        "bottom": 724.6327484130859
+      },
+      "arena": {
+        "left": 29.80000114440918,
+        "right": 715.0000133514404,
+        "top": 224.5625,
+        "bottom": 564.5625
+      }
+    }
+  },
+  {
+    "name": "view",
+    "detail": "launcher"
+  },
+  {
+    "name": "PASS opaque backdrop covers 760 launcher",
+    "detail": {
+      "bounds": {
+        "left": -363.2974361419678,
+        "right": 1363.678528213501,
+        "top": 11.244284057617165,
+        "bottom": 723.6608062744141
+      },
+      "arena": {
+        "left": 29.80000114440918,
+        "right": 715.0000133514404,
+        "top": 224.5625,
+        "bottom": 564.5625
+      }
+    }
+  },
+  {
+    "name": "view",
+    "detail": "fit"
+  },
+  {
+    "name": "PASS opaque backdrop covers 760 fit",
+    "detail": {
+      "bounds": {
+        "left": -242.93955039978027,
+        "right": 987.9884281158447,
+        "top": 140.42799377441406,
+        "bottom": 648.2136077880859
+      },
+      "arena": {
+        "left": 29.80000114440918,
+        "right": 715.0000133514404,
+        "top": 224.5625,
+        "bottom": 564.5625
+      }
+    }
+  },
+  {
+    "name": "width",
+    "detail": 390
+  },
+  {
+    "name": "view",
+    "detail": "enemy"
+  },
+  {
+    "name": "PASS opaque backdrop covers 390 enemy",
+    "detail": {
+      "bounds": {
+        "left": -269.83138885498045,
+        "right": 543.3405288696289,
+        "top": 96.102783203125,
+        "bottom": 703.0353393554688
+      },
+      "arena": {
+        "left": 25.80000114440918,
+        "right": 349.4000072479248,
+        "top": 274.875,
+        "bottom": 564.875
+      }
+    }
+  },
+  {
+    "name": "view",
+    "detail": "launcher"
+  },
+  {
+    "name": "PASS opaque backdrop covers 390 launcher",
+    "detail": {
+      "bounds": {
+        "left": -167.16384296417237,
+        "right": 646.0079648971557,
+        "top": 95.13079528808592,
+        "bottom": 702.0632965087891
+      },
+      "arena": {
+        "left": 25.80000114440918,
+        "right": 349.4000072479248,
+        "top": 274.875,
+        "bottom": 564.875
+      }
+    }
+  },
+  {
+    "name": "view",
+    "detail": "fit"
+  },
+  {
+    "name": "PASS opaque backdrop covers 390 fit",
+    "detail": {
+      "bounds": {
+        "left": -102.16663780212403,
+        "right": 477.28323402404783,
+        "top": 203.3893310546875,
+        "bottom": 635.8773162841796
+      },
+      "arena": {
+        "left": 25.80000114440918,
+        "right": 349.4000072479248,
+        "top": 274.875,
+        "bottom": 564.875
+      }
+    }
+  },
+  {
+    "name": "width",
+    "detail": 760
+  },
+  {
+    "name": "view",
+    "detail": "fit"
+  }
+]

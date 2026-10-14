@@ -1,0 +1,120 @@
+[
+  {
+    "name": "PASS fit identity",
+    "detail": [
+      {
+        "name": "distant",
+        "a": 1,
+        "x": 0,
+        "y": -0.0000704912
+      },
+      {
+        "name": "midground",
+        "a": 1,
+        "x": 0,
+        "y": -0.0000429825
+      },
+      {
+        "name": "foreground",
+        "a": 1,
+        "x": 0,
+        "y": 0.00000687719
+      }
+    ]
+  },
+  {
+    "name": "PASS depth-specific scale",
+    "detail": [
+      {
+        "name": "distant",
+        "globalScale": 0.58479165
+      },
+      {
+        "name": "midground",
+        "globalScale": 0.8834089500000001
+      },
+      {
+        "name": "foreground",
+        "globalScale": 1.424655
+      }
+    ]
+  },
+  {
+    "name": "PASS one active sampler",
+    "detail": 2
+  },
+  {
+    "name": "PASS cancel freezes current frame",
+    "detail": {
+      "before": {
+        "x": -1396.8,
+        "y": -431.75
+      },
+      "after": {
+        "x": -1396.8,
+        "y": -431.75
+      }
+    }
+  },
+  {
+    "name": "PASS cancel releases handles",
+    "detail": {
+      "camera": null,
+      "frame": null
+    }
+  },
+  {
+    "name": "PASS old completion preserves new animation",
+    "detail": {}
+  },
+  {
+    "name": "PASS finished fit releases handles",
+    "detail": {}
+  },
+  {
+    "name": "PASS battle-to-reward cancels intro",
+    "detail": {}
+  },
+  {
+    "name": "PASS rapid reentry settles once",
+    "detail": {
+      "frame": null,
+      "transform": "matrix(0.416819, 0, 0, 0.416819, 0, 27.9068)",
+      "hidden": false
+    }
+  },
+  {
+    "name": "PASS nonforest clears scenery and sampler",
+    "detail": {}
+  },
+  {
+    "name": "PASS forest resumes active sampler",
+    "detail": {}
+  },
+  {
+    "name": "PASS blur releases camera and sampler",
+    "detail": {}
+  },
+  {
+    "name": "PASS focus restores fit",
+    "detail": {}
+  },
+  {
+    "name": "PASS reduced motion uses static fit",
+    "detail": {}
+  },
+  {
+    "name": "PASS path remains on world camera",
+    "detail": {}
+  },
+  {
+    "name": "PASS foreground remains ahead of path",
+    "detail": {}
+  },
+  {
+    "name": "SUITE COMPLETE",
+    "detail": {
+      "passed": 16
+    }
+  }
+]
