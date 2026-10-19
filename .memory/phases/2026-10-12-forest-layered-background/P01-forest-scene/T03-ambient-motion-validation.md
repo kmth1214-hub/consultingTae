@@ -81,7 +81,7 @@ Task: T03-ambient-motion-validation
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: recorded in Git history under the specified T03 commit message.
+- commit: 5519ff0
 
 ## Validation Results (2026-10-20)
 34 ambient checks, 3 combat checks, 3 intro motion checks and initial reduced-motion checks passed in Chrome. Actual hidden event and missing-image fallback verified. Fullscreen API fell back to window mode; actual fullscreen and OS-level reduced-motion switching remain unverified. See [final results](../../../validation/2026-10-12-forest-layered-background/final.md).

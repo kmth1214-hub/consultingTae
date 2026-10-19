@@ -10,7 +10,7 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 숲 장면 제작, 카메라 시차, 환경 연출 | [P01](../phases/2026-10-12-forest-layered-background/P01-forest-scene/phase.md) |
+| P01 | `done` | 숲 장면 제작, 카메라 시차, 환경 연출 | [P01](../phases/2026-10-12-forest-layered-background/P01-forest-scene/phase.md) |
 
 ## Execution Order
 사용자 후속 요청(2026-10-12): T01 뒤에 T01R01을 삽입하여 원본 기반 길목 이미지, 중경과 전경 사이의 경로/배우 배치, 더 넓은 숲과 긴 투석기-적 거리를 구현한다. 기존 world-size/actor-position 보존 조건은 준비된 숲에서만 갱신한다. 다른 지역은 유지한다.
@@ -30,3 +30,6 @@ Node로 인라인 JavaScript 문법과 PNG 파일을 검사한다. `node`는 현
 
 ## Completion
 T01, T01R01, T02, T03 네 Task의 시각·동작 검증, 개별 커밋, phase 진행률 및 current 포인터 갱신이 모두 끝나면 완료한다. 첫 버전 확인 후 다른 지역 확장은 별도 인터뷰/계획으로 진행한다.
+
+## Completed ? 2026-10-20
+4/4 tasks complete. T03 implementation: 5519ff0. Validation: [final.md](../validation/2026-10-12-forest-layered-background/final.md). Actual fullscreen entry/exit and OS-level reduced-motion switching remain manual verification limitations. No next task in this plan.
