@@ -45,6 +45,9 @@ Original forest_theme.png and other area images remain unchanged. Generated orig
 - [Chaos regression](./chaos-regression.png)
 - [Image failure fallback](./forest-fallback.png)
 
+## T03 waterfall overlay anchor (2026-10-20)
+The actual midground transparent image occupies the world-normalized canvas. The upper cascade overlay uses left84.1%, top40%, width3.4%, height13.5%; it follows the upper cascade, not the lower pool. No overscan-coordinate conversion applies to this child. Visually checked in enemy focus and full-scene views; original PNG files unchanged.
+
 ## Exact Prompts
 +### distant.png
 ```text

@@ -1,6 +1,6 @@
 # Task: T03 Ambient Motion and Final Validation
 
-## Status: pending
+## Status: done
 
 ## T02 Integration Contract (2026-10-14)
 T02 is complete (6990718). `forestMotionQuery` and its change listener already exist: reuse the query and extend the existing listener with ambient synchronization; do not redeclare a replacement query or duplicate camera cancellation/fit behavior. Existing `showScreen`, visibility/focus/blur and `fitArenaWorld` own camera cleanup, navigation-generation guards and parallax refresh. Add ambient state synchronization to those lifecycle boundaries without replacing them. All decorative `.forest-layer` elements are now inset0 transform wrappers; their artwork and feather masks live in overscanned ::before pseudo-elements. Place ambient children on the world-sized wrapper so their animations do not overwrite parallax transforms or inherit the artwork mask. The actual hidden-document cleanup and completed projectile flow were verified; preserve them. T02's fixed-delay tests were replaced by bounded waits for actual completion, so reuse the state-based validation approach. Existing idle-projectile hidden/display defect remains out of scope. Actual fullscreen request fell back to window mode; do not claim previous fullscreen success.
@@ -51,13 +51,13 @@ Foreground is a separate direct `#arenaWorld` child z5; put leaves there. Midgro
   6. Record actual outcomes in final.md. If browser file URL blocked use HTTP; if still unavailable document limitation and leave visual criteria unverified. Syntax alone cannot complete this visual task.
 
 ## Acceptance Criteria
-- [ ] Fog, leaves and waterfall gently animate in forest battle.
-- [ ] Motion pauses on area change, battle exit, hidden document and reduce motion, resumes correctly.
-- [ ] Camera and ambient transforms compose without jitter or blank edges.
-- [ ] Launcher, enemies, health numbers, aiming and projectiles remain clear.
-- [ ] Widths1440/760/390, fullscreen and theme switch pass inspection.
-- [ ] Four areas and image-error fallback work; bonus remains unchanged.
-- [ ] Actual browser checks recorded before completion.
+- [x] Fog, leaves and waterfall gently animate in forest battle.
+- [x] Motion pauses on area change, battle exit, hidden document and reduce motion, resumes correctly.
+- [x] Camera and ambient transforms compose without jitter or blank edges.
+- [x] Launcher, enemies, health numbers, aiming and projectiles remain clear.
+- [x] Widths1440/760/390 and theme switch pass inspection; fullscreen request/fallback checked, actual fullscreen unavailable (see final.md).
+- [x] Four areas and image-error fallback work; bonus remains unchanged.
+- [x] Actual browser checks recorded before completion.
 
 ## Validation
 - `node -e 'const fs=require("fs"),vm=require("vm"); const h=fs.readFileSync("cookie-roguelike-mockup.html","utf8"); for(const m of h.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi))if(m[1].trim())new vm.Script(m[1]); console.log("inline scripts OK");'` — syntax passes.
@@ -79,6 +79,9 @@ Task: T03-ambient-motion-validation
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: recorded in Git history under the specified T03 commit message.
+
+## Validation Results (2026-10-20)
+34 ambient checks, 3 combat checks, 3 intro motion checks and initial reduced-motion checks passed in Chrome. Actual hidden event and missing-image fallback verified. Fullscreen API fell back to window mode; actual fullscreen and OS-level reduced-motion switching remain unverified. See [final results](../../../validation/2026-10-12-forest-layered-background/final.md).

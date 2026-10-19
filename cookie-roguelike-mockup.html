@@ -185,6 +185,22 @@
     .forest-layer[data-forest-layer="midground"]::before,.forest-layer[data-forest-layer="foreground"]::before { mask-image:linear-gradient(90deg,transparent 22.222222%,#000 27%,#000 73%,transparent 77.777778%),linear-gradient(180deg,transparent 22.222222%,#000 25%,#000 74%,transparent 77.777778%);mask-composite:intersect; }
     .forest-path { position:absolute;inset:0;z-index:2;display:none;background:url('./assets/maps/forest-layers/path.png') center/100% 100% no-repeat;pointer-events:none; }
     .forest-foreground { z-index:5;display:none; }
+    .forest-fog,.forest-leaf,.forest-waterfall-flow { position:absolute;pointer-events:none;animation-play-state:paused; }
+    .forest-fog { left:-6%;top:43%;width:65%;height:13%;opacity:.12;background:radial-gradient(ellipse,rgba(235,253,227,.9),rgba(194,224,201,.35) 43%,transparent 72%);filter:blur(7px);animation:forestFogDrift 24s ease-in-out -8s infinite alternate paused; }
+    .forest-fog.two { left:42%;top:56%;width:60%;height:11%;opacity:.10;animation-duration:32s;animation-delay:-19s;animation-direction:alternate-reverse; }
+    .forest-leaf { left:5%;top:17%;width:8px;height:12px;border-radius:80% 0 80% 12%;background:#c7d67a;opacity:.4;visibility:hidden;animation:forestLeafDrift 14s ease-in-out -3s infinite paused; }
+    .forest-leaf:nth-child(2) { left:9%;top:39%;width:6px;height:9px;animation-duration:18s;animation-delay:-11s; }
+    .forest-leaf:nth-child(3) { left:3%;top:64%;width:7px;height:10px;animation-duration:16s;animation-delay:-7s; }
+    .forest-leaf:nth-child(4) { left:92%;top:21%;width:7px;height:11px;animation-duration:20s;animation-delay:-14s; }
+    .forest-leaf:nth-child(5) { left:96%;top:45%;width:6px;height:9px;animation-duration:12s;animation-delay:-5s; }
+    .forest-leaf:nth-child(6) { left:94%;top:63%;width:8px;height:12px;animation-duration:17s;animation-delay:-10s; }
+    .forest-waterfall-flow { left:84.1%;top:40%;width:3.4%;height:13.5%;opacity:.16;border-radius:40% 25% 40% 45%;background:repeating-linear-gradient(180deg,transparent 0 12px,rgba(235,255,255,.85) 14px 16px,transparent 20px 32px);mask-image:linear-gradient(transparent,#000 18%,#000 78%,transparent);animation:forestWaterfallFlow 2.8s linear infinite paused; }
+    #arena[data-area="forest"][data-forest-ready="true"][data-forest-ambient="running"] :is(.forest-fog,.forest-leaf,.forest-waterfall-flow) { animation-play-state:running; }
+    #arena[data-area="forest"][data-forest-ready="true"][data-forest-ambient="running"] .forest-leaf { visibility:visible; }
+    @keyframes forestFogDrift { from { transform:translateX(-3%); } to { transform:translateX(3%); } }
+    @keyframes forestLeafDrift { 0% { transform:translate(0,-12px) rotate(-20deg); } 50% { transform:translate(6px,12px) rotate(55deg); } 100% { transform:translate(0,34px) rotate(145deg); } }
+    @keyframes forestWaterfallFlow { from { background-position:0 0; } to { background-position:0 64px; } }
+    @media (prefers-reduced-motion:reduce) { .forest-leaf { display:none; } .forest-fog,.forest-waterfall-flow { animation:none!important; } }
     #arena[data-area="forest"][data-forest-ready="true"] .forest-scenery { display:block; }
     #arena[data-area="forest"][data-forest-ready="true"] .forest-path,
     #arena[data-area="forest"][data-forest-ready="true"] .forest-foreground { display:block; }
@@ -458,7 +474,10 @@
               <div class="arena-world" id="arenaWorld">
                 <div id="forestScenery" class="forest-scenery" aria-hidden="true">
                   <div class="forest-layer" data-forest-layer="distant" data-parallax="0.18"></div>
-                  <div class="forest-layer" data-forest-layer="midground" data-parallax="0.50"></div>
+                  <div class="forest-layer" data-forest-layer="midground" data-parallax="0.50">
+                    <div class="forest-fog" aria-hidden="true"></div><div class="forest-fog two" aria-hidden="true"></div>
+                    <div class="forest-waterfall-flow" aria-hidden="true"></div>
+                  </div>
                 </div>
                 <div id="forestPath" class="forest-path" aria-hidden="true"></div>
                 <div class="area-depth-layer" aria-hidden="true"></div>
@@ -474,7 +493,10 @@
                 <div class="enemy-group" id="enemyGroup" role="group" aria-label="현재 라운드의 적">
                   <div class="monster snake" aria-label="뱀, 체력 4">🐍</div><div class="monster boar-one" aria-label="멧돼지, 체력 4">🐗</div><div class="monster boar-two" aria-label="멧돼지, 체력 4">🐗</div>
                 </div>
-                <div class="forest-layer forest-foreground" data-forest-layer="foreground" data-parallax="1.08" aria-hidden="true"></div>
+                <div class="forest-layer forest-foreground" data-forest-layer="foreground" data-parallax="1.08" aria-hidden="true">
+                  <span class="forest-leaf" aria-hidden="true"></span><span class="forest-leaf" aria-hidden="true"></span><span class="forest-leaf" aria-hidden="true"></span>
+                  <span class="forest-leaf" aria-hidden="true"></span><span class="forest-leaf" aria-hidden="true"></span><span class="forest-leaf" aria-hidden="true"></span>
+                </div>
               </div>
               <div class="arena-caption" id="arenaCaption"><span id="areaIcon" aria-hidden="true">🌲</span><span id="areaCaptionText">숲 지역</span></div>
             </section>
@@ -688,7 +710,19 @@
         stopCameraAnimation();
         fitArenaWorld();
       } else updateForestParallax();
+      syncForestAmbientState();
     });
+    /** @returns {void} Keep ambient motion limited to the visible, ready forest battle. */
+    function syncForestAmbientState() {
+      var arena = document.getElementById('arena');
+      var battle = document.querySelector('[data-screen="battle"]');
+      if (!arena || !battle) return;
+      var running = arena.dataset.area === 'forest' && arena.dataset.forestReady === 'true' && !battle.hidden && !document.hidden && !forestMotionQuery.matches;
+      arena.dataset.forestAmbient = running ? 'running' : 'paused';
+    }
+    function setupForestAmbientMotion() {
+      syncForestAmbientState();
+    }
     function setArenaArea(area) {
       if (!Object.prototype.hasOwnProperty.call(AREA_BACKGROUNDS, area)) return false;
       var arena = document.getElementById('arena');
@@ -703,6 +737,7 @@
       fitArenaWorld();
       updateForestParallax();
       startForestParallaxSampling();
+      syncForestAmbientState();
       return true;
     }
     window.setArenaArea = setArenaArea;
@@ -712,6 +747,7 @@
       var scenery = document.getElementById('forestScenery');
       if (!arena || !scenery) return false;
       arena.dataset.forestReady = 'false';
+      syncForestAmbientState();
       var loaded = await Promise.all(['distant','midground','path','foreground'].map(function(layer) {
         return new Promise(function(resolve) {
           var image = new Image();
@@ -725,6 +761,7 @@
       fitArenaWorld();
       updateForestParallax();
       startForestParallaxSampling();
+      syncForestAmbientState();
       return ready;
     }
     prepareForestScenery();
@@ -831,6 +868,7 @@
       }
       if (name !== 'battle' && aimState.phase !== 'idle') cancelAim('pointer-cancel');
       document.querySelectorAll('.prototype-screen').forEach(function(screen) { screen.hidden = screen.dataset.screen !== name; });
+      syncForestAmbientState();
       document.querySelectorAll('[data-screen-button]').forEach(function(button) { button.classList.toggle('active',button.dataset.screenButton === name); });
       document.querySelectorAll('.side-link').forEach(function(link) { link.classList.toggle('active',link.dataset.side === name || (name === 'clear' && link.dataset.side === 'board')); });
       if (GAMEPLAY_SCREENS.has(name)) {
@@ -1145,6 +1183,7 @@
           roundIntroId++;
           stopCameraAnimation();
         } else fitArenaWorld();
+        syncForestAmbientState();
       });
       document.addEventListener('fullscreenchange',function() {
         var battle = document.querySelector('[data-screen="battle"]');
@@ -1159,6 +1198,7 @@
       updateAimState();
     }
     setupAimControls();
+    setupForestAmbientMotion();
     function useItem(key) {
       var battle = document.querySelector('[data-screen="battle"]');
       if (battle.hidden) return;

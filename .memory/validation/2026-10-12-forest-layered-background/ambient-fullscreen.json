@@ -1,0 +1,28 @@
+[
+  {
+    "name": "PASS reduce during intro pauses camera and effects",
+    "detail": {}
+  },
+  {
+    "name": "PASS cancelled intro stays stopped",
+    "detail": {}
+  },
+  {
+    "name": "PASS restore motion only resumes ambient",
+    "detail": {}
+  },
+  {
+    "name": "fullscreen entry",
+    "detail": {
+      "active": false,
+      "ambient": "running"
+    }
+  },
+  {
+    "name": "fullscreen exit",
+    "detail": {
+      "active": false,
+      "ambient": "running"
+    }
+  }
+]

@@ -1,0 +1,451 @@
+[
+  {
+    "name": "PASS nine fixed effects",
+    "detail": {
+      "count": 9
+    }
+  },
+  {
+    "name": "PASS visible forest running",
+    "detail": [
+      {
+        "class": "forest-fog",
+        "state": "running",
+        "transform": "matrix(1, 0, 0, 1, 27.8927, 0)",
+        "position": "0% 0%",
+        "time": 11733.9960000135,
+        "visibility": "visible"
+      },
+      {
+        "class": "forest-fog two",
+        "state": "running",
+        "transform": "matrix(1, 0, 0, 1, -29.3535, 0)",
+        "position": "0% 0%",
+        "time": 11733.9960000135,
+        "visibility": "visible"
+      },
+      {
+        "class": "forest-waterfall-flow",
+        "state": "running",
+        "transform": "none",
+        "position": "0px 21.1543px",
+        "time": 12125.499999999998,
+        "visibility": "visible"
+      },
+      {
+        "class": "forest-leaf",
+        "state": "running",
+        "transform": "matrix(0.949038, -0.315161, 0.315161, 0.949038, 0.130357, -11.4786)",
+        "position": "0% 0%",
+        "time": 11733.9960000135,
+        "visibility": "visible"
+      },
+      {
+        "class": "forest-leaf",
+        "state": "running",
+        "transform": "matrix(0.934477, 0.356024, -0.356024, 0.934477, 3.2685, 1.07399)",
+        "position": "0% 0%",
+        "time": 11733.9960000135,
+        "visibility": "visible"
+      },
+      {
+        "class": "forest-leaf",
+        "state": "running",
+        "transform": "matrix(0.999545, -0.0301536, 0.0301536, 0.999545, 1.46177, -6.15294)",
+        "position": "0% 0%",
+        "time": 11733.9960000135,
+        "visibility": "visible"
+      },
+      {
+        "class": "forest-leaf",
+        "state": "running",
+        "transform": "matrix(0.892093, 0.451851, -0.451851, 0.892093, 3.749, 2.996)",
+        "position": "0% 0%",
+        "time": 11733.9960000135,
+        "visibility": "visible"
+      },
+      {
+        "class": "forest-leaf",
+        "state": "running",
+        "transform": "matrix(0.66702, 0.74504, -0.74504, 0.66702, 5.453, 9.81201)",
+        "position": "0% 0%",
+        "time": 11733.9960000135,
+        "visibility": "visible"
+      },
+      {
+        "class": "forest-leaf",
+        "state": "running",
+        "transform": "matrix(0.907759, 0.419493, -0.419493, 0.907759, 3.58421, 2.33683)",
+        "position": "0% 0%",
+        "time": 11733.9960000135,
+        "visibility": "visible"
+      }
+    ]
+  },
+  {
+    "name": "PASS fog leaf and water advance",
+    "detail": {
+      "first": [
+        {
+          "class": "forest-fog",
+          "state": "running",
+          "transform": "matrix(1, 0, 0, 1, 27.8927, 0)",
+          "position": "0% 0%",
+          "time": 11733.9960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-fog two",
+          "state": "running",
+          "transform": "matrix(1, 0, 0, 1, -29.3535, 0)",
+          "position": "0% 0%",
+          "time": 11733.9960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-waterfall-flow",
+          "state": "running",
+          "transform": "none",
+          "position": "0px 21.1543px",
+          "time": 12125.499999999998,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.949038, -0.315161, 0.315161, 0.949038, 0.130357, -11.4786)",
+          "position": "0% 0%",
+          "time": 11733.9960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.934477, 0.356024, -0.356024, 0.934477, 3.2685, 1.07399)",
+          "position": "0% 0%",
+          "time": 11733.9960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.999545, -0.0301536, 0.0301536, 0.999545, 1.46177, -6.15294)",
+          "position": "0% 0%",
+          "time": 11733.9960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.892093, 0.451851, -0.451851, 0.892093, 3.749, 2.996)",
+          "position": "0% 0%",
+          "time": 11733.9960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.66702, 0.74504, -0.74504, 0.66702, 5.453, 9.81201)",
+          "position": "0% 0%",
+          "time": 11733.9960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.907759, 0.419493, -0.419493, 0.907759, 3.58421, 2.33683)",
+          "position": "0% 0%",
+          "time": 11733.9960000135,
+          "visibility": "visible"
+        }
+      ],
+      "second": [
+        {
+          "class": "forest-fog",
+          "state": "running",
+          "transform": "matrix(1, 0, 0, 1, 28.7614, 0)",
+          "position": "0% 0%",
+          "time": 12200.7960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-fog two",
+          "state": "running",
+          "transform": "matrix(1, 0, 0, 1, -29.4609, 0)",
+          "position": "0% 0%",
+          "time": 12200.7960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-waterfall-flow",
+          "state": "running",
+          "transform": "none",
+          "position": "0px 31.824px",
+          "time": 12592.3,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.963475, -0.267797, 0.267797, 0.963475, 0.357344, -10.5706)",
+          "position": "0% 0%",
+          "time": 12200.7960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.887692, 0.460438, -0.460438, 0.887692, 3.79323, 3.17291)",
+          "position": "0% 0%",
+          "time": 12200.7960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.996341, 0.0854727, -0.0854727, 0.996341, 1.99226, -4.03097)",
+          "position": "0% 0%",
+          "time": 12200.7960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.843626, 0.536932, -0.536932, 0.843626, 4.198, 4.792)",
+          "position": "0% 0%",
+          "time": 12200.7960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.610944, 0.791673, -0.791673, 0.610944, 5.78737, 11.1495)",
+          "position": "0% 0%",
+          "time": 12200.7960000135,
+          "visibility": "visible"
+        },
+        {
+          "class": "forest-leaf",
+          "state": "running",
+          "transform": "matrix(0.852495, 0.522735, -0.522735, 0.852495, 4.12127, 4.48508)",
+          "position": "0% 0%",
+          "time": 12200.7960000135,
+          "visibility": "visible"
+        }
+      ]
+    }
+  },
+  {
+    "name": "PASS snow pauses and hides forest",
+    "detail": {}
+  },
+  {
+    "name": "PASS city pauses and hides forest",
+    "detail": {}
+  },
+  {
+    "name": "PASS chaos pauses and hides forest",
+    "detail": {}
+  },
+  {
+    "name": "PASS forest resumes",
+    "detail": {}
+  },
+  {
+    "name": "PASS battle exit pauses",
+    "detail": {}
+  },
+  {
+    "name": "PASS battle reentry resumes",
+    "detail": {}
+  },
+  {
+    "name": "PASS hidden pauses animation",
+    "detail": {}
+  },
+  {
+    "name": "PASS paused animation times stay fixed",
+    "detail": {
+      "frozen": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "after": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "name": "PASS visible resumes",
+    "detail": {}
+  },
+  {
+    "name": "PASS reduce pauses effects and hides leaves",
+    "detail": {}
+  },
+  {
+    "name": "PASS normal motion resumes without intro",
+    "detail": {}
+  },
+  {
+    "name": "width",
+    "detail": 1440
+  },
+  {
+    "name": "view",
+    "detail": "enemy"
+  },
+  {
+    "name": "PASS backdrop covers 1440 enemy",
+    "detail": {}
+  },
+  {
+    "name": "PASS ambient independent of camera 1440 enemy",
+    "detail": {}
+  },
+  {
+    "name": "view",
+    "detail": "launcher"
+  },
+  {
+    "name": "PASS backdrop covers 1440 launcher",
+    "detail": {}
+  },
+  {
+    "name": "PASS ambient independent of camera 1440 launcher",
+    "detail": {}
+  },
+  {
+    "name": "view",
+    "detail": "fit"
+  },
+  {
+    "name": "PASS backdrop covers 1440 fit",
+    "detail": {}
+  },
+  {
+    "name": "PASS ambient independent of camera 1440 fit",
+    "detail": {}
+  },
+  {
+    "name": "width",
+    "detail": 760
+  },
+  {
+    "name": "view",
+    "detail": "enemy"
+  },
+  {
+    "name": "PASS backdrop covers 760 enemy",
+    "detail": {}
+  },
+  {
+    "name": "PASS ambient independent of camera 760 enemy",
+    "detail": {}
+  },
+  {
+    "name": "view",
+    "detail": "launcher"
+  },
+  {
+    "name": "PASS backdrop covers 760 launcher",
+    "detail": {}
+  },
+  {
+    "name": "PASS ambient independent of camera 760 launcher",
+    "detail": {}
+  },
+  {
+    "name": "view",
+    "detail": "fit"
+  },
+  {
+    "name": "PASS backdrop covers 760 fit",
+    "detail": {}
+  },
+  {
+    "name": "PASS ambient independent of camera 760 fit",
+    "detail": {}
+  },
+  {
+    "name": "width",
+    "detail": 390
+  },
+  {
+    "name": "view",
+    "detail": "enemy"
+  },
+  {
+    "name": "PASS backdrop covers 390 enemy",
+    "detail": {}
+  },
+  {
+    "name": "PASS ambient independent of camera 390 enemy",
+    "detail": {}
+  },
+  {
+    "name": "view",
+    "detail": "launcher"
+  },
+  {
+    "name": "PASS backdrop covers 390 launcher",
+    "detail": {}
+  },
+  {
+    "name": "PASS ambient independent of camera 390 launcher",
+    "detail": {}
+  },
+  {
+    "name": "view",
+    "detail": "fit"
+  },
+  {
+    "name": "PASS backdrop covers 390 fit",
+    "detail": {}
+  },
+  {
+    "name": "PASS ambient independent of camera 390 fit",
+    "detail": {}
+  },
+  {
+    "name": "width",
+    "detail": 760
+  },
+  {
+    "name": "theme",
+    "detail": "dark"
+  },
+  {
+    "name": "PASS dark retains running scene",
+    "detail": {}
+  },
+  {
+    "name": "theme",
+    "detail": "light"
+  },
+  {
+    "name": "PASS light retains running scene",
+    "detail": {}
+  },
+  {
+    "name": "SUITE COMPLETE",
+    "detail": {
+      "passed": 34
+    }
+  }
+]

@@ -1,0 +1,1 @@
+{"hidden":true,"state":"paused","effects":["paused","paused","paused","paused","paused","paused","paused","paused","paused"],"frame":null}document.getElementById('result').textContent=localStorage.getItem('forest-ambient-exit')||'No event captured';localStorage.removeItem('forest-ambient-exit');

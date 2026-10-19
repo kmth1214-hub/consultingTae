@@ -1,0 +1,17 @@
+{
+  "ambient": "paused",
+  "background": "none",
+  "effects": [
+    "paused",
+    "paused",
+    "paused",
+    "paused",
+    "paused",
+    "paused",
+    "paused",
+    "paused",
+    "paused"
+  ],
+  "ready": "false",
+  "scene": "none"
+}
