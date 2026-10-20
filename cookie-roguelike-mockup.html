@@ -10,9 +10,15 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script>Chart.defaults.animation = false;</script>
   <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+  <script>
+    document.documentElement.dataset.previewMode = new URLSearchParams(window.location.search).get('preview') === '1' ? 'true' : 'false';
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root { interpolate-size: allow-keywords; }
+    :root:not([data-preview-mode="true"]) .mockup-controls,
+    :root:not([data-preview-mode="true"]) .viz-menu,
+    :root:not([data-preview-mode="true"]) .mockup-caption { display:none!important; }
     html.theme-light {
       --bg: #f5f0e6; --surface: #fffdf8; --surface-hover: #f4ead8;
       --border: rgba(67,43,26,0.12); --text: #2d2119; --text-secondary: #806b58;
