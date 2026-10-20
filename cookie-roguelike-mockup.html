@@ -178,8 +178,8 @@
     .stat-chip { display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font-size:.77rem;font-weight:800; }
     .heart { color:var(--negative); }
     .ammo { color:var(--accent); }
-    .battle-grid { display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:18px;align-items:start; }
-    .arena { min-height:378px;position:relative;overflow:hidden;border:1px solid var(--border);border-radius:18px;background:#18222c;isolation:isolate; }
+    .battle-grid { display:grid;grid-template-columns:minmax(0,1fr);gap:15px;align-items:start; }
+    .arena { min-height:clamp(360px,58vh,620px);position:relative;overflow:hidden;border:1px solid var(--border);border-radius:18px;background:#18222c;isolation:isolate; }
     .arena-world { position:absolute;left:0;top:0;width:160%;height:160%;overflow:hidden;transform:translate(0,0) scale(.625);transform-origin:0 0;will-change:transform;background-image:linear-gradient(180deg,rgba(17,24,32,.06),rgba(17,24,32,.2)),var(--arena-image,url('./assets/maps/forest_theme.png'));background-size:cover;background-position:center; }
     .forest-scenery { position:absolute;inset:0;z-index:0;display:none;pointer-events:none; }
     .forest-layer { position:absolute;inset:0;transform-origin:0 0;pointer-events:none; }
@@ -211,7 +211,7 @@
     #arena[data-area="forest"][data-forest-ready="true"] .forest-path,
     #arena[data-area="forest"][data-forest-ready="true"] .forest-foreground { display:block; }
     #arena[data-area="forest"][data-forest-ready="true"] .arena-world { width:240%;height:200%;background-image:none;background-color:#bad8bb;overflow:visible; }
-    #arena[data-area="forest"][data-forest-ready="true"] .launch-pad { left:14%;bottom:26%; }
+    #arena[data-area="forest"][data-forest-ready="true"] .launch-pad { left:20%;bottom:24%; }
     #arena[data-area="forest"][data-forest-ready="true"] .enemy-group { left:73%;right:16%;bottom:26%; }
     #arena[data-area="forest"][data-forest-ready="true"] .monster { bottom:0; }
     #arena[data-area="forest"][data-forest-ready="true"] .trajectory-preview { z-index:6; }
@@ -237,10 +237,14 @@
     .area-road-stop-middle { stop-color:var(--area-road-middle); }
     .area-road-stop-bottom { stop-color:var(--area-road-bottom); }
     .area-road-highlight { fill:none;stroke:var(--area-road-highlight);stroke-width:5;stroke-linecap:round; }
-    .launch-pad { position:absolute;z-index:3;left:38px;bottom:48px;width:130px;height:104px; }
-    .launcher-base { position:absolute;left:4px;bottom:0;width:105px;height:27px;border-radius:55% 45% 8px 8px;background:#66402b;transform:rotate(-9deg); }
-    .launcher-arm { position:absolute;left:54px;bottom:17px;width:86px;height:12px;border-radius:99px;background:#a96635;transform:rotate(-42deg);transform-origin:8px 50%;box-shadow:0 3px rgba(0,0,0,.16); }
-    .launcher-stone { position:absolute;left:107px;top:18px;width:26px;height:26px;border-radius:50%;background:#96765b;border:3px solid #72573f; }
+    .launch-pad { position:absolute;z-index:6;left:8%;bottom:20%;width:148px;height:150px;overflow:visible; }
+    .slingshot-visual { position:absolute;left:0;bottom:0;width:124px;height:142px;overflow:visible;filter:drop-shadow(0 4px 3px rgba(31,23,17,.3));pointer-events:none; }
+    .slingshot-frame { fill:none;stroke:#704628;stroke-width:13;stroke-linecap:round;stroke-linejoin:round; }
+    .slingshot-grip { fill:none;stroke:#aa7143;stroke-width:7;stroke-linecap:round; }
+    .slingshot-band { fill:none;stroke:#e3b86f;stroke-width:4;stroke-linecap:round; }
+    .slingshot-pouch { position:absolute;left:55px;top:45px;width:18px;height:18px;border:2px solid #69452b;border-radius:50% 50% 48% 48%;background:radial-gradient(circle at 33% 28%,#f5d493,#99633a 72%);box-shadow:0 2px 4px rgba(0,0,0,.35); }
+    .launch-pad .power-meter { position:absolute;left:112px;top:29px;width:16px;height:92px;border-radius:99px; }
+    .launch-pad .power-meter-fill { width:100%;height:20%;background:linear-gradient(0deg,#96c27a,#efbd58 58%,#e27759);transition:height 70ms linear; }
     .enemy-group { position:absolute;left:43%;right:4%;bottom:62px;height:112px; }
     .monster { position:absolute;z-index:4;display:grid;place-items:center;width:67px;height:76px; }
     .monster-art { position:relative;z-index:0;display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(35,33,23,.34));pointer-events:none;animation:monsterBreath 3.1s ease-in-out infinite; }
@@ -270,13 +274,14 @@
     .trajectory-preview #trajectoryGeometry { stroke:none;filter:none;visibility:hidden; }
     .projectile-sprite { position:absolute;left:0;top:0;z-index:6;width:24px;height:24px;display:block;border:3px solid #493522;border-radius:50%;background:radial-gradient(circle at 31% 27%,#fff2bd 0 12%,#e9c875 13% 46%,#92724e 72%,#59432f 100%);box-shadow:0 3px 7px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.75);will-change:transform;pointer-events:none; }
     .aim-controls { display:grid;gap:11px; }
-    .power-meter { height:14px;overflow:hidden;border:1px solid var(--border);border-radius:99px;background:var(--surface-hover); }
-    .power-meter-fill { width:20%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#96c27a,#efbd58,#e27759);transition:width 70ms linear; }
+    .power-meter { display:flex;align-items:flex-end;overflow:hidden;border:1px solid var(--border);background:var(--surface-hover); }
+    .power-meter-fill { width:100%;height:20%;border-radius:inherit;background:linear-gradient(0deg,#96c27a,#efbd58 58%,#e27759);transition:height 70ms linear; }
     .aim-stage { min-height:18px;margin:0;color:var(--text-secondary);font-size:.75rem;font-weight:800; }
     .aim-guidance { margin:0;color:var(--text-secondary);font-size:.7rem;line-height:1.55; }
     .aim-value { font-variant-numeric:tabular-nums; }
     .arena-caption { position:absolute;z-index:6;left:16px;top:15px;display:flex;gap:7px;align-items:center;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.84);color:#263a2e;font-size:.7rem;font-weight:850;box-shadow:0 2px 10px rgba(0,0,0,.12); }
-    .combat-side { display:grid;gap:13px; }
+    .combat-hud { display:grid;grid-template-columns:minmax(220px,.95fr) minmax(260px,1.05fr) minmax(240px,1fr);gap:13px;align-items:stretch; }
+    .combat-hud > .card { min-width:0; }
     .weapon-card { padding:16px; }
     .weapon-head { display:flex;align-items:center;justify-content:space-between; }
     .weapon-emoji { width:45px;height:45px;display:grid;place-items:center;border-radius:13px;background:var(--surface-hover);font-size:1.8rem; }
@@ -363,9 +368,9 @@
     .status-bar { display:flex;align-items:center;justify-content:space-between;gap:10px;margin:19px 0;padding:13px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font-size:.8rem; }
     .form-label { display:block;margin:12px 0 6px;font-size:.75rem;font-weight:800; }
     .mockup-caption { margin:16px auto 0;max-width:1440px;color:var(--text-secondary);font-size:.72rem; }
-    @media (max-width:1080px) { .character-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .battle-grid { grid-template-columns:minmax(0,1fr) 260px; } .board-grid { grid-template-columns:minmax(0,1fr); } }
-    @media (max-width:760px) { .mockup-controls { align-items:flex-start;flex-direction:column;padding:13px 14px 8px; } .workspace { padding:0 12px 28px; } .app-window { display:block;min-height:0;border-radius:18px; } .sidebar { display:none; } .content { padding:22px 17px 28px; } .content-header { align-items:flex-start;flex-direction:column;margin-bottom:23px; } .screen-login { grid-template-columns:1fr; } .login-art { min-height:400px;padding:27px; } .oven-light { width:180px;height:205px;right:7%;top:11%; } .cookie-hero { right:24%;top:29%;font-size:5rem; } .login-panel { padding:34px 27px; } .hero-banner { grid-template-columns:1fr;min-height:280px;padding:25px; } .hero-visual { position:absolute;right:18px;bottom:16px;opacity:.55; } .game-card { grid-template-columns:112px minmax(0,1fr);gap:13px; } .game-art { min-height:150px; } .battle-grid { grid-template-columns:1fr; } .arena { min-height:340px; } .combat-side { grid-template-columns:repeat(2,minmax(0,1fr)); } .inventory { grid-column:1/-1; } .result-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .clear-hero { grid-template-columns:1fr; } .clear-stamp { position:absolute;right:28px;top:32px;width:83px;height:83px;font-size:.58rem; } .clear-hero { position:relative;padding:25px; } }
-    @media (max-width:520px) { body { overflow-x:hidden; } h1 { font-size:2.5rem; } h2 { font-size:2rem; } h3 { font-size:1.5rem; } .content { padding:19px 13px 25px; } .character-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .character-art { height:86px;font-size:3.4rem; } .character-bottom { align-items:flex-start;flex-direction:column; } .game-card { grid-template-columns:1fr; } .game-art { min-height:130px; } .reward-grid { grid-template-columns:1fr; } .reward-card { min-height:175px; } .choice-grid { grid-template-columns:1fr; } .battle-top { align-items:flex-start;flex-direction:column; } .battle-stats { justify-content:flex-start; } .arena { min-height:290px; } .monster { width:52px;height:59px;font-size:1.8rem; } .monster.snake { left:5%; } .monster.boar-one { left:43%; } .monster.boar-two { left:77%; } .launch-pad { left:17px;bottom:44px; } .combat-side { grid-template-columns:1fr; } .inventory { grid-column:auto; } .boss-lineup { gap:10px;padding:19px 8px; } .boss-token .emoji { font-size:2.7rem; } .boss-hp { width:72px; } .qr-card { grid-template-columns:1fr;justify-items:center;text-align:center; } .result-actions .btn { width:100%; } .leaderboard-table th:nth-child(4),.leaderboard-table td:nth-child(4) { text-align:right; } }
+    @media (max-width:1080px) { .character-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .combat-hud { grid-template-columns:repeat(2,minmax(0,1fr)); } .combat-hud > .inventory { grid-column:1/-1; } .board-grid { grid-template-columns:minmax(0,1fr); } }
+    @media (max-width:760px) { .mockup-controls { align-items:flex-start;flex-direction:column;padding:13px 14px 8px; } .workspace { padding:0 12px 28px; } .app-window { display:block;min-height:0;border-radius:18px; } .sidebar { display:none; } .content { padding:22px 17px 28px; } .content-header { align-items:flex-start;flex-direction:column;margin-bottom:23px; } .screen-login { grid-template-columns:1fr; } .login-art { min-height:400px;padding:27px; } .oven-light { width:180px;height:205px;right:7%;top:11%; } .cookie-hero { right:24%;top:29%;font-size:5rem; } .login-panel { padding:34px 27px; } .hero-banner { grid-template-columns:1fr;min-height:280px;padding:25px; } .hero-visual { position:absolute;right:18px;bottom:16px;opacity:.55; } .game-card { grid-template-columns:112px minmax(0,1fr);gap:13px; } .game-art { min-height:150px; } .arena { min-height:clamp(300px,48vh,430px); } .combat-hud { grid-template-columns:1fr; } .combat-hud > .inventory { grid-column:auto; } .result-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .clear-hero { grid-template-columns:1fr; } .clear-stamp { position:absolute;right:28px;top:32px;width:83px;height:83px;font-size:.58rem; } .clear-hero { position:relative;padding:25px; } }
+    @media (max-width:520px) { body { overflow-x:hidden; } h1 { font-size:2.5rem; } h2 { font-size:2rem; } h3 { font-size:1.5rem; } .content { padding:19px 13px 25px; } .character-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .character-art { height:86px;font-size:3.4rem; } .character-bottom { align-items:flex-start;flex-direction:column; } .game-card { grid-template-columns:1fr; } .game-art { min-height:130px; } .reward-grid { grid-template-columns:1fr; } .reward-card { min-height:175px; } .choice-grid { grid-template-columns:1fr; } .battle-top { align-items:flex-start;flex-direction:column; } .battle-stats { justify-content:flex-start; } .monster { width:52px;height:59px;font-size:1.8rem; } .monster.snake { left:5%; } .monster.boar-one { left:43%; } .monster.boar-two { left:77%; } .launch-pad { left:16%;bottom:20%;transform:scale(.84);transform-origin:left bottom; } .boss-lineup { gap:10px;padding:19px 8px; } .boss-token .emoji { font-size:2.7rem; } .boss-hp { width:72px; } .qr-card { grid-template-columns:1fr;justify-items:center;text-align:center; } .result-actions .btn { width:100%; } .leaderboard-table th:nth-child(4),.leaderboard-table td:nth-child(4) { text-align:right; } }
   </style>
 </head>
 <body>
@@ -458,7 +463,7 @@
           <div class="board-grid">
             <section class="card game-card animate delay-1" aria-label="게임 소개">
               <div class="game-art"><img class="cookie-figure" src="./Cookie%20Run_%20OvenBreak%20Fan%20Kit/01.%20Cookies/Adventurer%20Cookie.png" alt=""></div>
-              <div class="game-copy"><span class="pill warn">가칭 · 턴제 로그라이크</span><h3>오븐 탈출: 쿠키 대작전</h3><p>마우스로 투석기 각도를 맞추고 스페이스바로 파워를 정해 발사하세요. 숲·눈길·도시를 지나 세 보스를 무찌르는 쿠키런 스타일의 투석 전투입니다.</p><div class="meta-row"><span class="pill">3개 지역</span><span class="pill">15라운드</span><span class="pill">마우스 + 키보드 조작</span></div><button class="btn" onclick="showScreen('characters')">게임 플레이 <span aria-hidden="true">→</span></button></div>
+              <div class="game-copy"><span class="pill warn">가칭 · 턴제 로그라이크</span><h3>오븐 탈출: 쿠키 대작전</h3><p>새총 각도를 맞추고 스페이스바로 파워를 정해 발사하세요. 숲·눈길·도시를 지나 세 보스를 무찌르는 쿠키런 스타일의 새총 전투입니다.</p><div class="meta-row"><span class="pill">3개 지역</span><span class="pill">15라운드</span><span class="pill">마우스 + 키보드 조작</span></div><button class="btn" onclick="showScreen('characters')">게임 플레이 <span aria-hidden="true">→</span></button></div>
             </section>
             <section class="card animate delay-2" aria-labelledby="leaderboard-title">
               <div class="section-head"><div><div class="eyebrow">COMPANY TOP 10</div><h3 id="leaderboard-title">회사 랭킹</h3></div><button class="btn ghost small" onclick="showToast('상위 10위와 내 최고 기록을 표시합니다.')">전체 보기</button></div>
@@ -512,7 +517,16 @@
                   </defs>
                   <rect class="area-road-shadow" x="90" y="411" width="820" height="138" rx="69"></rect><rect class="area-road-edge" x="90" y="405" width="820" height="132" rx="66"></rect><rect class="area-road-surface" x="90" y="412" width="820" height="118" rx="59"></rect><path class="area-road-highlight" d="M 150 431 H 850"></path>
                 </svg>
-                <div class="launch-pad" id="launchPad" aria-hidden="true"><div class="launcher-base"></div><div class="launcher-arm"></div><div class="launcher-stone"></div></div>
+                <div class="launch-pad" id="launchPad" role="group" aria-label="새총과 발사 파워">
+                  <svg class="slingshot-visual" viewBox="0 0 124 142" aria-hidden="true">
+                    <path class="slingshot-band" id="slingshotBandLeft" d="M 34 22 Q 47 39 64 54"></path>
+                    <path class="slingshot-band" id="slingshotBandRight" d="M 91 22 Q 78 39 64 54"></path>
+                    <path class="slingshot-frame" d="M 63 58 Q 55 87 42 127 M 62 59 Q 50 40 34 22 M 64 58 Q 78 39 91 22"></path>
+                    <path class="slingshot-grip" d="M 46 119 Q 41 128 38 133"></path>
+                  </svg>
+                  <div class="slingshot-pouch" id="slingshotPouch" aria-hidden="true"></div>
+                  <div id="powerMeter" class="power-meter" role="meter" aria-label="발사 파워" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="100" aria-valuenow="20"><div id="powerMeterFill" class="power-meter-fill"></div></div>
+                </div>
                 <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryGeometry" d=""></path><path id="trajectoryPath" d=""></path></svg>
                 <div id="projectileSprite" class="projectile-sprite" aria-hidden="true" hidden></div>
                 <div class="enemy-group" id="enemyGroup" role="group" aria-label="현재 라운드의 적">
@@ -525,12 +539,11 @@
               </div>
               <div class="arena-caption" id="arenaCaption"><span id="areaIcon" aria-hidden="true">🌲</span><span id="areaCaptionText">숲 지역</span></div>
             </section>
-            <aside class="combat-side" aria-label="전투 정보">
+            <aside class="combat-hud" aria-label="전투 정보">
               <section class="card weapon-card"><div class="weapon-head"><span class="weapon-emoji">🧭</span><span class="grade">C 등급</span></div><div class="weapon-name">모험가의 마법사탕</div><div class="weapon-desc">이번 투사체 · 세 번째 영구 무기 명중마다 점수 +10</div><div class="ammo-dots" aria-label="남은 탄약 5발, 사용한 탄약 4발"><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i></div></section>
               <section class="card aim-controls" aria-label="투사체 조준">
                 <div class="control-row"><span>발사 각도</span><span id="angleValue" class="aim-value">42°</span></div>
                 <div class="control-row"><span>발사 파워</span><span id="powerValue" class="aim-value">20%</span></div>
-                <div id="powerMeter" class="power-meter" role="meter" aria-label="발사 파워" aria-valuemin="20" aria-valuemax="100" aria-valuenow="20"><div id="powerMeterFill" class="power-meter-fill"></div></div>
                 <p id="aimStageLabel" class="aim-stage" aria-live="polite">전장을 좌클릭해 조준을 시작하세요.</p>
                 <p class="aim-guidance">좌클릭 유지: 상하로 각도 조절 · Space 유지/해제: 파워 조절/확정 · 확정 후 좌우 이동: 조준 위치 · 좌클릭 해제: 발사</p>
               </section>
@@ -990,8 +1003,9 @@
         geometry:document.getElementById('trajectoryGeometry'),
         sprite:document.getElementById('projectileSprite'),
         launcher:document.getElementById('launchPad'),
-        stone:document.querySelector('#launchPad .launcher-stone'),
-        arm:document.querySelector('#launchPad .launcher-arm')
+        stone:document.getElementById('slingshotPouch'),
+        bandLeft:document.getElementById('slingshotBandLeft'),
+        bandRight:document.getElementById('slingshotBandRight')
       };
     }
     function syncTrajectoryViewBox() {
@@ -1019,20 +1033,30 @@
         y:elements.launcher.offsetTop + elements.stone.offsetTop + elements.stone.offsetHeight / 2
       };
     }
+    function updateSlingshotDraw(angleDeg) {
+      var elements = getAimElements();
+      if (!elements.stone || !elements.bandLeft || !elements.bandRight) return;
+      var angle = angleDeg * Math.PI / 180;
+      var centerX = 64 + Math.cos(angle) * 11;
+      var centerY = 54 - Math.sin(angle) * 11;
+      elements.stone.style.left = (centerX - elements.stone.offsetWidth / 2) + 'px';
+      elements.stone.style.top = (centerY - elements.stone.offsetHeight / 2) + 'px';
+      elements.bandLeft.setAttribute('d','M 34 22 Q ' + (49 + (centerX - 64) * .45) + ' ' + (39 + (centerY - 54) * .35) + ' ' + centerX + ' ' + centerY);
+      elements.bandRight.setAttribute('d','M 91 22 Q ' + (78 + (centerX - 64) * .45) + ' ' + (39 + (centerY - 54) * .35) + ' ' + centerX + ' ' + centerY);
+    }
     function updateAimState() {
       var angle = document.getElementById('angleValue');
       var power = document.getElementById('powerValue');
       var meter = document.getElementById('powerMeter');
       var fill = document.getElementById('powerMeterFill');
       var stage = document.getElementById('aimStageLabel');
-      var arm = getAimElements().arm;
       var angleText = Math.round(aimState.angleDeg) + '°';
       var powerText = Math.round(aimState.powerPercent) + '%';
       if (angle && angle.textContent !== angleText) angle.textContent = angleText;
       if (power && power.textContent !== powerText) power.textContent = powerText;
       if (meter) meter.setAttribute('aria-valuenow',String(Math.round(aimState.powerPercent)));
-      if (fill) fill.style.width = aimState.powerPercent + '%';
-      if (arm) arm.style.transform = 'rotate(' + (-aimState.angleDeg) + 'deg)';
+      if (fill) fill.style.height = aimState.powerPercent + '%';
+      updateSlingshotDraw(aimState.angleDeg);
       var stageText = {
         idle:'전장을 좌클릭해 조준을 시작하세요.',
         angle:'1/3 각도 조절 · 좌클릭을 유지하고 마우스를 상하로 움직이세요.',
