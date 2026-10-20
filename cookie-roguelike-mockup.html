@@ -644,6 +644,7 @@
     <p class="mockup-caption">화면 상단 탭으로 목업을 이동할 수 있습니다. 실제 로그인, 전투 저장, 랭킹 및 QR 검증은 연결되어 있지 않은 디자인 시안입니다.</p>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="./assets/js/battle-engine.js"></script>
   <script>
     function toggleMenu() {
       var dropdown = document.getElementById('vizMenuDropdown');
@@ -1010,13 +1011,6 @@
       card.classList.add('selected');
       button.textContent = '선택됨';
       showToast(card.querySelector('h3').textContent + ' 선택');
-    }
-    function fireShot() {
-      var ammo = document.getElementById('ammoValue');
-      var count = Math.max(0,Number(ammo.textContent) - 1);
-      ammo.textContent = count;
-      if (count === 0) showToast('탄약을 모두 사용했어요. 적이 남으면 패배입니다.');
-      else showToast('발사 완료 · 배정된 영구 무기를 소모했습니다.');
     }
     const ANGLE_MIN_DEG = 10;
     const ANGLE_MAX_DEG = 80;
@@ -1397,5 +1391,6 @@
     }
     function onThemeChange() {}
   </script>
+  <script src="./assets/js/battle-ui.js"></script>
 </body>
 </html>
