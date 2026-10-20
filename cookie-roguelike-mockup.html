@@ -230,6 +230,29 @@
     #arena[data-area="forest"] .area-depth-layer,#arena[data-area="snow"] .area-depth-layer,#arena[data-area="city"] .area-depth-layer,#arena[data-area="chaos"] .area-depth-layer { display:block; }
     .area-road { position:absolute;inset:0;z-index:2;width:100%;height:100%;display:none;pointer-events:none; }
     #arena[data-area="forest"] .area-road,#arena[data-area="snow"] .area-road,#arena[data-area="city"] .area-road,#arena[data-area="chaos"] .area-road { display:block; }
+    #arena[data-area="forest"][data-forest-ready="true"] #sceneRoute { display:none; }
+    .scene-route-shadow { fill:none;stroke:var(--area-road-shadow);stroke-width:146;stroke-linecap:round;filter:blur(5px); }
+    .scene-route-edge { fill:none;stroke:var(--area-road-edge);stroke-width:132;stroke-linecap:round; }
+    .scene-route-surface { fill:none;stroke:url(#areaRoadSurface);stroke-width:116;stroke-linecap:round; }
+    .scene-route-highlight { fill:none;stroke:var(--area-road-highlight);stroke-width:5;stroke-linecap:round;stroke-dasharray:3 18;opacity:.72; }
+    .scene-obstacles { position:absolute;inset:0;z-index:3;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 7px 5px rgba(28,26,25,.28)); }
+    .scene-prop { display:none; }
+    #arena[data-area="forest"] .scene-prop[data-area="forest"],#arena[data-area="snow"] .scene-prop[data-area="snow"],#arena[data-area="city"] .scene-prop[data-area="city"],#arena[data-area="chaos"] .scene-prop[data-area="chaos"] { display:inline; }
+    .prop-log { fill:#815438;stroke:#523923;stroke-width:8;stroke-linejoin:round; }
+    .prop-log-end { fill:#c99963;stroke:#523923;stroke-width:6; }
+    .prop-woodgrain { fill:none;stroke:#d6a36b;stroke-width:5;stroke-linecap:round;opacity:.8; }
+    .prop-root { fill:none;stroke:#53623a;stroke-width:15;stroke-linecap:round;stroke-linejoin:round; }
+    .prop-boulder { fill:#827d65;stroke:#555542;stroke-width:7;stroke-linejoin:round; }
+    .prop-snow { fill:#f4fbff;stroke:#90b7d0;stroke-width:7;stroke-linejoin:round; }
+    .prop-ice { fill:#a9e9f2;stroke:#5ca9c0;stroke-width:7;stroke-linejoin:round; }
+    .prop-ice-shine { fill:none;stroke:#efffff;stroke-width:6;stroke-linecap:round; }
+    .prop-crate { fill:#bb8657;stroke:#69482f;stroke-width:7;stroke-linejoin:round; }
+    .prop-crate-line { fill:none;stroke:#e3b579;stroke-width:8;stroke-linecap:round; }
+    .prop-panel { fill:#565b66;stroke:#343944;stroke-width:8;stroke-linejoin:round; }
+    .prop-panel-light { fill:#ef9565;stroke:#813f3f;stroke-width:5; }
+    .prop-barrier { fill:#f0d49a;stroke:#725548;stroke-width:7;stroke-linejoin:round; }
+    .prop-barrier-mark { fill:none;stroke:#ca6953;stroke-width:15;stroke-linecap:round; }
+    #arena[data-area="chaos"] .prop-log,#arena[data-area="chaos"] .prop-crate { filter:hue-rotate(18deg) saturate(1.22); }
     .area-road-shadow { fill:var(--area-road-shadow); }
     .area-road-edge { fill:var(--area-road-edge); }
     .area-road-surface { fill:url(#areaRoadSurface); }
@@ -508,11 +531,28 @@
                 </div>
                 <div id="forestPath" class="forest-path" aria-hidden="true"></div>
                 <div class="area-depth-layer" aria-hidden="true"></div>
-                <svg id="areaRoad" class="area-road" aria-hidden="true" viewBox="0 0 1000 600" preserveAspectRatio="none">
+                <svg id="sceneRoute" class="area-road" aria-hidden="true" viewBox="0 0 1000 600" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="areaRoadSurface" x1="0" y1="0" x2="0" y2="1"><stop class="area-road-stop-top" offset="0%"></stop><stop class="area-road-stop-middle" offset="16%"></stop><stop class="area-road-stop-bottom" offset="100%"></stop></linearGradient>
                   </defs>
-                  <rect class="area-road-shadow" x="90" y="411" width="820" height="138" rx="69"></rect><rect class="area-road-edge" x="90" y="405" width="820" height="132" rx="66"></rect><rect class="area-road-surface" x="90" y="412" width="820" height="118" rx="59"></rect><path class="area-road-highlight" d="M 150 431 H 850"></path>
+                  <path class="scene-route-shadow" d="M 38 468 C 185 432 270 486 390 476 S 635 423 756 452 S 892 492 965 462"></path>
+                  <path class="scene-route-edge" d="M 38 458 C 185 422 270 476 390 466 S 635 413 756 442 S 892 482 965 452"></path>
+                  <path class="scene-route-surface" d="M 38 458 C 185 422 270 476 390 466 S 635 413 756 442 S 892 482 965 452"></path>
+                  <path class="scene-route-highlight" d="M 78 439 C 195 415 278 461 393 451 S 635 399 755 427 S 885 466 932 446"></path>
+                </svg>
+                <svg id="sceneObstacles" class="scene-obstacles" aria-hidden="true" viewBox="0 0 1000 600" preserveAspectRatio="none">
+                  <g class="scene-prop" data-area="forest" data-obstacle="fallen-log" transform="translate(245 354) rotate(-8)"><path class="prop-log" d="M 0 28 Q 5 2 30 6 L 162 0 Q 183 4 180 30 L 170 66 L 12 71 Z"></path><ellipse class="prop-log-end" cx="15" cy="39" rx="18" ry="31"></ellipse><path class="prop-woodgrain" d="M 34 23 Q 85 12 151 18 M 39 46 Q 97 35 159 42"></path></g>
+                  <g class="scene-prop" data-area="forest" data-obstacle="exposed-roots" transform="translate(548 495)"><path class="prop-root" d="M 0 48 Q 15 15 42 7 T 75 -8 M 36 21 Q 15 4 10 -10 M 45 14 Q 66 26 83 18 M 23 31 Q 3 33 -9 21"></path></g>
+                  <g class="scene-prop" data-area="forest" data-obstacle="moss-boulder" transform="translate(790 350)"><path class="prop-boulder" d="M 5 64 Q 6 37 27 26 L 38 6 L 68 18 L 91 12 L 112 39 L 104 72 Z"></path><path d="M 31 23 Q 54 9 77 23" fill="none" stroke="#b2b77c" stroke-width="8" stroke-linecap="round"></path></g>
+                  <g class="scene-prop" data-area="snow" data-obstacle="snowdrift" transform="translate(214 380)"><path class="prop-snow" d="M 0 72 Q 4 38 37 40 Q 52 8 86 27 Q 119 -1 145 30 Q 177 30 185 71 Z"></path><path d="M 27 57 Q 75 35 111 49 T 166 48" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"></path></g>
+                  <g class="scene-prop" data-area="snow" data-obstacle="ice-crystal" transform="translate(480 337)"><path class="prop-ice" d="M 0 92 L 19 15 L 37 45 L 57 0 L 81 92 Z"></path><path class="prop-ice-shine" d="M 20 74 L 35 35 M 57 73 L 58 31"></path></g>
+                  <g class="scene-prop" data-area="snow" data-obstacle="ice-spire" transform="translate(804 365)"><path class="prop-ice" d="M 0 78 L 13 35 L 23 46 L 40 0 L 57 50 L 72 22 L 90 78 Z"></path><path class="prop-ice-shine" d="M 40 62 L 41 22 M 68 63 L 73 39"></path></g>
+                  <g class="scene-prop" data-area="city" data-obstacle="stacked-crates" transform="translate(210 366)"><path class="prop-crate" d="M 0 28 L 70 8 L 129 27 L 59 50 Z M 0 28 L 59 50 L 59 112 L 0 88 Z M 59 50 L 129 27 L 129 88 L 59 112 Z"></path><path class="prop-crate-line" d="M 11 38 L 48 75 L 48 99 M 70 48 L 113 33 M 73 56 L 73 101"></path></g>
+                  <g class="scene-prop" data-area="city" data-obstacle="broken-appliance-panel" transform="translate(530 351) rotate(7)"><path class="prop-panel" d="M 0 12 L 115 0 L 132 80 L 18 96 Z"></path><rect class="prop-panel-light" x="29" y="24" width="29" height="20" rx="4"></rect><circle cx="91" cy="30" r="7" fill="#9de0d5"></circle><path d="M 29 62 L 68 57 M 83 57 L 108 52" stroke="#bfc7ce" stroke-width="6" stroke-linecap="round"></path></g>
+                  <g class="scene-prop" data-area="city" data-obstacle="road-barrier" transform="translate(790 405)"><path class="prop-barrier" d="M 0 14 L 152 0 L 152 43 L 0 58 Z M 19 53 L 37 53 L 25 102 L 7 102 Z M 119 43 L 137 43 L 148 89 L 130 89 Z"></path><path class="prop-barrier-mark" d="M 36 17 L 53 48 M 84 12 L 101 43 M 128 8 L 145 39"></path></g>
+                  <g class="scene-prop" data-area="chaos" data-obstacle="driftwood" transform="translate(218 373) rotate(-5)"><path class="prop-log" d="M 0 25 Q 5 1 29 4 L 130 0 Q 151 4 148 27 L 142 57 L 10 62 Z"></path><ellipse class="prop-log-end" cx="12" cy="35" rx="15" ry="26"></ellipse><path class="prop-woodgrain" d="M 35 19 Q 76 11 124 15 M 38 40 Q 83 34 131 37"></path></g>
+                  <g class="scene-prop" data-area="chaos" data-obstacle="prism-spire" transform="translate(496 355)"><path class="prop-ice" d="M 0 81 L 18 28 L 31 42 L 54 0 L 75 81 Z"></path><path class="prop-ice-shine" d="M 21 67 L 39 31 M 56 63 L 56 23"></path></g>
+                  <g class="scene-prop" data-area="chaos" data-obstacle="floating-crate" transform="translate(788 371) rotate(-4)"><path class="prop-crate" d="M 0 20 L 67 0 L 121 18 L 55 39 Z M 0 20 L 55 39 L 55 91 L 0 71 Z M 55 39 L 121 18 L 121 70 L 55 91 Z"></path><path class="prop-crate-line" d="M 12 30 L 44 60 L 44 80 M 66 38 L 104 25"></path></g>
                 </svg>
                 <div class="launch-pad" id="launchPad" role="group" aria-label="새총과 발사 파워">
                   <svg class="slingshot-visual" viewBox="0 0 124 142" aria-hidden="true">
