@@ -242,7 +242,7 @@
     .slingshot-frame { fill:none;stroke:#704628;stroke-width:13;stroke-linecap:round;stroke-linejoin:round; }
     .slingshot-grip { fill:none;stroke:#aa7143;stroke-width:7;stroke-linecap:round; }
     .slingshot-band { fill:none;stroke:#e3b86f;stroke-width:4;stroke-linecap:round; }
-    .slingshot-pouch { position:absolute;left:55px;top:45px;width:18px;height:18px;border:2px solid #69452b;border-radius:50% 50% 48% 48%;background:radial-gradient(circle at 33% 28%,#f5d493,#99633a 72%);box-shadow:0 2px 4px rgba(0,0,0,.35); }
+    .slingshot-pouch { position:absolute;left:55px;top:45px;width:18px;height:18px;border:2px solid #69452b;border-radius:50% 50% 48% 48%;background:radial-gradient(circle at 33% 28%,#f5d493,#99633a 72%);box-shadow:0 2px 4px rgba(0,0,0,.35),0 0 0 rgba(246,167,77,0);transition:box-shadow 100ms linear; }
     .launch-pad .power-meter { position:absolute;left:112px;top:29px;width:16px;height:92px;border-radius:99px; }
     .launch-pad .power-meter-fill { width:100%;height:20%;background:linear-gradient(0deg,#96c27a,#efbd58 58%,#e27759);transition:height 70ms linear; }
     .angle-readout { position:absolute;left:101px;top:0;min-width:42px;padding:4px 6px;border:1px solid rgba(77,60,39,.28);border-radius:8px;background:rgba(255,250,239,.94);color:#40301f;text-align:center;font-size:.7rem;font-weight:900;font-variant-numeric:tabular-nums;box-shadow:0 2px 7px rgba(0,0,0,.16);pointer-events:none; }
@@ -271,7 +271,7 @@
     @keyframes playerShieldFeedback { 0% { opacity:.55;transform:scale(.88); } 35%,70% { opacity:1;transform:scale(1.02); } 100% { opacity:.82;transform:scale(1); } }
     @keyframes playerHealFeedback { 0% { opacity:.34;transform:translateY(5px) scale(.92); } 42% { opacity:1;transform:translateY(-3px) scale(1.04); } 100% { opacity:.78;transform:translateY(-8px) scale(1); } }
     .trajectory-preview { position:absolute;inset:0;z-index:3;width:100%;height:100%;overflow:visible;pointer-events:none; }
-    .trajectory-preview path { fill:none;stroke:rgba(255,255,255,.22);stroke-width:3;stroke-dasharray:7 9;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)); }
+    .trajectory-preview path { fill:none;stroke:rgba(255,231,157,.62);stroke-width:4;stroke-dasharray:10 8;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(24,30,17,.9)) drop-shadow(0 0 4px rgba(255,238,160,.45)); }
     .trajectory-preview #trajectoryGeometry { stroke:none;filter:none;visibility:hidden; }
     .projectile-sprite { position:absolute;left:0;top:0;z-index:6;width:24px;height:24px;display:block;border:3px solid #493522;border-radius:50%;background:radial-gradient(circle at 31% 27%,#fff2bd 0 12%,#e9c875 13% 46%,#92724e 72%,#59432f 100%);box-shadow:0 3px 7px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.75);will-change:transform;pointer-events:none; }
     .power-meter { display:flex;align-items:flex-end;overflow:hidden;border:1px solid var(--border);background:var(--surface-hover); }
@@ -849,13 +849,20 @@
         updateForestParallax();
       }
     }
-    function focusAimCamera(immediate) {
+    function focusAimCamera(immediate, scale) {
       var arena = document.getElementById('arena');
       var battle = document.querySelector('[data-screen="battle"]');
       var launcher = document.getElementById('launchPad');
       if (!arena || !battle || battle.hidden || !launcher) return;
-      if (forestMotionQuery.matches) { restoreAimCamera(true); return; }
-      focusCameraOn(launcher,1.35,immediate ? 0 : 500);
+      focusCameraOn(launcher,Number.isFinite(scale) ? scale : 1.35,immediate ? 0 : 500);
+    }
+    function zoomAimCameraOut(durationMs) {
+      var arena = document.getElementById('arena');
+      var world = document.getElementById('arenaWorld');
+      var battle = document.querySelector('[data-screen="battle"]');
+      if (!arena || !world || !battle || battle.hidden || !world.offsetWidth || !world.offsetHeight || !arena.clientWidth || !arena.clientHeight) return;
+      var fitScale = Math.min(arena.clientWidth / world.offsetWidth,arena.clientHeight / world.offsetHeight);
+      focusCameraOn(world,fitScale,durationMs);
     }
     function restoreAimCamera(immediate) {
       var arena = document.getElementById('arena');
@@ -1024,16 +1031,22 @@
         y:elements.launcher.offsetTop + elements.stone.offsetTop + elements.stone.offsetHeight / 2
       };
     }
-    function updateSlingshotDraw(angleDeg) {
+    function updateSlingshotDraw(angleDeg,powerPercent) {
       var elements = getAimElements();
       if (!elements.stone || !elements.bandLeft || !elements.bandRight) return;
       var angle = angleDeg * Math.PI / 180;
-      var centerX = 64 + Math.cos(angle) * 11;
-      var centerY = 54 - Math.sin(angle) * 11;
+      var tension = clamp((powerPercent - POWER_MIN_PERCENT) / (POWER_MAX_PERCENT - POWER_MIN_PERCENT),0,1);
+      var pullDistance = 18 * tension;
+      var centerX = 64 + Math.cos(angle) * 11 - Math.cos(angle) * pullDistance;
+      var centerY = 54 - Math.sin(angle) * 11 + Math.sin(angle) * pullDistance;
       elements.stone.style.left = (centerX - elements.stone.offsetWidth / 2) + 'px';
       elements.stone.style.top = (centerY - elements.stone.offsetHeight / 2) + 'px';
       elements.bandLeft.setAttribute('d','M 34 22 Q ' + (49 + (centerX - 64) * .45) + ' ' + (39 + (centerY - 54) * .35) + ' ' + centerX + ' ' + centerY);
       elements.bandRight.setAttribute('d','M 91 22 Q ' + (78 + (centerX - 64) * .45) + ' ' + (39 + (centerY - 54) * .35) + ' ' + centerX + ' ' + centerY);
+      var bandWidth = (4 + tension * 1.4).toFixed(2) + 'px';
+      elements.bandLeft.style.strokeWidth = bandWidth;
+      elements.bandRight.style.strokeWidth = bandWidth;
+      if (elements.stone) elements.stone.style.boxShadow = '0 2px 4px rgba(0,0,0,.35),0 0 ' + (tension * 10).toFixed(1) + 'px rgba(246,167,77,' + (tension * .65).toFixed(2) + ')';
     }
     function updateAimState() {
       var angle = document.getElementById('angleValue');
@@ -1047,7 +1060,7 @@
       if (power && power.textContent !== powerText) power.textContent = powerText;
       if (meter) meter.setAttribute('aria-valuenow',String(Math.round(aimState.powerPercent)));
       if (fill) fill.style.height = aimState.powerPercent + '%';
-      updateSlingshotDraw(aimState.angleDeg);
+      updateSlingshotDraw(aimState.angleDeg,aimState.powerPercent);
       var stageText = {
         idle:'전장을 좌클릭해 조준을 시작하세요.',
         angle:'1/3 각도 조절 · 좌클릭을 유지하고 마우스를 상하로 움직이세요.',
@@ -1097,17 +1110,20 @@
       if (event.pointerType !== 'mouse' || event.button !== 0 || aimState.phase !== 'idle') return;
       var battle = document.querySelector('[data-screen="battle"]');
       if (!battle || battle.hidden || Number(document.getElementById('ammoValue').textContent) <= 0) return;
+      var launcherBounds = elements.launcher.getBoundingClientRect();
+      if (event.clientX < launcherBounds.left || event.clientX > launcherBounds.right || event.clientY < launcherBounds.top || event.clientY > launcherBounds.bottom) return;
       event.preventDefault();
       syncTrajectoryViewBox();
-      var start = getStoneCenter();
       aimState = createIdleAimState();
       aimState.phase = 'angle';
       aimState.pointerId = event.pointerId;
       aimState.lastClientY = event.clientY;
       aimState.isPointerHeld = true;
-      aimState.targetX = elements.launcher.offsetLeft + elements.launcher.offsetWidth;
+      var enemyGroup = document.getElementById('enemyGroup');
+      aimState.targetX = enemyGroup ? enemyGroup.offsetLeft + enemyGroup.offsetWidth / 2 : elements.launcher.offsetLeft + elements.launcher.offsetWidth;
       try { elements.arena.setPointerCapture(event.pointerId); } catch(error) { /* Pointer capture can be unavailable in an embedded preview. */ }
       elements.arena.focus({preventScroll:true});
+      focusAimCamera(true,1.5);
       updateAimState();
     }
     function onArenaPointerMove(event) {
@@ -1147,12 +1163,14 @@
       aimState.phase = 'power';
       aimState.lastPowerFrameTime = null;
       updateAimState();
+      zoomAimCameraOut(1400);
       aimState.animationFrameId = requestAnimationFrame(animatePowerGauge);
     }
     function onPowerKeyUp(event) {
       if (!isSpaceKey(event) || aimState.phase !== 'power' || !aimState.isPointerHeld) return;
       event.preventDefault();
       stopAimAnimation();
+      stopCameraAnimation();
       aimState.isPowerLocked = true;
       aimState.phase = 'direction';
       var elements = getAimElements();
@@ -1235,7 +1253,6 @@
       if (elements.weaponCard) elements.weaponCard.hidden = true;
       stopAimAnimation();
       if (elements.path) elements.path.setAttribute('d','');
-      focusAimCamera(false);
       try { if (elements.arena.hasPointerCapture(event.pointerId)) elements.arena.releasePointerCapture(event.pointerId); } catch(error) { /* The browser may have released capture already. */ }
       updateAimState();
       var sequence = launchSequence;
