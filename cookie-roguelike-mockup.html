@@ -252,6 +252,19 @@
     .monster.snake { left:5%;bottom:18px; }
     .monster.boar-one { left:43%;bottom:14px; }
     .monster.boar-two { left:77%;bottom:43px; }
+    .enemy-group::before,.enemy-group::after { content:"";position:absolute;z-index:5;pointer-events:none; }
+    .enemy-group.item-effect-fireball::after { inset:-8% -2%;border-radius:50%;background:radial-gradient(ellipse at 50% 55%,rgba(255,205,91,.76),rgba(255,112,45,.36) 32%,rgba(255,70,43,.12) 55%,transparent 74%);animation:enemyFireballBurst 850ms ease-out both; }
+    .enemy-group.item-effect-fireball .monster { filter:drop-shadow(0 0 10px rgba(255,125,46,.9)) brightness(1.16);animation:enemyFireballHit 850ms ease-out both; }
+    .enemy-group.item-effect-spear::before { left:-7%;right:-4%;top:46%;height:9px;border-radius:99px;background:linear-gradient(90deg,transparent 0%,rgba(130,245,255,.08) 8%,#fff5c2 43%,#75efff 58%,rgba(118,195,255,.12) 95%,transparent);filter:drop-shadow(0 0 6px rgba(99,226,255,.95));transform:translateX(0);animation:spearFeedbackSweep 700ms cubic-bezier(.18,.72,.22,1) both; }
+    .enemy-group.item-effect-spear .monster { filter:drop-shadow(0 0 9px rgba(118,226,255,.88)) brightness(1.12);animation:enemySpearHit 700ms ease-out both; }
+    .launch-pad.item-effect-defense::before { content:"";position:absolute;z-index:2;inset:-13px -8px -7px -10px;border:3px solid rgba(160,237,255,.96);border-radius:52% 48% 44% 46%;background:radial-gradient(ellipse,rgba(123,222,255,.18),rgba(85,182,255,.08) 65%,transparent 72%);box-shadow:0 0 10px rgba(94,220,255,.8),inset 0 0 12px rgba(143,232,255,.38);pointer-events:none;animation:playerShieldFeedback 850ms ease-out both; }
+    .launch-pad.item-effect-heal::after { content:"";position:absolute;z-index:2;inset:-18px -9px -5px -10px;border-radius:50%;background:radial-gradient(circle at 23% 66%,#f5ffbf 0 2px,transparent 3px),radial-gradient(circle at 74% 52%,#d9ff9a 0 2px,transparent 3px),radial-gradient(circle at 57% 28%,#fff6b0 0 1.5px,transparent 2.5px),radial-gradient(ellipse at 52% 68%,rgba(151,245,115,.4),rgba(126,227,122,.16) 46%,transparent 73%);filter:drop-shadow(0 0 6px rgba(151,255,121,.75));pointer-events:none;animation:playerHealFeedback 900ms ease-out both; }
+    @keyframes enemyFireballBurst { 0% { opacity:.92;transform:scale(.62); } 65% { opacity:.88;transform:scale(1.04); } 100% { opacity:0;transform:scale(1.17); } }
+    @keyframes enemyFireballHit { 0%,100% { filter:drop-shadow(0 0 0 transparent) brightness(1); } 28% { filter:drop-shadow(0 0 13px rgba(255,129,43,.96)) brightness(1.32); } }
+    @keyframes spearFeedbackSweep { 0% { opacity:.1;transform:translateX(-110%) scaleX(.72); } 24% { opacity:1; } 100% { opacity:0;transform:translateX(110%) scaleX(.88); } }
+    @keyframes enemySpearHit { 0%,100% { filter:drop-shadow(0 0 0 transparent) brightness(1); } 25% { filter:drop-shadow(0 0 12px rgba(118,226,255,.98)) brightness(1.26); } }
+    @keyframes playerShieldFeedback { 0% { opacity:.55;transform:scale(.88); } 35%,70% { opacity:1;transform:scale(1.02); } 100% { opacity:.82;transform:scale(1); } }
+    @keyframes playerHealFeedback { 0% { opacity:.34;transform:translateY(5px) scale(.92); } 42% { opacity:1;transform:translateY(-3px) scale(1.04); } 100% { opacity:.78;transform:translateY(-8px) scale(1); } }
     .trajectory-preview { position:absolute;inset:0;z-index:3;width:100%;height:100%;overflow:visible;pointer-events:none; }
     .trajectory-preview path { fill:none;stroke:rgba(255,255,255,.22);stroke-width:3;stroke-dasharray:7 9;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)); }
     .trajectory-preview #trajectoryGeometry { stroke:none;filter:none;visibility:hidden; }
@@ -1259,10 +1272,40 @@
     }
     setupAimControls();
     setupForestAmbientMotion();
+    var itemVisualEffectTimers = new WeakMap();
+    function triggerItemVisualEffect(target, className, duration) {
+      if (!target) return;
+      var targetTimers = itemVisualEffectTimers.get(target);
+      if (!targetTimers) {
+        targetTimers = Object.create(null);
+        itemVisualEffectTimers.set(target,targetTimers);
+      }
+      if (targetTimers[className]) clearTimeout(targetTimers[className]);
+      target.classList.remove(className);
+      void target.offsetWidth;
+      target.classList.add(className);
+      targetTimers[className] = setTimeout(function() {
+        target.classList.remove(className);
+        delete targetTimers[className];
+      },duration);
+    }
+    function showItemVisualEffect(key) {
+      var enemyGroup = document.getElementById('enemyGroup');
+      var launchPad = document.getElementById('launchPad');
+      var effects = {
+        1:{target:enemyGroup,className:'item-effect-fireball',duration:850},
+        2:{target:enemyGroup,className:'item-effect-spear',duration:700},
+        3:{target:launchPad,className:'item-effect-defense',duration:850},
+        4:{target:launchPad,className:'item-effect-heal',duration:900}
+      };
+      var effect = effects[key];
+      if (effect) triggerItemVisualEffect(effect.target,effect.className,effect.duration);
+    }
     function useItem(key) {
       var battle = document.querySelector('[data-screen="battle"]');
       if (battle.hidden) return;
       var labels = {1:'불공 사용 · 다음 영구 무기 투사체 피해 2배',2:'창 사용 · 최대 3마리 관통',3:'방어 사용 · 다음 적 공격을 모두 차단',4:'회복 사용 · 체력 25 회복'};
+      showItemVisualEffect(key);
       showToast(labels[key] + ' · 적의 차례');
     }
     async function downloadImage() {
