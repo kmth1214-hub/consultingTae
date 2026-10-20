@@ -713,9 +713,10 @@
     forestMotionQuery.addEventListener('change',function(event) {
       if (event.matches) {
         roundIntroId++;
-        stopCameraAnimation();
-        fitArenaWorld();
-      } else updateForestParallax();
+        if (aimState.phase !== 'idle') restoreAimCamera(true);
+        else { stopCameraAnimation(); fitArenaWorld(); }
+      } else if (aimState.phase !== 'idle') focusAimCamera(true);
+      else updateForestParallax();
       syncForestAmbientState();
     });
     /** @returns {void} Keep ambient motion limited to the visible, ready forest battle. */
@@ -826,6 +827,29 @@
         updateForestParallax();
       }
     }
+    function focusAimCamera(immediate) {
+      var arena = document.getElementById('arena');
+      var battle = document.querySelector('[data-screen="battle"]');
+      var launcher = document.getElementById('launchPad');
+      if (!arena || !battle || battle.hidden || !launcher) return;
+      if (forestMotionQuery.matches) { restoreAimCamera(true); return; }
+      focusCameraOn(launcher,1.35,immediate ? 0 : 500);
+    }
+    function restoreAimCamera(immediate) {
+      var arena = document.getElementById('arena');
+      var world = document.getElementById('arenaWorld');
+      var battle = document.querySelector('[data-screen="battle"]');
+      if (!arena || !world || !battle || !world.offsetWidth || !world.offsetHeight || !arena.clientWidth || !arena.clientHeight) return;
+      var fitScale = Math.min(arena.clientWidth / world.offsetWidth,arena.clientHeight / world.offsetHeight);
+      if (immediate || battle.hidden || forestMotionQuery.matches) {
+        stopCameraAnimation();
+        world.style.transform = cameraTransformFor(world,fitScale);
+        syncTrajectoryViewBox();
+        updateForestParallax();
+        return;
+      }
+      focusCameraOn(world,fitScale,450);
+    }
     async function playRoundIntro() {
       var arena = document.getElementById('arena');
       var world = document.getElementById('arenaWorld');
@@ -872,7 +896,7 @@
         roundIntroId++;
         stopCameraAnimation();
       }
-      if (name !== 'battle' && aimState.phase !== 'idle') cancelAim('pointer-cancel');
+      if (name !== 'battle' && aimState.phase !== 'idle') cancelAim('screen-exit');
       document.querySelectorAll('.prototype-screen').forEach(function(screen) { screen.hidden = screen.dataset.screen !== name; });
       syncForestAmbientState();
       document.querySelectorAll('[data-screen-button]').forEach(function(button) { button.classList.toggle('active',button.dataset.screenButton === name); });
@@ -1040,6 +1064,7 @@
       aimState.targetX = elements.launcher.offsetLeft + elements.launcher.offsetWidth;
       try { elements.arena.setPointerCapture(event.pointerId); } catch(error) { /* Pointer capture can be unavailable in an embedded preview. */ }
       elements.arena.focus({preventScroll:true});
+      focusAimCamera(false);
       updateAimState();
     }
     function onArenaPointerMove(event) {
@@ -1113,6 +1138,7 @@
       if (elements.sprite) elements.sprite.hidden = true;
       aimState = createIdleAimState();
       updateAimState();
+      restoreAimCamera(reason === 'window-blur' || reason === 'screen-exit');
       if (reason === 'early-release') showToast('발사 파워를 확정하려면 Space를 놓은 뒤 좌클릭을 떼세요.');
     }
     function onArenaPointerCancel(event) {
@@ -1163,9 +1189,13 @@
       updateAimState();
       var sequence = launchSequence;
       var completed = await animateProjectile(elements.path);
-      if (!completed || aimState.phase !== 'launching' || sequence + 1 !== launchSequence) return;
+      if (!completed || aimState.phase !== 'launching' || sequence + 1 !== launchSequence) {
+        if (!completed && aimState.phase === 'launching' && sequence + 1 === launchSequence) cancelAim('projectile-failed');
+        return;
+      }
       fireShot();
       resetAimAfterShot();
+      restoreAimCamera(false);
     }
     function setupAimControls() {
       var elements = getAimElements();
@@ -1193,11 +1223,13 @@
       });
       document.addEventListener('fullscreenchange',function() {
         var battle = document.querySelector('[data-screen="battle"]');
-        if (!document.fullscreenElement && battle && battle.hidden && aimState.phase !== 'idle') cancelAim('pointer-cancel');
-        fitArenaWorld();
+        if (!document.fullscreenElement && battle && battle.hidden && aimState.phase !== 'idle') cancelAim('screen-exit');
+        if (aimState.phase !== 'idle' && battle && !battle.hidden) focusAimCamera(true);
+        else fitArenaWorld();
       });
       window.addEventListener('resize',function() {
-        fitArenaWorld();
+        if (aimState.phase !== 'idle') focusAimCamera(true);
+        else fitArenaWorld();
         syncTrajectoryViewBox();
         if (aimState.phase === 'direction' || aimState.phase === 'launching') drawTrajectoryPreview();
       });

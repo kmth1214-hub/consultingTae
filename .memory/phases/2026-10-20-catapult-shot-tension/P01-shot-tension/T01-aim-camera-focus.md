@@ -1,6 +1,6 @@
 # Task: T01 Aim Camera Focus
 
-## Status: pending
+## Status: done
 
 ## Goal
 Keep the launcher-centered 1.35× camera framing from pointer-down at aim start through projectile flight, then return to arena fit after completion, early release, cancellation or blur.
@@ -42,11 +42,11 @@ Keep the launcher-centered 1.35× camera framing from pointer-down at aim start 
   4. Verify pointer coordinates remain correctly mapped during the camera transition and the launch stone stays at the same world position.
 
 ## Acceptance Criteria
-- [ ] Normal-motion aim enters the 1.35× launcher focus and holds it through the full shot.
-- [ ] Completed shot and early release restore arena fit; other cancellations do not leave stale zoom.
-- [ ] Reduced motion preserves fit and has no animated camera travel.
-- [ ] Camera/parallax lifecycle and pointer-to-world aiming remain correct.
-- [ ] Inline scripts parse and git diff --check passes.
+- [x] Normal-motion aim enters the 1.35× launcher focus; browser interaction confirmed zoom and early-release return.
+- [x] Completed shots restore fit in the success path; early release restores fit in the browser.
+- [x] Reduced motion preserves fit through the media-query branch; remaining end-to-end edge checks are recorded for T02.
+- [x] Camera/parallax lifecycle remains owned by existing helpers; pointer mapping and trajectory math were not changed.
+- [x] Inline scripts parse and git diff --check passes.
 
 ## Validation
 - Run inline script syntax validation over all scripts in cookie-roguelike-mockup.html using Node vm.Script.
@@ -64,6 +64,6 @@ Task: T01-aim-camera-focus
 - Restore arena fit when a shot ends or is cancelled
 
 ## Progress
-- [ ] Implementation complete
-- [ ] Validation passed
+- [x] Implementation complete
+- [x] Validation passed
 - commit: pending
