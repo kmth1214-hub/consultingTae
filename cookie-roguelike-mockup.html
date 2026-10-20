@@ -243,7 +243,11 @@
     .launcher-stone { position:absolute;left:107px;top:18px;width:26px;height:26px;border-radius:50%;background:#96765b;border:3px solid #72573f; }
     .enemy-group { position:absolute;left:43%;right:4%;bottom:62px;height:112px; }
     .monster { position:absolute;z-index:4;display:grid;place-items:center;width:67px;height:76px; }
-    .monster-art { position:relative;z-index:0;display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(35,33,23,.34));pointer-events:none; }
+    .monster-art { position:relative;z-index:0;display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(35,33,23,.34));pointer-events:none;animation:monsterBreath 3.1s ease-in-out infinite; }
+    .monster.snake .monster-art { animation-delay:-.75s; }
+    .monster.boar-two .monster-art { animation-delay:-1.55s; }
+    @keyframes monsterBreath { 0%,100% { transform:scale(1); } 50% { transform:scale(1.012); } }
+    @media (prefers-reduced-motion:reduce) { .monster-art { animation:none!important; } }
     .monster::after { content:"4";position:absolute;z-index:2;right:-8px;top:-9px;min-width:25px;height:25px;display:grid;place-items:center;border:2px solid var(--surface);border-radius:50%;background:#fff9ec;color:#60412f;font-size:.69rem;font-weight:900; }
     .monster.snake { left:5%;bottom:18px; }
     .monster.boar-one { left:43%;bottom:14px; }
