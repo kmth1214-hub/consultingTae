@@ -248,7 +248,8 @@
     .monster.boar-one { left:43%;bottom:14px;background:#c6966a; }
     .monster.boar-two { left:77%;bottom:43px;background:#cc9b71; }
     .trajectory-preview { position:absolute;inset:0;z-index:3;width:100%;height:100%;overflow:visible;pointer-events:none; }
-    .trajectory-preview path { fill:none;stroke:rgba(255,255,255,.48);stroke-width:3;stroke-dasharray:7 9;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)); }
+    .trajectory-preview path { fill:none;stroke:rgba(255,255,255,.22);stroke-width:3;stroke-dasharray:7 9;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)); }
+    .trajectory-preview #trajectoryGeometry { stroke:none;filter:none;visibility:hidden; }
     .projectile-sprite { position:absolute;left:0;top:0;z-index:6;width:24px;height:24px;display:block;border:3px solid #493522;border-radius:50%;background:radial-gradient(circle at 31% 27%,#fff2bd 0 12%,#e9c875 13% 46%,#92724e 72%,#59432f 100%);box-shadow:0 3px 7px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.75);will-change:transform;pointer-events:none; }
     .aim-controls { display:grid;gap:11px; }
     .power-meter { height:14px;overflow:hidden;border:1px solid var(--border);border-radius:99px;background:var(--surface-hover); }
@@ -494,7 +495,7 @@
                   <rect class="area-road-shadow" x="90" y="411" width="820" height="138" rx="69"></rect><rect class="area-road-edge" x="90" y="405" width="820" height="132" rx="66"></rect><rect class="area-road-surface" x="90" y="412" width="820" height="118" rx="59"></rect><path class="area-road-highlight" d="M 150 431 H 850"></path>
                 </svg>
                 <div class="launch-pad" id="launchPad" aria-hidden="true"><div class="launcher-base"></div><div class="launcher-arm"></div><div class="launcher-stone"></div></div>
-                <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryPath" d=""></path></svg>
+                <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryGeometry" d=""></path><path id="trajectoryPath" d=""></path></svg>
                 <div id="projectileSprite" class="projectile-sprite" aria-hidden="true" hidden></div>
                 <div class="enemy-group" id="enemyGroup" role="group" aria-label="현재 라운드의 적">
                   <div class="monster snake" aria-label="뱀, 체력 4">🐍</div><div class="monster boar-one" aria-label="멧돼지, 체력 4">🐗</div><div class="monster boar-two" aria-label="멧돼지, 체력 4">🐗</div>
@@ -715,7 +716,7 @@
         roundIntroId++;
         if (aimState.phase !== 'idle') restoreAimCamera(true);
         else { stopCameraAnimation(); fitArenaWorld(); }
-      } else if (aimState.phase !== 'idle') focusAimCamera(true);
+      } else if (aimState.phase === 'launching') focusAimCamera(true);
       else updateForestParallax();
       syncForestAmbientState();
     });
@@ -968,6 +969,7 @@
         arena:document.getElementById('arena'),
         world:document.getElementById('arenaWorld'),
         path:document.getElementById('trajectoryPath'),
+        geometry:document.getElementById('trajectoryGeometry'),
         sprite:document.getElementById('projectileSprite'),
         launcher:document.getElementById('launchPad'),
         stone:document.querySelector('#launchPad .launcher-stone'),
@@ -1025,9 +1027,10 @@
     }
     function drawTrajectoryPreview() {
       var elements = getAimElements();
-      if (!elements.path || !elements.world || !elements.arena) return;
-      if (aimState.phase !== 'direction' && aimState.phase !== 'launching') {
+      if (!elements.path || !elements.geometry || !elements.world || !elements.arena) return;
+      if (aimState.phase !== 'direction') {
         elements.path.setAttribute('d','');
+        if (aimState.phase !== 'launching') elements.geometry.setAttribute('d','');
         return;
       }
       syncTrajectoryViewBox();
@@ -1037,7 +1040,15 @@
       var verticalLift = clamp((aimState.targetX - start.x) * Math.tan(aimState.angleDeg * Math.PI / 180) * 0.45,24,height * 0.82);
       var controlX = start.x + horizontalDistance;
       var controlY = start.y - verticalLift;
-      elements.path.setAttribute('d','M ' + start.x + ' ' + start.y + ' Q ' + controlX + ' ' + controlY + ' ' + aimState.targetX + ' ' + start.y);
+      var previewFraction = 0.30;
+      var firstControlX = start.x + (controlX - start.x) * previewFraction;
+      var firstControlY = start.y + (controlY - start.y) * previewFraction;
+      var secondControlX = controlX + (aimState.targetX - controlX) * previewFraction;
+      var secondControlY = controlY + (start.y - controlY) * previewFraction;
+      var previewEndX = firstControlX + (secondControlX - firstControlX) * previewFraction;
+      var previewEndY = firstControlY + (secondControlY - firstControlY) * previewFraction;
+      elements.geometry.setAttribute('d','M ' + start.x + ' ' + start.y + ' Q ' + controlX + ' ' + controlY + ' ' + aimState.targetX + ' ' + start.y);
+      elements.path.setAttribute('d','M ' + start.x + ' ' + start.y + ' Q ' + firstControlX + ' ' + firstControlY + ' ' + previewEndX + ' ' + previewEndY);
     }
     function aimPointFromPointer(event) {
       var elements = getAimElements();
@@ -1064,7 +1075,6 @@
       aimState.targetX = elements.launcher.offsetLeft + elements.launcher.offsetWidth;
       try { elements.arena.setPointerCapture(event.pointerId); } catch(error) { /* Pointer capture can be unavailable in an embedded preview. */ }
       elements.arena.focus({preventScroll:true});
-      focusAimCamera(false);
       updateAimState();
     }
     function onArenaPointerMove(event) {
@@ -1121,6 +1131,7 @@
     function resetAimAfterShot() {
       var elements = getAimElements();
       if (elements.path) elements.path.setAttribute('d','');
+      if (elements.geometry) elements.geometry.setAttribute('d','');
       if (elements.sprite) elements.sprite.hidden = true;
       aimState = createIdleAimState();
       updateAimState();
@@ -1128,6 +1139,7 @@
     function cancelAim(reason) {
       var elements = getAimElements();
       var pointerId = aimState.pointerId;
+      var wasCameraFocused = aimState.phase === 'launching';
       if (projectileAnimationCancel) projectileAnimationCancel();
       stopAimAnimation();
       launchSequence++;
@@ -1135,10 +1147,11 @@
         try { if (elements.arena.hasPointerCapture(pointerId)) elements.arena.releasePointerCapture(pointerId); } catch(error) { /* The pointer may already have been released by the browser. */ }
       }
       if (elements.path) elements.path.setAttribute('d','');
+      if (elements.geometry) elements.geometry.setAttribute('d','');
       if (elements.sprite) elements.sprite.hidden = true;
       aimState = createIdleAimState();
       updateAimState();
-      restoreAimCamera(reason === 'window-blur' || reason === 'screen-exit');
+      restoreAimCamera(!wasCameraFocused || reason === 'window-blur' || reason === 'screen-exit');
       if (reason === 'early-release') showToast('발사 파워를 확정하려면 Space를 놓은 뒤 좌클릭을 떼세요.');
     }
     function onArenaPointerCancel(event) {
@@ -1185,10 +1198,12 @@
       aimState.phase = 'launching';
       aimState.isPointerHeld = false;
       stopAimAnimation();
+      if (elements.path) elements.path.setAttribute('d','');
+      focusAimCamera(false);
       try { if (elements.arena.hasPointerCapture(event.pointerId)) elements.arena.releasePointerCapture(event.pointerId); } catch(error) { /* The browser may have released capture already. */ }
       updateAimState();
       var sequence = launchSequence;
-      var completed = await animateProjectile(elements.path);
+      var completed = await animateProjectile(elements.geometry);
       if (!completed || aimState.phase !== 'launching' || sequence + 1 !== launchSequence) {
         if (!completed && aimState.phase === 'launching' && sequence + 1 === launchSequence) cancelAim('projectile-failed');
         return;
@@ -1224,11 +1239,13 @@
       document.addEventListener('fullscreenchange',function() {
         var battle = document.querySelector('[data-screen="battle"]');
         if (!document.fullscreenElement && battle && battle.hidden && aimState.phase !== 'idle') cancelAim('screen-exit');
-        if (aimState.phase !== 'idle' && battle && !battle.hidden) focusAimCamera(true);
+        if (aimState.phase === 'launching' && battle && !battle.hidden) focusAimCamera(true);
+        else if (aimState.phase !== 'idle' && battle && !battle.hidden) restoreAimCamera(true);
         else fitArenaWorld();
       });
       window.addEventListener('resize',function() {
-        if (aimState.phase !== 'idle') focusAimCamera(true);
+        if (aimState.phase === 'launching') focusAimCamera(true);
+        else if (aimState.phase !== 'idle') restoreAimCamera(true);
         else fitArenaWorld();
         syncTrajectoryViewBox();
         if (aimState.phase === 'direction' || aimState.phase === 'launching') drawTrajectoryPreview();

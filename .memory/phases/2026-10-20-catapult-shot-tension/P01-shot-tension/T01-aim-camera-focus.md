@@ -3,10 +3,10 @@
 ## Status: done
 
 ## Goal
-Keep the launcher-centered 1.35× camera framing from pointer-down at aim start through projectile flight, then return to arena fit after completion, early release, cancellation or blur.
+Keep the full battlefield framing while the player selects a target, then transition to the launcher-centered 1.35× camera framing at accepted release and hold it through projectile flight. Return to arena fit after completion or cancellation.
 
 ## Decision Summary
-- Reuse existing camera helpers and world transform. Normal motion transitions to a 1.35× launcher focus; reduced motion keeps the existing fit view.
+- Reuse existing camera helpers and world transform. Preserve full-scene pointer mapping during aim, then transition to a 1.35× launcher focus for flight; reduced motion keeps the existing fit view.
 - Camera changes are presentation only. Preserve aim state, pointer-world mapping, projectile path, parallax sampling and navigation generation guards.
 
 ## Implementation
@@ -23,9 +23,9 @@ Keep the launcher-centered 1.35× camera framing from pointer-down at aim start 
   - restoreAimCamera(immediate?: boolean): void; fit the world with existing fitArenaWorld() if battle is hidden or immediate is true; otherwise animate focusCameraOn(world, fitScale, 450), where fitScale = min(arena.clientWidth/world.offsetWidth, arena.clientHeight/world.offsetHeight).
 - **Data & Schema Fields**: No persistent data. Reuse cameraAnimation and forestParallaxFrameId managed by existing camera helpers.
 - **Execution Flow / Logic**:
-  1. In onArenaPointerDown, invoke focusAimCamera once after pointer-down is accepted and aimState enters angle. The existing 1.35 scale centers the launcher at the screen center. Do not alter start pointer coordinates or initial targetX.
-  2. Let getWorldPointFromPointer use the live world transform during zoom. Do not cache a pre-zoom camera matrix or alter pointer capture.
-  3. Keep the zoom while phase is angle, power, direction and launching. Do not refocus on the enemy.
+  1. Keep arena fit while onArenaPointerDown and all aim phases through direction selection. In onArenaPointerUp, after validating the selected direction and before projectile animation, invoke focusAimCamera once. Do not alter aim pointer coordinates or targetX.
+  2. Keep getWorldPointFromPointer on the existing live transform. The camera remains at fit until pointer coordinates have selected the target, so the zoom cannot clip reachable targets.
+  3. Keep the zoom during phase launching. Do not refocus on the enemy.
   4. In onArenaPointerUp, after successful animateProjectile and fireShot/resetAimAfterShot, animate back to fit. An early release already routes through cancelAim('early-release'); that cancellation restores fit.
   5. In cancelAim, clear existing aim/projectile state as today, then restore fit when battle is visible. If battle is hidden, fit immediately or leave camera cleanup to the existing navigation handler; never start a new camera animation on a hidden screen.
   6. Maintain existing `focusCameraOn` cancellation semantics: it stops prior camera animation and updates parallax sampling. Do not add a second rAF loop, timeout or transform owner.
@@ -36,17 +36,18 @@ Keep the launcher-centered 1.35× camera framing from pointer-down at aim start 
   - cookie-roguelike-mockup.html :: existing camera and aim event flow — browser validation.
   - .memory/validation/2026-10-20-catapult-shot-tension/final.md — update in T02 after end-to-end validation.
 - **Execution Flow / Logic**:
-  1. Normal motion: pointer-down enters 1.35× launcher-centered zoom, aim phases and projectile flight stay zoomed, successful completion returns to calculated fit.
+  1. Normal motion: keep fit while aiming; accepted release enters 1.35× launcher-centered zoom, flight stays zoomed, successful completion returns to calculated fit.
   2. Early release, pointercancel, blur, document hidden, battle exit and resize cannot leave a stale zoom or stale camera animation. Navigation retains ownership of hidden-screen cleanup.
   3. Reduced motion does not animate or zoom; scene remains fit and aiming/projectile still work.
   4. Verify pointer coordinates remain correctly mapped during the camera transition and the launch stone stays at the same world position.
 
 ## Acceptance Criteria
-- [x] Normal-motion aim enters the 1.35× launcher focus; browser interaction confirmed zoom and early-release return.
+- [x] Normal-motion launch enters the 1.35× launcher focus after target selection; browser interaction confirmed zoom and early-release return.
 - [x] Completed shots restore fit in the success path; early release restores fit in the browser.
 - [x] Reduced motion preserves fit through the media-query branch; remaining end-to-end edge checks are recorded for T02.
 - [x] Camera/parallax lifecycle remains owned by existing helpers; pointer mapping and trajectory math were not changed.
 - [x] Inline scripts parse and git diff --check passes.
+- Follow-up from T02 integration: moved zoom entry to release after testing showed a pointer-down zoom clipped reachable enemy coordinates.
 
 ## Validation
 - Run inline script syntax validation over all scripts in cookie-roguelike-mockup.html using Node vm.Script.

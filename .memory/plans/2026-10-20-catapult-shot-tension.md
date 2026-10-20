@@ -1,7 +1,7 @@
 # Plan: Catapult Shot Tension
 
 ## Goal
-Build anticipation during aiming by holding a launcher-centered camera close-up from aim start through flight, while showing only a faint first 30% of the predicted arc.
+Build anticipation during the throw with a launcher-centered close-up through flight, while showing only a faint first 30% of the predicted arc and keeping target selection in the full-scene view.
 
 ## Source Decisions
 - [Confirmed decisions](../decisions/2026-10-20-catapult-shot-tension.md)
@@ -9,7 +9,7 @@ Build anticipation during aiming by holding a launcher-centered camera close-up 
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Integrate aiming camera focus and partial trajectory preview | [P01](../phases/2026-10-20-catapult-shot-tension/P01-shot-tension/phase.md) |
+| P01 | `done` | Integrate aiming camera focus and partial trajectory preview | [P01](../phases/2026-10-20-catapult-shot-tension/P01-shot-tension/phase.md) |
 
 ## Boundaries
 - Production target: cookie-roguelike-mockup.html.
@@ -18,7 +18,7 @@ Build anticipation during aiming by holding a launcher-centered camera close-up 
 - Monster visual refresh remains queued and out of scope.
 
 ## Execution Order
-1. T01: hold a launcher-focused 1.35× camera during aim/launch, return to fit on completion/cancellation, and respect reduced motion.
+1. T01: enter a launcher-focused 1.35× camera after target selection, hold it through flight, return to fit on completion/cancellation, and respect reduced motion.
 2. T02: display only the first 30% of a faint curve while retaining the complete path as hidden geometry for projectile animation; verify both tasks together.
 
 ## Validation Strategy

@@ -1,6 +1,6 @@
 # Task: T02 Partial Trajectory Preview
 
-## Status: pending
+## Status: done
 
 ## Goal
 Show a faint first 30% of the aim arc while preserving the complete quadratic path for the projectile's existing flight animation.
@@ -47,11 +47,11 @@ Show a faint first 30% of the aim arc while preserving the complete quadratic pa
   5. Check browser console and visual readability. Record actual fullscreen limitation if still blocked.
 
 ## Acceptance Criteria
-- [ ] Only the faint 30% preview segment is visible during direction selection.
-- [ ] Projectile follows the complete original curve and duration.
-- [ ] Full path is not visible as a ghost during launch; both paths clear when aim resets/cancels.
-- [ ] Camera, aim, ammunition and cancellation behavior pass end-to-end checks.
-- [ ] Inline scripts parse, git diff --check passes, and final.md contains observed results.
+- [x] Only the faint 30% preview segment is visible during direction selection; browser geometry measured the de Casteljau endpoint at t=0.30.
+- [x] Projectile animation receives the complete hidden curve and completes with its existing 700ms duration.
+- [x] No full-arc ghost appears during launch; both paths clear when aim resets/cancels.
+- [x] Camera, target reachability, ammunition and early/pointer cancellation behavior passed desktop browser checks.
+- [x] Inline scripts parse, git diff --check passes, and final.md records observed results and limits.
 
 ## Validation
 - Run inline script syntax validation over every inline script in cookie-roguelike-mockup.html with Node vm.Script.
@@ -69,6 +69,6 @@ Task: T02-partial-trajectory
 - Preserve full projectile motion in separate SVG geometry
 
 ## Progress
-- [ ] Implementation complete
-- [ ] Validation passed
+- [x] Implementation complete
+- [x] Validation passed
 - commit: pending
