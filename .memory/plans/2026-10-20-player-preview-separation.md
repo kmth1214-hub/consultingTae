@@ -9,7 +9,7 @@ Present the mockup as a player-facing game by default, with developer navigation
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Gate preview controls by URL mode and verify both modes | [P01](../phases/2026-10-20-player-preview-separation/P01-preview-mode/phase.md) |
+| P01 | `done` | Gate preview controls by URL mode and verify both modes | [P01](../phases/2026-10-20-player-preview-separation/P01-preview-mode/phase.md) |
 
 ## Boundaries
 - Production target: cookie-roguelike-mockup.html.
@@ -28,3 +28,5 @@ Present the mockup as a player-facing game by default, with developer navigation
 
 ## Completion
 Complete when T01 is implemented, verified, committed and memory status is synchronized.
+
+Completed 2026-10-20. T01 commit: dd4ea41. See [browser validation](../validation/2026-10-20-player-preview-separation/final.md). Fullscreen API was blocked in the validation browser.

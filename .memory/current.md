@@ -1,22 +1,19 @@
-# Current Context
+﻿# Current Context
 
 ## Active Plan
-None ? [Forest Layered Background](./plans/2026-10-12-forest-layered-background.md) completed on 2026-10-20.
+[Catapult Shot Tension](./plans/2026-10-20-catapult-shot-tension.md)
 
 ## Active Phase
-None ? [P01 Forest Scene](./phases/2026-10-12-forest-layered-background/P01-forest-scene/phase.md) completed.
+[P01 Shot Tension](./phases/2026-10-20-catapult-shot-tension/P01-shot-tension/phase.md)
 
 ## Active Task
-None. Last completed: [T03 Ambient Motion and Final Validation](./phases/2026-10-12-forest-layered-background/P01-forest-scene/T03-ambient-motion-validation.md).
+[T01 Aim Camera Focus](./phases/2026-10-20-catapult-shot-tension/P01-shot-tension/T01-aim-camera-focus.md)
 
 ## Status
-- T01 complete: a7bc1bb ? layered PNG scene and fallback.
-- T01R01 complete: e74d642 ? original-inspired road between midground and foreground, panoramic world and greater actor distance.
-- T02 complete: 6990718 ? camera parallax and lifecycle cleanup.
-- T03 complete: 5519ff0 ? fog, six leaves and waterfall motion; 34 ambient assertions, combat cancellation, actual hidden event, responsive scenes and missing-image fallback verified.
-- Progress: 4/4, plan complete. [Final validation and screenshots](./validation/2026-10-12-forest-layered-background/final.md).
-- Validation limits: browser fullscreen API fell back to window mode; actual fullscreen and OS-level reduced-motion switching remain unverified.
-- Existing idle projectile hidden/display conflict is outside this plan. Previous area-background-depth plan remains complete; unrelated Battle Presentation Refinement tasks are preserved and not activated.
+- Player and Preview UI Separation completed: T01 commit dd4ea41. Default player mode hides prototype tabs/tools/caption; exact ?preview=1 enables them. Browser fullscreen API was unavailable for exit verification; see .memory/validation/2026-10-20-player-preview-separation/final.md.
+- Monster Visual Refresh is confirmed but queued; it is not in the active plan.
+- Catapult Shot Tension is active from the confirmed decision dated 2026-10-20.
+- Previous forest plan remains complete; unrelated Battle Presentation Refinement tasks remain unchanged.
 
 ## Next Step (IMPORTANT)
-No next task in this plan. Do not replay T03 or automatically activate another plan. New feature work begins with the project interview and planning workflow; fullscreen/manual accessibility checks may be performed separately.
+Execute T01 from .memory/phases/2026-10-20-catapult-shot-tension/P01-shot-tension/T01-aim-camera-focus.md: reuse existing camera helpers to zoom to the launcher at aim start, keep zoom through launch, and restore fit on completion/cancellation while respecting reduced motion.
