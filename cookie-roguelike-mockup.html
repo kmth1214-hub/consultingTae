@@ -245,6 +245,7 @@
     .slingshot-pouch { position:absolute;left:55px;top:45px;width:18px;height:18px;border:2px solid #69452b;border-radius:50% 50% 48% 48%;background:radial-gradient(circle at 33% 28%,#f5d493,#99633a 72%);box-shadow:0 2px 4px rgba(0,0,0,.35); }
     .launch-pad .power-meter { position:absolute;left:112px;top:29px;width:16px;height:92px;border-radius:99px; }
     .launch-pad .power-meter-fill { width:100%;height:20%;background:linear-gradient(0deg,#96c27a,#efbd58 58%,#e27759);transition:height 70ms linear; }
+    .angle-readout { position:absolute;left:101px;top:0;min-width:42px;padding:4px 6px;border:1px solid rgba(77,60,39,.28);border-radius:8px;background:rgba(255,250,239,.94);color:#40301f;text-align:center;font-size:.7rem;font-weight:900;font-variant-numeric:tabular-nums;box-shadow:0 2px 7px rgba(0,0,0,.16);pointer-events:none; }
     .enemy-group { position:absolute;left:43%;right:4%;bottom:62px;height:112px; }
     .monster { position:absolute;z-index:4;display:grid;place-items:center;width:67px;height:76px; }
     .monster-art { position:relative;z-index:0;display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(35,33,23,.34));pointer-events:none;animation:monsterBreath 3.1s ease-in-out infinite; }
@@ -273,36 +274,31 @@
     .trajectory-preview path { fill:none;stroke:rgba(255,255,255,.22);stroke-width:3;stroke-dasharray:7 9;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)); }
     .trajectory-preview #trajectoryGeometry { stroke:none;filter:none;visibility:hidden; }
     .projectile-sprite { position:absolute;left:0;top:0;z-index:6;width:24px;height:24px;display:block;border:3px solid #493522;border-radius:50%;background:radial-gradient(circle at 31% 27%,#fff2bd 0 12%,#e9c875 13% 46%,#92724e 72%,#59432f 100%);box-shadow:0 3px 7px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.75);will-change:transform;pointer-events:none; }
-    .aim-controls { display:grid;gap:11px; }
     .power-meter { display:flex;align-items:flex-end;overflow:hidden;border:1px solid var(--border);background:var(--surface-hover); }
     .power-meter-fill { width:100%;height:20%;border-radius:inherit;background:linear-gradient(0deg,#96c27a,#efbd58 58%,#e27759);transition:height 70ms linear; }
-    .aim-stage { min-height:18px;margin:0;color:var(--text-secondary);font-size:.75rem;font-weight:800; }
-    .aim-guidance { margin:0;color:var(--text-secondary);font-size:.7rem;line-height:1.55; }
-    .aim-value { font-variant-numeric:tabular-nums; }
-    .arena-caption { position:absolute;z-index:6;left:16px;top:15px;display:flex;gap:7px;align-items:center;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.84);color:#263a2e;font-size:.7rem;font-weight:850;box-shadow:0 2px 10px rgba(0,0,0,.12); }
-    .combat-hud { display:grid;grid-template-columns:minmax(220px,.95fr) minmax(260px,1.05fr) minmax(240px,1fr);gap:13px;align-items:stretch; }
-    .combat-hud > .card { min-width:0; }
-    .weapon-card { padding:16px; }
+    .arena-caption { position:absolute;z-index:6;left:13px;top:auto;bottom:13px;display:flex;gap:7px;align-items:center;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.84);color:#263a2e;font-size:.7rem;font-weight:850;box-shadow:0 2px 10px rgba(0,0,0,.12); }
+    .arena-overlay { position:absolute;z-index:8;top:13px;max-height:calc(100% - 26px);overflow:auto;border:1px solid rgba(99,78,52,.2);background:rgba(255,252,245,.93);backdrop-filter:blur(8px);box-shadow:0 5px 18px rgba(30,40,27,.2);pointer-events:auto; }
+    .arena-overlay[hidden] { display:none; }
+    .weapon-card { right:13px;width:min(260px,30%);padding:13px; }
+    .inventory { left:13px;width:min(224px,27%);padding:10px 12px; }
     .weapon-head { display:flex;align-items:center;justify-content:space-between; }
-    .weapon-emoji { width:45px;height:45px;display:grid;place-items:center;border-radius:13px;background:var(--surface-hover);font-size:1.8rem; }
+    .weapon-emoji { width:35px;height:35px;display:grid;place-items:center;border-radius:11px;background:var(--surface-hover);font-size:1.45rem; }
     .grade { padding:4px 8px;border-radius:7px;background:#f0d99a;color:#634712;font-size:.7rem;font-weight:950; }
-    .weapon-name { margin-top:11px;font-size:.92rem;font-weight:850; }
-    .weapon-desc { margin-top:3px;font-size:.73rem;color:var(--text-secondary); }
-    .ammo-dots { display:flex;gap:5px;flex-wrap:wrap;margin-top:12px; }
-    .ammo-dot { width:13px;height:13px;border-radius:50%;background:var(--accent);box-shadow:inset 0 -2px rgba(0,0,0,.13); }
+    .weapon-name { margin-top:7px;font-size:.82rem;font-weight:850; }
+    .weapon-desc { margin-top:2px;font-size:.66rem;line-height:1.35;color:var(--text-secondary); }
+    .ammo-dots { display:flex;gap:4px;flex-wrap:wrap;margin-top:8px; }
+    .ammo-dot { width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:inset 0 -2px rgba(0,0,0,.13); }
     .ammo-dot.spent { background:var(--surface-hover);box-shadow:none;border:1px solid var(--border); }
-    .aim-controls { padding:15px; }
-    .control-row { display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.77rem;font-weight:750; }
     #arena { cursor:crosshair;touch-action:pan-y; }
     #arena:focus-visible { outline:3px solid var(--accent);outline-offset:3px; }
-    .inventory { padding:15px; }
-    .inventory-title { display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:.82rem;font-weight:850; }
-    .item-slot { display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 0;border-top:1px solid var(--border); }
-    .item-key { width:25px;height:25px;display:grid;place-items:center;border-radius:7px;background:var(--surface-hover);font-size:.7rem;font-weight:900; }
-    .item-icon { width:32px;height:32px;display:block;object-fit:contain; }
-    .item-name { font-size:.73rem;font-weight:800; }
-    .item-count { min-width:24px;padding:3px 7px;border-radius:99px;background:var(--accent);color:#fff;text-align:center;font-size:.7rem;font-weight:900; }
-    .item-use { margin-left:4px;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:transparent;font-size:.65rem;font-weight:800;cursor:pointer; }
+    .inventory-title { display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:.76rem;font-weight:850; }
+    .inventory-title .muted { font-size:.63rem; }
+    .item-slot { display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:5px;align-items:center;padding:4px 0;border-top:1px solid var(--border); }
+    .item-key { width:21px;height:21px;display:grid;place-items:center;border-radius:6px;background:var(--surface-hover);font-size:.66rem;font-weight:900; }
+    .item-icon { width:24px;height:24px;display:inline-block;vertical-align:middle;object-fit:contain; }
+    .item-name { font-size:.66rem;font-weight:800; }
+    .item-count { min-width:19px;padding:2px 5px;border-radius:99px;background:var(--accent);color:#fff;text-align:center;font-size:.64rem;font-weight:900; }
+    .item-use { margin-left:2px;padding:3px 5px;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,.65);font-size:.6rem;font-weight:800;cursor:pointer; }
     .item-use:hover { background:var(--surface-hover); }
     .toast { position:fixed;left:50%;bottom:24px;z-index:10001;padding:12px 17px;border-radius:12px;background:var(--text);color:var(--bg);font-size:.84rem;font-weight:750;box-shadow:0 12px 35px rgba(0,0,0,.22);opacity:0;transform:translate(-50%,14px);pointer-events:none;transition:.25s; }
     .toast.show { opacity:1;transform:translate(-50%,0); }
@@ -368,8 +364,9 @@
     .status-bar { display:flex;align-items:center;justify-content:space-between;gap:10px;margin:19px 0;padding:13px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font-size:.8rem; }
     .form-label { display:block;margin:12px 0 6px;font-size:.75rem;font-weight:800; }
     .mockup-caption { margin:16px auto 0;max-width:1440px;color:var(--text-secondary);font-size:.72rem; }
-    @media (max-width:1080px) { .character-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .combat-hud { grid-template-columns:repeat(2,minmax(0,1fr)); } .combat-hud > .inventory { grid-column:1/-1; } .board-grid { grid-template-columns:minmax(0,1fr); } }
-    @media (max-width:760px) { .mockup-controls { align-items:flex-start;flex-direction:column;padding:13px 14px 8px; } .workspace { padding:0 12px 28px; } .app-window { display:block;min-height:0;border-radius:18px; } .sidebar { display:none; } .content { padding:22px 17px 28px; } .content-header { align-items:flex-start;flex-direction:column;margin-bottom:23px; } .screen-login { grid-template-columns:1fr; } .login-art { min-height:400px;padding:27px; } .oven-light { width:180px;height:205px;right:7%;top:11%; } .cookie-hero { right:24%;top:29%;font-size:5rem; } .login-panel { padding:34px 27px; } .hero-banner { grid-template-columns:1fr;min-height:280px;padding:25px; } .hero-visual { position:absolute;right:18px;bottom:16px;opacity:.55; } .game-card { grid-template-columns:112px minmax(0,1fr);gap:13px; } .game-art { min-height:150px; } .arena { min-height:clamp(300px,48vh,430px); } .combat-hud { grid-template-columns:1fr; } .combat-hud > .inventory { grid-column:auto; } .result-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .clear-hero { grid-template-columns:1fr; } .clear-stamp { position:absolute;right:28px;top:32px;width:83px;height:83px;font-size:.58rem; } .clear-hero { position:relative;padding:25px; } }
+    @media (max-width:1080px) { .character-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .board-grid { grid-template-columns:minmax(0,1fr); } }
+    @media (max-width:760px) { .mockup-controls { align-items:flex-start;flex-direction:column;padding:13px 14px 8px; } .workspace { padding:0 12px 28px; } .app-window { display:block;min-height:0;border-radius:18px; } .sidebar { display:none; } .content { padding:22px 17px 28px; } .content-header { align-items:flex-start;flex-direction:column;margin-bottom:23px; } .screen-login { grid-template-columns:1fr; } .login-art { min-height:400px;padding:27px; } .oven-light { width:180px;height:205px;right:7%;top:11%; } .cookie-hero { right:24%;top:29%;font-size:5rem; } .login-panel { padding:34px 27px; } .hero-banner { grid-template-columns:1fr;min-height:280px;padding:25px; } .hero-visual { position:absolute;right:18px;bottom:16px;opacity:.55; } .game-card { grid-template-columns:112px minmax(0,1fr);gap:13px; } .game-art { min-height:150px; } .arena { min-height:clamp(300px,48vh,430px); } .result-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .clear-hero { grid-template-columns:1fr; } .clear-stamp { position:absolute;right:28px;top:32px;width:83px;height:83px;font-size:.58rem; } .clear-hero { position:relative;padding:25px; } }
+    @media (max-width:520px) { .arena-overlay { top:9px;max-height:calc(100% - 18px); } .inventory { left:9px;width:47%;padding:7px 8px; } .weapon-card { right:9px;width:42%;padding:8px; } .weapon-name { font-size:.72rem; } .weapon-desc { font-size:.58rem; } .weapon-emoji { width:27px;height:27px;font-size:1.15rem; } .grade { padding:3px 5px;font-size:.58rem; } .item-slot { grid-template-columns:20px minmax(0,1fr) auto;gap:3px;padding:3px 0; } .item-use { font-size:.55rem;padding:2px 3px; } .launch-pad .angle-readout { left:97px; } }
     @media (max-width:520px) { body { overflow-x:hidden; } h1 { font-size:2.5rem; } h2 { font-size:2rem; } h3 { font-size:1.5rem; } .content { padding:19px 13px 25px; } .character-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .character-art { height:86px;font-size:3.4rem; } .character-bottom { align-items:flex-start;flex-direction:column; } .game-card { grid-template-columns:1fr; } .game-art { min-height:130px; } .reward-grid { grid-template-columns:1fr; } .reward-card { min-height:175px; } .choice-grid { grid-template-columns:1fr; } .battle-top { align-items:flex-start;flex-direction:column; } .battle-stats { justify-content:flex-start; } .monster { width:52px;height:59px;font-size:1.8rem; } .monster.snake { left:5%; } .monster.boar-one { left:43%; } .monster.boar-two { left:77%; } .launch-pad { left:16%;bottom:20%;transform:scale(.84);transform-origin:left bottom; } .boss-lineup { gap:10px;padding:19px 8px; } .boss-token .emoji { font-size:2.7rem; } .boss-hp { width:72px; } .qr-card { grid-template-columns:1fr;justify-items:center;text-align:center; } .result-actions .btn { width:100%; } .leaderboard-table th:nth-child(4),.leaderboard-table td:nth-child(4) { text-align:right; } }
   </style>
 </head>
@@ -525,6 +522,7 @@
                     <path class="slingshot-grip" d="M 46 119 Q 41 128 38 133"></path>
                   </svg>
                   <div class="slingshot-pouch" id="slingshotPouch" aria-hidden="true"></div>
+                  <span id="angleValue" class="angle-readout" aria-label="발사 각도">42°</span>
                   <div id="powerMeter" class="power-meter" role="meter" aria-label="발사 파워" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="100" aria-valuenow="20"><div id="powerMeterFill" class="power-meter-fill"></div></div>
                 </div>
                 <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryGeometry" d=""></path><path id="trajectoryPath" d=""></path></svg>
@@ -537,18 +535,10 @@
                   <span class="forest-leaf" aria-hidden="true"></span><span class="forest-leaf" aria-hidden="true"></span><span class="forest-leaf" aria-hidden="true"></span>
                 </div>
               </div>
+              <section id="inventoryOverlay" class="card arena-overlay inventory" aria-label="소모품 단축키 목록"><div class="inventory-title"><span>소모품</span><span class="muted">키</span></div><div class="item-slot" data-consumable="fireball"><span class="item-key" aria-label="1번 키">1</span><span><span class="item-icon">🔥</span> <span class="item-name">불공</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(1)">사용</button></span></div><div class="item-slot" data-consumable="spear"><span class="item-key" aria-label="2번 키">2</span><span><span class="item-icon">🔱</span> <span class="item-name">창</span></span><span><b class="item-count">2</b><button class="item-use" onclick="useItem(2)">사용</button></span></div><div class="item-slot" data-consumable="defense"><span class="item-key" aria-label="3번 키">3</span><span><span class="item-icon">🛡</span> <span class="item-name">방어</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(3)">사용</button></span></div><div class="item-slot" data-consumable="heal"><span class="item-key" aria-label="4번 키">4</span><span><span class="item-icon">♥</span> <span class="item-name">회복</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(4)">사용</button></span></div></section>
+              <section id="weaponCard" class="card arena-overlay weapon-card" aria-label="현재 영구 무기"><div class="weapon-head"><span class="weapon-emoji">🧭</span><span class="grade">C 등급</span></div><div class="weapon-name">모험가의 마법사탕</div><div class="weapon-desc">이번 투사체 · 세 번째 영구 무기 명중마다 점수 +10</div><div class="ammo-dots" aria-label="남은 탄약 5발, 사용한 탄약 4발"><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i></div></section>
               <div class="arena-caption" id="arenaCaption"><span id="areaIcon" aria-hidden="true">🌲</span><span id="areaCaptionText">숲 지역</span></div>
             </section>
-            <aside class="combat-hud" aria-label="전투 정보">
-              <section class="card weapon-card"><div class="weapon-head"><span class="weapon-emoji">🧭</span><span class="grade">C 등급</span></div><div class="weapon-name">모험가의 마법사탕</div><div class="weapon-desc">이번 투사체 · 세 번째 영구 무기 명중마다 점수 +10</div><div class="ammo-dots" aria-label="남은 탄약 5발, 사용한 탄약 4발"><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i><i class="ammo-dot spent"></i></div></section>
-              <section class="card aim-controls" aria-label="투사체 조준">
-                <div class="control-row"><span>발사 각도</span><span id="angleValue" class="aim-value">42°</span></div>
-                <div class="control-row"><span>발사 파워</span><span id="powerValue" class="aim-value">20%</span></div>
-                <p id="aimStageLabel" class="aim-stage" aria-live="polite">전장을 좌클릭해 조준을 시작하세요.</p>
-                <p class="aim-guidance">좌클릭 유지: 상하로 각도 조절 · Space 유지/해제: 파워 조절/확정 · 확정 후 좌우 이동: 조준 위치 · 좌클릭 해제: 발사</p>
-              </section>
-              <section class="card inventory"><div class="inventory-title"><span>소모품</span><span class="muted">숫자키 1–4</span></div><div class="item-slot" data-consumable="fireball"><span class="item-key">1</span><span><span class="item-icon">🔥</span> <span class="item-name">불공</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(1)">사용</button></span></div><div class="item-slot" data-consumable="spear"><span class="item-key">2</span><span><span class="item-icon">🔱</span> <span class="item-name">창</span></span><span><b class="item-count">2</b><button class="item-use" onclick="useItem(2)">사용</button></span></div><div class="item-slot" data-consumable="defense"><span class="item-key">3</span><span><span class="item-icon">🛡</span> <span class="item-name">방어</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(3)">사용</button></span></div><div class="item-slot" data-consumable="heal"><span class="item-key">4</span><span><span class="item-icon">♥</span> <span class="item-name">회복</span></span><span><b class="item-count">1</b><button class="item-use" onclick="useItem(4)">사용</button></span></div></section>
-            </aside>
           </div>
           <div class="status-bar"><span>다음 영구 무기: <strong>마력 구슬 · B</strong></span><span class="muted">명중 8회 · 마력 구슬 효과까지 1회</span></div>
         </section>
@@ -1003,6 +993,7 @@
         geometry:document.getElementById('trajectoryGeometry'),
         sprite:document.getElementById('projectileSprite'),
         launcher:document.getElementById('launchPad'),
+        weaponCard:document.getElementById('weaponCard'),
         stone:document.getElementById('slingshotPouch'),
         bandLeft:document.getElementById('slingshotBandLeft'),
         bandRight:document.getElementById('slingshotBandRight')
@@ -1175,6 +1166,7 @@
       if (elements.path) elements.path.setAttribute('d','');
       if (elements.geometry) elements.geometry.setAttribute('d','');
       if (elements.sprite) elements.sprite.hidden = true;
+      if (elements.weaponCard) elements.weaponCard.hidden = false;
       aimState = createIdleAimState();
       updateAimState();
     }
@@ -1191,6 +1183,7 @@
       if (elements.path) elements.path.setAttribute('d','');
       if (elements.geometry) elements.geometry.setAttribute('d','');
       if (elements.sprite) elements.sprite.hidden = true;
+      if (elements.weaponCard) elements.weaponCard.hidden = false;
       aimState = createIdleAimState();
       updateAimState();
       restoreAimCamera(!wasCameraFocused || reason === 'window-blur' || reason === 'screen-exit');
@@ -1239,6 +1232,7 @@
       if (!canLaunch) { cancelAim('early-release'); return; }
       aimState.phase = 'launching';
       aimState.isPointerHeld = false;
+      if (elements.weaponCard) elements.weaponCard.hidden = true;
       stopAimAnimation();
       if (elements.path) elements.path.setAttribute('d','');
       focusAimCamera(false);
