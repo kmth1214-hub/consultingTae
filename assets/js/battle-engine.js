@@ -85,6 +85,8 @@
       terminal: null,
       enemies: createRoundEnemies(area, round, { rng: config.rng }),
       consumablesBlockedTurns: 0,
+      consumablesBlocked: false,
+      inventory: Object.assign({ fireball: 1, spear: 2, defense: 1, heal: 1 }, config.inventory || {}),
       defenseArmed: false,
       fireballArmed: false
     };
@@ -140,14 +142,17 @@
     }
     if (special === 'boar-charge') { minDamage = 8; maxDamage = 15; }
     const sourceRng = typeof rng === 'function' ? rng : Math.random;
-    const damage = randomInt(sourceRng, minDamage, maxDamage);
+    const blocked = state.defenseArmed;
+    state.defenseArmed = false;
+    const damage = blocked ? 0 : randomInt(sourceRng, minDamage, maxDamage);
     state.playerHp = Math.max(0, state.playerHp - damage);
-    const event = { enemyId: enemy.id, kind: enemy.kind, damage, special, healedEnemy: 0, ammoLost: 0, consumablesBlocked: false };
+    const event = { enemyId: enemy.id, kind: enemy.kind, damage, special: blocked ? null : special, blocked, healedEnemy: 0, ammoLost: 0, consumablesBlocked: false };
 
-    if (special === 'frozen-breath') {
+    if (!blocked && special === 'frozen-breath') {
       state.consumablesBlockedTurns = 1;
+      state.consumablesBlocked = true;
       event.consumablesBlocked = true;
-    } else if (special === 'oven-overheat') {
+    } else if (!blocked && special === 'oven-overheat') {
       const previousAmmo = state.ammo;
       state.ammo = Math.max(0, state.ammo - 1);
       event.ammoLost = previousAmmo - state.ammo;
@@ -168,7 +173,12 @@
     }
     state.ammo = Math.max(0, state.ammo - 1);
     state.turnNumber += 1;
-    let damage = Math.max(0, Math.floor(Number(config.damage) || 0));
+    const rolledDamage = Math.max(0, Math.floor(Number(config.damage) || 0));
+    const damageMultiplier = config.source === 'spear' ? 1 : (state.fireballArmed ? 2 : 1);
+    let damage = rolledDamage * damageMultiplier;
+    if (config.source !== 'spear') state.fireballArmed = false;
+    state.consumablesBlocked = false;
+    state.consumablesBlockedTurns = 0;
     const hits = [];
     const seen = new Set();
     for (const id of Array.isArray(config.hitIds) ? config.hitIds : []) {
@@ -190,7 +200,7 @@
     const event = {
       accepted: true,
       source: config.source || 'weapon',
-      damage: Math.max(0, Math.floor(Number(config.damage) || 0)),
+      damage: rolledDamage * damageMultiplier,
       spillover: damage,
       hits,
       missed: hits.length === 0,
@@ -215,6 +225,67 @@
     return event;
   }
 
+  function getConsumableCount(state, key) {
+    return state && state.inventory && Number(state.inventory[key]) || 0;
+  }
+
+  function addConsumable(state, key, count) {
+    if (!state || !Object.prototype.hasOwnProperty.call(state.inventory, key)) return false;
+    const amount = Math.max(0, Math.floor(Number(count) || 0));
+    const added = Math.min(amount, 3 - getConsumableCount(state, key));
+    state.inventory[key] += added;
+    return added;
+  }
+
+  function useConsumable(state, key, options) {
+    const config = options || {};
+    const event = { accepted: false, key, effect: null, enemyAttack: null, hits: [], scoreDelta: 0, roundCleared: false, runDefeated: false };
+    if (!state || state.terminal) { event.reason = 'combat-ended'; return event; }
+    if (!Object.prototype.hasOwnProperty.call(state.inventory, key)) { event.reason = 'unknown-item'; return event; }
+    if (config.isAiming) { event.reason = 'aiming'; return event; }
+    if (state.consumablesBlocked || state.consumablesBlockedTurns > 0) { event.reason = 'blocked'; return event; }
+    if (getConsumableCount(state, key) <= 0) { event.reason = 'empty'; return event; }
+
+    state.inventory[key] -= 1;
+    state.turnNumber += 1;
+    event.accepted = true;
+    if (key === 'heal') {
+      const before = state.playerHp;
+      state.playerHp = Math.min(state.maxPlayerHp, state.playerHp + 25);
+      event.effect = { healed: state.playerHp - before };
+    } else if (key === 'defense') {
+      state.defenseArmed = true;
+      event.effect = { armed: true };
+    } else if (key === 'fireball') {
+      state.fireballArmed = true;
+      event.effect = { armed: true };
+    } else if (key === 'spear') {
+      const rng = typeof config.rng === 'function' ? config.rng : Math.random;
+      let damage = randomInt(rng, 2, 5);
+      for (const enemy of getLivingEnemies(state).slice(0, 3)) {
+        const removed = Math.min(enemy.hp, damage);
+        enemy.hp -= removed;
+        enemy.alive = enemy.hp > 0;
+        state.score += removed;
+        event.scoreDelta += removed;
+        event.hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp, defeated: !enemy.alive, scoreDelta: removed });
+        damage = Math.max(0, damage - 1);
+      }
+      event.effect = { hits: event.hits };
+    }
+
+    if (getLivingEnemies(state).length === 0) {
+      state.terminal = 'round-clear';
+      event.roundCleared = true;
+      return event;
+    }
+    state.consumablesBlocked = false;
+    state.consumablesBlockedTurns = 0;
+    event.enemyAttack = resolveEnemyTurn(state, config.rng);
+    event.runDefeated = state.terminal === 'defeat';
+    return event;
+  }
+
   return Object.freeze({
     AREAS,
     GRADE_MULTIPLIER,
@@ -226,6 +297,9 @@
     resolveEnemyTurn,
     getLivingEnemies,
     isRunDefeated,
-    isRoundCleared
+    isRoundCleared,
+    getConsumableCount,
+    addConsumable,
+    useConsumable
   });
 });

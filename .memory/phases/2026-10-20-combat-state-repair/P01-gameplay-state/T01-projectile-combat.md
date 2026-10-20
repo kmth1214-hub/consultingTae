@@ -69,4 +69,4 @@ Task: T01-projectile-combat
 ## Progress
 - [x] Implementation complete
 - [x] Validation passed
-- commit: pending
+- commit: ae99826

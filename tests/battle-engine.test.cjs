@@ -86,3 +86,55 @@ test('boss special attack replaces the normal attack on its third attack', () =>
   assert.equal(event.special, 'boar-charge');
   assert.equal(event.damage, 8);
 });
+
+test('Heal spends one item, restores 25 up to max HP, and resolves one enemy attack', () => {
+  const state = engine.createRunState({ playerHp: 60, rng: () => 0.5 });
+  const event = engine.useConsumable(state, 'heal', { rng: () => 0.5 });
+  assert.equal(event.accepted, true);
+  assert.equal(event.effect.healed, 25);
+  assert.equal(state.playerHp, 80); // healing to 85, then a 5-point enemy attack
+  assert.equal(engine.getConsumableCount(state, 'heal'), 0);
+  assert.equal(state.turnNumber, 2); // one player action and one enemy attack
+});
+
+test('Defense consumes its turn and cancels a boss special completely', () => {
+  const state = engine.createRunState({ area: 'forest', round: 5, rng: () => 0.99 });
+  state.enemies[0].attackCount = 2;
+  const event = engine.useConsumable(state, 'defense', { rng: () => 0.99 });
+  assert.equal(event.enemyAttack.blocked, true);
+  assert.equal(event.enemyAttack.special, null);
+  assert.equal(state.playerHp, 100);
+  assert.equal(state.enemies[0].attackCount, 3);
+});
+
+test('Fireball doubles only the next permanent projectile and preserves a zero roll', () => {
+  const state = engine.createRunState({ rng: () => 0.5 });
+  engine.useConsumable(state, 'fireball', { rng: () => 0.5 });
+  assert.equal(state.fireballArmed, true);
+  const zero = engine.resolveProjectile(state, { damage: 0, hitIds: [state.enemies[0].id], rng: () => 0.5 });
+  assert.equal(zero.damage, 0);
+  assert.equal(state.fireballArmed, false);
+  assert.equal(engine.getConsumableCount(state, 'fireball'), 0);
+});
+
+test('Spear hits up to three enemies with falling damage, even when a target survives', () => {
+  const state = engine.createRunState({ area: 'forest', round: 4, rng: () => 0.5 });
+  state.enemies = state.enemies.slice(0, 3);
+  state.enemies.forEach((enemy) => { enemy.hp = 10; enemy.maxHp = 10; });
+  const event = engine.useConsumable(state, 'spear', { rng: () => 0.5 }); // 4, 3, 2
+  assert.deepEqual(event.hits.map((hit) => hit.damage), [4, 3, 2]);
+  assert.equal(state.score, 9);
+  assert.equal(engine.getConsumableCount(state, 'spear'), 1);
+});
+
+test('blocked and empty consumables cannot be spent or consume a turn', () => {
+  const state = engine.createRunState();
+  state.consumablesBlocked = true;
+  const blocked = engine.useConsumable(state, 'heal', { rng: () => 0.5 });
+  assert.equal(blocked.reason, 'blocked');
+  state.consumablesBlocked = false;
+  state.inventory.heal = 0;
+  const empty = engine.useConsumable(state, 'heal', { rng: () => 0.5 });
+  assert.equal(empty.reason, 'empty');
+  assert.equal(state.turnNumber, 0);
+});

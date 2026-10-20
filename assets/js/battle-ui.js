@@ -20,6 +20,13 @@
       score.append('점수 '); var value = document.createElement('strong'); value.id = 'scoreNumber'; score.appendChild(value); stats.appendChild(score);
     }
     document.getElementById('scoreNumber').textContent = state.score.toLocaleString('ko-KR');
+    ['fireball','spear','defense','heal'].forEach(function(key){
+      var slot=document.querySelector('.item-slot[data-consumable="'+key+'"]');
+      if(!slot)return;
+      var count=window.BattleEngine.getConsumableCount(state,key);
+      slot.querySelector('.item-count').textContent=count;
+      slot.querySelector('.item-use').disabled=count===0||!!state.terminal;
+    });
     var enemies = window.BattleEngine.getLivingEnemies(state);
     var group = document.getElementById('enemyGroup');
     group.style.cssText = 'left:55%;right:22%;bottom:26%;height:112px;z-index:4;';
@@ -67,6 +74,19 @@
     if(result.runDefeated) showOutcome('defeat');
     else if(result.roundCleared) showOutcome('round-clear');
     else showToast(result.missed?'빗나갔어요 · 적이 반격합니다.':'명중! 피해 '+result.hits.reduce(function(sum,hit){return sum+hit.damage;},0)+' · 적의 차례');
+  };
+  window.useItem = function (key) {
+    if(!state||document.querySelector('[data-screen="battle"]').hidden){showToast('전투 중에만 소모품을 사용할 수 있어요.');return;}
+    var itemKey={1:'fireball',2:'spear',3:'defense',4:'heal'}[Number(key)];
+    var result=window.BattleEngine.useConsumable(state,itemKey,{isAiming:!!(window.aimState&&window.aimState.phase!=='idle')});
+    if(!result.accepted){showToast(({aiming:'조준을 마친 뒤 사용할 수 있어요.',blocked:'얼어붙는 숨결 때문에 이번 턴에는 소모품을 쓸 수 없어요.',empty:'이 소모품을 모두 사용했어요.','combat-ended':'전투가 끝났어요.'}[result.reason])||'지금은 사용할 수 없어요.');return;}
+    if(window.showItemVisualEffect)window.showItemVisualEffect(Number(key));
+    render();
+    if(result.runDefeated)showOutcome('defeat');else if(result.roundCleared)showOutcome('round-clear');
+    else if(itemKey==='heal')showToast('회복 사용 · 체력 '+result.effect.healed+' 회복'+(result.enemyAttack.blocked?' · 적 공격 방어':' · 적의 차례'));
+    else if(itemKey==='defense')showToast('방어 사용 · 다음 공격 '+(result.enemyAttack.blocked?'차단':'대기'));
+    else if(itemKey==='fireball')showToast('불공 사용 · 다음 새총 피해 2배'+(result.enemyAttack.blocked?' · 적 공격 방어':' · 적의 차례'));
+    else showToast('창 사용 · '+result.hits.length+'마리 타격 · 적의 차례');
   };
   document.addEventListener('DOMContentLoaded',function(){
     var start=document.querySelector('.character-bottom .btn');
