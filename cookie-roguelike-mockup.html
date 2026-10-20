@@ -220,7 +220,7 @@
     #arena[data-area="forest"][data-forest-ready="true"] .area-road { display:none; }
     @media (max-width:520px) {
       #arena[data-area="forest"][data-forest-ready="true"] .enemy-group { left:68%;right:14%; }
-      #arena[data-area="forest"][data-forest-ready="true"] .monster { width:40px;height:46px;font-size:1.3rem; }
+      #arena[data-area="forest"][data-forest-ready="true"] .monster { width:40px;height:46px; }
     }
     #arena[data-area="forest"] { --area-road-shadow:rgba(12,29,16,.58);--area-road-edge:#596541;--area-road-top:#d8a77d;--area-road-middle:#a66f58;--area-road-bottom:#62494a;--area-road-highlight:rgba(255,237,200,.62);--area-depth-background:linear-gradient(180deg,rgba(17,34,22,.06) 0%,transparent 40%,rgba(17,33,25,.16) 100%),radial-gradient(ellipse at 50% 44%,rgba(111,194,122,.08) 0%,transparent 68%); }
     #arena[data-area="snow"] { --area-road-shadow:rgba(14,28,48,.56);--area-road-edge:#45617f;--area-road-top:#b8d9ed;--area-road-middle:#779dbb;--area-road-bottom:#475f83;--area-road-highlight:rgba(235,248,255,.66);--area-depth-background:linear-gradient(180deg,rgba(10,22,46,.04) 0%,transparent 40%,rgba(12,28,52,.14) 100%),radial-gradient(ellipse at 50% 44%,rgba(180,220,255,.10) 0%,transparent 68%); }
@@ -242,11 +242,12 @@
     .launcher-arm { position:absolute;left:54px;bottom:17px;width:86px;height:12px;border-radius:99px;background:#a96635;transform:rotate(-42deg);transform-origin:8px 50%;box-shadow:0 3px rgba(0,0,0,.16); }
     .launcher-stone { position:absolute;left:107px;top:18px;width:26px;height:26px;border-radius:50%;background:#96765b;border:3px solid #72573f; }
     .enemy-group { position:absolute;left:43%;right:4%;bottom:62px;height:112px; }
-    .monster { position:absolute;z-index:4;display:grid;place-items:center;width:67px;height:76px;border-radius:48% 48% 38% 38%;background:#b98a63;border:3px solid rgba(81,52,35,.3);box-shadow:0 8px 8px rgba(48,43,26,.18);font-size:2.4rem; }
-    .monster::after { content:"4";position:absolute;right:-8px;top:-9px;min-width:25px;height:25px;display:grid;place-items:center;border:2px solid var(--surface);border-radius:50%;background:#fff9ec;color:#60412f;font-size:.69rem;font-weight:900; }
-    .monster.snake { left:5%;bottom:18px;background:#98b980; }
-    .monster.boar-one { left:43%;bottom:14px;background:#c6966a; }
-    .monster.boar-two { left:77%;bottom:43px;background:#cc9b71; }
+    .monster { position:absolute;z-index:4;display:grid;place-items:center;width:67px;height:76px; }
+    .monster-art { position:relative;z-index:0;display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(35,33,23,.34));pointer-events:none; }
+    .monster::after { content:"4";position:absolute;z-index:2;right:-8px;top:-9px;min-width:25px;height:25px;display:grid;place-items:center;border:2px solid var(--surface);border-radius:50%;background:#fff9ec;color:#60412f;font-size:.69rem;font-weight:900; }
+    .monster.snake { left:5%;bottom:18px; }
+    .monster.boar-one { left:43%;bottom:14px; }
+    .monster.boar-two { left:77%;bottom:43px; }
     .trajectory-preview { position:absolute;inset:0;z-index:3;width:100%;height:100%;overflow:visible;pointer-events:none; }
     .trajectory-preview path { fill:none;stroke:rgba(255,255,255,.22);stroke-width:3;stroke-dasharray:7 9;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)); }
     .trajectory-preview #trajectoryGeometry { stroke:none;filter:none;visibility:hidden; }
@@ -498,7 +499,7 @@
                 <svg id="trajectoryPreview" class="trajectory-preview" aria-hidden="true" viewBox="0 0 1 1" preserveAspectRatio="none"><path id="trajectoryGeometry" d=""></path><path id="trajectoryPath" d=""></path></svg>
                 <div id="projectileSprite" class="projectile-sprite" aria-hidden="true" hidden></div>
                 <div class="enemy-group" id="enemyGroup" role="group" aria-label="현재 라운드의 적">
-                  <div class="monster snake" aria-label="뱀, 체력 4">🐍</div><div class="monster boar-one" aria-label="멧돼지, 체력 4">🐗</div><div class="monster boar-two" aria-label="멧돼지, 체력 4">🐗</div>
+                  <div class="monster snake" aria-label="뱀, 체력 4"><img class="monster-art" src="./assets/monsters/jelly-snake.png" alt="" aria-hidden="true"></div><div class="monster boar-one" aria-label="멧돼지, 체력 4"><img class="monster-art" src="./assets/monsters/chocolate-boar.png" alt="" aria-hidden="true"></div><div class="monster boar-two" aria-label="멧돼지, 체력 4"><img class="monster-art" src="./assets/monsters/chocolate-boar.png" alt="" aria-hidden="true"></div>
                 </div>
                 <div class="forest-layer forest-foreground" data-forest-layer="foreground" data-parallax="1.08" aria-hidden="true">
                   <span class="forest-leaf" aria-hidden="true"></span><span class="forest-leaf" aria-hidden="true"></span><span class="forest-leaf" aria-hidden="true"></span>
