@@ -1,8 +1,12 @@
 # Plan: Wide Battlefield and Mouse Drag Slingshot
 
 - Date: 2026-10-21
-- Status: in_progress (3/5 tasks done; active P01-T04; T03 completed as455990b)
+- Status: in_progress (3/5 tasks done; P01-T04 queued after regional scene/studio dependency; T03 completed as455990b)
 - Decisions: [Confirmed interview](../decisions/2026-10-21-wide-battlefield-mouse-drag.md)
+
+## Inserted visual dependency — 2026-10-21
+- Active execution is now [Regional Layered World and Map Studio](./2026-10-21-regional-layered-world-and-map-studio.md), per the user's explicit planning request. After its T06, restore this plan at existing P01-T04 (cookie feedback), then P01-T05. Preserve3/5 completion and all source commit history; no cookie work is implemented by this amendment.
+- The new scene plan supersedes only the earlier restriction against producing regional raster layers/decorative parallax. Combat/path/solids/input and shared camera ownership remain unchanged. T04/T05 must retain the new scene pose/lifecycle and production studio exclusion. Azure remains deferred.
 
 ## Goal
 Replace mouse + Space aiming with a direct mouse pull/release, including reverse shots, in an actual wide battlefield. Show overview → close aiming → projectile tracking, distribute existing enemies over near/far distances, stop normal candy at solid regional obstacles, and preserve Wind's once-per-round visible obstacle bypass. Complete independent depth layers for all four maps and place the selected cookie beside the weapon, receiving actual enemy hit/shield/heal feedback. Keep the full-window arena, polished weapon and existing combat/progression.

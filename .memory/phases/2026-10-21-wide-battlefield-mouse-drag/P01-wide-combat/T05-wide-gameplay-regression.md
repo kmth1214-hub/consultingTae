@@ -11,6 +11,11 @@ Prove the complete wide-field mouse-only game works through real input, obstacle
 
 ## Implementation
 
+### Dependency amendment — 2026-10-21
+- Complete `.memory/plans/2026-10-21-regional-layered-world-and-map-studio.md`, then the original Wide Combat T04 cookie migration before this final review. Neither is considered complete at planning time.
+- Final visuals now require dedicated Snow/City/Chaos painted layers and actual decorative parallax/environment motion, including Forest's shared lifecycle. Preserve gameplay matrices while allowing inner decorative planes their intentional depth offsets. Do not restore flat-map crop/native-geometric stand-ins or obsolete equality assertions.
+- In addition to the validation below, run `node scripts/verify-region-art.cjs all`, `npm.cmd run test:studio`, and after the final standalone build `node scripts/verify-studio-build.cjs`. Verify cookie framing/response with scene motion, actual dev review link and production unavailable route. Studio remains development-only; Azure administrator authentication remains deferred. No cleanup here may remove the shared scene pose call, DEV compile-time gate or accepted artwork.
+
 ### I01. Browser fixture contracts and independent assertions
 - Related Files:
   - `tests/e2e/support.cjs` :: existing `installGame`, `grabMap`, new `dragPull`, `shoot`, trace/health assertions; modify

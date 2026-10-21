@@ -11,6 +11,11 @@ Show the currently selected cookie standing beside the slingshot and make incomi
 
 ## Implementation
 
+### Dependency amendment — 2026-10-21
+- Before executing this Task, complete `.memory/plans/2026-10-21-regional-layered-world-and-map-studio.md` (six Tasks). This cookie Task remains pending, not superseded; that plan's final handoff restores the active pointer here.
+- New independent regional painted layers/decorative parallax/environment activity replace the old T03 cropped-map limitation. Keep x40..450/y720..940 clear for this actor. `useBattlefieldCamera` now delegates presentation application to `applyScenePose`; retain that call and CSS camera/depth variables while changing enemy bounds in battlefieldCamera.js. Do not reintroduce a competing camera or require decorative plane matrices to equal gameplay matrices.
+- All actor/attack origins below remain canonical and fixed; only scenery depth planes move. Add player tests on the new maps without disabling the scene/studio exclusion tests. This Task still owns the complete incoming hit/shield/heal migration; no such actor was added by the inserted plan.
+
 ### I01. Canonical player bounds and camera framing
 - Related Files:
   - `src/game/battlefieldModel.js` :: `buildBattlefield`; add player presentation geometry
