@@ -1,7 +1,7 @@
 # Plan: Regional Layered World and Development Map Studio
 
 - Date: 2026-10-21
-- Status: in_progress (1/6 tasks done; active P01-T02; T01 artwork completed as82751e8)
+- Status: in_progress (2/6 tasks done; active P01-T03; T02 City artwork completed as86432cc, T01 Snow as82751e8)
 - Decisions: [Confirmed scope](../decisions/2026-10-21-regional-layered-world-and-map-studio.md)
 
 ## Goal
@@ -56,4 +56,4 @@ One Phase is sufficient: these are connected scene-presentation assets and their
 - Verify all areas at2007×1037,2560×1080,1440×900,844×390,390×844, normal/reduced motion; inspect entrance/middle/far follow and obstacle/Wind/reverse/enemy feedback.
 - Production boundary: actual browser negative route case plus emitted chunk/import checks. Development UI tests must not accidentally run against Vite preview.
 - Each Task: task done → prescribed implementation/art+task commit → phase/plan/current sync → next pointer. Keep sites/tmp/build/test artifacts out of commits. Final T06 restores Wide Combat T04.
-- Planning was documentation-only. Subsequent T01 execution completed Snow assets/verifier/review as82751e8 (8/8 asset checks and build pass); City/Chaos artwork and runtime/studio work remain pending. Adjacent unrequested findings: none; Forest motion gap and test migration are already confirmed scope.
+- Planning was documentation-only. Subsequent T01 completed Snow assets/verifier/review as82751e8; T02 completed City assets/review as86432cc (City8/8 + Snow8/8 asset checks and build pass). Chaos artwork and runtime/studio work remain pending. Adjacent unrequested code findings: none; Forest motion gap and test migration are already confirmed scope.
