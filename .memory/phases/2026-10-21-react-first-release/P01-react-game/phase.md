@@ -9,6 +9,7 @@
 | T04 | `done ✅` | Implement the slingshot aim sequence, camera, trajectory, arena HUD, and item/shot visual timing in React. | [T04](./T04-slingshot-arena-controls.md) |
 | T05 | `done ✅` | Add deterministic browser regression coverage for real gameplay actions and verify the built app and responsive screens. | [T05](./T05-browser-regression.md) |
 | T06 | `done ✅` | Show enemy attacks, timed damage feedback and shield interception. | [T06](./T06-enemy-response-feedback.md) |
+| T07 | `done ✅` | Polish the player slingshot materials, charge and launch effects. | [T07](./T07-slingshot-visual-polish.md) |
 
 ## Progress
-- done: 6/6 (complete; next: P02-T01)
+- done: 7/7 (complete; next: P02-T01)
