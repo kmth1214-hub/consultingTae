@@ -6,15 +6,15 @@
 | T01 | `done` | Define wide world, pull-driven paths, solid collision, Wind bypass and camera math as tested pure functions. | [T01](./T01-world-shot-model.md) |
 | T02 | `done` | Atomically wire mouse-only drag, wide world, camera, collision and enemy feedback into the playable game. | [T02](./T02-playable-mouse-drag.md) |
 | T03 | `done` | Compose independent layers for all four regions, matching obstacle art and elastic feedback; reserve cookie space. | [T03](./T03-wide-scenery-and-tension.md) |
-| T04 | `pending` | Add the selected cookie beside the weapon and center incoming hits, shields and healing on it. | [T04](./T04-player-cookie-feedback.md) |
+| T04 | `in_progress` | Add the selected cookie beside the weapon and center incoming hits, shields and healing on it. | [T04](./T04-player-cookie-feedback.md) |
 | T05 | `pending` | Validate full layered-map/player/gameplay visuals and progression; retire superseded compact helpers. | [T05](./T05-wide-gameplay-regression.md) |
 
 ## Progress
-- done: 3/5 (next here: T04; queued behind the regional scene/studio plan, implementation not started)
+- done: 3/5 (active: T04)
 
 ## Inserted dependency — 2026-10-21
 - The user requested [Regional Layered World and Map Studio](../../../plans/2026-10-21-regional-layered-world-and-map-studio.md). Its six Tasks now own the active pointer. This Phase retains its completed T01–T03, queued T04 and pending T05; nothing is marked completed by that planning step.
-- After the inserted plan's T06, restore this Phase's active T04, then T05. Dedicated regional PNGs and decorative parallax supersede T03's flat-crop presentation limit; its successful gameplay/material/tension work and historical validation remain valid. Preserve shared scene/camera calls during the later player migration.
+- The inserted regional scene/studio plan is complete. Dedicated regional PNGs and decorative parallax supersede T03's flat-crop presentation limit; its successful gameplay/material/tension work and historical validation remain valid. Preserve shared scene/camera calls during the later player migration.
 
 ## User amendment — 2026-10-21
 - Snow/City/Chaos retain their flat source PNGs; T03 has now composed independent sky/distant/midground/route/foreground layers using proportional cropped landmarks and native continuation. T04 adds the selected cookie/player-centered impacts. Original final-regression T04 is renamed T05; its checks remain intact and expand to all four maps/five cookies. See decisionD09 and the revised plan.

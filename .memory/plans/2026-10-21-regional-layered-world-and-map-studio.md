@@ -1,7 +1,7 @@
 # Plan: Regional Layered World and Development Map Studio
 
 - Date: 2026-10-21
-- Status: in_progress (5/6 tasks done; active P01-T06; T05 development studio completed in a Korean commit; T04 shared scene/depth/minimap completed; T03 Chaos artwork completed as1cee22f, T02 City as86432cc, T01 Snow as82751e8)
+- Status: complete (6/6 tasks done; final review and queued-task handoff recorded in [acceptance evidence](../asset-reviews/2026-10-21-regional-scene-acceptance.md))
 - Decisions: [Confirmed scope](../decisions/2026-10-21-regional-layered-world-and-map-studio.md)
 
 ## Goal
@@ -10,7 +10,7 @@ Give Snow, City and Chaos dedicated side-view painted scenery matching Forest, r
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Produce regional layers, integrate one shared scene/camera presentation, and validate a development map studio. | [P01](../phases/2026-10-21-regional-layered-world-and-map-studio/P01-regional-scenes/phase.md) |
+| P01 | `done` | Produce regional layers, integrate one shared scene/camera presentation, and validate a development map studio. | [P01](../phases/2026-10-21-regional-layered-world-and-map-studio/P01-regional-scenes/phase.md) |
 
 ## Task sequence
 | Task | Result | Main files |

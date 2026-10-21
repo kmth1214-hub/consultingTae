@@ -52,9 +52,9 @@ export default function ForestLayerContent({ activity, visibleLayers }) {
       </g>)}
     </Layer>
     <Layer name="distant" activity={activity} visible={visibleLayers?.distant !== false}>
-      <path d="M-400 800Q-100 690 100 711L360 486 510 616 720 411 970 655 1300 452 1460 647 1810 398 2050 637 2340 484 2600 678 2890 402 3120 609 3460 460 3900 754V1200H-400Z" fill="#71a8a2" opacity=".36" />
-      {[-120, 930, 1980, 3030].map((x, i) => <ArtPatch key={x} href={ASSETS.forestLayers.distant} x={x} y="100" width="1200" height="800"
-        viewBox={['0 0 1536 1024', '450 80 1086 724', '400 170 1136 757.3333333333', '650 70 886 590.6666666667'][i]} />)}
+      <svg x="0" y="-600" width="3600" height="2400" viewBox="0 0 1536 1024" preserveAspectRatio="none" overflow="hidden">
+        <image href={ASSETS.forestLayers.distant} width="1536" height="1024" preserveAspectRatio="none" />
+      </svg>
     </Layer>
     <Layer name="midground" activity={activity} visible={visibleLayers?.midground !== false}>
       <defs><linearGradient id={`${id}-land`} x1="0" x2="0" y1="850" y2="1500" gradientUnits="userSpaceOnUse"><stop stopColor="#527c51" /><stop offset="1" stopColor="#386c58" /></linearGradient>
@@ -62,8 +62,6 @@ export default function ForestLayerContent({ activity, visibleLayers }) {
       <path d="M-300 840Q80 780 360 805T1010 803T1740 810T2490 799T3200 806T3900 790V1080H-300Z" fill={`url(#${id}-land)`} />
       <g clipPath={`url(#${id}-left)`}><image href={ASSETS.forestLayers.midground} x="0" y="100" width="1200" height="800" preserveAspectRatio="xMidYMid meet" /></g>
       <g clipPath={`url(#${id}-right)`}><image href={ASSETS.forestLayers.midground} x="2400" y="100" width="1200" height="800" preserveAspectRatio="xMidYMid meet" /></g>
-      {[620, 960, 1280, 1600, 1950, 2290, 2640].map((x, i) => <ArtPatch key={x} href={ASSETS.forestLayers.midground} x={x} y={540 + i % 3 * 24}
-        width={380 + i % 2 * 60} height={(380 + i % 2 * 60) * 350 / 520} viewBox="0 10 520 350" />)}
     </Layer>
     <Layer name="route" activity={activity} visible={visibleLayers?.route !== false}>
       <defs><linearGradient id={`${id}-water`} x1="0" x2="0" y1="1000" y2="1500" gradientUnits="userSpaceOnUse"><stop stopColor="#91c7ba" /><stop offset="1" stopColor="#387d80" /></linearGradient>
@@ -76,7 +74,11 @@ export default function ForestLayerContent({ activity, visibleLayers }) {
       <path d="M-100 900H3700" stroke="#af775d" strokeWidth="142" />
       <path d="M-100 900H3700" stroke={`url(#${id}-lane)`} strokeWidth="110" />
       <path d="M-100 900H3700" stroke={`url(#${id}-grain)`} strokeWidth="110" />
-      <g clipPath={`url(#${id}-route)`}>{[-200, 800, 1800, 2800].map(x => <ArtPatch key={x} href={ASSETS.forestLayers.path} x={x} y="300" width="1200" height="800" />)}</g>
+      <g clipPath={`url(#${id}-route)`}>
+        <svg x="0" y="-928" width="3600" height="2400" viewBox="0 0 1536 1024" preserveAspectRatio="none" overflow="hidden">
+          <image href={ASSETS.forestLayers.path} width="1536" height="1024" preserveAspectRatio="none" />
+        </svg>
+      </g>
       {Array.from({ length: 42 }, (_, i) => <g key={i} transform={`translate(${(i * 211) % 3600} ${i % 2 ? 990 + i % 3 * 7 : 811 - i % 4 * 3})`}>
         <path d="M0 8Q-19-10-23 0Q-7 11 0 8Q15-18 19-8Q18 4 0 8" fill="#69995b" /><circle cy="-4" r="5" fill={i % 3 ? '#edc575' : '#efb4b2'} /><circle cy="-4" r="2" fill="#fff6c4" />
       </g>)}

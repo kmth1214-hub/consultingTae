@@ -1,6 +1,6 @@
 # Task: T04 Selected Cookie and Player Hit Feedback
 
-## Status: pending
+## Status: in_progress
 
 ## Goal
 Show the currently selected cookie standing beside the slingshot and make incoming enemy attacks visibly hit/protect/heal that cookie. Weapon and player must read as separate actors while retaining the proven launch path and single-resolution combat lifecycle.

@@ -1,16 +1,16 @@
 # Current Context
 
 ## Active Plan
-[Regional Layered World and Map Studio](./plans/2026-10-21-regional-layered-world-and-map-studio.md)
+[Wide Battlefield and Mouse Drag Slingshot](./plans/2026-10-21-wide-battlefield-mouse-drag.md)
 
 ## Active Phase
-[P01 Regional Scenes](./phases/2026-10-21-regional-layered-world-and-map-studio/P01-regional-scenes/phase.md)
+[P01 Wide Combat](./phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/phase.md)
 
 ## Active Task
-[T05 Development-only Map Studio](./phases/2026-10-21-regional-layered-world-and-map-studio/P01-regional-scenes/T05-development-map-studio.md)
+[T04 Selected Cookie and Player Hit Feedback](./phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/T04-player-cookie-feedback.md)
 
 ## Status
-- [Regional Layered World and Map Studio](./decisions/2026-10-21-regional-layered-world-and-map-studio.md): one Phase/six Tasks, done5/6, active T06. T05 development map studio committed in Korean; verified local link `http://127.0.0.1:5173/__dev/maps`. Planning baseline543252f; T01 Snow as82751e8, T02 City as86432cc, T03 Chaos art/review as1cee22f, T04 shared scene/depth/minimap `7b54908`. T06 acceptance/handoff comes next; then return to queued Wide Combat T04.
+- [Regional Layered World and Map Studio](./plans/2026-10-21-regional-layered-world-and-map-studio.md): complete, 6/6 Tasks. T04 scene/depth/minimap `7b54908`; T05 development studio `3ee5ed3`; T06 final review committed in Korean. Local review link: `http://127.0.0.1:5173/__dev/maps` (development-only, no authenticated administrator access). Evidence: [regional scene review](./asset-reviews/2026-10-21-regional-scene-acceptance.md).
 - T03 delivered eight native1536×1024 Chaos layers and metadata (11,255,361 bytes). Chaos8/8 and all-region24/24 browser-decoded checks, production build and diff check pass. The raw panel join has a visible texture transition; T04 must feather the overlap. See [Chaos review](./asset-reviews/2026-10-21-chaos-layers.md). Live renderer and game rules remain unchanged.
 - T02 delivered eight native1536×1024 City PNGs and layers.json in assets/maps/city-layers, total12547815 bytes, using built-in imagegen with inspected Forest/City/Snow placement references. City8/8 and unchanged Snow8/8 pass actual-Chrome RGBA/native/contact-row checks with the existing verifier unchanged; standalone build/staged diff pass. No gameplay suite claimed for asset-only delivery. Original assets, live src, dependencies and game rules unchanged.
 - City west bakery/east oven workshop, dusk skylines, stone promenade and low planter/rail foreground were reviewed on light/dark/checker and registered overview/west/join/east/near-road views. Initial road geometry placed contact on a vertical face; imagegen rebuilt it with a temporary placement guide, final opaque bands718..869/718..870 and row768100% on the paving surface. Midground72.40%/65.57% transparent, foreground90.54%/90.76% with top80%100% clear. [City prompts and review](./asset-reviews/2026-10-21-city-layers.md) record accepted/rejected outputs and native/load/blend limits. Runtime integration still T04; studio link T05. Captures/probes/rejected candidates remain untracked tmp. No adjacent code findings; existing4173/5173 services preserved.
@@ -56,6 +56,6 @@
 - P02 requires owner-provided Azure subscription/resource, Entra tenant ID and app-registration credentials, and SWA deployment token.
 
 ## Next Step (IMPORTANT)
-Read only `phases/2026-10-21-regional-layered-world-and-map-studio/P01-regional-scenes/T06-regional-review-and-handoff.md` when execution resumes. Complete visual/gameplay/access acceptance and record the reproduced Forest composition issue; fix it within T06's reproduced-fix scope, then return to queued Wide Combat T04 cookie feedback, followed by T05 full gameplay review. Do not start Azure early.
+Read only `phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/T04-player-cookie-feedback.md`. Add the selected cookie beside the slingshot and move incoming damage, shield and healing feedback to that cookie. Preserve the shared scene pose, shot collision, game rules and single-impact lifecycle. Then continue the original T05 full gameplay review. Azure remains deferred.
 ## Deferred Azure Work
 [React release P02-T01](./phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md) remains an explicit later project step. Do not resume it as part of this gameplay plan or automatically start it after T05. Tenant/subscription/app registration and deployment secrets remain owner-provided and are never committed.

@@ -1,6 +1,6 @@
 # Task: T06 Regional Acceptance and Existing-task Handoff
 
-## Status: pending
+## Status: done
 
 ## Goal
 Prove that the completed painted scenes, depth and development studio work together without gameplay regression; record the real review link and return the active pointer to the unfinished selected-cookie task.
@@ -58,11 +58,12 @@ Prove that the completed painted scenes, depth and development studio work toget
 - Original Wide Combat T04 enemy-framing change must retain the new `applyScenePose` call; its T05 full-game release review now also runs asset/studio/build-exclusion checks. Those dependency notes were added during planning and remain relevant. Do not overwrite them with the historical flat-crop assumptions.
 
 ## Acceptance Criteria
-- [ ] All four painted/depth/ambient scenes are manually inspected across the specified cameras/viewports with gameplay alignment preserved.
-- [ ] Complete existing Node/production game regressions and separate studio tests pass with no retries/runtime/assets failures.
-- [ ] Production exclusion verified in real browser and emitted output; actual development review URL recorded.
-- [ ] Evidence accurately describes new art/native detail and remaining cookie/auth work.
-- [ ] New plan is complete and current pointer correctly returns to original Wide Combat T04, preserving T05 and deferred Azure.
+- [x] All four painted/depth/ambient scenes are manually inspected across the specified cameras/viewports with gameplay alignment preserved.
+- [x] Complete existing Node/production game regressions and separate studio tests pass with no retries/runtime/assets failures.
+- [x] Production exclusion verified in real browser and emitted output; actual development review URL recorded.
+- [x] Evidence accurately describes new art/native detail and remaining cookie/auth work.
+- [x] New plan is complete and current pointer correctly returns to original Wide Combat T04, preserving T05 and deferred Azure.
+
 
 ## Validation
 - `node scripts/verify-region-art.cjs all` — all24 regional PNGs pass native/alpha/road checks.
@@ -85,9 +86,17 @@ Task: T06-regional-review-and-handoff
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] Acceptance implementation/review complete
+- [x] Full validation passed and findings documented
+- commit: Korean subject feat(scene): ?? ?????? ?? ?? ??
+
+## Execution Notes
+- Reworked the existing Forest layer composition after actual screenshots exposed repeated tree cutouts and a schematic distant ridge. The same original source panorama now spans the distant plane once; its matching path is used once beneath the canonical collision lane. No art source, enemy, collision polygon, or world coordinate changed.
+- Acceptance evidence: [regional scene review](../../../asset-reviews/2026-10-21-regional-scene-acceptance.md). Inspected all four 1440px studio maps, playfield capture at 2007x1037, plus desktop/short/narrow studio layouts. The visual review records the remaining outer transparent-plane checker backing and resolution/content limitations accurately.
+- Final checks: region art 24/24; Node 85/85; fresh-production Chrome 71/71; development studio Chrome 8/8; build pass; studio production-exclusion checker inspected 5 emitted HTML/JS/CSS files; diff check pass.
+- The development-only Chrome link is verified at http://127.0.0.1:5173/__dev/maps. No administrator authentication is implied. The exact production path fails closed, and production excludes studio code.
+- Browser-hidden lifecycle remains a documented limitation: headless Chrome cannot physically background this document; the existing test dispatches visibilitychange with a test-only hidden state. Real blur/focus, reduced-motion, other pointer cleanup, and separate production behavior passed.
+- The selected cookie remains intentionally pending in the original Wide Combat T04.
 
 ## Next pointer
 After prescribed commit/synchronization, restore the existing `.memory/phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/T04-player-cookie-feedback.md`. That Task is next, not Azure and not another art task. Do not claim the original5-task plan complete yet.

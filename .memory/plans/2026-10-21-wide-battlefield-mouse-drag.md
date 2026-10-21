@@ -1,11 +1,11 @@
 # Plan: Wide Battlefield and Mouse Drag Slingshot
 
 - Date: 2026-10-21
-- Status: in_progress (3/5 tasks done; P01-T04 queued after regional scene/studio dependency; T03 completed as455990b)
+- Status: in_progress (3/5 tasks done; active P01-T04; regional scene/studio dependency complete; T03 completed as455990b)
 - Decisions: [Confirmed interview](../decisions/2026-10-21-wide-battlefield-mouse-drag.md)
 
 ## Inserted visual dependency — 2026-10-21
-- Active execution is now [Regional Layered World and Map Studio](./2026-10-21-regional-layered-world-and-map-studio.md), per the user's explicit planning request. After its T06, restore this plan at existing P01-T04 (cookie feedback), then P01-T05. Preserve3/5 completion and all source commit history; no cookie work is implemented by this amendment.
+- The inserted [Regional Layered World and Map Studio](./2026-10-21-regional-layered-world-and-map-studio.md) is complete. Resume this plan at P01-T04 (cookie feedback), then P01-T05. Preserve3/5 completion and all source commit history; no cookie work is implemented by this amendment.
 - The new scene plan supersedes only the earlier restriction against producing regional raster layers/decorative parallax. Combat/path/solids/input and shared camera ownership remain unchanged. T04/T05 must retain the new scene pose/lifecycle and production studio exclusion. Azure remains deferred.
 
 ## Goal

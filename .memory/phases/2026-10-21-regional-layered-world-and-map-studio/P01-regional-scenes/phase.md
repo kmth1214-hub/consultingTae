@@ -8,10 +8,10 @@
 | T03 | `done` | Produce and review dedicated Chaos layers. | [T03](./T03-chaos-layer-art.md) |
 | T04 | `done` | Integrate painted scenes, parallax, restrained environment motion and the player minimap. | [T04](./T04-shared-scene-depth.md) |
 | T05 | `done` | Build isolated development map review with production exclusion. | [T05](./T05-development-map-studio.md) |
-| T06 | `pending` | Validate all scenes/gameplay/access boundaries and hand back to existing cookie task. | [T06](./T06-regional-review-and-handoff.md) |
+| T06 | `done` | Validate all scenes/gameplay/access boundaries and hand back to existing cookie task. | [T06](./T06-regional-review-and-handoff.md) |
 
 ## Progress
-- done: 5/6 (active: T06)
+- done: 6/6 (Phase complete)
 
 ## Completed
 - T03: `1cee22f` — eight native1536×1024 Chaos PNGs and metadata, total11255361 bytes. Chaos8/8 and all-region24/24 browser-decoded checks pass; production build and diff check pass. Isolated checkerboard layers and registered panorama/join inspected. The raw 600-unit panel join needs the shared runtime feathering already specified in T04. See [review](../../../asset-reviews/2026-10-21-chaos-layers.md). Original map, Forest/Snow/City art, live renderer and gameplay unchanged.
@@ -21,3 +21,5 @@
 ## Completion policy
 Follow task → prescribed commit → phase/plan/current sync. Do not skip art review or count DOM image presence as visual completion. Keep actual dimensions/transparency and screenshots/review notes.
 After T06, complete this Phase/plan and restore the existing Wide Combat T04 pointer, then its T05. Wide Combat remains3/5 during this inserted plan. Never start Azure automatically.
+
+- T04 shared painted scene/depth/minimap: `7b54908`; T05 isolated studio: `3ee5ed3`; T06 final visual/gameplay/access review committed in Korean. See [acceptance evidence](../../../asset-reviews/2026-10-21-regional-scene-acceptance.md).

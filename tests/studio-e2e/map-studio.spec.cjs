@@ -88,6 +88,36 @@ test('pan, wheel zoom, cursor anchor, reset and keyboard navigation use one stud
   await expect(page.getByLabel('확대 비율')).toHaveValue('1');
 });
 
+test('region changes preserve review preferences, reset the camera, cancel capture and keep SVG ids unique', async ({ page }) => {
+  await page.goto('/__dev/maps');
+  const preview = page.locator('.studio-viewport');
+  await page.locator('.studio-check input').nth(3).uncheck();
+  const pause = page.locator('.studio-pause');
+  await pause.click();
+  await page.locator('.studio-zoom-buttons button').first().click();
+  await expect(page.locator('input[type="range"]')).toHaveValue('1.3');
+  const bounds = await preview.boundingBox();
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.down();
+  await expect.poll(() => preview.evaluate(node => node.hasPointerCapture(1))).toBe(true);
+  await page.locator('.studio-field select').selectOption('snow');
+  await expect(page.locator('input[type="range"]')).toHaveValue('1');
+  await expect(preview.locator('[data-scene-layer="route"]')).toBeHidden();
+  await expect(pause).toHaveAttribute('aria-pressed', 'true');
+  expect(await preview.evaluate(node => node.hasPointerCapture(1))).toBe(false);
+  await page.mouse.up();
+  await page.locator('.studio-field select').selectOption('city');
+  await page.locator('.studio-field select').selectOption('chaos');
+  expect(await preview.evaluate(node => {
+    const ids = [...node.querySelectorAll('[id]')].map(element => element.id);
+    return ids.length === new Set(ids).size;
+  })).toBe(true);
+  expect(await page.evaluate(() => ({ test: window.__gameTest, storage: localStorage.length })))
+    .toEqual({ test: undefined, storage: 0 });
+  await page.goto('/__dev/maps/');
+  await expect(page.locator('[data-dev-tool="regional-map-studio-v1"]')).toBeVisible();
+});
+
 for (const viewportSize of [{ width: 1440, height: 900 }, { width: 844, height: 390 }, { width: 390, height: 844 }]) {
   test(`studio controls and preview remain visible without overflow at ${viewportSize.width}x${viewportSize.height}`, async ({ page }) => {
     await page.setViewportSize(viewportSize); await page.goto('/__dev/maps');
