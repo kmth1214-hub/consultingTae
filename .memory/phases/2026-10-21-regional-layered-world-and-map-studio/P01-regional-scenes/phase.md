@@ -7,11 +7,11 @@
 | T02 | `done` | Produce and review dedicated City layers. | [T02](./T02-city-layer-art.md) |
 | T03 | `done` | Produce and review dedicated Chaos layers. | [T03](./T03-chaos-layer-art.md) |
 | T04 | `done` | Integrate painted scenes, parallax, restrained environment motion and the player minimap. | [T04](./T04-shared-scene-depth.md) |
-| T05 | `in_progress` | Build isolated development map review with production exclusion. | [T05](./T05-development-map-studio.md) |
+| T05 | `done` | Build isolated development map review with production exclusion. | [T05](./T05-development-map-studio.md) |
 | T06 | `pending` | Validate all scenes/gameplay/access boundaries and hand back to existing cookie task. | [T06](./T06-regional-review-and-handoff.md) |
 
 ## Progress
-- done: 4/6 (active: T05)
+- done: 5/6 (active: T06)
 
 ## Completed
 - T03: `1cee22f` — eight native1536×1024 Chaos PNGs and metadata, total11255361 bytes. Chaos8/8 and all-region24/24 browser-decoded checks pass; production build and diff check pass. Isolated checkerboard layers and registered panorama/join inspected. The raw 600-unit panel join needs the shared runtime feathering already specified in T04. See [review](../../../asset-reviews/2026-10-21-chaos-layers.md). Original map, Forest/Snow/City art, live renderer and gameplay unchanged.

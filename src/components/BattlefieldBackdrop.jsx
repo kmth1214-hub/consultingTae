@@ -3,9 +3,10 @@ import SceneArt from './SceneArt.jsx';
 import ForestLayerContent from './ForestLayerContent.jsx';
 import { useSceneActivity } from '../game/useSceneActivity.js';
 
-function BattlefieldBackdrop({ area, motionPaused = false }) {
+function BattlefieldBackdrop({ area, motionPaused = false, visibleLayers }) {
   const activity = useSceneActivity({ paused: motionPaused });
-  return area === 'forest' ? <ForestLayerContent activity={activity} /> : <SceneArt area={area} activity={activity} />;
+  return area === 'forest' ? <ForestLayerContent activity={activity} visibleLayers={visibleLayers} />
+    : <SceneArt area={area} activity={activity} visibleLayers={visibleLayers} />;
 }
 
 export default memo(BattlefieldBackdrop);

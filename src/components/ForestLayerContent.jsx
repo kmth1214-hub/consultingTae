@@ -2,9 +2,10 @@ import React, { useId } from 'react';
 import { ASSETS } from '../game/assetCatalog.js';
 import SceneAtmosphere from './SceneAtmosphere.jsx';
 
-function Layer({ name, children, activity }) {
+function Layer({ name, children, activity, visible }) {
   const clip = `forest-${useId().replace(/:/g, '')}-foreground`;
   return <svg className={`battlefield-layer scene-${name}`} data-scene-layer={name} data-scene-area="forest"
+    style={{ display: visible ? undefined : 'none' }}
     viewBox="0 0 3600 1200" aria-hidden="true">
     {name === 'foreground' && <defs><clipPath id={clip}><path d="M-100-200H36V1010H3564V-200H3700V1800H-100Z" /></clipPath></defs>}
     <g data-depth-plane={name} clipPath={name === 'foreground' ? `url(#${clip})` : undefined}>
@@ -32,10 +33,10 @@ function ArtPatch({ href, x, y, width, height, viewBox = '0 0 1536 1024', opacit
   </g>;
 }
 
-export default function ForestLayerContent({ activity }) {
+export default function ForestLayerContent({ activity, visibleLayers }) {
   const id = `forest-scene-${useId().replace(/:/g, '')}`;
   return <>
-    <Layer name="sky" activity={activity}>
+    <Layer name="sky" activity={activity} visible={visibleLayers?.sky !== false}>
       <defs>
         <linearGradient id={`${id}-sky`} x1="0" x2="0" y1="-300" y2="900" gradientUnits="userSpaceOnUse"><stop stopColor="#72d5d3" /><stop offset="1" stopColor="#f0efbd" /></linearGradient>
         <radialGradient id={`${id}-sun`}><stop stopColor="#fff9d4" stopOpacity=".8" /><stop offset="1" stopColor="#f0efbd" stopOpacity="0" /></radialGradient>
@@ -50,12 +51,12 @@ export default function ForestLayerContent({ activity }) {
         <path d="M120 87q71-16 164-8l57 9q-89 5-221-1" opacity=".6" />
       </g>)}
     </Layer>
-    <Layer name="distant" activity={activity}>
+    <Layer name="distant" activity={activity} visible={visibleLayers?.distant !== false}>
       <path d="M-400 800Q-100 690 100 711L360 486 510 616 720 411 970 655 1300 452 1460 647 1810 398 2050 637 2340 484 2600 678 2890 402 3120 609 3460 460 3900 754V1200H-400Z" fill="#71a8a2" opacity=".36" />
       {[-120, 930, 1980, 3030].map((x, i) => <ArtPatch key={x} href={ASSETS.forestLayers.distant} x={x} y="100" width="1200" height="800"
         viewBox={['0 0 1536 1024', '450 80 1086 724', '400 170 1136 757.3333333333', '650 70 886 590.6666666667'][i]} />)}
     </Layer>
-    <Layer name="midground" activity={activity}>
+    <Layer name="midground" activity={activity} visible={visibleLayers?.midground !== false}>
       <defs><linearGradient id={`${id}-land`} x1="0" x2="0" y1="850" y2="1500" gradientUnits="userSpaceOnUse"><stop stopColor="#527c51" /><stop offset="1" stopColor="#386c58" /></linearGradient>
         <clipPath id={`${id}-left`}><rect width="600" height="1200" /></clipPath><clipPath id={`${id}-right`}><rect x="3000" width="600" height="1200" /></clipPath></defs>
       <path d="M-300 840Q80 780 360 805T1010 803T1740 810T2490 799T3200 806T3900 790V1080H-300Z" fill={`url(#${id}-land)`} />
@@ -64,7 +65,7 @@ export default function ForestLayerContent({ activity }) {
       {[620, 960, 1280, 1600, 1950, 2290, 2640].map((x, i) => <ArtPatch key={x} href={ASSETS.forestLayers.midground} x={x} y={540 + i % 3 * 24}
         width={380 + i % 2 * 60} height={(380 + i % 2 * 60) * 350 / 520} viewBox="0 10 520 350" />)}
     </Layer>
-    <Layer name="route" activity={activity}>
+    <Layer name="route" activity={activity} visible={visibleLayers?.route !== false}>
       <defs><linearGradient id={`${id}-water`} x1="0" x2="0" y1="1000" y2="1500" gradientUnits="userSpaceOnUse"><stop stopColor="#91c7ba" /><stop offset="1" stopColor="#387d80" /></linearGradient>
         <linearGradient id={`${id}-lane`} x1="0" x2="0" y1="840" y2="975" gradientUnits="userSpaceOnUse"><stop stopColor="#af775d" /><stop offset=".22" stopColor="#f8cdab" /><stop offset=".7" stopColor="#deaa83" /><stop offset="1" stopColor="#af775d" /></linearGradient>
         <pattern id={`${id}-grain`} width="137" height="69" patternUnits="userSpaceOnUse"><path d="m9 20 23-2m17 29 14 2m27-38 21 1m7 44 15-3m-90-1 13-2m49-24 14 2" stroke="#f8cdab" strokeWidth="2" opacity=".4" /></pattern>
@@ -80,7 +81,7 @@ export default function ForestLayerContent({ activity }) {
         <path d="M0 8Q-19-10-23 0Q-7 11 0 8Q15-18 19-8Q18 4 0 8" fill="#69995b" /><circle cy="-4" r="5" fill={i % 3 ? '#edc575' : '#efb4b2'} /><circle cy="-4" r="2" fill="#fff6c4" />
       </g>)}
     </Layer>
-    <Layer name="foreground" activity={activity}>
+    <Layer name="foreground" activity={activity} visible={visibleLayers?.foreground !== false}>
       {[-80, 2480].map(x => <ArtPatch key={x} href={ASSETS.forestLayers.foreground} x={x} y="300" width="1200" height="800" />)}
       {[850, 1800].map(x => <ArtPatch key={x} href={ASSETS.forestLayers.foreground} x={x} y="1010" width="1100" height="220" viewBox="250 830 1036 207.2" />)}
     </Layer>

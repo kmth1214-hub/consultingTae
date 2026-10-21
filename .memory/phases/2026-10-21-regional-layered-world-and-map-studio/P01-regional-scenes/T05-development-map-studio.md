@@ -1,6 +1,6 @@
 # Task: T05 Development-only Map Studio
 
-## Status: in_progress
+## Status: done
 
 ## Goal
 Provide a distinct development review page where all four real runtime maps can be selected, panned, zoomed and inspected by layer, and prove that the ordinary production build exposes no studio interface or module.
@@ -125,9 +125,16 @@ Task: T05-development-map-studio
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] Implementation complete
+- [x] Validation passed
+- commit: Korean subject feat(dev): ?? ?? ?? ?? ????
+
+## Execution Notes
+- Exact development paths /__dev/maps and /__dev/maps/ are gated by import.meta.env.DEV. The ordinary App is lazy, the studio never mounts a game session, and fresh production output omits the studio module, CSS, camera helper, and test fixture.
+- Reuses BattlefieldBackdrop, ArenaScenery, round-one canonical prop placement, and the shared scene pose. Includes four map selectors, five layer toggles, atmosphere pause/resume, pointer pan, cursor-anchored wheel zoom, zoom controls, arrows/+/-/Home keyboard navigation, reset, and responsive layouts.
+- Verified in the local Chrome tab at http://127.0.0.1:5173/__dev/maps. This is a development review page, not authenticated administrator access.
+- Validation: full Node suite 85/85; camera math 3/3; studio Chrome suite 7/7 reported passing; production boundary/player suite 13/13; fresh production build; emitted-output checker examined five HTML/JS/CSS files and found no studio module/UI/CSS/camera/fixture.
+- Inspected all four 1440x900 map captures and layouts at 844x390 and 390x844. Snow, City and Chaos show their registered art. Forest currently repeats/crops tree patches and uses a schematic triangular distant ridge; T06 must review and fix this reproduced visual issue before calling the composition accepted. Captures remain untracked in tmp/.
 
 ## Next pointer
 After prescribed implementation/task commit and phase/plan/current sync, advance to `T06-regional-review-and-handoff.md`. No authenticated admin/deployment or cookie migration here.

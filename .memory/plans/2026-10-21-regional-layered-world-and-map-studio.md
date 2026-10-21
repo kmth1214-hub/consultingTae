@@ -1,7 +1,7 @@
 # Plan: Regional Layered World and Development Map Studio
 
 - Date: 2026-10-21
-- Status: in_progress (4/6 tasks done; active P01-T05; T04 shared scene/depth/minimap completed in the Korean T04 commit; T03 Chaos artwork completed as1cee22f, T02 City as86432cc, T01 Snow as82751e8)
+- Status: in_progress (5/6 tasks done; active P01-T06; T05 development studio completed in a Korean commit; T04 shared scene/depth/minimap completed; T03 Chaos artwork completed as1cee22f, T02 City as86432cc, T01 Snow as82751e8)
 - Decisions: [Confirmed scope](../decisions/2026-10-21-regional-layered-world-and-map-studio.md)
 
 ## Goal

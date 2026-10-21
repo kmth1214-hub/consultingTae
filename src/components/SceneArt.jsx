@@ -5,11 +5,12 @@ import SceneAtmosphere from './SceneAtmosphere.jsx';
 const ORDER = ['sky', 'distant', 'midground', 'route', 'foreground'];
 const Z = { sky: 0, distant: 0, midground: 1, route: 2, foreground: 5 };
 
-function PanoramaLayer({ role, panels, area, profile, prefix, activity }) {
+function PanoramaLayer({ role, panels, area, profile, prefix, activity, visible }) {
   const layer = role === 'path' ? 'route' : role;
   const clipId = `${prefix}-${layer}-clip`;
   const isForeground = role === 'foreground';
   return <svg className={`battlefield-layer scene-${layer}`} data-scene-layer={layer} data-scene-area={area}
+    style={{ display: visible ? undefined : 'none' }}
     viewBox="0 0 3600 1200" aria-hidden="true">
     <defs>
       <linearGradient id={`${prefix}-sky`} x1="0" x2="0" y1="-300" y2="900" gradientUnits="userSpaceOnUse">
@@ -66,13 +67,14 @@ function PanoramaLayer({ role, panels, area, profile, prefix, activity }) {
   </svg>;
 }
 
-export default function SceneArt({ area, activity }) {
+export default function SceneArt({ area, activity, visibleLayers }) {
   const profile = getSceneProfile(area), prefix = `scene-${useId().replace(/:/g, '')}`;
   return <>
     {ORDER.map(name => {
       const role = name === 'route' ? 'path' : name;
       const panels = profile.panels[role];
-      return <PanoramaLayer key={name} role={role} panels={panels} area={area} profile={profile} prefix={`${prefix}-${name}`} activity={activity} />;
+      return <PanoramaLayer key={name} role={role} panels={panels} area={area} profile={profile} prefix={`${prefix}-${name}`} activity={activity}
+        visible={visibleLayers?.[name] !== false} />;
     })}
   </>;
 }

@@ -1,0 +1,63 @@
+.map-studio { height: 100svh; min-height: 520px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 12px; padding: 14px 18px 10px; overflow: hidden; color: #30251d; background: #ece8dc; }
+.map-studio h1 { margin: 2px 0 4px; font-size: clamp(1.4rem, 2vw, 2rem); letter-spacing: -.04em; line-height: 1.2; }
+.studio-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-width: 0; }
+.studio-header > div { min-width: 0; }
+.studio-kicker { color: #4e805f; font-size: .68rem; font-weight: 900; letter-spacing: .12em; }
+.studio-header > div > p:last-child { color: #746552; font-size: .78rem; line-height: 1.5; }
+.studio-return, .studio-controls button { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 7px 12px; border: 1px solid #d1c6b3; border-radius: 9px; background: #fffaf0; color: #4c3a27; font-size: .78rem; font-weight: 750; text-decoration: none; cursor: pointer; }
+.studio-return { flex: 0 0 auto; }
+.studio-layout { display: grid; grid-template-columns: 235px minmax(0, 1fr); gap: 14px; min-height: 0; }
+.studio-controls { display: flex; flex-direction: column; gap: 15px; min-height: 0; padding: 14px; border: 1px solid #d9d0c0; border-radius: 14px; background: #fffdf7; overflow-y: auto; }
+.studio-field { display: grid; gap: 6px; color: #655440; font-size: .78rem; font-weight: 850; }
+.studio-field select { width: 100%; min-height: 40px; padding: 6px 10px; border: 1px solid #d0c5b1; border-radius: 8px; background: white; color: #33271c; font: inherit; }
+.studio-controls fieldset { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; margin: 0; padding: 10px; border: 1px solid #e2dacc; border-radius: 9px; }
+.studio-controls legend { padding: 0 5px; font-size: .76rem; font-weight: 850; }
+.studio-check { display: flex; align-items: center; gap: 6px; color: #665542; font-size: .72rem; cursor: pointer; }
+.studio-check input { accent-color: #477c61; width: 16px; height: 16px; }
+.studio-controls button:hover, .studio-return:hover { background: #f3ead7; }
+.studio-controls button:focus-visible, .studio-return:focus-visible, .studio-controls input:focus-visible, .studio-controls select:focus-visible, .studio-viewport:focus-visible { outline: 3px solid #477c61; outline-offset: 3px; }
+.studio-pause { width: 100%; background: #e8f0dc !important; border-color: #bfd0b8 !important; }
+.studio-zoom { display: grid; gap: 9px; }
+.studio-zoom-heading { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; }
+.studio-zoom-heading output { color: #4c805e; font-variant-numeric: tabular-nums; font-weight: 850; }
+.studio-zoom-buttons { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 6px; }
+.studio-zoom-buttons button { padding: 5px; }
+.studio-zoom input[type="range"] { width: 100%; accent-color: #477c61; }
+.studio-zoom p { color: #81715c; font-size: .66rem; line-height: 1.5; }
+.studio-viewport { position: relative; isolation: isolate; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid #789182; border-radius: 14px; background-color: #b8c3ae; background-image: linear-gradient(45deg, #ffffff20 25%, transparent 25%, transparent 75%, #ffffff20 75%), linear-gradient(45deg, #ffffff20 25%, transparent 25%, transparent 75%, #ffffff20 75%); background-size: 28px 28px; background-position: 0 0, 14px 14px; cursor: grab; touch-action: none; user-select: none; }
+.studio-viewport.is-dragging { cursor: grabbing; }
+.studio-viewport .arena-world { position: absolute; top: 0; left: 0; isolation: isolate; transform-origin: 0 0; }
+.studio-viewport .battlefield-layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.studio-viewport .scene-sky, .studio-viewport .scene-distant { z-index: 0; }
+.studio-viewport .scene-midground { z-index: 1; }
+.studio-viewport .scene-route { z-index: 2; }
+.studio-viewport .scene-foreground { z-index: 5; }
+.studio-viewport .scene-scenery { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; }
+.studio-map-label { position: absolute; z-index: 8; right: 10px; bottom: 9px; padding: 5px 9px; border: 1px solid #fff7db; border-radius: 8px; background: #fffdf2e8; color: #5b4d3a; font-size: .7rem; font-weight: 750; pointer-events: none; }
+.studio-waiting { position: absolute; inset: 0; z-index: 9; display: grid; place-items: center; color: #4c604d; }
+.studio-footer { color: #81725f; text-align: right; font-size: .66rem; }
+.studio-error, .studio-unavailable { min-height: 100svh; display: grid; align-content: center; justify-items: center; gap: 14px; padding: 24px; text-align: center; }
+.studio-error h1, .studio-unavailable h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.5rem); }
+.studio-error a, .studio-unavailable a { color: #365f45; font-weight: 800; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 700px) {
+  .map-studio { height: auto; min-height: 100svh; grid-template-rows: auto auto auto; padding: 10px; }
+  .studio-header { align-items: flex-start; }
+  .studio-header > div > p:last-child { max-width: 42ch; font-size: .68rem; }
+  .studio-return { min-height: 34px; padding: 6px 8px; font-size: .68rem; }
+  .studio-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(45svh, 1fr); gap: 9px; }
+  .studio-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 9px; padding: 10px; overflow: visible; }
+  .studio-controls fieldset { grid-row: span 2; }
+  .studio-pause { min-height: 36px !important; }
+  .studio-zoom { grid-column: 1 / -1; grid-template-columns: auto minmax(130px, 1fr) minmax(100px, 1fr); align-items: center; gap: 8px; }
+  .studio-zoom p { grid-column: 1 / -1; }
+  .studio-zoom-buttons { grid-template-columns: 1fr 1fr 1.5fr; }
+  .studio-viewport { min-height: 45svh; border-radius: 10px; }
+  .studio-footer { padding-bottom: 5px; }
+}
+@media (max-width: 380px) {
+  .studio-controls { grid-template-columns: minmax(0, 1fr); }
+  .studio-controls fieldset { grid-row: auto; }
+  .studio-zoom { grid-template-columns: 1fr; }
+  .studio-zoom-buttons, .studio-zoom p { grid-column: 1; }
+}

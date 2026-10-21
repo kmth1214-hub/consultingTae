@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "test": "node --test tests/*.test.cjs tests/*.test.mjs",
     "test:e2e": "playwright test",
+    "test:studio": "playwright test --config playwright.studio.config.cjs",
     "preview:e2e": "npm run build && vite preview --host 127.0.0.1 --port 4180 --strictPort"
   },
   "dependencies": {
