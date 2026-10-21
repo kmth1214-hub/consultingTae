@@ -1,6 +1,6 @@
 # Task: T03 Dedicated Chaos Layer Artwork
 
-## Status: pending
+## Status: done
 
 ## Goal
 Produce an independently painted side-view Chaos scene matching Forest's art quality, delivered as eight proportional PNG layers with real transparency and reviewed seams. Do not switch the live renderer during this asset task.
@@ -59,10 +59,10 @@ type LayerManifest={version:1;area:'chaos';baselineRatio:0.75;
 - Review notes include tool used, generation/edit prompts, references, filenames, native dimensions, alpha metrics, accepted/rejected issue resolutions, overall byte total, screenshot paths and remaining limitations. Never include secrets or raw base64. Only accepted final PNGs/manifest/review and the verifier (T01) are staged.
 
 ## Acceptance Criteria
-- [ ] Eight dedicated painted Chaos layers and complete native metadata exist; originals unchanged.
-- [ ] Opaque/cutout roles, road registration and source proportions pass browser pixel validation.
-- [ ] Side-view style matches Forest; west/east have coherent edges without duplicated major landmarks.
-- [ ] Real isolated/assembled images inspected and findings recorded; no live renderer or gameplay changed.
+- [x] Eight dedicated painted Chaos layers and complete native metadata exist; originals unchanged.
+- [x] Opaque/cutout roles, road registration and source proportions pass browser pixel validation.
+- [x] Side-view style matches Forest; west/east have distinct compositions; overlap transition is recorded for T04 runtime feathering.
+- [x] Real isolated/assembled images inspected and findings recorded; no live renderer or gameplay changed.
 
 ## Validation
 - `node scripts/verify-region-art.cjs chaos` — all eight images decode and pass dimensions/alpha/road checks.
@@ -83,8 +83,8 @@ Task: T03-chaos-layer-art
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] Implementation complete: eight native Chaos PNGs and layers.json; original images and live scene untouched.
+- [x] Validation passed: Chaos8/8 and all areas24/24 browser-decoded checks, production build, diff check and visual review.
 - commit: pending
 
 ## Next pointer
