@@ -33,7 +33,7 @@ test('Defense blocks damage, Fireball arms/doubles the next shot, and both count
   let trace = await snapshot(page);
   expect(trace.lastEvent.enemyAttack.blocked).toBe(true);
   expect(trace.run.inventory.defense).toBe(0);
-  await expect(page.locator('.launcher')).toHaveClass(/has-shield/);
+  await expect(page.getByTestId('player-shield')).toBeVisible();
   await page.getByRole('button', { name: '불공 사용', exact: true }).click();
   await expect(hp(page)).toHaveText('35');
   trace = await snapshot(page);

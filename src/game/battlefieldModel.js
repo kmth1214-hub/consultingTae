@@ -52,6 +52,9 @@ export function buildBattlefield({ area, round, enemies } = {}) {
   }
   return { ...BATTLEFIELD, key: JSON.stringify([area, round,
     enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss])]), area, round,
+  // Presentation-only cookie bounds and canonical incoming-attack anchor.
+  player: { x: 44, y: 748, width: 152, height: 152,
+    impact: { x: 120, y: 824 }, contact: { x: 170, y: 900 } },
   // restPouch is LOCAL to the sprite; impact/contact are WORLD coordinates.
   launcher: { x: 220, y: 758, width: 124, height: 142, restPouch: { x: 64, y: 54 },
     impact: { x: 284, y: 823 }, contact: { x: 319, y: 900 } },

@@ -5,6 +5,7 @@ import MonsterGroup from './MonsterGroup.jsx';
 import ArenaScenery, { ContactEffect } from './ArenaScenery.jsx';
 import BattlefieldBackdrop from './BattlefieldBackdrop.jsx';
 import Slingshot from './Slingshot.jsx';
+import PlayerCookie from './PlayerCookie.jsx';
 import TrajectoryPreview from './TrajectoryPreview.jsx';
 import ProjectileFlight from './ProjectileFlight.jsx';
 import EnemyResponse, { EnemyResponseNotice, responseTravelMs } from './EnemyResponse.jsx';
@@ -75,7 +76,10 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
       <div ref={worldRef} className="arena-world" style={{ width: layout.width, height: layout.height }}>
         <BattlefieldBackdrop area={run.area} layout={layout} motionPaused={Boolean(run.terminal)} />
         <ArenaScenery layout={layout} />
-        <Slingshot aim={state} run={run} lastEvent={lastEvent} response={enemyResponse} launcherRef={launcherRef} layout={layout} />
+        <Slingshot aim={state} run={run} launcherRef={launcherRef} layout={layout} />
+        <PlayerCookie characterId={run.characterId} placement={layout.player} aimPhase={state.phase}
+          launchId={state.launchId} response={enemyResponse} playerHp={beforeImpact
+            ? enemyResponse.attack.playerHpBefore : run.playerHp} defenseArmed={run.defenseArmed} lastEvent={lastEvent} />
         <svg className="projectile-layer" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
           <TrajectoryPreview path={solution?.path || flight?.path} previewD={solution?.previewD}
             visible={state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />

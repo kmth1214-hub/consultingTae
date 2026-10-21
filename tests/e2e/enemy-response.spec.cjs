@@ -13,15 +13,24 @@ test('shield intercepts a visible incoming attack from the actual enemy without 
   await expect(attack).toBeVisible();
   await expect(attack).toHaveAttribute('data-attacker-id', trace.lastEvent.enemyAttack.enemyId);
   await expect(page.locator('.monster.is-attacking')).toHaveCount(1);
-  await expect(page.getByTestId('shield-impact')).toBeVisible();
+  await expect(attack).toHaveAttribute('data-stage', 'impact');
+  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-character-id', 'adventurer');
+  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'blocked');
+  await expect(page.getByTestId('player-shield')).toBeVisible();
+  await expect(page.getByTestId('player-cookie').locator('img')).toHaveJSProperty('naturalWidth', 312);
   await expect(hp(page)).toHaveText('100');
-  await page.screenshot({ path: 'tmp/react-t06-shield-impact.jpg' });
+  await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-blocked-1440.jpg' });
   await phase(page, 'idle');
-  await expect(page.locator('.launcher')).not.toHaveClass(/has-shield/);
+  await expect(page.getByTestId('player-cookie')).not.toHaveClass(/player-cookie--blocked/);
+  await expect(page.getByTestId('player-shield')).toHaveCount(0);
   await expect(attack).toHaveCount(0);
   // A consumed shield must not accidentally protect the following enemy turn.
   await page.keyboard.press('1');
+  const second = await snapshot(page);
+  await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'impact');
+  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'hurt');
   await expect(page.getByTestId('player-impact')).toBeVisible();
+  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-impact-id', /\d+/);
   await expect(hp(page)).toHaveText('95');
   await phase(page, 'idle');
   expect((await snapshot(page)).run.playerHp).toBe(95);
@@ -50,7 +59,11 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
   const x1 = (await projectile.boundingBox()).x;
   await expect.poll(async () => (await projectile.boundingBox()).x, { intervals: [16] }).toBeLessThan(x1 - 15);
   await page.screenshot({ path: 'tmp/react-t06-enemy-projectile.jpg' });
+  await expect(attack).toHaveAttribute('data-stage', 'impact');
+  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'hurt');
+  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-impact-id', /\d+/);
   await expect(page.getByTestId('player-impact')).toBeVisible();
+  await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-hit-1440.jpg' });
   await expect(hp(page)).toHaveText('95');
   await phase(page, 'idle');
   const after = await snapshot(page);
@@ -103,6 +116,7 @@ test('a lethal enemy hit is shown before defeat, then retry has no stale respons
   await expect(hp(page)).toHaveText('1');
   await expect(page.getByRole('heading', { name: '다음엔 조금 더 멀리', exact: true })).toHaveCount(0);
   await expect(page.getByTestId('player-impact')).toBeVisible();
+  await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-ranged-hit-1440.jpg' });
   await expect(hp(page)).toHaveText('0');
   await expect(page.getByRole('heading', { name: '다음엔 조금 더 멀리', exact: true })).toBeVisible();
   expect((await snapshot(page)).run.playerHp).toBe(0);

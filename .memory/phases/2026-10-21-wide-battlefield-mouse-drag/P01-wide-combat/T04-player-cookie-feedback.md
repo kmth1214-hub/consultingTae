@@ -1,6 +1,6 @@
 # Task: T04 Selected Cookie and Player Hit Feedback
 
-## Status: in_progress
+## Status: done
 
 ## Goal
 Show the currently selected cookie standing beside the slingshot and make incoming enemy attacks visibly hit/protect/heal that cookie. Weapon and player must read as separate actors while retaining the proven launch path and single-resolution combat lifecycle.
@@ -97,11 +97,11 @@ PlayerCookie({characterId,placement,aimPhase,launchId,response,playerHp,defenseA
 - On failure, fix the reproduced migration issue with its regression. Do not weaken HP/turn/collision assertions or introduce new damage rules to make poses appear. Record unrelated findings without implementing them.
 
 ## Acceptance Criteria
-- [ ] Correct selected cookie stands visibly beside the weapon, with proportions and feet aligned across all four maps.
-- [ ] Ranged/melee origins/destinations and hit flashes match the cookie, with HP reveal at actual response impact and no duplicate turns.
-- [ ] Defense/Milk shield and healing belong to the cookie; slingshot retains only weapon effects.
-- [ ] Player+weapon+attacker framing works on prescribed viewports; reduced-motion and cancel/hidden/new-run cleanup remain correct.
-- [ ] Existing launch origins, solids/Wind/reverse rules, damage/HP/inventory/progression and all prior regressions stay valid.
+- [x] Correct selected cookie stands visibly beside the weapon, with proportions and feet aligned across all four maps.
+- [x] Ranged/melee origins/destinations and hit flashes match the cookie, with HP reveal at actual response impact and no duplicate turns.
+- [x] Defense/Milk shield and healing belong to the cookie; slingshot retains only weapon effects.
+- [x] Player+weapon+attacker framing works on prescribed viewports; reduced-motion and cancel/hidden/new-run cleanup remain correct.
+- [x] Existing launch origins, solids/Wind/reverse rules, damage/HP/inventory/progression and all prior regressions stay valid.
 
 ## Validation
 - `node --test tests/battlefield-model.test.mjs tests/battlefield-camera.test.mjs tests/player-presentation.test.mjs` — player metadata, poses and framing pass.
@@ -109,23 +109,24 @@ PlayerCookie({characterId,placement,aimPhase,launchId,response,playerHp,defenseA
 - `npm.cmd run test:e2e` — complete fresh-production actual-Chrome suite on4180 passes with no runtime/asset failures or retries.
 - `npm.cmd run build` and `git diff --check` — pass.
 - Inspect and document all required player captures under untracked tmp; keep4173/5173 preview services intact.
+- Visual evidence: [T04 selected-cookie, heal, shield and hit captures](../../../asset-reviews/2026-10-21-wide-t04-player-review.md).
 
 ## Commit Message
 ```text
-feat(game): place selected cookie beside the slingshot and receive enemy hits
+기능(전투): 선택 쿠키 피격 및 방어 연출 적용
 
 Plan: 2026-10-21-wide-battlefield-mouse-drag
 Phase: P01-wide-combat
 Task: T04-player-cookie-feedback
 
-- Render the selected cookie and center enemy strikes, shields and healing on it.
-- Preserve single-response combat and validate player framing and feedback.
+- 선택한 쿠키를 새총 옆에 표시하고 적의 공격·방어막·회복 효과를 쿠키에 연결한다.
+- 기존 전투 처리를 유지하면서 플레이어 배치와 피드백을 검증한다.
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과 — focused9/9; full Node89/89; full production Chromium73/73; build and diff checks pass.
+- commit: `기능(전투): 선택 쿠키 피격 및 방어 연출 적용`
 
 ## Next pointer
 After prescribed source/task commit and phase/current sync, advance to `T05-wide-gameplay-regression.md`. Do not start Azure deployment or mark the full feature complete yet.

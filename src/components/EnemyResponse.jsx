@@ -32,7 +32,7 @@ export function EnemyResponseNotice({ response }) {
 export function responseTravelMs(response, layout, reduced) {
   if (reduced) return 100;
   const attacker = layout.enemies.find(e => e.id === response?.attack.enemyId);
-  return Math.max(520, Math.min(1100, Math.abs((attacker?.x ?? layout.launcher.impact.x) - layout.launcher.impact.x) / 4));
+  return Math.max(520, Math.min(1100, Math.abs((attacker?.x ?? layout.player.impact.x) - layout.player.impact.x) / 4));
 }
 
 export default function EnemyResponse({ response, layout, travelMs, onAdvance, onComplete }) {
@@ -42,9 +42,9 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
   const { attack, stage, id } = response;
   const visual = attackStyle(attack);
   const attacker = layout.enemies.find(enemy => enemy.id === attack.enemyId);
-  const source = { x: attacker?.x ?? layout.launcher.impact.x,
-    y: attacker ? attacker.y - attacker.size * .55 : layout.launcher.impact.y };
-  const target = layout.launcher.impact;
+  const source = { x: attacker?.x ?? layout.player.impact.x,
+    y: attacker ? attacker.y - attacker.size * .55 : layout.player.impact.y };
+  const target = layout.player.impact;
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const windup = reduced ? 150 : attack.attemptedSpecial ? 480 : 340;
@@ -104,7 +104,7 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
       </g>}
       {stage === 'impact' && <g transform={`translate(${target.x} ${target.y})`}>
         {attack.blocked ? <g className="shield-impact" data-testid="shield-impact">
-          <ellipse rx="82" ry="102" /><path d="M-31-26 0-38 31-26V4Q30 28 0 43Q-30 28-31 4Z" />
+          <path d="M-31-26 0-38 31-26V4Q30 28 0 43Q-30 28-31 4Z" />
           <text y="-122" textAnchor="middle">{attack.blockedBy === 'milk' ? '우유 보호막 · 차단!' : '쉴드 · 차단!'}</text>
           <text y="134" textAnchor="middle">피해 0</text>
         </g> : <g className="player-impact" data-testid="player-impact">

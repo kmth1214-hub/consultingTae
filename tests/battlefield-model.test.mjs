@@ -17,6 +17,8 @@ test('real round slots and regional solids are deterministic without changing li
           assert.equal(layout.enemies.length, enemies.length);
           assert.deepEqual(layout.enemies.map(e => e.id), enemies.map(e => e.id));
           assert.equal(layout.width, 3600);
+          assert.deepEqual(layout.player, { x: 44, y: 748, width: 152, height: 152,
+            impact: { x: 120, y: 824 }, contact: { x: 170, y: 900 } });
           assert.ok(layout.obstacles.length >= 1);
           assert.equal(new Set(layout.obstacles.map(o => o.id)).size, layout.obstacles.length);
           for (const [i, enemy] of layout.enemies.entries()) {
@@ -62,6 +64,8 @@ test('builder rejects invalid identities and gives fresh empty layouts and froze
   assert.deepEqual(a.obstacles, []);
   a.launcher.restPouch.x = 123;
   assert.equal(b.launcher.restPouch.x, 64);
+  a.player.impact.x = 0;
+  assert.equal(b.player.impact.x, 120);
   for (const invalid of [{ ...input, area: 'moon' }, { ...input, round: NaN },
     { ...input, enemies: [{ id: '', kind: 'snake', isBoss: false }] },
     { ...input, enemies: Array(2).fill({ id: 'same', kind: 'snake', isBoss: false }) }]) {

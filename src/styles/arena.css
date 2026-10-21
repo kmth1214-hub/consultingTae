@@ -48,6 +48,23 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .ammo-dots .is-spent { background: #ede5d4; border-color: #d8cbb6; }
 .candy-hud .weapon-count { font-size: .62rem; color: #96846a; }
 .monster-group { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
+.player-cookie { position: absolute; z-index: 7; pointer-events: none; }
+.player-cookie-body { position: absolute; inset: 0; display: grid; place-items: end center; transform-origin: 50% 92%; }
+.player-cookie-art { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 2px 1px #3c36204a); }
+.player-cookie--idle .player-cookie-body { animation: cookie-breathe 2.8s ease-in-out infinite; }
+.player-cookie--aiming .player-cookie-body, .player-cookie--brace .player-cookie-body { transform: rotate(-5deg) translateY(2px); }
+.player-cookie--release .player-cookie-body { animation: cookie-release 200ms ease-out both; }
+.player-cookie--hurt .player-cookie-body { animation: cookie-hurt 420ms ease-out both; }
+.player-cookie--defeated .player-cookie-body { filter: grayscale(.85); transform: rotate(70deg) translate(12px, 8px); }
+.player-cookie--blocked .player-cookie-art { filter: drop-shadow(0 0 8px #8ee7ff) drop-shadow(0 2px 1px #3c36204a); }
+.player-shield { position: absolute; z-index: 2; inset: 4% 8% 5%; border: 3px solid #8ce7f1; border-radius: 48% 48% 42% 42%; background: radial-gradient(ellipse at 35% 25%, #efffff55, #66cff01b 60%, transparent 72%); box-shadow: inset 0 0 13px #bfffff83, 0 0 11px #6ce8f18c; }
+.player-cookie--blocked .player-shield { animation: shield-collision 500ms ease-out both; }
+.player-heal-sign { position: absolute; z-index: 3; top: -8%; left: 18%; width: 64%; text-align: center; color: #e8ffd7; font-size: 20px; font-weight: 900; text-shadow: 0 1px 5px #3c8d58; animation: hit-rise 700ms ease-out both; }
+.player-hit-feedback { position: absolute; inset: 0; z-index: 4; border: 2px solid #ffd7a1; border-radius: 50%; background: #ff984526; animation: damage-flash 500ms ease-out both; }
+.player-hit-feedback.is-blocked { border-color: #9df5ff; background: #8deaff1c; }
+@keyframes cookie-breathe { 50% { transform: translateY(-2px); } }
+@keyframes cookie-release { 35% { transform: translateY(-7px) rotate(8deg); } }
+@keyframes cookie-hurt { 20% { transform: translateX(-7px) rotate(-7deg); filter: brightness(1.7); } 55% { transform: translateX(4px) rotate(4deg); } }
 .monster { position: absolute; transform: translate(-50%, -100%); aspect-ratio: 1; border: 0; background: none; padding: 0; pointer-events: none; }
 .monster-art { width: 100%; height: 100%; object-fit: contain; position: relative; }
 .monster-body { position: absolute; inset: 0; display: block; transform-origin: 50% 90%; }
@@ -72,7 +89,6 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .player-impact > path { fill: #ffb16c9c; stroke: #fff0c4; stroke-width: 3; animation: damage-flash 500ms ease-out both; }
 .player-impact text { stroke: #8a332b; font-size: 40px; }
 .player-impact .special-impact-label { font-size: 22px; }
-.launcher.is-hit .launcher-button svg { animation: player-recoil 420ms ease-out; }
 .battle-arena[data-aim-phase="responding"] { cursor: wait; }
 @keyframes enemy-windup { to { transform: translateX(8%) rotate(9deg) scale(.94, 1.07); filter: brightness(1.15); } }
 @keyframes enemy-cast { 0% { transform: rotate(9deg); } 35% { transform: translateX(-22%) rotate(-17deg); } 100% { transform: none; } }
@@ -232,8 +248,10 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .sling-charge-sparks > * { animation: none; opacity: .8; }
   .sling-release, .projectile-trail { display: none; }
   .slingshot-band, .sling-rune { transition: none; }
-  .monster-body, .launcher.is-hit .launcher-button svg, .shield-impact ellipse, .player-impact > path { animation: none !important; }
-  .hit-effect, .is-healing::before, .launcher-button.is-releasing svg { animation-duration: 1ms; }
+  .monster-body, .player-cookie-body, .player-cookie--blocked .player-shield, .player-hit-feedback, .player-impact > path { animation: none !important; }
+  .player-cookie--hurt .player-cookie-art { filter: brightness(1.35); }
+  .player-cookie--defeated .player-cookie-body { transform: none; filter: grayscale(.6); }
+  .hit-effect, .player-heal-sign, .launcher-button.is-releasing svg { animation-duration: 1ms; }
   .character-card { transform: none !important; }
 }
 

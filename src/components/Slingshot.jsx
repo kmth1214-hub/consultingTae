@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useState } from 'react';
 import { getDragDraw } from '../game/battlefieldModel.js';
 
-export default function Slingshot({ aim, run, lastEvent, response, launcherRef, layout }) {
+export default function Slingshot({ aim, run, launcherRef, layout }) {
   const id = `sling-${useId().replace(/:/g, '')}`;
   const active = !['idle', 'launching'].includes(aim.phase);
   const launching = aim.phase === 'launching';
@@ -31,13 +31,11 @@ export default function Slingshot({ aim, run, lastEvent, response, launcherRef, 
   const frame = `M44 127 Q${49 + bow.x} 103 ${61 + bow.x} ${65 + bow.y} Q${65 + bow.x} ${55 + bow.y} 48 41 L${left.x} ${left.y} M${61 + bow.x} ${65 + bow.y} Q${74 + bow.x} 43 ${right.x} ${right.y}`;
   const bands = `M${left.x} ${left.y} L${pouch.x} ${pouch.y} L${right.x} ${right.y}`;
   const strength = tension < .35 ? '약하게 당김' : tension < .7 ? '보통으로 당김' : '강하게 당김';
-  const shield = run.defenseArmed || response?.attack.blocked;
-  const hit = response?.stage === 'impact' && !response.attack.blocked;
-  return <div className={`launcher ${active ? 'is-aiming' : ''} ${active && tension >= .68 ? 'is-primed' : ''} ${run.fireballArmed ? 'is-fireball' : ''} ${shield ? 'has-shield' : ''} ${hit ? 'is-hit' : ''} ${lastEvent?.key === 'heal' ? 'is-healing' : ''}`}
+  return <div className={`launcher ${active ? 'is-aiming' : ''} ${active && tension >= .68 ? 'is-primed' : ''} ${run.fireballArmed ? 'is-fireball' : ''}`}
     style={{ left: layout.launcher.x, top: layout.launcher.y, width: layout.launcher.width, height: layout.launcher.height,
       '--sling-tension': tension, '--sling-color': run.fireballArmed ? '#ff9c53' : '#ffe5a0' }}>
     <button ref={launcherRef} className={`launcher-button ${active ? 'is-drawn' : ''} ${launching ? 'is-releasing' : ''}`}
-      aria-label="새총 잡기" aria-describedby="aim-instructions" disabled={launching || Boolean(response)}>
+      aria-label="새총 잡기" aria-describedby="aim-instructions" disabled={launching}>
       <svg viewBox="0 0 124 142" aria-hidden="true">
         <defs>
           <linearGradient id={`${id}-wood`} x1="0" y1="0" x2="1" y2=".5">

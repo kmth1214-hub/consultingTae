@@ -1,6 +1,6 @@
 # Task: T05 Wide Gameplay Regression and Completion
 
-## Status: pending
+## Status: in_progress
 
 ## Goal
 Prove the complete wide-field mouse-only game works through real input, obstacles, reverse shots, Wind and existing main/bonus progression; record visual evidence and finish the plan without starting deployment.

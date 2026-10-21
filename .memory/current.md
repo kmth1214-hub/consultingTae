@@ -7,9 +7,10 @@
 [P01 Wide Combat](./phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/phase.md)
 
 ## Active Task
-[T04 Selected Cookie and Player Hit Feedback](./phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/T04-player-cookie-feedback.md)
+[T05 Wide Gameplay Regression and Completion](./phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/T05-wide-gameplay-regression.md)
 
 ## Status
+- T04 selected-cookie actor and player-centered incoming feedback passed focused9/9, full Node89/89, full Chromium73/73, production build and diff checks; visual evidence: [T04 review](./asset-reviews/2026-10-21-wide-t04-player-review.md). Korean task commit: `기능(전투): 선택 쿠키 피격 및 방어 연출 적용`.
 - [Regional Layered World and Map Studio](./plans/2026-10-21-regional-layered-world-and-map-studio.md): complete, 6/6 Tasks. T04 scene/depth/minimap `7b54908`; T05 development studio `3ee5ed3`; T06 final review committed in Korean. Local review link: `http://127.0.0.1:5173/__dev/maps` (development-only, no authenticated administrator access). Evidence: [regional scene review](./asset-reviews/2026-10-21-regional-scene-acceptance.md).
 - T03 delivered eight native1536×1024 Chaos layers and metadata (11,255,361 bytes). Chaos8/8 and all-region24/24 browser-decoded checks, production build and diff check pass. The raw panel join has a visible texture transition; T04 must feather the overlap. See [Chaos review](./asset-reviews/2026-10-21-chaos-layers.md). Live renderer and game rules remain unchanged.
 - T02 delivered eight native1536×1024 City PNGs and layers.json in assets/maps/city-layers, total12547815 bytes, using built-in imagegen with inspected Forest/City/Snow placement references. City8/8 and unchanged Snow8/8 pass actual-Chrome RGBA/native/contact-row checks with the existing verifier unchanged; standalone build/staged diff pass. No gameplay suite claimed for asset-only delivery. Original assets, live src, dependencies and game rules unchanged.
@@ -56,6 +57,6 @@
 - P02 requires owner-provided Azure subscription/resource, Entra tenant ID and app-registration credentials, and SWA deployment token.
 
 ## Next Step (IMPORTANT)
-Read only `phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/T04-player-cookie-feedback.md`. Add the selected cookie beside the slingshot and move incoming damage, shield and healing feedback to that cookie. Preserve the shared scene pose, shot collision, game rules and single-impact lifecycle. Then continue the original T05 full gameplay review. Azure remains deferred.
+Read only `phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/T05-wide-gameplay-regression.md`. Complete the final wide-map/gameplay regression review, fix only reproducible in-scope regressions, run every validation command, document visual evidence, commit in Korean, and then close this gameplay plan. Azure remains deferred.
 ## Deferred Azure Work
 [React release P02-T01](./phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md) remains an explicit later project step. Do not resume it as part of this gameplay plan or automatically start it after T05. Tenant/subscription/app registration and deployment secrets remain owner-provided and are never committed.

@@ -25,6 +25,8 @@ test('overview, aim and follow use uniform invertible transforms in wide, portra
         close(worldToScreen({ x: 3600, y: 900 }, pose).x, viewport.width);
       }
       if (mode === 'enemy') {
+        assert.ok(worldToScreen({ x: layout.player.x, y: 900 }, pose).x >= -1);
+        assert.ok(worldToScreen({ x: layout.player.x + layout.player.width, y: 900 }, pose).x <= viewport.width + 1);
         assert.ok(worldToScreen({ x: 220, y: 900 }, pose).x >= 0);
         assert.ok(worldToScreen({ x: 2438 + 46, y: 900 }, pose).x <= viewport.width);
       }

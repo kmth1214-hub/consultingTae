@@ -49,8 +49,8 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
         aria-label={`${MONSTER_NAMES[enemy.kind]}, 체력 ${hp}/${enemy.maxHp}${selectedTargetId === enemy.id ? ', 바람 유도 목표' : ''}`}
         style={{ left: enemy.x, top: enemy.y, width: enemy.size,
           '--attack-travel': `${travelMs}ms`,
-          '--strike-x': `${(layout.launcher.contact.x - enemy.x) / enemy.size * 100}%`,
-          '--strike-y': `${(layout.launcher.contact.y - enemy.y) / enemy.size * 100}%` }}>
+          '--strike-x': `${(layout.player.contact.x - enemy.x) / enemy.size * 100}%`,
+          '--strike-y': `${(layout.player.contact.y - enemy.y) / enemy.size * 100}%` }}>
         <span className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} />
           <span className="monster-health">{enemy.isBoss ? 'BOSS ' : ''}{hp}<span className="sr-only"> / {enemy.maxHp}</span></span></span>
         {hit && <span key={lastEvent.id} className={`hit-effect hit-effect--${lastEvent.visualKey}`}>−{hit.damage}</span>}

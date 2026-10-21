@@ -22,9 +22,9 @@ export function getCameraPose({ mode, viewport, layout, focus, attackerId, reduc
     return { scale, x: -left * scale, y: -top * scale };
   } else if (mode === 'enemy') {
     const attacker = layout.enemies?.find(enemy => enemy.id === attackerId);
-    if (!attacker || !layout.launcher) return overview();
-    const low = Math.min(layout.launcher.x, attacker.x - attacker.size / 2) - 120;
-    const high = Math.max(layout.launcher.x + layout.launcher.width,
+    if (!attacker || !layout.launcher || !layout.player) return overview();
+    const low = Math.min(layout.player.x, layout.launcher.x, attacker.x - attacker.size / 2) - 120;
+    const high = Math.max(layout.player.x + layout.player.width, layout.launcher.x + layout.launcher.width,
       attacker.x + attacker.size / 2) + 120;
     scale = Math.min(width / (high - low), height / 640);
     left = clamp(low, 0, Math.max(0, layout.width - width / scale));
