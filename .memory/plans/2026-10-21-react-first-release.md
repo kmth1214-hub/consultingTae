@@ -6,7 +6,7 @@ Turn the current browser prototype into a complete, testable Vite + React single
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `done` | Create and verify the React game, including T06 enemy feedback and T07 slingshot visual polish. | [P01](../phases/2026-10-21-react-first-release/P01-react-game/phase.md) |
+| P01 | `done` | Create and verify the React game, including enemy feedback, slingshot polish and T08's viewport-filling arena. | [P01](../phases/2026-10-21-react-first-release/P01-react-game/phase.md) |
 | P02 | `in_progress` | Package and deploy the Vite build to Azure Static Web Apps with tenant-restricted Entra access and GitHub Actions. | [P02](../phases/2026-10-21-react-first-release/P02-azure-release/phase.md) |
 
 ## Release boundaries

@@ -10,6 +10,7 @@
 | T05 | `done ✅` | Add deterministic browser regression coverage for real gameplay actions and verify the built app and responsive screens. | [T05](./T05-browser-regression.md) |
 | T06 | `done ✅` | Show enemy attacks, timed damage feedback and shield interception. | [T06](./T06-enemy-response-feedback.md) |
 | T07 | `done ✅` | Polish the player slingshot materials, charge and launch effects. | [T07](./T07-slingshot-visual-polish.md) |
+| T08 | `done ✅` | Fill the available window with the arena while preserving world proportions and hit alignment. | [T08](./T08-viewport-filling-arena.md) |
 
 ## Progress
-- done: 7/7 (complete; next: P02-T01)
+- done: 8/8 (complete; next: P02-T01)
