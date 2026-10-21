@@ -88,10 +88,27 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 @keyframes hit-rise { 0% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-35px); } }
 .launcher { position: absolute; left: 14%; top: 63%; width: 10.3333%; height: 17.75%; z-index: 8; }
 .launcher-button { position: absolute; inset: 0; border: 0; padding: 0; background: transparent; width: 100%; height: 100%; }
-.launcher-button svg { display: block; width: 100%; height: 100%; }
+.launcher-button svg { display: block; width: 100%; height: 100%; overflow: visible; transform-origin: 50% 85%; }
+.slingshot-frame { filter: drop-shadow(1px 3px 1px #37241e70); }
+.slingshot-band { transition: stroke 150ms; }
+.sling-rune { transition: filter 200ms; }
+.is-aiming .sling-rune { filter: drop-shadow(0 0 4px var(--sling-color)); }
+.is-aiming .sling-loaded-candy { filter: drop-shadow(0 0 3px var(--sling-color)); }
+.sling-charge-orbit { opacity: calc(.3 + var(--sling-tension) * .6); }
+.sling-charge-sparks > * { transform-box: fill-box; transform-origin: center; animation: sling-spark 1200ms ease-in-out infinite alternate; }
+.sling-charge-sparks > :nth-child(2n) { animation-delay: -400ms; }
+.sling-charge-sparks > :nth-child(3n) { animation-delay: -800ms; }
+.is-primed .sling-charge-sparks > * { animation-duration: 650ms; }
+.is-primed .sling-rune { fill: #fff0ad; filter: drop-shadow(0 0 6px var(--sling-color)); }
+.sling-release-ring, .sling-release-rays { transform-box: fill-box; transform-origin: center; }
+.sling-release-ring { animation: sling-release-wave 380ms ease-out both; }
+.sling-release-rays { animation: sling-release-rays 300ms ease-out both; }
 .launcher-button > span { position: absolute; left: 12%; top: 100%; background: #fff7e6ed; border: 1px solid #be9e73; border-radius: 7px; padding: 3px 8px; font-size: clamp(10px, 1.3cqw, 13px); font-weight: 750; white-space: nowrap; }
-.power-meter { position: absolute; left: 108%; top: 0; width: 11%; height: 82%; border: 2px solid #fff6d5; border-radius: 20px; background: #604c3b79; overflow: hidden; box-shadow: 0 1px 4px #2c321938; pointer-events: none; }
-.power-meter-fill { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(0deg, #cbd275, #efbd5d 65%, #ec7846); border-radius: 10px; }
+.power-meter { position: absolute; left: 108%; top: 0; width: 11%; height: 82%; border: 2px solid #e6c17e; border-radius: 20px; background: linear-gradient(90deg, #322e2ccd, #6e6251b8, #322e2ccd); overflow: hidden; box-shadow: 0 0 0 1px #67452b, inset 1px 0 2px #fff1cb77, 0 2px 4px #2c321950; pointer-events: none; }
+.power-meter-fill { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(90deg, #fff8c080, transparent 55%), linear-gradient(0deg, #83c8a0, #efc769 65%, #f08b48); border-radius: 10px; box-shadow: 0 -2px 6px #ffe6a795; }
+.is-aiming .power-meter { box-shadow: 0 0 0 1px #67452b, 0 0 8px #ffe5a044; }
+.is-primed .power-meter-fill { filter: brightness(1.15); }
+.is-fireball .power-meter-fill { background: linear-gradient(0deg, #f5bd65, #ed663c); }
 .power-meter-mark { position: absolute; top: 25%; left: 0; width: 100%; border-top: 1px solid #fff8ce80; }
 .trajectory-outline, .trajectory-arc { stroke-dasharray: 5 10; stroke-linecap: round; }
 .trajectory-outline { stroke: #294538; stroke-width: 7; opacity: .7; }
@@ -102,10 +119,13 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .projectile-candy.is-fiery { filter: drop-shadow(0 0 9px #ff782b); }
 .launcher-button { cursor: grab; touch-action: none; }
 .launcher-button.is-drawn { cursor: grabbing; }
-.launcher-button.is-releasing svg { animation: sling-recoil 200ms ease-out; }
+.launcher-button.is-releasing svg { animation: sling-recoil 340ms ease-out; }
 .battle-arena[data-aim-phase="angle"], .battle-arena[data-aim-phase="power"], .battle-arena[data-aim-phase="direction"] { cursor: grabbing; }
 .aim-instructions { text-align: center; margin: 12px auto 0; color: #4b644b; font-size: .8rem; min-height: 22px; line-height: 1.6; }
-@keyframes sling-recoil { 0% { transform: rotate(-5deg); } 45% { transform: rotate(4deg); } 100% { transform: none; } }
+@keyframes sling-recoil { 0% { transform: rotate(-10deg) scale(.96, 1.04); } 30% { transform: rotate(7deg) scale(1.04, .96); } 65% { transform: rotate(-3deg); } 100% { transform: none; } }
+@keyframes sling-spark { from { opacity: .3; transform: translateY(3px) scale(.7); } to { opacity: 1; transform: translateY(-4px) scale(1.1); } }
+@keyframes sling-release-wave { from { opacity: .9; transform: scale(.7); } to { opacity: 0; transform: scale(3); } }
+@keyframes sling-release-rays { from { opacity: 1; transform: scale(.55); } to { opacity: 0; transform: scale(1.8); } }
 .has-shield::before { content: ''; position: absolute; inset: -18% -30%; border: 3px solid #6bc8e2; background: #abe3f137; border-radius: 50%; pointer-events: none; }
 .is-healing::before { content: '+'; position: absolute; inset: -25%; color: #74bc72; text-align: center; font-size: 5cqw; animation: hit-rise 1s ease-out both; pointer-events: none; }
 .battle-status { max-width: 1500px; margin: 0 auto; padding: 12px 8px; text-align: center; font-size: .76rem; color: #6d634f; min-height: 42px; }
@@ -165,6 +185,9 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .aim-instructions { font-size: .68rem; padding: 0 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .sling-charge-sparks > * { animation: none; opacity: .8; }
+  .sling-release, .projectile-trail { display: none; }
+  .slingshot-band, .sling-rune { transition: none; }
   .monster-body, .launcher.is-hit .launcher-button svg, .shield-impact ellipse, .player-impact > path { animation: none !important; }
   .hit-effect, .is-healing::before, .launcher-button.is-releasing svg { animation-duration: 1ms; }
   .character-card { transform: none !important; }

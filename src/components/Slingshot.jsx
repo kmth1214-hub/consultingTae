@@ -1,24 +1,91 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { getSlingshotDraw } from '../game/trajectory.js';
 
 export default function Slingshot({ aim, run, lastEvent, response, launcherRef }) {
+  const id = `sling-${useId().replace(/:/g, '')}`;
   const active = !['idle', 'launching'].includes(aim.phase);
+  const launching = aim.phase === 'launching';
   const { pouch, left, right, tension } = getSlingshotDraw(aim.angleDeg, aim.powerPercent, active);
+  const release = getSlingshotDraw(aim.angleDeg, aim.powerPercent, true).pouch;
+  const frame = `M44 127 Q49 103 61 65 Q65 55 48 41 L${left.x} ${left.y} M61 65 Q74 43 ${right.x} ${right.y}`;
+  const bands = `M${left.x} ${left.y} L${pouch.x} ${pouch.y} L${right.x} ${right.y}`;
   const strength = aim.powerPercent < 45 ? '약하게 당김' : aim.powerPercent < 75 ? '보통으로 당김' : '강하게 당김';
   const shield = run.defenseArmed || response?.attack.blocked;
   const hit = response?.stage === 'impact' && !response.attack.blocked;
-  return <div className={`launcher ${shield ? 'has-shield' : ''} ${hit ? 'is-hit' : ''} ${lastEvent?.key === 'heal' ? 'is-healing' : ''}`}>
-    <button ref={launcherRef} className={`launcher-button ${active ? 'is-drawn' : ''} ${aim.phase === 'launching' ? 'is-releasing' : ''}`}
-      aria-label="새총 잡기" aria-describedby="aim-instructions" disabled={aim.phase === 'launching' || Boolean(response)}>
+  return <div className={`launcher ${active ? 'is-aiming' : ''} ${active && tension >= .68 ? 'is-primed' : ''} ${run.fireballArmed ? 'is-fireball' : ''} ${shield ? 'has-shield' : ''} ${hit ? 'is-hit' : ''} ${lastEvent?.key === 'heal' ? 'is-healing' : ''}`}
+    style={{ '--sling-tension': tension, '--sling-color': run.fireballArmed ? '#ff9c53' : '#ffe5a0' }}>
+    <button ref={launcherRef} className={`launcher-button ${active ? 'is-drawn' : ''} ${launching ? 'is-releasing' : ''}`}
+      aria-label="새총 잡기" aria-describedby="aim-instructions" disabled={launching || Boolean(response)}>
       <svg viewBox="0 0 124 142" aria-hidden="true">
-        <path className="slingshot-band" data-testid="sling-band"
-          d={`M ${left.x} ${left.y} L ${pouch.x} ${pouch.y} L ${right.x} ${right.y}`}
-          fill="none" stroke="#ebc382" strokeWidth={4 + tension} strokeLinecap="round" />
-        <path d={`M42 127 Q55 87 63 58 M63 58 Q50 40 ${left.x} ${left.y} M63 58 Q78 39 ${right.x} ${right.y}`}
-          fill="none" stroke="#704628" strokeWidth="13" strokeLinecap="round" />
-        <path d="M46 119 38 133" stroke="#b7804e" strokeWidth="7" strokeLinecap="round" />
-        <circle className="slingshot-pouch" cx={pouch.x} cy={pouch.y} r="10"
-          fill={run.fireballArmed ? '#ee6b35' : '#d9af6f'} stroke="#745033" strokeWidth="3" />
+        <defs>
+          <linearGradient id={`${id}-wood`} x1="0" y1="0" x2="1" y2=".5">
+            <stop stopColor="#643a24" /><stop offset=".42" stopColor="#c88849" /><stop offset=".62" stopColor="#edb96c" /><stop offset="1" stopColor="#86502c" />
+          </linearGradient>
+          <linearGradient id={`${id}-brass`} x1="0" y1="0" x2=".8" y2="1">
+            <stop stopColor="#fff1bb" /><stop offset=".35" stopColor="#e8bd65" /><stop offset=".65" stopColor="#ae7335" /><stop offset="1" stopColor="#f2d58a" />
+          </linearGradient>
+          <linearGradient id={`${id}-leather`} x2="1" y2=".4">
+            <stop stopColor="#5a3027" /><stop offset=".5" stopColor="#a25c40" /><stop offset="1" stopColor="#653523" />
+          </linearGradient>
+          <radialGradient id={`${id}-candy`} cx=".3" cy=".25" r=".8">
+            <stop stopColor="#fffce4" /><stop offset=".35" stopColor={run.fireballArmed ? '#ffd06a' : '#f9d380'} />
+            <stop offset="1" stopColor={run.fireballArmed ? '#e74c29' : '#c47936'} />
+          </radialGradient>
+          <radialGradient id={`${id}-aura`}>
+            <stop stopColor={run.fireballArmed ? '#ffc576' : '#fff1b1'} stopOpacity=".65" />
+            <stop offset="1" stopColor={run.fireballArmed ? '#ff6d36' : '#ffe5a0'} stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="54" cy="138" rx="32" ry="5" fill="#362e2342" />
+        {active && <g className="sling-charge" transform={`translate(${pouch.x} ${pouch.y})`}>
+          <circle r={25 + tension * 18} fill={`url(#${id}-aura)`} />
+          <ellipse className="sling-charge-orbit" rx={19 + tension * 10} ry={12 + tension * 5}
+            transform="rotate(-35)" fill="none" stroke="var(--sling-color)" strokeWidth="1.2" strokeDasharray="3 7" />
+          <g className="sling-charge-sparks" fill="var(--sling-color)">
+            <path d="M-24-16v8m-4-4h8" stroke="var(--sling-color)" strokeWidth="1.5" />
+            <circle cx="21" cy="-17" r="2" /><circle cx="-17" cy="21" r="1.6" />
+            <path d="m26 12 3 4-3 4-3-4Z" /><circle cx="0" cy="-29" r="1.5" />
+          </g>
+        </g>}
+        <path d={bands} fill="none" stroke="#4d3229" strokeWidth="7" strokeLinecap="round" />
+        <path className="slingshot-band" data-testid="sling-band" d={bands}
+          fill="none" stroke={active ? '#ffe3a1' : '#cfa16a'} strokeWidth={4.5 - tension} strokeLinecap="round" />
+        <g className="slingshot-frame" fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <path d={frame} stroke="#482c21" strokeWidth="23" />
+          <path d={frame} stroke={`url(#${id}-wood)`} strokeWidth="17" />
+          <path d={`M40 120Q47 94 57 68Q60 57 44 43L${left.x - 2} ${left.y + 2} M66 57Q79 39 ${right.x - 2} ${right.y + 1}`}
+            stroke="#ffe3a0" strokeOpacity=".55" strokeWidth="2.5" />
+          <path d="M53 69q4 6-1 13M75 44q8-3 10-10M43 45l-4-6" stroke="#6b3e29" strokeWidth="1.4" />
+        </g>
+        <path d="M51 80 66 85 53 123Q48 132 37 124Z" fill={`url(#${id}-leather)`} stroke="#4e3025" strokeWidth="2" />
+        <path d="m49 88 14 5m-17 4 14 5m-17 4 14 5m-17 4 13 5" stroke="#d49865" strokeWidth="3" strokeLinecap="round" />
+        <path d="m52 87-11 34" stroke="#ebba84" strokeWidth="1" strokeDasharray="1 4" />
+        <path d="m37 120 18 6-3 7q-9 4-18-5Z" fill={`url(#${id}-brass)`} stroke="#604129" strokeWidth="2" />
+        {[left, right].map((anchor, i) => <g key={i} transform={`translate(${anchor.x} ${anchor.y}) rotate(${i ? 30 : -30})`}>
+          <rect x="-10" y="-10" width="20" height="19" rx="5" fill={`url(#${id}-brass)`} stroke="#67432a" strokeWidth="2" />
+          <path d="M-6-4H6M-6 4H6" stroke="#fff0b9" strokeWidth="1.5" />
+          <circle r="3" fill="#794d30" /><circle cx="-.7" cy="-.8" r="1.3" fill="#fff0ba" />
+        </g>)}
+        <path d="m61 49 12 13-12 14-12-14Z" fill={`url(#${id}-brass)`} stroke="#6f4b2f" strokeWidth="1.7" />
+        <path className="sling-rune" d="m61 54 7 8-7 9-7-9Z" fill={run.fireballArmed ? '#fa9852' : '#8ad9be'} stroke="#305c4b" strokeWidth="1.5" />
+        <path d="m58 61 3-4 3 4-3 5Z" fill="#edfff1" opacity=".85" />
+        <path d={`M${left.x} ${left.y + 2} L${pouch.x} ${pouch.y + 3}`} fill="none" stroke="#59382b" strokeWidth="6" strokeLinecap="round" />
+        <path d={`M${left.x} ${left.y + 1} L${pouch.x} ${pouch.y + 2}`} fill="none" stroke="#f3cf88" strokeWidth={3.5 - tension} strokeLinecap="round" />
+        <g className="slingshot-pouch" transform={`translate(${pouch.x} ${pouch.y})`}>
+          <ellipse rx="14" ry="11" fill={`url(#${id}-leather)`} stroke="#4e3026" strokeWidth="2" />
+          {!launching && <g className="sling-loaded-candy">
+            <circle r="9" fill={`url(#${id}-candy)`} stroke="#9c672e" strokeWidth="1.5" />
+            <path d="M-5-2Q0-8 5-2T-3 4" fill="none" stroke="#fff9dc" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="-3" cy="-4" r="1.5" fill="#fff" />
+          </g>}
+          <path d="M-14 2Q0 10 14 2L12 11Q0 18-12 11Z" fill={`url(#${id}-leather)`} stroke="#4e3026" strokeWidth="1.5" />
+          <path d="M-10 7Q0 14 10 7" fill="none" stroke="#e2ad76" strokeWidth="1" strokeDasharray="2 2" />
+        </g>
+        {launching && <g className="sling-release" transform={`translate(${release.x} ${release.y})`}>
+          <ellipse className="sling-release-ring" rx="16" ry="11" fill="none" stroke="var(--sling-color)" strokeWidth="3" />
+          <path className="sling-release-rays" d="M-29-7-18-4M-21-26-13-16M2-34 1-22M24-25 16-17M33 0H22M22 25 15 17M-6 30-4 20"
+            fill="none" stroke="var(--sling-color)" strokeWidth="2.5" strokeLinecap="round" />
+        </g>}
       </svg>
       <span>{aim.phase === 'launching' ? '발사!' : active ? '당기는 중' : '잡아당기기'}</span>
     </button>
