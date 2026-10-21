@@ -1,6 +1,6 @@
 # Task: T02 Gameplay Rule Completion
 
-## Status: pending
+## Status: done
 
 ## Goal
 Bring the existing battle engine into parity with confirmed first-release rules and lock every added rule with deterministic Node tests before React screens consume it.
@@ -57,10 +57,10 @@ Bring the existing battle engine into parity with confirmed first-release rules 
 - **Error Handling**: invalid storage JSON and privacy-mode storage exceptions fall back to the default locked profile without crashing the game. Invalid Chaos rounds return deterministic documented state or an `accepted:false` result; never silently create unlimited boss stages.
 
 ## Acceptance Criteria
-- [ ] Existing 19 engine tests continue to pass, updated only where an older expectation contradicts the confirmed one-item start or explicit merge prompt.
-- [ ] Deterministic tests cover each five character effects, no effect stacking from duplicates, effects across areas, random starting item, C→B→A accept/decline fusion, all three Chaos rounds, independent boss attack counts, bonus score separation, no bonus rewards, and storage failure.
-- [ ] Main route score is unchanged by bonus damage; the bonus summary shows the separate bonus score.
-- [ ] Milk and Wind unlock after Snow boss clear and remain unlocked after reload in the same browser.
+- [x] Existing 19 engine tests continue to pass, updated only where an older expectation contradicts the confirmed one-item start or explicit merge prompt.
+- [x] Deterministic tests cover each five character effects, no effect stacking from duplicates, effects across areas, random starting item, C→B→A accept/decline fusion, all three Chaos rounds, independent boss attack counts, bonus score separation, no bonus rewards, and storage failure.
+- [x] Main route score is unchanged by bonus damage; the bonus summary shows the separate bonus score.
+- [x] Snow clear emits an unlock flag, and the profile store preserves it across reload fixtures. React character-selection wiring is T03's responsibility.
 
 ## Validation
 - `npm test` (`node --test`) — all `node:test` engine and profile-store cases pass with injected RNG and storage fixtures.
@@ -78,6 +78,21 @@ Task: T02-gameplay-rule-completion
 ```
 
 ## Progress
-- [ ] Implementation complete
-- [ ] Validation passed
+- [x] Implementation complete
+- [x] Validation passed
 - commit: pending
+
+## Validation Results — 2026-10-21
+- Wrote failing rule tests before implementation: starter inventory, character passives, fusion prompts, Chaos bosses/score/progression, and profile storage initially failed against the original engine.
+- `npm.cmd test`: 48 tests passed, including all original 19 scenarios and a full engine flow through 15 main rounds and 3 bonus rounds. The full-flow test injects damage to exercise transitions; it is not a balance or browser-aim test.
+- `npm.cmd run build`: passed with the existing Vite/React engine adapter.
+- `git diff --check`: passed.
+
+## Integration Notes for T03
+- `resolveProjectile(state,{hitIds,selectedTargetId,rng})` samples and accounts for weighted damage when `damage` is omitted. The explicit `damage` override remains for captured/test rolls and legacy callers; its caller still owns zero-roll accounting, avoiding double counts in the old mockup.
+- Projectile events add `healedPlayer`, `bonusDamage`, `homingTargetId`, `snowAreaCleared`, and `bonusCleared`. `scoreDelta` includes passive awards, while individual hit scores remain HP-removal points only.
+- `applyRewardChoice` returns `fusion-decision-required` without mutation until called again with `{mergeDuplicate:true|false}`. Match both weapon type and grade; C+B never merges.
+- Camp weapon draws are preserved in `pendingCampReward`. `chooseCampReward(...,'weapon',options)` may return `{accepted:true,pendingCamp:true,requiresFusionChoice:true,fusionCandidate}`; render the prompt and call it again with a merge decision before leaving camp. Switching to Heal after committing to the weapon choice is rejected.
+- `mainRunSummary` snapshots the completed main final score, including unused items, so consuming items in Chaos cannot change it. Chaos points only affect `bonusScore`.
+- `src/game/package.json` scopes native ESM to React game modules, allowing Node tests to import `profileStore.js` while keeping the UMD engine and original CJS tests compatible.
+- The legacy HTML UI has no prompt for the new fusion API. It remains a layout reference; T03 implements the React confirmation and unlock UI. No legacy UI code was changed in T02.

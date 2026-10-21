@@ -31,6 +31,34 @@
     { id:'defense',name:'방어',description:'다음 적 공격 차단' },
     { id:'heal',name:'회복',description:'체력 25 회복' }
   ]);
+  const CHARACTER_WEAPONS = Object.freeze({
+    adventurer: 'adventurer-candy', alchemist: 'alchemist-candy', wizard: 'wizard-orb',
+    milk: 'milk-candy', wind: 'wind-candy'
+  });
+
+  function timestamp(value) { return Number.isFinite(value) ? value : Date.now(); }
+  function hasEffect(state, id) { return state.weapons.some(weapon => weapon.id === id); }
+  function activeScore(state) { return state.area === 'chaos' ? state.bonusScore : state.score; }
+  function addScore(state, points) {
+    if (state.area === 'chaos') state.bonusScore += points;
+    else state.score += points;
+  }
+  function createInventory(config, rng) {
+    const inventory = { fireball: 0, spear: 0, defense: 0, heal: 0 };
+    if (config === undefined) inventory[CONSUMABLE_CATALOG[randomInt(rng, 0, 3)].id] = 1;
+    else for (const key of Object.keys(inventory)) {
+      inventory[key] = Math.max(0, Math.min(3, Math.floor(Number(config && config[key]) || 0)));
+    }
+    return inventory;
+  }
+  function createBoss(boss, area, bonus) {
+    const hp = bonus ? Math.ceil(boss.hp * 1.5) : boss.hp;
+    return {
+      id: `${area}-${boss.id}`, kind: boss.kind, hp,
+      maxHp: boss.kind === 'oven-robot' ? (bonus ? 26 : 18) : hp,
+      isBoss: true, attackCount: 0, alive: true
+    };
+  }
 
   function assertArea(area) {
     if (!AREAS.includes(area)) throw new RangeError(`Unknown area: ${area}`);
@@ -44,18 +72,15 @@
   function createRoundEnemies(area, round, options) {
     assertArea(area);
     const rng = options && typeof options.rng === 'function' ? options.rng : Math.random;
+    if (area === 'chaos' && (!Number.isInteger(round) || round < 1 || round > 3)) {
+      throw new RangeError('Chaos round must be 1, 2, or 3');
+    }
     const roundNumber = Math.max(1, Math.floor(Number(round) || 1));
+    if (area === 'chaos' && roundNumber === 3) {
+      return Object.values(AREA_BOSSES).map(boss => createBoss(boss, area, true));
+    }
     if (roundNumber >= 5 && AREA_BOSSES[area]) {
-      const boss = AREA_BOSSES[area];
-      return [{
-        id: `${area}-${boss.id}`,
-        kind: boss.kind,
-        hp: boss.hp,
-        maxHp: area === 'city' ? 18 : boss.hp,
-        isBoss: true,
-        attackCount: 0,
-        alive: true
-      }];
+      return [createBoss(AREA_BOSSES[area], area, false)];
     }
 
     const count = area === 'chaos'
@@ -84,15 +109,26 @@
     const area = config.area || 'forest';
     const round = Math.max(1, Math.floor(Number(config.round) || 1));
     assertArea(area);
-    const initialWeapons=config.weapons||[Object.assign({instanceId:'weapon-1',ammoType:'magic-candy'},WEAPON_CATALOG[0])];
+    const rng = typeof config.rng === 'function' ? config.rng : Math.random;
+    const characterId = config.characterId || 'adventurer';
+    if (!Object.prototype.hasOwnProperty.call(CHARACTER_WEAPONS, characterId)) throw new RangeError(`Unknown character: ${characterId}`);
+    const starter = WEAPON_CATALOG.find(weapon => weapon.id === CHARACTER_WEAPONS[characterId]);
+    const initialWeapons = config.weapons || [starter];
     const state = {
       area,
       round,
+      characterId,
       playerHp: Math.max(0, Math.min(100, Number.isFinite(config.playerHp) ? config.playerHp : 100)),
       maxPlayerHp: 100,
       ammo: Math.max(0, Math.min(9, Number.isFinite(config.ammo) ? config.ammo : 9)),
       maxAmmo: 9,
       score: Math.max(0, Number(config.score) || 0),
+      bonusScore: 0,
+      bonusMode: area === 'chaos',
+      mainRunSummary: null,
+      snowAreaCleared: false,
+      effectCounters: { permanentWeaponHits: 0, projectileCollisions: 0, consumablesUsed: 0 },
+      roundEffects: { windHomingUsed: false, milkBossBlockUsed: false },
       zeroRollsThisRound: 0,
       enemyTurnIndex: 0,
       turnNumber: 0,
@@ -100,10 +136,11 @@
       enemies: createRoundEnemies(area, round, { rng: config.rng }),
       consumablesBlockedTurns: 0,
       consumablesBlocked: false,
-      inventory: Object.assign({ fireball: 1, spear: 2, defense: 1, heal: 1 }, config.inventory || {}),
+      inventory: createInventory(config.inventory, rng),
       weapons: initialWeapons.map((weapon,index)=>Object.assign({instanceId:'weapon-'+(index+1),ammoType:'magic-candy'},weapon)),
       weaponQueue: [], currentWeaponId:null, rewardChoices:null, selectedRewards:{weapon:null,consumable:null},
-      furthestArea:area, playStartedAt:Number(config.now)||Date.now(), roundStartedAt:Number(config.now)||Date.now(), pendingCamp:false,
+      furthestArea:area, playStartedAt:timestamp(config.now), roundStartedAt:timestamp(config.now), pendingCamp:false,
+      pendingCampReward: null,
       defenseArmed: false,
       fireballArmed: false
     };
@@ -121,15 +158,30 @@
     state.currentWeaponId=state.weaponQueue[0]||null;
   }
   function getCurrentWeapon(state) { return state&&state.weapons.find(weapon=>weapon.instanceId===state.currentWeaponId)||state&&state.weapons[0]||null; }
-  function grantWeapon(state,source,grade) {
-    const requestedGrade=grade||source.grade||'C';
-    if(requestedGrade==='C'||requestedGrade==='B'){
-      const match=state.weapons.find(item=>item.id===source.id&&item.grade==='C')||state.weapons.find(item=>item.id===source.id&&item.grade==='B');
-      if(match&&match.grade==='C'){match.grade='B';return {weapon:match,fused:true};}
-      if(match&&match.grade==='B'){match.grade='A';return {weapon:match,fused:true};}
+  function fusionWeapon(state, source, grade) {
+    return grade === 'A' ? null : state.weapons.find(item => item.id === source.id && item.grade === grade);
+  }
+  function grantWeapon(state, source, grade, options) {
+    const requestedGrade = grade || source.grade || 'C';
+    if (!Object.prototype.hasOwnProperty.call(GRADE_MULTIPLIER, requestedGrade)) throw new RangeError(`Unknown weapon grade: ${requestedGrade}`);
+    const match = fusionWeapon(state, source, requestedGrade);
+    const mergeDuplicate = options && options.mergeDuplicate;
+    if (match && typeof mergeDuplicate !== 'boolean') {
+      return { accepted: false, reason: 'fusion-decision-required', fusionCandidate: {
+        instanceId: match.instanceId, weaponId: match.id, name: match.name,
+        grade: match.grade, targetGrade: match.grade === 'C' ? 'B' : 'A'
+      } };
     }
-    const weapon=Object.assign({},source,{grade:requestedGrade,instanceId:'weapon-'+(state.weapons.length+1),ammoType:'magic-candy'});
-    state.weapons.push(weapon);return {weapon,fused:false};
+    if (match && mergeDuplicate) {
+      match.grade = requestedGrade === 'C' ? 'B' : 'A';
+      return { accepted: true, weapon: match, fused: true };
+    }
+    let index = state.weapons.length + 1;
+    while (state.weapons.some(item => item.instanceId === 'weapon-' + index)) index++;
+    const weapon = Object.assign({}, source, { grade: requestedGrade, instanceId: 'weapon-' + index, ammoType: 'magic-candy' });
+    delete weapon.choiceId;
+    state.weapons.push(weapon);
+    return { accepted: true, weapon, fused: false };
   }
 
   function rollWeaponDamage(rng, grade, zeroRollsThisRound) {
@@ -148,7 +200,7 @@
   }
 
   function drawRewardChoices(state,rng) {
-    if(!state||state.terminal!=='round-clear')return null;
+    if(!state||state.terminal!=='round-clear'||state.area==='chaos')return null;
     const sourceRng=typeof rng==='function'?rng:Math.random;
     const weapons=shuffle(WEAPON_CATALOG,sourceRng).slice(0,3).map(item=>Object.assign({},item,{choiceId:'weapon:'+item.id}));
     const consumables=shuffle(CONSUMABLE_CATALOG.filter(item=>getConsumableCount(state,item.id)<3),sourceRng).slice(0,3).map(item=>Object.assign({},item,{choiceId:'consumable:'+item.id}));
@@ -156,46 +208,95 @@
     state.selectedRewards={weapon:null,consumable:consumables.length?null:'skip'};
     return state.rewardChoices;
   }
-  function applyRewardChoice(state,category,choiceId) {
-    if(!state||state.terminal!=='round-clear'||!state.rewardChoices)return {accepted:false,reason:'no-reward'};
+  function applyRewardChoice(state,category,choiceId,options) {
+    if(!state||state.area==='chaos'||state.terminal!=='round-clear'||!state.rewardChoices)return {accepted:false,reason:'no-reward'};
     if(!['weapon','consumable'].includes(category)||state.selectedRewards[category])return {accepted:false,reason:'already-selected'};
     const choices=category==='weapon'?state.rewardChoices.weapons:state.rewardChoices.consumables;
     const choice=choices.find(item=>item.choiceId===choiceId);
     if(!choice)return {accepted:false,reason:'invalid-choice'};
     if(category==='weapon'){
-      const granted=grantWeapon(state,choice,choice.grade);choice.fused=granted.fused;
+      const granted=grantWeapon(state,choice,choice.grade,options);
+      if (!granted.accepted) return granted;
+      choice.fused=granted.fused;
     }else if(addConsumable(state,choice.id,1)!==1)return {accepted:false,reason:'inventory-full'};
     state.selectedRewards[category]=choiceId;
     return {accepted:true,choice};
   }
   function getRunSummary(state,now) {
-    const time=Number(now)||Date.now();
-    const unusedConsumablePoints=Object.values(state.inventory).reduce((total,count)=>total+Math.max(0,Number(count)||0),0);
-    return {score:state.score,finalScore:state.score+unusedConsumablePoints,unusedConsumablePoints,playerHp:state.playerHp,ammo:state.ammo,area:state.area,round:state.round,furthestArea:state.furthestArea,durationMs:Math.max(0,time-state.playStartedAt)};
+    const unused = Object.values(state.inventory).reduce((total,count)=>total+Math.max(0,Number(count)||0),0);
+    const main = state.mainRunSummary;
+    return {
+      score: state.score, bonusScore: state.bonusScore,
+      finalScore: main ? main.finalScore : state.score + unused,
+      unusedConsumablePoints: main ? main.unusedConsumablePoints : unused,
+      playerHp: state.playerHp, ammo: state.ammo, area: state.area, round: state.round,
+      furthestArea: state.furthestArea, snowAreaCleared: state.snowAreaCleared,
+      durationMs: Math.max(0, timestamp(now) - state.playStartedAt)
+    };
   }
   function enterRound(state,options) {
     const config=options||{};
     state.ammo=state.maxAmmo;state.zeroRollsThisRound=0;state.enemyTurnIndex=0;state.terminal=null;state.pendingCamp=false;
-    state.roundStartedAt=Number(config.now)||Date.now();state.enemies=createRoundEnemies(state.area,state.round,{rng:config.rng});
+    state.roundStartedAt=timestamp(config.now);state.enemies=createRoundEnemies(state.area,state.round,{rng:config.rng});
+    state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
+    state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
     state.rewardChoices=null;state.selectedRewards={weapon:null,consumable:null};
     if(AREAS.indexOf(state.area)>AREAS.indexOf(state.furthestArea))state.furthestArea=state.area;
     refillWeaponQueue(state,config.rng);
   }
   function advanceRound(state,options) {
     if(!state||state.terminal!=='round-clear')return {accepted:false,reason:'round-not-cleared'};
+    if (state.area === 'chaos') {
+      if (state.round < 1 || state.round > 3) return {accepted:false,reason:'invalid-round'};
+      if (state.round === 3) { state.terminal='bonus-clear'; return {accepted:true,terminal:'bonus-clear',summary:getRunSummary(state,options&&options.now)}; }
+      state.round++;enterRound(state,options);return {accepted:true,area:state.area,round:state.round};
+    }
     if(!state.selectedRewards.weapon||!state.selectedRewards.consumable)return {accepted:false,reason:'rewards-incomplete'};
-    if(state.area==='city'&&state.round>=5){state.terminal='clear';return {accepted:true,terminal:'clear',summary:getRunSummary(state,options&&options.now)};}
+    if(state.area==='city'&&state.round>=5){
+      state.terminal='clear';
+      state.mainRunSummary=Object.freeze(getRunSummary(state,options&&options.now));
+      return {accepted:true,terminal:'clear',summary:state.mainRunSummary};
+    }
     if(state.round>=5){state.pendingCamp=true;return {accepted:true,pendingCamp:true};}
     state.round+=1;enterRound(state,options);return {accepted:true,area:state.area,round:state.round};
   }
   function chooseCampReward(state,choice,options) {
     if(!state||!state.pendingCamp)return {accepted:false,reason:'camp-not-ready'};
     const config=options||{};let effect;
+    if (state.pendingCampReward && choice !== 'weapon') return {accepted:false,reason:'camp-choice-locked'};
     if(choice==='heal'){const before=state.playerHp;state.playerHp=Math.min(state.maxPlayerHp,state.playerHp+60);effect={healed:state.playerHp-before};}
-    else if(choice==='weapon'){const rng=typeof config.rng==='function'?config.rng:Math.random;const grade=randomInt(rng,0,9)===0?'B':'C',count=grade==='B'?1:2,grants=[];for(let i=0;i<count;i++){const item=shuffle(WEAPON_CATALOG,rng)[0],result=grantWeapon(state,item,grade);grants.push({name:result.weapon.name,grade:result.weapon.grade,fused:result.fused});}effect={weapons:grants,grade};}
+    else if(choice==='weapon'){
+      const rng=typeof config.rng==='function'?config.rng:Math.random;
+      if (!state.pendingCampReward) {
+        const grade=randomInt(rng,0,9)===0?'B':'C',count=grade==='B'?1:2;
+        state.pendingCampReward={grade,items:Array.from({length:count},()=>({...shuffle(WEAPON_CATALOG,rng)[0],grade})),index:0,grants:[]};
+      }
+      const pending=state.pendingCampReward;
+      let mergeDuplicate=config.mergeDuplicate;
+      while (pending.index < pending.items.length) {
+        const item=pending.items[pending.index];
+        const duplicate=fusionWeapon(state,item,item.grade);
+        const result=grantWeapon(state,item,item.grade,{mergeDuplicate});
+        if (!result.accepted) return {accepted:true,pendingCamp:true,requiresFusionChoice:true,fusionCandidate:result.fusionCandidate};
+        pending.grants.push({name:result.weapon.name,grade:result.weapon.grade,fused:result.fused});
+        pending.index++;
+        if (duplicate) mergeDuplicate=undefined;
+      }
+      effect={weapons:pending.grants,grade:pending.grade};
+    }
     else return {accepted:false,reason:'invalid-choice'};
     state.area=state.area==='forest'?'snow':'city';state.round=1;enterRound(state,config);
     return {accepted:true,effect,area:state.area,round:state.round};
+  }
+  function startBonusRoute(state, options) {
+    if (!state || state.terminal !== 'clear' || state.area !== 'city' || state.round !== 5 || state.bonusMode) {
+      return {accepted:false,reason:'bonus-not-ready'};
+    }
+    const config=options||{};
+    if (!state.mainRunSummary) state.mainRunSummary=Object.freeze(getRunSummary(state,config.now));
+    state.area='chaos';state.round=1;state.bonusMode=true;state.bonusScore=0;
+    enterRound(state,config);
+    return {accepted:true,area:'chaos',round:1};
   }
   function skipConsumableReward(state) {
     if(!state||!state.rewardChoices||state.selectedRewards.consumable)return false;
@@ -214,11 +315,31 @@
     return state.terminal === 'round-clear' || getLivingEnemies(state).length === 0;
   }
 
+  function markRoundClear(state) {
+    if (state.area === 'snow' && state.round === 5) state.snowAreaCleared = true;
+    state.terminal = state.area === 'chaos' && state.round === 3 ? 'bonus-clear' : 'round-clear';
+  }
+
+  function finishAction(state, event, rng) {
+    if (!getLivingEnemies(state).length) {
+      markRoundClear(state);
+      event.roundCleared = true;
+      event.bonusCleared = state.terminal === 'bonus-clear';
+    } else if (state.ammo <= 0 || state.playerHp <= 0) {
+      state.terminal = 'defeat';
+    } else {
+      event.enemyAttack = resolveEnemyTurn(state, rng);
+    }
+    event.snowAreaCleared = state.snowAreaCleared;
+    event.runDefeated = state.terminal === 'defeat';
+    return event;
+  }
+
   function resolveEnemyTurn(state, rng) {
     if (state.terminal || state.playerHp <= 0) return null;
     const living = getLivingEnemies(state);
     if (!living.length) {
-      state.terminal = 'round-clear';
+      markRoundClear(state);
       return null;
     }
     const size = state.enemies.length;
@@ -233,15 +354,21 @@
     let maxDamage = enemy.isBoss ? 15 : 8;
     if (enemy.isBoss) {
       enemy.attackCount += 1;
-      if (enemy.attackCount % 3 === 0) special = AREA_BOSSES[state.area].special;
+      const boss = Object.values(AREA_BOSSES).find(definition => definition.kind === enemy.kind);
+      if (boss && enemy.attackCount % 3 === 0) special = boss.special;
     }
     if (special === 'boar-charge') { minDamage = 8; maxDamage = 15; }
     const sourceRng = typeof rng === 'function' ? rng : Math.random;
-    const blocked = state.defenseArmed;
+    let blockedBy = state.defenseArmed ? 'defense' : null;
+    if (!blockedBy && enemy.isBoss && hasEffect(state, 'milk-candy') && !state.roundEffects.milkBossBlockUsed) {
+      blockedBy = 'milk';
+      state.roundEffects.milkBossBlockUsed = true;
+    }
+    const blocked = blockedBy !== null;
     state.defenseArmed = false;
     const damage = blocked ? 0 : randomInt(sourceRng, minDamage, maxDamage);
     state.playerHp = Math.max(0, state.playerHp - damage);
-    const event = { enemyId: enemy.id, kind: enemy.kind, damage, special: blocked ? null : special, blocked, healedEnemy: 0, ammoLost: 0, consumablesBlocked: false };
+    const event = { enemyId: enemy.id, kind: enemy.kind, damage, special: blocked ? null : special, blocked, blockedBy, healedEnemy: 0, ammoLost: 0, consumablesBlocked: false };
 
     if (!blocked && special === 'frozen-breath') {
       state.consumablesBlockedTurns = 1;
@@ -252,7 +379,7 @@
       state.ammo = Math.max(0, state.ammo - 1);
       event.ammoLost = previousAmmo - state.ammo;
       const previousHp = enemy.hp;
-      enemy.hp = Math.min(18, enemy.hp + 3);
+      enemy.hp = Math.min(enemy.maxHp, enemy.hp + 3);
       event.healedEnemy = enemy.hp - previousHp;
     }
     if (state.playerHp <= 0 || (state.ammo <= 0 && getLivingEnemies(state).length > 0)) state.terminal = 'defeat';
@@ -261,68 +388,102 @@
 
   function resolveProjectile(state, options) {
     const config = options || {};
+    if (!state) return {accepted:false,reason:'combat-ended',hits:[],enemyAttack:null};
     if (state.terminal) return { accepted: false, reason: 'combat-ended', hits: [], enemyAttack: null, roundCleared: isRoundCleared(state), runDefeated: isRunDefeated(state) };
+    if (state.playerHp <= 0) {
+      state.terminal = 'defeat';
+      return {accepted:false,reason:'combat-ended',hits:[],enemyAttack:null,roundCleared:false,runDefeated:true};
+    }
     if (state.ammo <= 0) {
       state.terminal = 'defeat';
       return { accepted: false, reason: 'no-ammo', hits: [], enemyAttack: null, roundCleared: false, runDefeated: true };
     }
+    const scoreBefore = activeScore(state);
+    const permanent = config.source !== 'spear';
     state.ammo = Math.max(0, state.ammo - 1);
     if(!state.weaponQueue.length)refillWeaponQueue(state,config.rng);
     const usedWeaponId=state.weaponQueue.shift();
+    const usedWeapon=state.weapons.find(weapon=>weapon.instanceId===usedWeaponId);
+    const grade=config.weaponGrade||(usedWeapon&&usedWeapon.grade)||'C';
     state.currentWeaponId=state.weaponQueue[0]||null;
     if(!state.weaponQueue.length)refillWeaponQueue(state,config.rng);
     state.turnNumber += 1;
-    const rolledDamage = Math.max(0, Math.floor(Number(config.damage) || 0));
-    const damageMultiplier = config.source === 'spear' ? 1 : (state.fireballArmed ? 2 : 1);
+    const rolledDamage = config.damage === undefined
+      ? rollWeaponDamage(typeof config.rng === 'function' ? config.rng : Math.random, grade, state.zeroRollsThisRound)
+      : Math.max(0, Math.floor(Number(config.damage) || 0));
+    // Explicit damage is a legacy/captured-roll override; its caller owns its zero-roll accounting.
+    if (config.damage === undefined && rolledDamage === 0) state.zeroRollsThisRound++;
+    const damageMultiplier = permanent && state.fireballArmed ? 2 : 1;
     let damage = rolledDamage * damageMultiplier;
-    if (config.source !== 'spear') state.fireballArmed = false;
+    if (permanent) state.fireballArmed = false;
     state.consumablesBlocked = false;
     state.consumablesBlockedTurns = 0;
     const hits = [];
     const seen = new Set();
-    for (const id of Array.isArray(config.hitIds) ? config.hitIds : []) {
-      if (damage <= 0) break;
+    const hitIds = Array.isArray(config.hitIds) ? config.hitIds.slice() : [];
+    let homingTarget = null;
+    if (permanent && hasEffect(state, 'wind-candy') && !state.roundEffects.windHomingUsed) {
+      homingTarget = state.enemies.find(enemy => enemy.id === config.selectedTargetId && enemy.alive && enemy.hp > 0) || null;
+      if (homingTarget) {
+        hitIds.unshift(homingTarget.id);
+        state.roundEffects.windHomingUsed = true;
+      }
+    }
+    let healedPlayer = 0;
+    let bonusDamage = 0;
+    for (const id of hitIds) {
+      // A zero roll can still collide with the first target. An exhausted projectile cannot reach another.
+      if (hits.length > 0 && damage <= 0) break;
       if (seen.has(id)) continue;
       seen.add(id);
       const enemy = state.enemies.find(candidate => candidate.id === id && candidate.alive && candidate.hp > 0);
       if (!enemy) continue;
+      if (permanent) {
+        state.effectCounters.projectileCollisions++;
+        let extra = homingTarget === enemy && enemy.isBoss ? 1 : 0;
+        if (state.effectCounters.projectileCollisions % 3 === 0) {
+          if (hasEffect(state, 'wizard-orb')) extra++;
+          if (hasEffect(state, 'milk-candy')) {
+            const before = state.playerHp;
+            state.playerHp = Math.min(state.maxPlayerHp, state.playerHp + 1);
+            healedPlayer += state.playerHp - before;
+          }
+        }
+        bonusDamage += extra * damageMultiplier;
+        damage += extra * damageMultiplier;
+      }
       const before = enemy.hp;
       const removed = Math.min(before, damage);
       enemy.hp = before - removed;
       enemy.alive = enemy.hp > 0;
       damage -= removed;
-      const scoreDelta = removed * (GRADE_MULTIPLIER[String(config.weaponGrade || 'C').toUpperCase()] || 1);
-      state.score += scoreDelta;
+      const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+      addScore(state, scoreDelta);
       hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp, defeated: !enemy.alive, scoreDelta });
       if (enemy.alive) break;
+    }
+    if (permanent && hits.length) {
+      state.effectCounters.permanentWeaponHits++;
+      if (hasEffect(state, 'adventurer-candy') && state.effectCounters.permanentWeaponHits % 3 === 0) addScore(state, 10);
     }
     const event = {
       accepted: true,
       source: config.source || 'weapon',
       weaponId: usedWeaponId,
       damage: rolledDamage * damageMultiplier,
+      bonusDamage,
+      healedPlayer,
+      homingTargetId: homingTarget && homingTarget.id,
       spillover: damage,
       hits,
       missed: hits.length === 0,
-      scoreDelta: hits.reduce((sum, hit) => sum + hit.scoreDelta, 0),
+      scoreDelta: activeScore(state) - scoreBefore,
       enemyAttack: null,
       roundCleared: false,
       runDefeated: false
     };
 
-    if (getLivingEnemies(state).length === 0) {
-      state.terminal = 'round-clear';
-      event.roundCleared = true;
-      return event;
-    }
-    if (state.ammo === 0) {
-      state.terminal = 'defeat';
-      event.runDefeated = true;
-      return event;
-    }
-    event.enemyAttack = resolveEnemyTurn(state, config.rng);
-    event.runDefeated = state.terminal === 'defeat';
-    return event;
+    return finishAction(state, event, config.rng);
   }
 
   function getConsumableCount(state, key) {
@@ -340,14 +501,17 @@
   function useConsumable(state, key, options) {
     const config = options || {};
     const event = { accepted: false, key, effect: null, enemyAttack: null, hits: [], scoreDelta: 0, roundCleared: false, runDefeated: false };
-    if (!state || state.terminal) { event.reason = 'combat-ended'; return event; }
+    if (!state || state.terminal || isRunDefeated(state)) { event.reason = 'combat-ended'; return event; }
     if (!Object.prototype.hasOwnProperty.call(state.inventory, key)) { event.reason = 'unknown-item'; return event; }
     if (config.isAiming) { event.reason = 'aiming'; return event; }
     if (state.consumablesBlocked || state.consumablesBlockedTurns > 0) { event.reason = 'blocked'; return event; }
     if (getConsumableCount(state, key) <= 0) { event.reason = 'empty'; return event; }
 
+    const scoreBefore = activeScore(state);
     state.inventory[key] -= 1;
     state.turnNumber += 1;
+    state.effectCounters.consumablesUsed++;
+    if (hasEffect(state, 'alchemist-candy')) addScore(state, 10);
     event.accepted = true;
     if (key === 'heal') {
       const before = state.playerHp;
@@ -366,24 +530,17 @@
         const removed = Math.min(enemy.hp, damage);
         enemy.hp -= removed;
         enemy.alive = enemy.hp > 0;
-        state.score += removed;
-        event.scoreDelta += removed;
+        addScore(state, removed);
         event.hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp, defeated: !enemy.alive, scoreDelta: removed });
         damage = Math.max(0, damage - 1);
       }
       event.effect = { hits: event.hits };
     }
 
-    if (getLivingEnemies(state).length === 0) {
-      state.terminal = 'round-clear';
-      event.roundCleared = true;
-      return event;
-    }
+    event.scoreDelta = activeScore(state) - scoreBefore;
     state.consumablesBlocked = false;
     state.consumablesBlockedTurns = 0;
-    event.enemyAttack = resolveEnemyTurn(state, config.rng);
-    event.runDefeated = state.terminal === 'defeat';
-    return event;
+    return finishAction(state, event, config.rng);
   }
 
   return Object.freeze({
@@ -400,6 +557,7 @@
     applyRewardChoice,
     advanceRound,
     chooseCampReward,
+    startBonusRoute,
     getRunSummary,
     skipConsumableReward,
     rollWeaponDamage,

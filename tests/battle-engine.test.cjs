@@ -88,7 +88,7 @@ test('boss special attack replaces the normal attack on its third attack', () =>
 });
 
 test('Heal spends one item, restores 25 up to max HP, and resolves one enemy attack', () => {
-  const state = engine.createRunState({ playerHp: 60, rng: () => 0.5 });
+  const state = engine.createRunState({ playerHp: 60, inventory: { heal: 1 }, rng: () => 0.5 });
   const event = engine.useConsumable(state, 'heal', { rng: () => 0.5 });
   assert.equal(event.accepted, true);
   assert.equal(event.effect.healed, 25);
@@ -98,7 +98,7 @@ test('Heal spends one item, restores 25 up to max HP, and resolves one enemy att
 });
 
 test('Defense consumes its turn and cancels a boss special completely', () => {
-  const state = engine.createRunState({ area: 'forest', round: 5, rng: () => 0.99 });
+  const state = engine.createRunState({ area: 'forest', round: 5, inventory: { defense: 1 }, rng: () => 0.99 });
   state.enemies[0].attackCount = 2;
   const event = engine.useConsumable(state, 'defense', { rng: () => 0.99 });
   assert.equal(event.enemyAttack.blocked, true);
@@ -108,7 +108,7 @@ test('Defense consumes its turn and cancels a boss special completely', () => {
 });
 
 test('Fireball doubles only the next permanent projectile and preserves a zero roll', () => {
-  const state = engine.createRunState({ rng: () => 0.5 });
+  const state = engine.createRunState({ inventory: { fireball: 1 }, rng: () => 0.5 });
   engine.useConsumable(state, 'fireball', { rng: () => 0.5 });
   assert.equal(state.fireballArmed, true);
   const zero = engine.resolveProjectile(state, { damage: 0, hitIds: [state.enemies[0].id], rng: () => 0.5 });
@@ -118,7 +118,7 @@ test('Fireball doubles only the next permanent projectile and preserves a zero r
 });
 
 test('Spear hits up to three enemies with falling damage, even when a target survives', () => {
-  const state = engine.createRunState({ area: 'forest', round: 4, rng: () => 0.5 });
+  const state = engine.createRunState({ area: 'forest', round: 4, inventory: { spear: 2 }, rng: () => 0.5 });
   state.enemies = state.enemies.slice(0, 3);
   state.enemies.forEach((enemy) => { enemy.hp = 10; enemy.maxHp = 10; });
   const event = engine.useConsumable(state, 'spear', { rng: () => 0.5 }); // 4, 3, 2
@@ -146,7 +146,7 @@ test('reward choices are unique and progression waits for both categories', () =
   assert.equal(new Set(choices.weapons.map((choice) => choice.id)).size, 3);
   assert.equal(new Set(choices.consumables.map((choice) => choice.id)).size, 3);
   assert.equal(engine.advanceRound(state).reason, 'rewards-incomplete');
-  assert.equal(engine.applyRewardChoice(state, 'weapon', choices.weapons[0].choiceId).accepted, true);
+  assert.equal(engine.applyRewardChoice(state, 'weapon', choices.weapons[0].choiceId, { mergeDuplicate: true }).accepted, true);
   assert.equal(engine.advanceRound(state).reason, 'rewards-incomplete');
   assert.equal(engine.applyRewardChoice(state, 'consumable', choices.consumables[0].choiceId).accepted, true);
   const next = engine.advanceRound(state, { now: 200, rng: () => 0.5 });
@@ -156,21 +156,24 @@ test('reward choices are unique and progression waits for both categories', () =
   assert.equal(state.score, 15);
 });
 
-test('duplicate weapons fuse C to B then B to A, while A copies remain separate', () => {
+test('matching C and B copies require an explicit fusion decision, while A copies remain separate', () => {
   const state = engine.createRunState();
   state.terminal = 'round-clear';
   let choices = engine.drawRewardChoices(state, () => 0.1);
   let adventurer = choices.weapons.find((choice) => choice.id === 'adventurer-candy');
   if (!adventurer) { adventurer = Object.assign({},engine.WEAPON_CATALOG[0],{choiceId:'weapon:adventurer-candy'}); state.rewardChoices.weapons[0] = adventurer; }
-  engine.applyRewardChoice(state, 'weapon', adventurer.choiceId);
+  assert.equal(engine.applyRewardChoice(state, 'weapon', adventurer.choiceId).reason, 'fusion-decision-required');
+  engine.applyRewardChoice(state, 'weapon', adventurer.choiceId, { mergeDuplicate: true });
   assert.equal(state.weapons[0].grade, 'B');
   assert.equal(engine.applyRewardChoice(state, 'weapon', adventurer.choiceId).reason, 'already-selected');
   choices=engine.drawRewardChoices(state,()=>0.1);adventurer=choices.weapons.find((choice)=>choice.id==='adventurer-candy');
   if(!adventurer){adventurer=Object.assign({},engine.WEAPON_CATALOG[0],{choiceId:'weapon:adventurer-candy'});state.rewardChoices.weapons[0]=adventurer;}
-  engine.applyRewardChoice(state,'weapon',adventurer.choiceId);
+  adventurer.grade = 'B';
+  engine.applyRewardChoice(state,'weapon',adventurer.choiceId, { mergeDuplicate: true });
   assert.equal(state.weapons[0].grade,'A');
   state.selectedRewards.weapon=null;choices=engine.drawRewardChoices(state,()=>0.1);adventurer=choices.weapons.find((choice)=>choice.id==='adventurer-candy');
   if(!adventurer){adventurer=Object.assign({},engine.WEAPON_CATALOG[0],{choiceId:'weapon:adventurer-candy'});state.rewardChoices.weapons[0]=adventurer;}
+  adventurer.grade = 'A';
   engine.applyRewardChoice(state,'weapon',adventurer.choiceId);
   assert.equal(state.weapons.length,2);
 });
@@ -179,7 +182,7 @@ test('camp healing enters Snow round 1 with refreshed ammo and preserved run pro
   const state = engine.createRunState({ playerHp: 50, ammo: 3, score: 100 });
   state.area = 'forest'; state.round = 5; state.terminal = 'round-clear';
   const choices = engine.drawRewardChoices(state, () => 0.5);
-  engine.applyRewardChoice(state, 'weapon', choices.weapons[0].choiceId);
+  engine.applyRewardChoice(state, 'weapon', choices.weapons[0].choiceId, { mergeDuplicate: true });
   engine.applyRewardChoice(state, 'consumable', choices.consumables[0].choiceId);
   assert.equal(engine.advanceRound(state).pendingCamp, true);
   const camp = engine.chooseCampReward(state, 'heal', { now: 500, rng: () => 0.5 });
@@ -194,12 +197,12 @@ test('City boss reward completion produces a live clear summary', () => {
   const state = engine.createRunState({ area: 'city', round: 5, score: 432, now: 1000 });
   state.terminal = 'round-clear';
   const choices = engine.drawRewardChoices(state, () => 0.5);
-  engine.applyRewardChoice(state, 'weapon', choices.weapons[0].choiceId);
+  engine.applyRewardChoice(state, 'weapon', choices.weapons[0].choiceId, { mergeDuplicate: true });
   engine.applyRewardChoice(state, 'consumable', choices.consumables[0].choiceId);
   const result = engine.advanceRound(state, { now: 5000 });
   assert.equal(result.terminal, 'clear');
   assert.equal(result.summary.score, 432);
-  assert.equal(result.summary.finalScore, 438); // unused starting consumables plus the chosen reward add one point each
+  assert.equal(result.summary.finalScore, 434); // one starter item plus the chosen reward
   assert.equal(result.summary.durationMs, 4000);
 });
 
