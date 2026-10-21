@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { getCameraPose } from './battlefieldCamera.js';
+import { applyScenePose } from './sceneParallax.js';
 
 export function useBattlefieldCamera({ arenaRef, worldRef, layout, mode, focusRef, attackerId }) {
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
@@ -26,8 +27,7 @@ export function useBattlefieldCamera({ arenaRef, worldRef, layout, mode, focusRe
     const started = previousTime, from = poseRef.current;
     const apply = pose => {
       poseRef.current = pose;
-      world.style.transform = `translate(${pose.x}px, ${pose.y}px) scale(${pose.scale})`;
-      world.style.setProperty('--camera-scale', pose.scale);
+      applyScenePose(world, pose, viewport, reducedMotion);
     };
     const target = () => getCameraPose({ mode, viewport, layout, focus: focusRef.current, attackerId, reducedMotion });
     if (!from || reducedMotion) { apply(target()); if (reducedMotion) return; }

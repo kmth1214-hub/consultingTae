@@ -8,6 +8,7 @@ import Slingshot from './Slingshot.jsx';
 import TrajectoryPreview from './TrajectoryPreview.jsx';
 import ProjectileFlight from './ProjectileFlight.jsx';
 import EnemyResponse, { EnemyResponseNotice, responseTravelMs } from './EnemyResponse.jsx';
+import BattlefieldMinimap from './BattlefieldMinimap.jsx';
 import { buildBattlefield } from '../game/battlefieldModel.js';
 import { planShot, sampleAtDistance } from '../game/shotGeometry.js';
 import { useAimController } from '../game/useAimController.js';
@@ -72,7 +73,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
       onPointerCancel={controller.onPointerCancel} onLostPointerCapture={controller.onLostPointerCapture}
       onContextMenu={controller.onContextMenu} onKeyDown={controller.onKeyDown}>
       <div ref={worldRef} className="arena-world" style={{ width: layout.width, height: layout.height }}>
-        <BattlefieldBackdrop area={run.area} layout={layout} />
+        <BattlefieldBackdrop area={run.area} layout={layout} motionPaused={Boolean(run.terminal)} />
         <ArenaScenery layout={layout} />
         <Slingshot aim={state} run={run} lastEvent={lastEvent} response={enemyResponse} launcherRef={launcherRef} layout={layout} />
         <svg className="projectile-layer" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
@@ -87,6 +88,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
         {enemyResponse && <EnemyResponse response={enemyResponse} layout={layout} travelMs={travelMs}
           onAdvance={onEnemyAdvance} onComplete={onEnemyComplete} />}
       </div>
+      {!run.terminal && <BattlefieldMinimap layout={layout} enemies={run.enemies} />}
       {enemyResponse && <EnemyResponseNotice response={enemyResponse} />}
       <div className="arena-hud">
         <ConsumableTable run={hudRun} disabled={aiming || Boolean(enemyResponse)} onConsumable={onConsumable} />

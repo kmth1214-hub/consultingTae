@@ -236,3 +236,34 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .hit-effect, .is-healing::before, .launcher-button.is-releasing svg { animation-duration: 1ms; }
   .character-card { transform: none !important; }
 }
+
+/* Decorative planes inherit the single canonical world camera pose. */
+.battlefield-layer [data-depth-plane="sky"] { transform: translate(var(--scene-sky-x, 0px), var(--scene-sky-y, 0px)); }
+.battlefield-layer [data-depth-plane="distant"] { transform: translate(var(--scene-distant-x, 0px), var(--scene-distant-y, 0px)); }
+.battlefield-layer [data-depth-plane="midground"] { transform: translate(var(--scene-midground-x, 0px), var(--scene-midground-y, 0px)); }
+.battlefield-layer [data-depth-plane="route"] { transform: translate(var(--scene-route-x, 0px), var(--scene-route-y, 0px)); }
+.battlefield-layer [data-depth-plane="foreground"] { transform: translate(var(--scene-foreground-x, 0px), var(--scene-foreground-y, 0px)); }
+.scene-atmosphere:not(.is-active) .scene-mote,
+.scene-atmosphere:not(.is-active) .scene-mist { animation-play-state: paused; }
+.scene-atmosphere.is-active .scene-mote { animation: scene-mote-drift 8s ease-in-out var(--mote-delay, 0s) infinite alternate; }
+.scene-atmosphere.is-active .scene-mist { animation: scene-mist-drift 12s ease-in-out infinite alternate; }
+@keyframes scene-mote-drift { from { transform: translateY(0); opacity: .16; } to { transform: translateY(calc(-1 * var(--mote-distance, 20px))); opacity: .35; } }
+@keyframes scene-mist-drift { from { transform: translateX(-24px); opacity: .65; } to { transform: translateX(24px); opacity: 1; } }
+.scene-atmosphere--static { pointer-events: none; }
+.battlefield-minimap { position: absolute; z-index: 9; right: 12px; bottom: 12px; width: min(19%, 180px); min-width: 112px; aspect-ratio: 3 / 1; overflow: hidden; border: 1px solid #fff5d5c9; border-radius: 9px; background: #26362eaa; box-shadow: 0 2px 9px #152b2770; pointer-events: none; }
+.battlefield-minimap svg { display: block; width: 100%; height: 100%; }
+.minimap-ground { fill: #647866; }
+.minimap-road { fill: none; stroke: #d6ad83; stroke-width: 118; }
+.minimap-obstacle { stroke: #493b2d; stroke-width: 18; }
+.minimap-obstacle--log, .minimap-obstacle--crate { fill: #bc9161; }
+.minimap-obstacle--ice { fill: #a8e3f0; stroke: #e9ffff; }
+.minimap-enemy { fill: #e38448; stroke: #fff0c5; stroke-width: 12; }
+.minimap-enemy.is-boss { fill: #be4e52; stroke-width: 16; }
+.minimap-player { fill: #b7eea2; stroke: #234b38; stroke-width: 14; }
+.minimap-camera-window { position: absolute; left: var(--minimap-camera-left, 0%); top: var(--minimap-camera-top, 0%); width: var(--minimap-camera-width, 40%); height: var(--minimap-camera-height, 100%); border: 1px solid #fff8c9; border-radius: 3px; box-shadow: 0 0 0 1px #284d3aaa; }
+.battlefield-minimap .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+@container (max-width: 500px) { .battlefield-minimap { right: 6px; bottom: 6px; width: 30%; min-width: 92px; border-radius: 6px; } }
+@media (prefers-reduced-motion: reduce) {
+  .scene-atmosphere .scene-mote { display: none; }
+  .scene-atmosphere .scene-mote, .scene-atmosphere .scene-mist { animation: none !important; }
+}

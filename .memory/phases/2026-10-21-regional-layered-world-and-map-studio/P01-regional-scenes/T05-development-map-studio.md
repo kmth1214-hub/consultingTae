@@ -1,6 +1,6 @@
 # Task: T05 Development-only Map Studio
 
-## Status: pending
+## Status: in_progress
 
 ## Goal
 Provide a distinct development review page where all four real runtime maps can be selected, panned, zoomed and inspected by layer, and prove that the ordinary production build exposes no studio interface or module.

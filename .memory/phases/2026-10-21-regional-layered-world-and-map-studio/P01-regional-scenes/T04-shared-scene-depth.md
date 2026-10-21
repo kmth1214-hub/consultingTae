@@ -1,6 +1,6 @@
 # Task: T04 Shared Painted Scene, Parallax and Environment
 
-## Status: pending
+## Status: done
 
 ## Goal
 Replace Snow/City/Chaos flat-map crop compositions with their accepted dedicated layers, make all four regions share restrained camera-driven depth and ambient life, and add a compact player-facing minimap, with every gameplay coordinate unchanged.
@@ -155,9 +155,9 @@ Task: T04-shared-scene-depth
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] Implementation complete: dedicated regional panels, extracted Forest content, camera-derived depth offsets, atmosphere lifecycle and the read-only player minimap.
+- [x] Validation passed: 82 Node tests; 56 affected production Chrome regressions; after final Forest extraction, 18 region/depth browser tests; all 24 regional asset checks; production build and diff check.
+- commit: Korean T04 task commit
 
 ## Next pointer
 After implementation/task commit and phase/plan/current sync, advance to `T05-development-map-studio.md`. Do not implement the queued cookie actor, balance changes or Azure.

@@ -20,7 +20,7 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
     expect(layers.every(l => l.area === area && l.parent === 'arena-world' && l.filter === 'none')).toBe(true);
     for (const l of layers) { expect(l.scaleX).toBeCloseTo(l.scaleY, 5); expect(l.scaleX).toBeCloseTo(layers[0].scaleX, 5); }
     expect(layers.map(l => l.z)).toEqual([0, 0, 1, 2, 5]);
-    const proportions = await page.locator('[data-source-patch] svg').evaluateAll(nodes => nodes.map(node => {
+    const proportions = await page.locator('.battlefield-layer [data-source-patch] svg, .battlefield-layer [data-painted-panel] svg').evaluateAll(nodes => nodes.map(node => {
       const vb = node.viewBox.baseVal;
       return { actual: node.width.baseVal.value / node.height.baseVal.value, source: vb.width / vb.height };
     }));
