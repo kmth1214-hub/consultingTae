@@ -7,7 +7,7 @@
 | T02 | `done ✅` | Complete confirmed battle rules and browser unlock persistence, including bonus combat without QR or bonus rewards. | [T02](./T02-gameplay-rule-completion.md) |
 | T03 | `done ✅` | Replace the mockup's imperative UI with React screens and connect all first-release run flows to one game-session controller. | [T03](./T03-react-game-screens.md) |
 | T04 | `done ✅` | Implement the slingshot aim sequence, camera, trajectory, arena HUD, and item/shot visual timing in React. | [T04](./T04-slingshot-arena-controls.md) |
-| T05 | `in_progress 🔵` | Add deterministic browser regression coverage for real gameplay actions and verify the built app and responsive screens. | [T05](./T05-browser-regression.md) |
+| T05 | `done ✅` | Add deterministic browser regression coverage for real gameplay actions and verify the built app and responsive screens. | [T05](./T05-browser-regression.md) |
 
 ## Progress
-- done: 4/5 (active: T05)
+- done: 5/5 (complete; next: P02-T01)

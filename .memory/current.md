@@ -4,12 +4,17 @@
 [React First Release](./plans/2026-10-21-react-first-release.md)
 
 ## Active Phase
-[P01 React Game](./phases/2026-10-21-react-first-release/P01-react-game/phase.md)
+[P02 Azure Release](./phases/2026-10-21-react-first-release/P02-azure-release/phase.md)
 
 ## Active Task
-[T05 Browser Regression](./phases/2026-10-21-react-first-release/P01-react-game/T05-browser-regression.md)
+[T01 Azure Static Web App](./phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md)
 
 ## Status
+- P01 is complete (5/5). T05 completed as `3ce8bff` (`test(react): cover gameplay in Chromium`); next pointer advances to P02-T01. Azure deployment/configuration has not been executed yet.
+- Latest user-approved control replaces T04's launcher-only entry: any primary mouse-down at a non-HUD map point starts the captured aim. Moving the mouse reveals a live 30% trajectory from the angle phase onward, with bright fixed-width dashes/dark outline; exact angle/power values stay hidden. HUD controls retain their own actions; narrow inventory compacts during aiming to leave the path visible.
+- T05 validation: 60 Node tests and 30 Chromium/installed-Chrome tests pass against a fresh production build; standalone build and diff checks pass. No browser/runtime errors, failed built assets, duplicate IDs or overflow at 1440×900 / 390×844. SVG arc screen sampling checks the trajectory is not merely present behind the HUD. Real fullscreen, Tab/Enter, live region and reduced-motion checks pass.
+- T05 covers Heal button/key actual inventory/HP/enemy turn, Defense/Fireball/Spear/Alchemist, frozen/aim lockout, rewards/fusion confirm+decline, both Camp flows, immediate Snow unlock/reload, City result and three optional Chaos waves/separate frozen scores, defeat/retry, and all existing T04 shot/cancel/timing cases. Advanced branch setup uses test-only engine fixtures; basic gameplay uses real unchanged rules. No production debug mode or fixture imports were added. Full natural-RNG balance playtesting is separate from regression.
+- Adjacent production fixes from T05: bundled SVG icon removes the favicon 404; fullscreen-change events now cancel aiming even without window resize. Legacy HTML and battle-engine rules remain untouched. Captures are `tmp/react-t05-map-aim.jpg` and `tmp/react-t05-map-aim-narrow.jpg` (untracked).
 - T01 completed as `804586e` (`feat(react): bootstrap Vite game application`).
 - T02 completed as `59cf5bc` (`feat(game): complete first-release combat rules`): character effects, random starter item, explicit matching-grade fusion, Chaos combat and separate score, and browser Snow unlock profile.
 - T03 completed as `ba09a9d` (`feat(react): build playable game screens`): all seven React screens, single cloned-draft session controller, reward/camp fusion, Snow unlock persistence, main and optional bonus result routing.
@@ -18,14 +23,14 @@
 - T04 completed as `94a3bfc` (`feat(react): add slingshot aim and launch feedback`). Replaced T03's temporary controls with captured primary-mouse angle → Space power → horizontal target → release/flight. Grab zooms to 1.5, charge eases toward 1 over 1400ms and freezes on Space release. Pouch/bands and a qualitative vertical meter convey angle/power; exact numeric values and sliders are hidden per the user's update.
 - T04 validation: 60 Node tests, 12 actual Chrome/Chromium input regressions, and production build pass. Covers hit/miss, card visibility, item lockout, camera/meter lock, 30% arc-length preview above foreground, all cancel/blur/lost-capture cleanup, reduced motion, reload, killing-shot unmount, Wind once-per-round flight and missing-matrix recovery. Captures: `tmp/react-t04-direction.jpg` and `tmp/react-t04-flight.jpg` (untracked).
 - T04 uses one sampled quadratic for preview/flight/collision; inverse SVG screen matrices compensate for zoom. Normal shot power changes range; existing Wind homing gets a matching endpoint. Combat calls the engine once at physical impact through the session; engine rules and legacy HTML remain unchanged. Touch remains intentionally ignored (mouse + Space scope).
-- Focused Playwright 1.64.1 harness is now installed at `tests/e2e/slingshot.spec.cjs` and `playwright.config.cjs`, using a separate Vite port 5180 and the installed Chrome channel. `npm.cmd test` uses explicit Node-test globs so it does not execute Playwright specs. T05 extends this harness for full release flow, built-app and responsive validation.
+- Playwright 1.64.1 now uses `tests/e2e/*.spec.cjs`, shared test-only `support.cjs`, and `playwright.config.cjs`. `preview:e2e` builds and serves production `dist` on separate port 4180 (existing 4173 preview was left running). `npm.cmd test` uses explicit Node-test globs so it does not execute Playwright specs. `test:e2e` fails on runtime/asset errors and attaches detailed failure state/screenshots/traces, with no retries.
 - T02 validation: 48 deterministic Node tests passed, including main 15-round plus bonus 3-round progression, and Vite production build passed. React UI integration was completed in T03; old HTML callers do not present the new fusion prompt.
 - Added npm lockfile, Vite/React entry, landing shell, asset catalog, and UMD engine adapter. Existing engine/legacy mockup were not modified.
 - Validation passed: clean cached npm ci, 19 Node engine tests, production build with 19 catalog PNGs, Chrome dev/production smoke checks with no errors or missing visible images.
 - React 19.3.1 and Vite 8.3.4 run on the installed Node v24.18.0. Use `npm.cmd` because PowerShell blocks `npm.ps1`.
-- Development server: http://127.0.0.1:5173/ (React game screens). Legacy HTML remains on its existing separate preview. Full-release browser regression and Azure configuration remain future tasks.
+- Development server: http://127.0.0.1:5173/ (React game screens; HTTP 200 confirmed at T05 completion). Legacy HTML remains on its existing separate preview. P01 game development/regression is complete; Azure configuration/deployment remains P02.
 - `sites/` and `tmp/` preview outputs remain outside this implementation plan.
 - P02 requires owner-provided Azure subscription/resource, Entra tenant ID and app-registration credentials, and SWA deployment token.
 
 ## Next Step
-Read T05 and extend the focused T04 browser harness with the blueprint's full first-release gameplay, rewards/camps/results/unlock/bonus, production-build and responsive checks. Preserve the now-tested primary mouse + Space control, qualitative aim HUD, impact-time `fireShot`, stable source-ratio world and sibling HUD. Keep the engine/session as the single rule/routing source and deterministic RNG/state instrumentation confined to tests. Do not reintroduce numeric angle/power controls or production debug shortcuts. Azure configuration remains P02.
+On the next execution request, read P02-T01 and prepare the Azure Static Web Apps configuration, tenant-restricted Entra access, GitHub Actions workflow and owner setup instructions from that blueprint. P01 is complete; preserve map-wide mouse + Space input, qualitative aim HUD, impact-time combat, source-ratio world, and sibling HUD. Azure subscription/resource, Entra tenant ID/app registration credentials and SWA deployment token are owner-provided inputs; never commit secret values. T05 did not deploy or change Azure/GitHub settings.

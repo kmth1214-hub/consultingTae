@@ -73,7 +73,7 @@ Task: T05-browser-regression
 ## Progress
 - [x] Implementation complete
 - [x] Validation passed
-- commit: pending
+- commit: `3ce8bff` (`test(react): cover gameplay in Chromium`)
 
 ### Implementation / Validation Notes
 - User interaction update is implemented before regression: primary mouse-down at any non-HUD map point captures the pointer and starts the existing mouse/Space flow. HUD buttons/cards retain their own interactions. Mouse movement exposes the live 30% preview during angle, power and direction phases; a bright non-scaling dash plus dark outline stays readable at desktop/narrow sizes. Angle/power numbers remain hidden.
