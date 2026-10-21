@@ -1,6 +1,6 @@
 # Task: T02 Dedicated City Layer Artwork
 
-## Status: pending
+## Status: done
 
 ## Goal
 Produce an independently painted side-view City scene matching Forest's art quality, delivered as eight proportional PNG layers with real transparency and reviewed seams. Do not switch the live renderer during this asset task.
@@ -59,10 +59,10 @@ type LayerManifest={version:1;area:'city';baselineRatio:0.75;
 - Review notes include tool used, generation/edit prompts, references, filenames, native dimensions, alpha metrics, accepted/rejected issue resolutions, overall byte total, screenshot paths and remaining limitations. Never include secrets or raw base64. Only accepted final PNGs/manifest/review and the verifier (T01) are staged.
 
 ## Acceptance Criteria
-- [ ] Eight dedicated painted City layers and complete native metadata exist; originals unchanged.
-- [ ] Opaque/cutout roles, road registration and source proportions pass browser pixel validation.
-- [ ] Side-view style matches Forest; west/east have coherent edges without duplicated major landmarks.
-- [ ] Real isolated/assembled images inspected and findings recorded; no live renderer or gameplay changed.
+- [x] Eight dedicated painted City layers and complete native metadata exist; originals unchanged.
+- [x] Opaque/cutout roles, road registration and source proportions pass browser pixel validation.
+- [x] Side-view style matches Forest; west/east have coherent edges without duplicated major landmarks.
+- [x] Real isolated/assembled images inspected and findings recorded; no live renderer or gameplay changed.
 
 ## Validation
 - `node scripts/verify-region-art.cjs city` — all eight images decode and pass dimensions/alpha/road checks.
@@ -83,9 +83,17 @@ Task: T02-city-layer-art
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: this prescribed asset/task commit; hash recorded in phase/current after commit
 
 ## Next pointer
 After the prescribed art/task commit and phase/plan/current synchronization, advance to `T03-chaos-layer-art.md`. Do not implement the runtime, studio, existing cookie task or Azure early.
+
+## Execution Notes — 2026-10-21
+- Delivered eight native1536×1024 City PNGs plus version1 layers.json in assets/maps/city-layers, total12547815 bytes. Built-in imagegen used with inspected Forest/City and accepted Snow registration references; no raster postprocessing, generated-detail upscaling or flat-map crops. Original assets, accepted Snow, live src, verifier and dependencies unchanged.
+- West/east distant skylines share lavender/peach dusk and gold windows; only west has sun. Midground bakery and distinct oven workshop/bridge remain real transparent cutouts. Low foreground planters/rail fragments stay below the reserved player/weapon space in the fixed-clip assembly. Raw midground foundations extend lower than the desired700px and rely on the prescribed world820 clip/road occlusion; inspected assembly honors that contract.
+- Initial path candidates put the contact row on a vertical face, which an opacity-only gate cannot distinguish. Regenerated through imagegen using a temporary SVG placement diagram plus City architectural material reference. Selected west-v4/east have matching top/curb heights, full-width opaque rows718..869/718..870 and100% opaque row768 on the paving surface. No generated diagram text/green line remains in the asset; no final PNG was moved with code.
+- Reused scripts/verify-region-art.cjs unchanged: City8/8 and prior Snow8/8 pass actual Chrome RGBA/dimension/registration checks, thresholds not relaxed. City midground72.40%/65.57% transparent; path84.38%/84.20%; foreground90.54%/90.76% with top80%100% clear. Standalone npm.cmd run build and staged diff checks pass.
+- All isolated light/dark/checker sheets plus registered overview/west/join/east/near-road captures inspected under untracked tmp. Full selected/rejected prompts, native metrics and visual limits recorded in .memory/asset-reviews/2026-10-21-city-layers.md. Native-resolution softness/loading and overlap tuning still require T04/T06 actual runtime review; this asset task does not implement the game renderer or studio link.
+- No gameplay browser suite was needed/run or claimed; live bundle remains unchanged. Existing4173/5173 services preserved, no combat/profile/RNG/obstacle change. Adjacent code findings: none. Rejected candidates, generation guide and probes remain outside the commit.
