@@ -59,5 +59,13 @@
 - Camera, slingshot origin, enemy attack origins and layout currently contain compact-world coordinate assumptions. Update them together; a CSS-only resize would not fulfill this feature.
 - Out-of-scope findings: none requiring a separate feature decision. The issues above are necessary integration work for the selected controls/map/obstacle behavior; moving-obstacle physics remains deferred.
 
+## D09. Amendment — layered regions and a visible player cookie (2026-10-21)
+- **User confirmed**: Snow/City/Chaos also need layered backgrounds; place a cookie beside the slingshot and show enemy damage as hitting that cookie. Allocate the additions within T03–T05.
+- **Verified current state**: only Forest has separate transparent distant/midground/path/foreground PNGs. Snow/City/Chaos have single source images. T02 currently renders functional SVG terrain, not the finished illustrated region composition.
+- **Implementation choice**: T03 gives each of all four regions independent sky/distant/midground/route/foreground render layers, using existing art proportionally plus native SVG continuation. Cropped flat source landmarks do not substitute for an entire layered map. No new bitmap generation or raster extraction is assumed.
+- **Implementation choice**: T04 renders the **selected** one of the existing five cookie assets standing to the left of the launcher. Canonical presentation-only player bounds/impact/contact anchors let incoming projectiles, melee, hurt, Defense/Milk shield and heal feedback share the cookie's location. Weapon pull/release feedback and cookie injury/protection feedback have separate owners.
+- **Preserve**: player HP/damage/turns/RNG, item effects, boss third-attack cadence, launch/collision/Wind rules and reverse no-self-damage. Poses/particles never call combat actions. Camera framing must include cookie+weapon during enemy response.
+- **Task allocation confirmed by this amendment**: T03 regional layers/tension → new T04 selected cookie/player feedback → T05 full gameplay/visual regression (renamed from the former T04). One Phase, now five Tasks; T01/T02 remain completed and current remains T03. This turn updates planning files only.
+
 ## Next step
-The [plan and rich task blueprints](../plans/2026-10-21-wide-battlefield-mouse-drag.md) are created. `.memory/current.md` now points to that plan's P01-T01. Run `/memory-execute` to implement the first task sequentially. The prior Azure task remains deferred; no gameplay change is implemented by these planning documents.
+The [plan and rich task blueprints](../plans/2026-10-21-wide-battlefield-mouse-drag.md) now include the D09 amendment. T01/T02 are implemented; `.memory/current.md` stays at P01-T03. Run `/memory-execute` to implement the revised T03 sequentially, then T04 and T05 on subsequent task executions. Azure stays deferred. This amendment itself changes no production code.
