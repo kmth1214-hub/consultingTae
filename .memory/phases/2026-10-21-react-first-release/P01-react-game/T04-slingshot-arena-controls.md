@@ -75,7 +75,7 @@ Task: T04-slingshot-arena-controls
 ## Progress
 - [x] Implementation complete
 - [x] Validation passed
-- commit: pending
+- commit: `94a3bfc` (`feat(react): add slingshot aim and launch feedback`)
 
 ### Implementation / Validation Notes
 - `useAimController` owns the captured mouse sequence and animation frames. Only phase changes publish to the session's `aim` for item lockout; all gameplay still goes through the existing session and engine. Constants remain 10–80 degrees, .25 degree/pixel, 20–100 internal power and 80/second; power zoom eases from 1.5 to 1 over 1400ms and freezes at key release.
