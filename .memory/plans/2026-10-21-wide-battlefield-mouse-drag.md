@@ -1,7 +1,7 @@
 # Plan: Wide Battlefield and Mouse Drag Slingshot
 
 - Date: 2026-10-21
-- Status: in_progress (2/5 tasks done; active P01-T03; amended2026-10-21)
+- Status: in_progress (3/5 tasks done; active P01-T04; T03 completed as455990b)
 - Decisions: [Confirmed interview](../decisions/2026-10-21-wide-battlefield-mouse-drag.md)
 
 ## Goal
