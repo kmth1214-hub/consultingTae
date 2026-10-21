@@ -8,6 +8,7 @@ import ArenaScenery from './ArenaScenery.jsx';
 import Slingshot from './Slingshot.jsx';
 import TrajectoryPreview from './TrajectoryPreview.jsx';
 import ProjectileFlight from './ProjectileFlight.jsx';
+import EnemyResponse from './EnemyResponse.jsx';
 import { ARENA, monsterPositions } from '../game/arenaLayout.js';
 import { getTrajectory, getSlingshotDraw, getHitDetails } from '../game/trajectory.js';
 import { useAimController } from '../game/useAimController.js';
@@ -20,7 +21,7 @@ const INSTRUCTIONS = {
   launching: '사탕이 날아가고 있어요!'
 };
 
-export default function BattleArena({ run, aim, lastEvent, setAim, onFire, onConsumable, arenaRef }) {
+export default function BattleArena({ run, aim, lastEvent, enemyResponse, onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef }) {
   const worldRef = useRef(null), launcherRef = useRef(null), enemyGroupRef = useRef(null), svgRef = useRef(null);
   const [flight, setFlight] = useState(null);
   const positions = monsterPositions(run.enemies).filter(enemy => enemy.alive);
@@ -54,10 +55,13 @@ export default function BattleArena({ run, aim, lastEvent, setAim, onFire, onCon
       selectedTargetId: geometryAvailable ? closestTarget(state.targetX) : null, fireball: run.fireballArmed });
   }
   const controller = useAimController({ arenaRef, worldRef, launcherRef, enemyGroupRef,
-    ammo: run.ammo, disabled: Boolean(run.terminal), onLaunch: startFlight, onCancel: () => setFlight(null),
+    ammo: run.ammo, disabled: Boolean(run.terminal || enemyResponse), onLaunch: startFlight, onCancel: () => setFlight(null),
     onAimChange: state => setAim({ phase: state.phase, angle: state.angleDeg, power: state.powerPercent }) });
   const state = controller.aimState;
   const aiming = state.phase !== 'idle';
+  const beforeImpact = enemyResponse && enemyResponse.stage !== 'impact';
+  const hudRun = beforeImpact ? { ...run, ammo: run.ammo + enemyResponse.attack.ammoLost,
+    consumablesBlocked: enemyResponse.attack.consumablesBlocked ? false : run.consumablesBlocked } : run;
   const path = ['angle', 'power', 'direction'].includes(state.phase) ? makePath(state) : flight?.path;
   function completeFlight(shot) {
     controller.completeLaunch(shot.id, () => onFire({ hitIds: shot.hitIds, selectedTargetId: shot.selectedTargetId }));
@@ -67,7 +71,7 @@ export default function BattleArena({ run, aim, lastEvent, setAim, onFire, onCon
     ? '준비됐어요. 마우스 버튼을 놓으면 발사합니다. Esc로 취소할 수 있어요.' : INSTRUCTIONS[state.phase];
   return <>
     <div ref={arenaRef} className={`battle-arena battle-arena--${run.area}`} tabIndex={0} role="group" aria-label="전투 맵"
-      data-aim-phase={state.phase} aria-describedby="aim-instructions"
+      data-aim-phase={enemyResponse ? 'responding' : state.phase} data-enemy-phase={enemyResponse?.stage || 'idle'} aria-describedby="aim-instructions"
       onPointerDown={controller.onPointerDown} onPointerMove={controller.onPointerMove} onPointerUp={controller.onPointerUp}
       onPointerCancel={controller.onPointerCancel} onLostPointerCapture={controller.onLostPointerCapture}
       onKeyDown={controller.onKeyDown} onKeyUp={controller.onKeyUp}>
@@ -79,21 +83,23 @@ export default function BattleArena({ run, aim, lastEvent, setAim, onFire, onCon
           <AssetImage className="scene-layer scene-path" src={ASSETS.forestLayers.path} />
         </> : <AssetImage className="scene-layer scene-distant" src={ASSETS.maps[run.area]} />}
         <ArenaScenery area={run.area} />
-        <Slingshot aim={state} run={run} lastEvent={lastEvent} launcherRef={launcherRef} />
+        <Slingshot aim={state} run={run} lastEvent={lastEvent} response={enemyResponse} launcherRef={launcherRef} />
         {run.area === 'forest' && <AssetImage className="scene-layer scene-foreground" src={ASSETS.forestLayers.foreground} />}
         <svg ref={svgRef} className="projectile-layer" viewBox="0 0 1200 800" aria-hidden="true">
           <TrajectoryPreview path={path} visible={aiming && state.phase !== 'launching' && state.hasMoved} />
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} />}
         </svg>
-        <MonsterGroup groupRef={enemyGroupRef} enemies={run.enemies} lastEvent={lastEvent} disabled={aiming}
+        <MonsterGroup groupRef={enemyGroupRef} enemies={run.enemies} lastEvent={lastEvent} response={enemyResponse} disabled={aiming || Boolean(enemyResponse)}
           selectedTargetId={state.phase === 'direction' && state.hasSelectedDirection ? closestTarget(state.targetX) : aim.selectedTargetId}
           onSelectTarget={selectedTargetId => setAim({ selectedTargetId })} />
+        {enemyResponse && <EnemyResponse response={enemyResponse} enemies={run.enemies}
+          onAdvance={onEnemyAdvance} onComplete={onEnemyComplete} />}
       </div>
       <div className="arena-hud">
-        <ConsumableTable run={run} disabled={aiming} onConsumable={onConsumable} />
-        <MagicCandyCard run={run} hidden={state.phase === 'launching'} />
+        <ConsumableTable run={hudRun} disabled={aiming || Boolean(enemyResponse)} onConsumable={onConsumable} />
+        <MagicCandyCard run={hudRun} hidden={state.phase === 'launching'} />
       </div>
     </div>
-    <p id="aim-instructions" className="aim-instructions" role="status" aria-live="polite">{instructions}</p>
+    <p id="aim-instructions" className="aim-instructions" role="status" aria-live="polite">{enemyResponse ? '적의 반격 중 · 쉴드는 적의 공격과 특수 효과를 막아줍니다.' : instructions}</p>
   </>;
 }

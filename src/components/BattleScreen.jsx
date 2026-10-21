@@ -13,7 +13,10 @@ function combatMessage(event) {
 }
 
 export default function BattleScreen({ session }) {
-  const { run, aim } = session;
+  const { run, aim, enemyResponse } = session;
+  const beforeImpact = enemyResponse && enemyResponse.stage !== 'impact';
+  const visibleHp = beforeImpact ? enemyResponse.attack.playerHpBefore : run.playerHp;
+  const visibleAmmo = run.ammo + (beforeImpact ? enemyResponse.attack.ammoLost : 0);
   const arenaRef = useRef(null);
   useEffect(() => {
     const onKey = event => {
@@ -34,13 +37,15 @@ export default function BattleScreen({ session }) {
     <header className="battle-header">
       <div><p className="eyebrow">{run.bonusMode ? 'BONUS' : 'COOKIE EXPEDITION'}</p>
         <h1 id="battle-title">{REGIONS[run.area].name} 지역 <span>{run.round} / {run.bonusMode ? 3 : 5}</span></h1></div>
-      <div className="battle-stats"><span>체력 <strong>{run.playerHp}</strong><small> / {run.maxPlayerHp}</small></span>
-        <span>사탕 <strong>{run.ammo}</strong><small> / {run.maxAmmo}</small></span>
+      <div className="battle-stats"><span>체력 <strong>{visibleHp}</strong><small> / {run.maxPlayerHp}</small></span>
+        <span>사탕 <strong>{visibleAmmo}</strong><small> / {run.maxAmmo}</small></span>
         <span>{run.bonusMode ? '보너스' : '점수'} <strong>{(run.bonusMode ? run.bonusScore : run.score).toLocaleString()}</strong></span></div>
       <button className="fullscreen-button" onClick={fullscreen} aria-label="전체화면 전환">⛶</button>
     </header>
     <BattleArena key={`${run.area}-${run.round}`} run={run} aim={aim} lastEvent={session.lastEvent} setAim={session.setAim}
+      enemyResponse={enemyResponse} onEnemyAdvance={session.advanceEnemyResponse} onEnemyComplete={session.completeEnemyResponse}
       onFire={session.fireShot} onConsumable={session.useConsumable} arenaRef={arenaRef} />
-    <div className="battle-status" role="status" aria-live="polite">{combatMessage(session.lastEvent)}</div>
+    <div className="battle-status" role="status" aria-live="polite">{enemyResponse && beforeImpact
+      ? '적의 반격! 공격이 끝나면 다음 행동을 할 수 있어요.' : combatMessage(session.lastEvent)}</div>
   </section>;
 }

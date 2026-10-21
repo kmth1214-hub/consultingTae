@@ -79,6 +79,7 @@ async function start(page, character = '모험가맛 쿠키') {
   await phase(page, 'idle');
 }
 async function grabMap(page) {
+  await phase(page, 'idle');
   const box = await arena(page).boundingBox();
   const point = { x: box.x + box.width * .5, y: box.y + box.height * .42 };
   await page.mouse.move(point.x, point.y);

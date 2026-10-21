@@ -17,6 +17,10 @@ function start(options = {}) {
   session.actions.startRun('adventurer');
   return session;
 }
+function finishResponse(session) {
+  const response = session.getSnapshot().enemyResponse;
+  if (response) session.actions.completeEnemyResponse(response.id);
+}
 function clear(session) {
   const ids = session.getSnapshot().run.enemies.filter(enemy => enemy.alive).map(enemy => enemy.id);
   assert.equal(session.actions.fireShot({ hitIds: ids }).accepted, true);
@@ -122,6 +126,7 @@ test('15 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bon
   assert.equal(session.actions.enterBonusRoute().accepted, false);
   const item = Object.keys(session.getSnapshot().run.inventory).find(key => session.getSnapshot().run.inventory[key]);
   session.actions.useConsumable(item);
+  finishResponse(session);
   for (let i = 1; i <= 3; i++) {
     assert.equal(session.getSnapshot().run.round, i);
     clear(session);
@@ -143,7 +148,7 @@ test('empty/aiming items reject without spending turns; nine misses route to def
   assert.equal(actions.useConsumable('heal').reason, 'aiming');
   assert.equal(session.getSnapshot().run.turnNumber, 0);
   actions.resetAim();
-  for (let i = 0; i < 9; i++) actions.fireShot();
+  for (let i = 0; i < 9; i++) { actions.fireShot(); finishResponse(session); }
   assert.equal(session.getSnapshot().screen, 'main-results');
   assert.equal(session.getSnapshot().outcome, 'defeat');
   assert.equal(actions.fireShot().accepted, false);
@@ -160,4 +165,61 @@ test('visual layout keeps dead-enemy slots stable', () => {
   const defeated = structuredClone(enemies);
   defeated[0].alive = false;
   assert.deepEqual(monsterPositions(defeated).slice(1), positions.slice(1));
+});
+
+test('enemy response locks combat, advances monotonically and ignores stale/duplicate animation callbacks', () => {
+  const session = start({ rng: () => .5 });
+  const { actions } = session;
+  actions.useConsumable('defense');
+  let state = session.getSnapshot();
+  const { id, attack } = state.enemyResponse;
+  assert.equal(attack.blockedBy, 'defense');
+  assert.equal(attack.playerHpBefore, 100);
+  assert.equal(attack.playerHpAfter, 100);
+  assert.equal(state.run.defenseArmed, false);
+  const committed = structuredClone(state.run);
+  assert.equal(actions.fireShot().reason, 'responding');
+  assert.equal(actions.useConsumable('heal').reason, 'responding');
+  actions.setAim({ phase: 'angle' });
+  assert.equal(session.getSnapshot().aim.phase, 'idle');
+  actions.advanceEnemyResponse(id, 'impact');
+  assert.equal(session.getSnapshot().enemyResponse.stage, 'windup');
+  actions.advanceEnemyResponse(id, 'travel');
+  actions.advanceEnemyResponse(id, 'impact');
+  actions.advanceEnemyResponse(id, 'travel');
+  assert.equal(session.getSnapshot().enemyResponse.stage, 'impact');
+  actions.completeEnemyResponse(id + 1);
+  assert.ok(session.getSnapshot().enemyResponse);
+  actions.completeEnemyResponse(id);
+  actions.completeEnemyResponse(id);
+  assert.equal(session.getSnapshot().enemyResponse, null);
+  assert.deepEqual(session.getSnapshot().run, committed);
+  actions.fireShot();
+  state = session.getSnapshot();
+  assert.equal(state.run.playerHp, 95);
+  assert.equal(state.enemyResponse.attack.blocked, false);
+  actions.completeEnemyResponse(id);
+  assert.ok(session.getSnapshot().enemyResponse);
+});
+
+test('lethal response preserves pre-impact HP metadata and delays result routing without applying damage twice', () => {
+  const engine = { ...BattleEngine, createRunState: options => BattleEngine.createRunState({ ...options, playerHp: 1 }) };
+  const session = start({ engine, rng: () => .5 });
+  session.actions.fireShot();
+  const before = session.getSnapshot();
+  assert.equal(before.screen, 'battle');
+  assert.equal(before.run.playerHp, 0);
+  assert.equal(before.enemyResponse.attack.playerHpBefore, 1);
+  assert.equal(before.enemyResponse.attack.playerHpAfter, 0);
+  const committed = structuredClone(before.run);
+  session.actions.completeEnemyResponse(before.enemyResponse.id);
+  session.actions.completeEnemyResponse(before.enemyResponse.id);
+  assert.equal(session.getSnapshot().screen, 'main-results');
+  assert.equal(session.getSnapshot().outcome, 'defeat');
+  assert.deepEqual(session.getSnapshot().run, committed);
+  session.actions.startCharacterSelect();
+  session.actions.startRun('wizard');
+  session.actions.completeEnemyResponse(before.enemyResponse.id);
+  assert.equal(session.getSnapshot().screen, 'battle');
+  assert.equal(session.getSnapshot().enemyResponse, null);
 });

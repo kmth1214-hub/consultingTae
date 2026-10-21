@@ -11,6 +11,7 @@ async function start(page) {
   await phase(page, 'idle');
 }
 async function grab(page) {
+  await phase(page, 'idle');
   const box = await page.getByRole('button', { name: '새총 잡기', exact: true }).boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();

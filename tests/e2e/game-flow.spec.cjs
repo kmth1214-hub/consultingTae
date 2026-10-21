@@ -11,11 +11,13 @@ test('Heal button and key spend real inventory, restore HP and resolve an enemy 
   expect(trace.lastEvent.effect.healed).toBe(25);
   expect(trace.lastEvent.enemyAttack.damage).toBe(5);
   expect(trace.run.playerHp).toBe(60);
+  await phase(page, 'idle');
   await page.keyboard.press('4');
   await expect(hp(page)).toHaveText('80');
   trace = await snapshot(page);
   expect(trace.run.inventory.heal).toBe(0);
   expect(trace.run.turnNumber).toBe(4);
+  await phase(page, 'idle');
   await expect(page.getByRole('button', { name: '회복 사용', exact: true })).toBeDisabled();
   await page.keyboard.press('4');
   await expect(page.getByText('이 소모품을 모두 사용했어요.', { exact: true })).toBeVisible();

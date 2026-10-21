@@ -367,8 +367,11 @@
     const blocked = blockedBy !== null;
     state.defenseArmed = false;
     const damage = blocked ? 0 : randomInt(sourceRng, minDamage, maxDamage);
+    const playerHpBefore = state.playerHp;
     state.playerHp = Math.max(0, state.playerHp - damage);
-    const event = { enemyId: enemy.id, kind: enemy.kind, damage, special: blocked ? null : special, blocked, blockedBy, healedEnemy: 0, ammoLost: 0, consumablesBlocked: false };
+    const event = { enemyId: enemy.id, kind: enemy.kind, damage, special: blocked ? null : special,
+      attemptedSpecial: special, playerHpBefore, playerHpAfter: state.playerHp,
+      blocked, blockedBy, healedEnemy: 0, ammoLost: 0, consumablesBlocked: false };
 
     if (!blocked && special === 'frozen-breath') {
       state.consumablesBlockedTurns = 1;

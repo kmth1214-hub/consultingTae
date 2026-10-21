@@ -4,6 +4,7 @@ import { loadProfile, markSnowCleared, saveProfile } from './profileStore.js';
 
 const initialAim = () => ({ angle: 42, power: 20, phase: 'idle', selectedTargetId: null });
 const REASONS = {
+  responding: '적이 공격하고 있어요. 반격이 끝나면 행동할 수 있어요.',
   empty: '이 소모품을 모두 사용했어요.', blocked: '얼음 숨결 때문에 이번 턴에는 소모품을 쓸 수 없어요.',
   aiming: '조준을 마친 뒤 소모품을 사용하세요.', 'combat-ended': '이미 전투가 끝났어요.',
   'inventory-full': '이 소모품은 최대 3개까지 보유할 수 있어요.', 'already-selected': '이미 선택한 보상이에요.',
@@ -16,7 +17,7 @@ const REASONS = {
 export function createGameSession({ rng = Math.random, now = Date.now, storage, engine = BattleEngine } = {}) {
   let sequence = 0;
   let state = { screen: 'home', profile: loadProfile(storage), selectedCharacter: null, run: null,
-    aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null };
+    aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null, enemyResponse: null };
   const listeners = new Set();
   const publish = patch => {
     state = { ...state, ...patch };
@@ -34,10 +35,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       ? '눈 지역 클리어! 우유맛 · 바람궁수 쿠키가 해금됐어요.'
       : '쿠키가 해금됐어요. 브라우저 저장을 사용할 수 없어 새로고침하면 초기화돼요.' } };
   }
-  function routeCombat(run, event) {
-    const patch = { run, lastEvent: { ...event, id: ++sequence,
-      visualKey: event.key || (state.run.fireballArmed ? 'fireball' : 'weapon') },
-      aim: { ...state.aim, phase: 'idle' }, ...persistUnlock(run) };
+  function finishCombatRouting(run, patch) {
     if (run.terminal === 'defeat') Object.assign(patch, {
       screen: run.bonusMode ? 'bonus-results' : 'main-results', outcome: 'defeat', summary: engine.getRunSummary(run, now())
     });
@@ -53,13 +51,23 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
         patch.screen = 'reward';
       }
     }
-    publish(patch);
+    return patch;
+  }
+  function routeCombat(run, event) {
+    const id = ++sequence;
+    const patch = { run, lastEvent: { ...event, id,
+      visualKey: event.key || (state.run.fireballArmed ? 'fireball' : 'weapon') },
+      aim: { ...state.aim, phase: 'idle' }, notification: null, ...persistUnlock(run),
+      enemyResponse: event.enemyAttack ? { id, stage: 'windup', attack: event.enemyAttack } : null };
+    // Damage resolves once in the engine. Playback only reveals that committed result.
+    // Keep fatal hits on the arena until the player has seen what hit them.
+    publish(event.enemyAttack ? patch : finishCombatRouting(run, patch));
     return event;
   }
   const actions = {
     startCharacterSelect() {
       publish({ screen: 'characters', run: null, selectedCharacter: null, fusion: null, outcome: null,
-        summary: null, lastEvent: null, aim: initialAim(), notification: null });
+        summary: null, lastEvent: null, enemyResponse: null, aim: initialAim(), notification: null });
     },
     startRun(characterId) {
       if (state.screen !== 'characters') return reject('invalid-state');
@@ -71,7 +79,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       return { accepted: true };
     },
     setAim(patch) {
-      if (state.screen !== 'battle' || state.run.terminal) return;
+      if (state.screen !== 'battle' || state.run.terminal || state.enemyResponse) return;
       const aim = { ...state.aim };
       if (Number.isFinite(patch.angle)) aim.angle = Math.max(10, Math.min(80, patch.angle));
       if (Number.isFinite(patch.power)) aim.power = Math.max(20, Math.min(100, patch.power));
@@ -81,8 +89,19 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       publish({ aim });
     },
     resetAim() { publish({ aim: initialAim() }); },
+    advanceEnemyResponse(id, stage) {
+      const response = state.enemyResponse;
+      const stages = ['windup', 'travel', 'impact'];
+      if (!response || response.id !== id || stages.indexOf(stage) !== stages.indexOf(response.stage) + 1) return;
+      publish({ enemyResponse: { ...response, stage } });
+    },
+    completeEnemyResponse(id) {
+      if (state.enemyResponse?.id !== id) return;
+      publish(finishCombatRouting(state.run, { enemyResponse: null, notification: null }));
+    },
     fireShot({ hitIds = [], selectedTargetId = state.aim.selectedTargetId } = {}) {
       if (state.screen !== 'battle') return reject('invalid-state');
+      if (state.enemyResponse) return reject('responding');
       const run = structuredClone(state.run);
       const event = engine.resolveProjectile(run, { hitIds, selectedTargetId, rng });
       if (!event.accepted) return reject(event.reason);
@@ -90,6 +109,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
     },
     useConsumable(key) {
       if (state.screen !== 'battle') return reject('invalid-state');
+      if (state.enemyResponse) return reject('responding');
       const run = structuredClone(state.run);
       const event = engine.useConsumable(run, key, { rng, isAiming: state.aim.phase !== 'idle' });
       if (!event.accepted) return reject(event.reason);

@@ -47,6 +47,37 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .monster-group { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
 .monster { position: absolute; transform: translate(-50%, -100%); aspect-ratio: 1; border: 0; background: none; padding: 0; pointer-events: auto; }
 .monster-art { width: 100%; height: 100%; object-fit: contain; position: relative; }
+.monster-body { position: absolute; inset: 0; display: block; transform-origin: 50% 90%; }
+.monster.is-attacking { z-index: 1; }
+.monster[data-attack-phase="windup"] .monster-body { animation: enemy-windup 340ms ease-out both; }
+.monster[data-attack-phase="travel"] .monster-body { animation: enemy-cast 520ms ease-out both; }
+.monster[data-melee="true"][data-attack-phase="travel"] .monster-body { animation: enemy-charge 520ms ease-in both; }
+.monster[data-melee="true"][data-attack-phase="impact"] .monster-body { animation: enemy-return 360ms ease-out both; }
+.enemy-response { position: absolute; inset: 0; z-index: 9; pointer-events: none; }
+.enemy-response > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.enemy-warning { position: absolute; left: 50%; top: 40.6%; transform: translateX(-50%); min-width: 35%; max-width: 70%; padding: 10px 22px; border-radius: 30px; background: #45382eed; border: 2px solid #fff3c3; text-align: center; color: #fff5dc; font-size: clamp(12px, 1.7cqw, 20px); font-weight: 850; }
+.enemy-warning-short { display: none; }
+.is-special .enemy-warning { background: #853a2eee; border-color: #ffc57d; }
+.battle-arena[data-aim-phase="responding"] .launcher-button > span { visibility: hidden; }
+.attack-telegraph circle { fill: #fcf0c2; stroke: #a55435; stroke-width: 3; }
+.attack-telegraph text { fill: #9d3d2c; font-size: 30px; font-weight: 900; }
+.enemy-projectile { fill: var(--attack-color); stroke: #4b5245; stroke-width: 3; filter: drop-shadow(0 0 8px var(--attack-color)); visibility: hidden; }
+.enemy-response--travel .enemy-projectile { visibility: visible; }
+.shield-impact { fill: #d1fbff; stroke: #1885b0; stroke-width: 4; }
+.shield-impact ellipse { fill: #abeaff40; stroke: #f1ffff; stroke-width: 7; animation: shield-collision 500ms ease-out both; }
+.shield-impact text, .player-impact text { fill: #fff; stroke: #244c61; stroke-width: 4; paint-order: stroke; font-size: 30px; font-weight: 900; }
+.player-impact > path { fill: #ffb16c9c; stroke: #fff0c4; stroke-width: 3; animation: damage-flash 500ms ease-out both; }
+.player-impact text { stroke: #8a332b; font-size: 40px; }
+.player-impact .special-impact-label { font-size: 22px; }
+.launcher.is-hit .launcher-button svg { animation: player-recoil 420ms ease-out; }
+.battle-arena[data-aim-phase="responding"] { cursor: wait; }
+@keyframes enemy-windup { to { transform: translateX(8%) rotate(9deg) scale(.94, 1.07); filter: brightness(1.15); } }
+@keyframes enemy-cast { 0% { transform: rotate(9deg); } 35% { transform: translateX(-22%) rotate(-17deg); } 100% { transform: none; } }
+@keyframes enemy-charge { from { transform: translateX(8%) rotate(9deg); } to { transform: translate(var(--strike-x), var(--strike-y)) rotate(-9deg); } }
+@keyframes enemy-return { from { transform: translate(var(--strike-x), var(--strike-y)) rotate(-9deg); } to { transform: none; } }
+@keyframes shield-collision { 0% { transform: scale(.8); opacity: 1; } 45% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1.2); opacity: .3; } }
+@keyframes damage-flash { 0% { transform: scale(.7); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+@keyframes player-recoil { 25% { transform: translateX(-12%) rotate(-9deg); } 60% { transform: translateX(3%) rotate(3deg); } }
 .monster-shadow { position: absolute; bottom: 0; left: 14%; width: 72%; height: 12%; border-radius: 50%; background: #49371e40; }
 .monster-health { position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); padding: 3px 7px; font-size: clamp(9px, 1.15cqw, 12px); line-height: 1; white-space: nowrap; border-radius: 6px; background: #fff9eaf5; border: 1px solid #bc9d71; color: #675027; font-weight: 800; }
 .monster--boss .monster-health { background: #6e4938; color: #fff6db; }
@@ -106,6 +137,14 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .battle-status { font-size: .68rem; }
 }
 @container (max-width: 500px) {
+  .enemy-warning { top: 51%; left: 66%; width: 64%; min-width: 0; max-width: none; font-size: 11px; padding: 5px 7px; border-width: 1px; }
+  .enemy-warning-long { display: none; }
+  .enemy-warning-short { display: inline; }
+  .shield-impact text { font-size: 36px; }
+  .shield-impact text:first-of-type { transform: translateY(272px); }
+  .shield-impact text:last-of-type { transform: translateY(66px); }
+  .player-impact text:not(.special-impact-label) { transform: translateY(60px); }
+  .player-impact .special-impact-label { font-size: 28px; }
   .hud-surface { top: 7px; border-radius: 9px; }
   .consumable-hud { left: 7px; width: 143px; padding: 7px; }
   .consumable-hud caption span { display: none; }
@@ -126,6 +165,7 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .aim-instructions { font-size: .68rem; padding: 0 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .monster-body, .launcher.is-hit .launcher-button svg, .shield-impact ellipse, .player-impact > path { animation: none !important; }
   .hit-effect, .is-healing::before, .launcher-button.is-releasing svg { animation-duration: 1ms; }
   .character-card { transform: none !important; }
 }

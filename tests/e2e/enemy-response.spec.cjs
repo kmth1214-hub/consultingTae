@@ -1,0 +1,157 @@
+const { test, expect, installGame, start, hp, ammo, phase, arena, snapshot } = require('./support.cjs');
+
+const inventory = { fireball: 1, spear: 1, defense: 1, heal: 3 };
+
+test('shield intercepts a visible incoming attack from the actual enemy without losing HP', async ({ page }) => {
+  await installGame(page, { initial: { inventory } });
+  await start(page);
+  await page.getByRole('button', { name: '방어 사용', exact: true }).click();
+  const trace = await snapshot(page);
+  expect(trace.lastEvent.enemyAttack.blockedBy).toBe('defense');
+  expect(trace.run.playerHp).toBe(100);
+  const attack = page.getByTestId('enemy-attack');
+  await expect(attack).toBeVisible();
+  await expect(attack).toHaveAttribute('data-attacker-id', trace.lastEvent.enemyAttack.enemyId);
+  await expect(page.locator('.monster.is-attacking')).toHaveCount(1);
+  await expect(page.getByTestId('shield-impact')).toBeVisible();
+  await expect(hp(page)).toHaveText('100');
+  await page.screenshot({ path: 'tmp/react-t06-shield-impact.jpg' });
+  await phase(page, 'idle');
+  await expect(page.locator('.launcher')).not.toHaveClass(/has-shield/);
+  await expect(attack).toHaveCount(0);
+  // A consumed shield must not accidentally protect the following enemy turn.
+  await page.keyboard.press('1');
+  await expect(page.getByTestId('player-impact')).toBeVisible();
+  await expect(hp(page)).toHaveText('95');
+  await phase(page, 'idle');
+  expect((await snapshot(page)).run.playerHp).toBe(95);
+});
+
+test('enemy projectile travels from its attacker and HP changes at impact; map and item input cannot overlap it', async ({ page }) => {
+  await installGame(page, { initial: { inventory } });
+  await start(page);
+  await page.keyboard.press('1');
+  const before = await snapshot(page);
+  const attack = page.getByTestId('enemy-attack');
+  await expect(attack).toHaveAttribute('data-stage', 'windup');
+  await expect(hp(page)).toHaveText('100');
+  expect(before.run.playerHp).toBe(95);
+  await expect(page.getByRole('button', { name: '방어 사용', exact: true })).toBeDisabled();
+  await page.keyboard.press('3');
+  const box = await arena(page).boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await phase(page, 'responding');
+  await expect(attack).toHaveAttribute('data-stage', 'travel');
+  const projectile = page.getByTestId('enemy-projectile');
+  await expect(projectile).toBeVisible();
+  const first = await projectile.getAttribute('transform');
+  await expect(projectile).not.toHaveAttribute('transform', first);
+  // Sample the real rendered movement, rather than merely checking a class exists.
+  const x1 = (await projectile.boundingBox()).x;
+  await expect.poll(async () => (await projectile.boundingBox()).x, { intervals: [16] }).toBeLessThan(x1 - 15);
+  await page.screenshot({ path: 'tmp/react-t06-enemy-projectile.jpg' });
+  await expect(page.getByTestId('player-impact')).toBeVisible();
+  await expect(hp(page)).toHaveText('95');
+  await phase(page, 'idle');
+  const after = await snapshot(page);
+  expect(after.run).toEqual(before.run);
+  expect(after.events.filter(event => event.name === 'useConsumable')).toHaveLength(1);
+  await expect(page.getByText('적이 공격하고 있어요. 반격이 끝나면 행동할 수 있어요.', { exact: true })).toHaveCount(0);
+});
+
+for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breath'], ['city', 'oven-overheat']]) {
+  for (const blocked of [false, true]) {
+    test(`${area} boss third response visibly ${blocked ? 'hits the shield and suppresses' : 'executes'} ${special}`, async ({ page }) => {
+      await installGame(page, { initial: { area, round: 5, inventory } });
+      await start(page);
+      for (let turn = 0; turn < 2; turn++) {
+        await page.keyboard.press('4');
+        await phase(page, 'idle');
+        expect((await snapshot(page)).lastEvent.enemyAttack.attemptedSpecial).toBe(null);
+      }
+      await page.keyboard.press(blocked ? '3' : '4');
+      const trace = await snapshot(page);
+      const event = trace.lastEvent.enemyAttack;
+      expect(event.attemptedSpecial).toBe(special);
+      expect(event.special).toBe(blocked ? null : special);
+      expect(event.blocked).toBe(blocked);
+      await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-special', special);
+      if (area === 'forest') {
+        const body = page.locator('.monster.is-attacking .monster-body');
+        await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'travel');
+        const startX = (await body.boundingBox()).x;
+        await expect.poll(async () => (await body.boundingBox()).x, { intervals: [16] }).toBeLessThan(startX - 40);
+      }
+      await expect(page.getByTestId(blocked ? 'shield-impact' : 'player-impact')).toBeVisible();
+      await expect(hp(page)).toHaveText(String(event.playerHpAfter));
+      await page.screenshot({ path: `tmp/react-t06-${area}-${blocked ? 'blocked' : 'special'}.jpg` });
+      await phase(page, 'idle');
+      expect((await snapshot(page)).run).toEqual(trace.run);
+      if (special === 'frozen-breath') expect(trace.run.consumablesBlocked).toBe(!blocked);
+      if (special === 'oven-overheat') {
+        expect(event.ammoLost).toBe(blocked ? 0 : 1);
+        await expect(ammo(page)).toHaveText(blocked ? '9' : '8');
+      }
+    });
+  }
+}
+
+test('a lethal enemy hit is shown before defeat, then retry has no stale response', async ({ page }) => {
+  await installGame(page, { initial: { playerHp: 1, inventory } });
+  await start(page);
+  await page.keyboard.press('1');
+  await expect(hp(page)).toHaveText('1');
+  await expect(page.getByRole('heading', { name: '다음엔 조금 더 멀리', exact: true })).toHaveCount(0);
+  await expect(page.getByTestId('player-impact')).toBeVisible();
+  await expect(hp(page)).toHaveText('0');
+  await expect(page.getByRole('heading', { name: '다음엔 조금 더 멀리', exact: true })).toBeVisible();
+  expect((await snapshot(page)).run.playerHp).toBe(0);
+  await page.getByRole('button', { name: '새 원정 시작' }).click();
+  await page.getByRole('button', { name: /^모험가맛 쿠키 / }).click();
+  await phase(page, 'idle');
+  await expect(page.getByTestId('enemy-attack')).toHaveCount(0);
+  await expect(hp(page)).toHaveText('100');
+});
+
+test('Milk first-boss protection uses the same visible interception without spending a Defense item', async ({ page }) => {
+  await installGame(page, { initial: { area: 'forest', round: 5, inventory }, allWeapons: true });
+  await start(page);
+  await page.keyboard.press('4');
+  await expect(page.getByTestId('shield-impact')).toContainText('우유 보호막');
+  await expect(hp(page)).toHaveText('100');
+  let trace = await snapshot(page);
+  expect(trace.lastEvent.enemyAttack.blockedBy).toBe('milk');
+  expect(trace.run.inventory.defense).toBe(1);
+  await phase(page, 'idle');
+  await page.keyboard.press('4');
+  await expect(page.getByTestId('player-impact')).toBeVisible();
+  await expect(hp(page)).toHaveText('91');
+  trace = await snapshot(page);
+  expect(trace.run.inventory.defense).toBe(1);
+});
+
+test('reduced-motion narrow screen shows the shield result and hidden-tab settling never repeats damage', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await installGame(page, { initial: { inventory } });
+  await start(page);
+  await page.keyboard.press('3');
+  await expect(page.getByTestId('shield-impact')).toBeVisible();
+  await expect(page.locator('.monster.is-attacking .monster-body')).toHaveCSS('animation-name', 'none');
+  await page.screenshot({ path: 'tmp/react-t06-shield-narrow.jpg' });
+  await phase(page, 'idle');
+  await page.keyboard.press('1');
+  const before = await snapshot(page);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await phase(page, 'idle');
+  await expect(hp(page)).toHaveText('95');
+  expect((await snapshot(page)).run).toEqual(before.run);
+  await page.evaluate(() => {
+    delete document.hidden;
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.getByTestId('enemy-attack')).toHaveCount(0);
+});
