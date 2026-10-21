@@ -6,7 +6,7 @@ Turn the current browser prototype into a complete, testable Vite + React single
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `done` | Create the React game, complete first-release rule parity, preserve arena controls, and verify play in a real browser. | [P01](../phases/2026-10-21-react-first-release/P01-react-game/phase.md) |
+| P01 | `done` | Create the React game, complete first-release rule parity, preserve arena controls, and verify play in a real browser, including T06 enemy attack/Defense feedback. | [P01](../phases/2026-10-21-react-first-release/P01-react-game/phase.md) |
 | P02 | `in_progress` | Package and deploy the Vite build to Azure Static Web Apps with tenant-restricted Entra access and GitHub Actions. | [P02](../phases/2026-10-21-react-first-release/P02-azure-release/phase.md) |
 
 ## Release boundaries
@@ -17,7 +17,7 @@ Turn the current browser prototype into a complete, testable Vite + React single
 - Azure tenant ID, Entra application client ID/secret, Static Web App deployment token, and Azure subscription access are external inputs for P02. Never commit credentials.
 
 ## Dependencies and current gaps
-- The implementation gaps below describe the planning baseline and were resolved by P01 (60 Node and 30 production-preview Chromium tests pass). P02's owner-supplied Azure inputs remain outstanding.
+- The implementation gaps below describe the planning baseline and were resolved by P01 (62 Node and 41 production-preview Chromium tests pass). P02's owner-supplied Azure inputs remain outstanding.
 - There is no root `package.json`, Vite configuration, React source tree, Playwright setup, Azure workflow, or Static Web Apps config.
 - `cookie-roguelike-mockup.html` is the current UI reference; `assets/js/battle-ui.js` performs imperative DOM rendering, while `assets/js/battle-engine.js` is a UMD engine used by 19 Node tests.
 - Before the UI migration, add engine regression coverage and complete confirmed rules missing in the engine: one random starting consumable, character-specific weapon effects, prompted weapon fusion, complete Chaos rounds/bosses, and separate bonus score.
