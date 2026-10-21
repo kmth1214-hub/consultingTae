@@ -1,6 +1,6 @@
 # Task: T01 Dedicated Snow Layer Artwork
 
-## Status: pending
+## Status: done
 
 ## Goal
 Produce an independently painted side-view Snow scene matching Forest's art quality, delivered as eight proportional PNG layers with real transparency and reviewed seams. Do not switch the live renderer during this asset task.
@@ -61,10 +61,10 @@ type LayerManifest={version:1;area:'snow';baselineRatio:0.75;
 - Review notes include tool used, generation/edit prompts, references, filenames, native dimensions, alpha metrics, accepted/rejected issue resolutions, overall byte total, screenshot paths and remaining limitations. Never include secrets or raw base64. Only accepted final PNGs/manifest/review and the verifier (T01) are staged.
 
 ## Acceptance Criteria
-- [ ] Eight dedicated painted Snow layers and complete native metadata exist; originals unchanged.
-- [ ] Opaque/cutout roles, road registration and source proportions pass browser pixel validation.
-- [ ] Side-view style matches Forest; west/east have coherent edges without duplicated major landmarks.
-- [ ] Real isolated/assembled images inspected and findings recorded; no live renderer or gameplay changed.
+- [x] Eight dedicated painted Snow layers and complete native metadata exist; originals unchanged.
+- [x] Opaque/cutout roles, road registration and source proportions pass browser pixel validation.
+- [x] Side-view style matches Forest; west/east have coherent edges without duplicated major landmarks.
+- [x] Real isolated/assembled images inspected and findings recorded; no live renderer or gameplay changed.
 
 ## Validation
 - `node scripts/verify-region-art.cjs snow` — all eight images decode and pass dimensions/alpha/road checks.
@@ -85,9 +85,17 @@ Task: T01-snow-layer-art
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: this prescribed asset/task commit; hash recorded in phase/current after commit
 
 ## Next pointer
 After the prescribed art/task commit and phase/plan/current synchronization, advance to `T02-city-layer-art.md`. Do not implement the runtime, studio, existing cookie task or Azure early.
+
+## Execution Notes — 2026-10-21
+- Eight native1536×1024 Snow PNGs and version1 layers.json delivered in assets/maps/snow-layers; total12212323 bytes. Built-in imagegen used with original Forest/Snow references, real alpha and no raster postprocessing. Original assets and live src code unchanged. Initial planning hierarchy was first saved separately as543252f.
+- Added scripts/verify-region-art.cjs: known-area/file/manifest/native-dimension checks, actual browser RGBA measurement, road contact-row and foreground-clearance gates, file-specific failures and guaranteed Chrome cleanup. No game/server/dependency import side effects; no image mutation.
+- Final validator8/8 passes. Distant100% opaque; midground76.77%/70.51% transparent; path83.74%/83.55% transparent with100% opaque contact row768; foreground91.72%/91.19% transparent and top80%100% clear. Final west/east full-width opaque road bands705..841/705..843 align without a step.
+- Numeric alpha alone did not catch overly tall/high first road paint or foreground clipped by the planned fixed boundary. Corrected via imagegen rather than weakening thresholds or moving the canonical contact row. Final isolated light/dark/checker sheets and registered overview/entrance/join/east/near-road captures were manually inspected; no label/poster border/fake transparency. Captures/probes/rejected candidates stay untracked in tmp.
+- Full prompts, source provenance, actual metrics, corrections, screenshots and residual native-resolution/byte-size limits are recorded in .memory/asset-reviews/2026-10-21-snow-layers.md. T04 still owns actual renderer/parallax/viewport integration and loading review; T05 owns the development studio link. No claim that the live game or admin page changed.
+- Invalid-area CLI returns expected exit1. Eight malformed manifest/unknown-area and two opaque-cutout/contact-row negative probes pass. Standalone npm.cmd run build and staged diff checks pass. No gameplay suite was needed/run for this asset-only task. Existing4173/5173 services preserved; out-of-scope findings: none.

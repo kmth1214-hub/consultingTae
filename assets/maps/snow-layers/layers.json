@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "area": "snow",
+  "baselineRatio": 0.75,
+  "panels": {
+    "west": {
+      "x": -600,
+      "worldWidth": 2700
+    },
+    "east": {
+      "x": 1500,
+      "worldWidth": 2700
+    }
+  },
+  "assets": [
+    {
+      "layer": "distant",
+      "side": "west",
+      "file": "distant-west.png",
+      "width": 1536,
+      "height": 1024,
+      "alphaMode": "opaque"
+    },
+    {
+      "layer": "distant",
+      "side": "east",
+      "file": "distant-east.png",
+      "width": 1536,
+      "height": 1024,
+      "alphaMode": "opaque"
+    },
+    {
+      "layer": "midground",
+      "side": "west",
+      "file": "midground-west.png",
+      "width": 1536,
+      "height": 1024,
+      "alphaMode": "cutout"
+    },
+    {
+      "layer": "midground",
+      "side": "east",
+      "file": "midground-east.png",
+      "width": 1536,
+      "height": 1024,
+      "alphaMode": "cutout"
+    },
+    {
+      "layer": "path",
+      "side": "west",
+      "file": "path-west.png",
+      "width": 1536,
+      "height": 1024,
+      "alphaMode": "cutout"
+    },
+    {
+      "layer": "path",
+      "side": "east",
+      "file": "path-east.png",
+      "width": 1536,
+      "height": 1024,
+      "alphaMode": "cutout"
+    },
+    {
+      "layer": "foreground",
+      "side": "west",
+      "file": "foreground-west.png",
+      "width": 1536,
+      "height": 1024,
+      "alphaMode": "cutout"
+    },
+    {
+      "layer": "foreground",
+      "side": "east",
+      "file": "foreground-east.png",
+      "width": 1536,
+      "height": 1024,
+      "alphaMode": "cutout"
+    }
+  ]
+}
