@@ -1,17 +1,19 @@
 # Current Context
 
 ## Active Plan
-[React First Release](./plans/2026-10-21-react-first-release.md)
+[Wide Battlefield and Mouse Drag](./plans/2026-10-21-wide-battlefield-mouse-drag.md)
 
 ## Active Phase
-[P02 Azure Release](./phases/2026-10-21-react-first-release/P02-azure-release/phase.md)
+[P01 Wide Combat](./phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/phase.md)
 
 ## Active Task
-[T01 Azure Static Web App](./phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md)
+[T01 World and Shot Model](./phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/T01-world-shot-model.md)
 
 ## Status
-- New confirmed design awaiting planning: [Wide Battlefield and Mouse Drag](./decisions/2026-10-21-wide-battlefield-mouse-drag.md). The interview selected mouse drag with reverse shots, overview/aim/follow camera, roughly 3× actual battlefield with near/far enemies, solid obstacles and Wind's once-per-round obstacle-bypassing homing. Run `/memory-plan wide-battlefield-mouse-drag` to initialize its own task pointer; no gameplay code for this design is implemented yet.
-- P01 is complete (8/8). T08 completed as `1c835c1` (`feat(game): fill the viewport with the battle arena`); pointer returns to P02-T01. Azure deployment/configuration has not been executed yet.
+- New plan ready: [Wide Battlefield and Mouse Drag](./decisions/2026-10-21-wide-battlefield-mouse-drag.md), one Phase/four Tasks, done0/4, active T01. Planning documents only; implementation has not started. User selected mouse vector pull/reverse, overview→aim→follow, roughly3× actual field with near/far enemies, solid stationary blockers and Wind's once-per-round visible bypass. Preserve existing combat/progression and hidden numeric HUD.
+- T01 creates pure battlefieldModel/shotGeometry/battlefieldCamera APIs and analytic/reachability tests without switching the current UI. T02 atomically wires input/camera/geometry/render/session and migrates real input tests; T03 completes illustrated scenery and full-angle tension; T04 proves complete gameplay and retires superseded compact helpers. Read the active task alone for exact files/contracts/commands/commit.
+- Planned canonical world3600×1200, ground900, sprite220,758, resting candy284,812; single enemy2438 preserves exactly3× old separation; multiple slots1000..2860. One sampled world path handles preview/flight/contacts; no behind-wall normal damage, no stale Wind target on reverse. Screen-pixel grab origin is fixed while the camera moves. T01 defines all constants and geometry; no production module exists yet.
+- Prior React release P01 is complete (8/8). T08 completed as `1c835c1` (`feat(game): fill the viewport with the battle arena`). Its P02 Azure configuration/deployment remains deferred and unexecuted. Historical notes below describe that prior implementation, which remains active until T02 of the new plan.
 - T08 replaces the arena's height-derived width/1500px cap with a full-window grid. At 2007×1037, map is 1983×899 with 12px side gutters. A bottom-anchored 3:2 world preserves art/actor/SVG proportions while excess sky is clipped; the same screen matrices still drive aim/collision. Portrait/square <=4:3 uses natural map height, short landscape compacts HUD into a 2×2 item table. Enemy notices sit outside the world so ultra-wide clipping cannot hide them; attack SVGs remain world-aligned. Fullscreen instructions stay legible. Physics/balance unchanged.
 - T08 validation: all 31 affected distinct Chrome cases pass across slingshot/accessibility/enemy-response runs, including three new wide/short-height regressions with real hit checks. After the final short-HUD spacing correction, that case passes on a fresh build. Standalone build/diff checks pass. Desktop 2007/2560/1440, 390px portrait and 844×390 layouts inspected; captures in untracked `tmp/react-t08-*.jpg`. Dev URL returns HTTP 200 at `http://127.0.0.1:5173/`. T07 completed as `881c1bc`.
 - T07 upgrades the player weapon to carved wood, brass caps, stitched leather, candy/rune highlights, localized charge sparks, spring recoil/release flash and a short gradient flight wake. Fireball has warm colors. SVG uses unique useId paint IDs. Existing 124×142 coordinates, aim/zoom/30% preview, hidden values, physics and damage remain intact; flight pouch now appears empty until reload. Reduced motion removes nonessential effects. Legacy HTML unchanged.
@@ -39,7 +41,8 @@
 - `sites/` and `tmp/` preview outputs remain outside this implementation plan.
 - P02 requires owner-provided Azure subscription/resource, Entra tenant ID and app-registration credentials, and SWA deployment token.
 
-## Next Step
-The latest gameplay request has a confirmed decision file and awaits `/memory-plan wide-battlefield-mouse-drag` before implementation. The prior P02 pointer is retained until that planning step; do not treat the new design as already implemented or fold it into Azure configuration.
+## Next Step (IMPORTANT)
+Read `phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/T01-world-shot-model.md` and implement only that task: new pure `src/game/battlefieldModel.js`, `shotGeometry.js`, `battlefieldCamera.js` and their three focused Node test files. Keep the existing live UI/engine behavior unchanged in T01. Run the blueprint's focused/full Node checks, build and diff check; mark task done, commit its exact message, synchronize phase/current and advance to T02.
 
-On a later explicit return to Azure work, read P02-T01 and prepare the Azure Static Web Apps configuration, tenant-restricted Entra access, GitHub Actions workflow and owner setup instructions from that blueprint. The prior P01 implementation is complete; the new wide-field design supersedes its controls/layout only after its own plan is implemented. Preserve qualitative aim HUD, impact-time combat, proportional world and sibling HUD, T06 enemy response/input lock, T07 weapon polish, and T08 viewport filling. Azure subscription/resource, Entra tenant ID/app registration credentials and SWA deployment token are owner-provided inputs; never commit secret values. This interview did not deploy or change Azure/GitHub settings.
+## Deferred Azure Work
+[React release P02-T01](./phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md) remains an explicit later project step. Do not resume it as part of this gameplay plan or automatically start it after T04. Tenant/subscription/app registration and deployment secrets remain owner-provided and are never committed.

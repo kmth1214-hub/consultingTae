@@ -3,7 +3,7 @@
 - Date: 2026-10-21
 - Status: Confirmed
 - Feature: `wide-battlefield-mouse-drag`
-- Stage: Design interview complete; implementation plan not created yet.
+- Stage: Design interview complete; [implementation plan ready](../plans/2026-10-21-wide-battlefield-mouse-drag.md), implementation not started.
 - Applies to the React game. Supersedes its mouse + Space aiming flow, compact battlefield layout and decorative-only obstacle restriction. Other first-release rules remain applicable.
 
 ## D01. Mouse-only aiming and release
@@ -60,4 +60,4 @@
 - Out-of-scope findings: none requiring a separate feature decision. The issues above are necessary integration work for the selected controls/map/obstacle behavior; moving-obstacle physics remains deferred.
 
 ## Next step
-Run `/memory-plan wide-battlefield-mouse-drag` using this confirmed decision file. Create task blueprints and initialize the new plan pointer before implementation. This document does not mark gameplay as implemented or modify the active Azure task pointer.
+The [plan and rich task blueprints](../plans/2026-10-21-wide-battlefield-mouse-drag.md) are created. `.memory/current.md` now points to that plan's P01-T01. Run `/memory-execute` to implement the first task sequentially. The prior Azure task remains deferred; no gameplay change is implemented by these planning documents.
