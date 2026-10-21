@@ -24,5 +24,13 @@
 - **Chosen**: Keep existing combat, item, reward, boss cadence, scoring, area, and obstacle decisions as the gameplay source of truth; run state remains in memory for the session.
 - **Rationale**: React migration should retain the confirmed game rules rather than introduce a second rule set.
 
+## D06. Bonus area
+- **Chosen**: Include the three-round bonus combat route with its established monsters, maps, and scoring rules. Exclude QR presentation and all additional bonus rewards from the first release.
+- **Rationale**: Keep the optional gameplay challenge while avoiding reward delivery and global first-clear tracking that need external assets and shared persistence.
+
+## D07. Character unlock persistence
+- **Chosen**: Save the Snow-area clear unlock in browser local storage so 우유맛 쿠키 and 바람궁수 쿠키 stay available in that browser on future visits.
+- **Rationale**: Preserve the unlock progression without adding game accounts or a profile backend.
+
 ## Deferred deployment inputs
 - Company Microsoft Entra tenant configuration is required before access restriction can be verified in Azure.

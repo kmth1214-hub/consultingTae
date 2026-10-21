@@ -13,3 +13,5 @@ Cookie Run_ OvenBreak Fan Kit/01. Cookies/*
 .agents/
 .memory/current.md
 examples/
+node_modules/
+dist/
