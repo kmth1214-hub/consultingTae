@@ -68,7 +68,7 @@ test('frozen and aiming item lockout cannot spend an item or a turn', async ({ p
   await page.keyboard.press('4');
   await expect(page.getByText('얼음 숨결 때문에 이번 턴에는 소모품을 쓸 수 없어요.', { exact: true })).toBeVisible();
   expect((await snapshot(page)).run).toEqual(before);
-  await shoot(page, { short: true, x: 500 });
+  await shoot(page, { short: true });
   await expect(page.getByRole('button', { name: '회복 사용', exact: true })).toBeEnabled();
   const after = (await snapshot(page)).run;
   await grabMap(page);

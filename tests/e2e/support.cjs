@@ -81,29 +81,23 @@ async function start(page, character = '모험가맛 쿠키') {
 async function grabMap(page) {
   await phase(page, 'idle');
   const box = await arena(page).boundingBox();
-  const point = { x: box.x + box.width * .5, y: box.y + box.height * .42 };
+  const point = { x: box.x + box.width * .5, y: box.y + box.height * .40 };
   await page.mouse.move(point.x, point.y);
   await page.mouse.down();
-  await phase(page, 'angle');
+  await phase(page, 'dragging');
   return point;
 }
-async function charge(page, { short = false } = {}) {
-  await page.keyboard.down('Space');
-  await phase(page, 'power');
-  // Wait for the rendered live gauge, never write a game/aim state or bypass its input.
-  await expect.poll(async () => parseFloat(await page.locator('.power-meter-fill').evaluate(el => el.style.height)),
-    { intervals: [8], timeout: 3000 }).toBeGreaterThan(short ? 24 : 68);
-  await page.keyboard.up('Space');
-  await phase(page, 'direction');
+async function dragPull(page, { angleDeg = 45, powerRatio = .8, reverse = false, origin } = {}) {
+  const start = origin || await grabMap(page);
+  const box = await arena(page).boundingBox();
+  const maxDrag = Math.min(220, .34 * Math.min(box.width, box.height));
+  const distance = 12 + powerRatio * (maxDrag - 12);
+  const radians = (reverse ? 135 : angleDeg) * Math.PI / 180;
+  await page.mouse.move(start.x - Math.cos(radians) * distance, start.y + Math.sin(radians) * distance);
+  return start;
 }
-async function target(page, x = 950) {
-  const box = await page.locator('.arena-world').boundingBox();
-  await page.mouse.move(box.x + box.width * x / 1200, box.y + box.height * 570 / 800);
-}
-async function shoot(page, { short = false, x = 950, finalHeading } = {}) {
-  await grabMap(page);
-  await charge(page, { short });
-  await target(page, x);
+async function shoot(page, { short = false, angleDeg = 45, powerRatio, reverse = false, finalHeading } = {}) {
+  await dragPull(page, { angleDeg, powerRatio: powerRatio ?? (short ? .08 : .8), reverse });
   await page.mouse.up();
   await phase(page, 'launching');
   if (finalHeading) await expect(page.getByRole('heading', { name: finalHeading, exact: true })).toBeVisible();
@@ -118,4 +112,4 @@ async function selectRewards(page, merge = false) {
   if (await items.count()) await items.first().click();
   await page.locator('.continue-button').click();
 }
-module.exports = { test, expect, installGame, arena, phase, ammo, hp, snapshot, start, grabMap, charge, target, shoot, selectRewards };
+module.exports = { test, expect, installGame, arena, phase, ammo, hp, snapshot, start, grabMap, dragPull, shoot, selectRewards };

@@ -2,7 +2,7 @@ import { BattleEngine } from './battleEngine.js';
 import { CHARACTERS } from './gameData.js';
 import { loadProfile, markSnowCleared, saveProfile } from './profileStore.js';
 
-const initialAim = () => ({ angle: 42, power: 20, phase: 'idle', selectedTargetId: null });
+const initialAim = () => ({ angle: 0, power: 0, phase: 'idle', selectedTargetId: null });
 const REASONS = {
   responding: '적이 공격하고 있어요. 반격이 끝나면 행동할 수 있어요.',
   empty: '이 소모품을 모두 사용했어요.', blocked: '얼음 숨결 때문에 이번 턴에는 소모품을 쓸 수 없어요.',
@@ -81,9 +81,9 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
     setAim(patch) {
       if (state.screen !== 'battle' || state.run.terminal || state.enemyResponse) return;
       const aim = { ...state.aim };
-      if (Number.isFinite(patch.angle)) aim.angle = Math.max(10, Math.min(80, patch.angle));
-      if (Number.isFinite(patch.power)) aim.power = Math.max(20, Math.min(100, patch.power));
-      if (['idle', 'angle', 'power', 'direction', 'launching'].includes(patch.phase)) aim.phase = patch.phase;
+      if (Number.isFinite(patch.angle)) aim.angle = ((patch.angle + 180) % 360 + 360) % 360 - 180;
+      if (Number.isFinite(patch.power)) aim.power = Math.max(0, Math.min(100, patch.power));
+      if (['idle', 'dragging', 'launching'].includes(patch.phase)) aim.phase = patch.phase;
       if ('selectedTargetId' in patch) aim.selectedTargetId = state.run.enemies.some(enemy => enemy.id === patch.selectedTargetId && enemy.alive)
         ? patch.selectedTargetId : null;
       publish({ aim });
@@ -99,12 +99,17 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       if (state.enemyResponse?.id !== id) return;
       publish(finishCombatRouting(state.run, { enemyResponse: null, notification: null }));
     },
-    fireShot({ hitIds = [], selectedTargetId = state.aim.selectedTargetId } = {}) {
+    fireShot({ hitIds = [], selectedTargetId = state.aim.selectedTargetId, shotMeta } = {}) {
       if (state.screen !== 'battle') return reject('invalid-state');
       if (state.enemyResponse) return reject('responding');
+      if (state.aim.phase === 'dragging') return reject('aiming');
+      if (shotMeta !== undefined && (!shotMeta || !['enemy', 'obstacle', 'ground', 'bounds', 'timeout'].includes(shotMeta.impactKind)
+        || !(shotMeta.obstacleId === null || typeof shotMeta.obstacleId === 'string')
+        || typeof shotMeta.reverse !== 'boolean')) return reject('invalid-state');
       const run = structuredClone(state.run);
-      const event = engine.resolveProjectile(run, { hitIds, selectedTargetId, rng });
+      const event = engine.resolveProjectile(run, { hitIds, selectedTargetId: shotMeta?.reverse ? null : selectedTargetId, rng });
       if (!event.accepted) return reject(event.reason);
+      if (shotMeta) event.shotMeta = { impactKind: shotMeta.impactKind, obstacleId: shotMeta.obstacleId, reverse: shotMeta.reverse };
       return routeCombat(run, event);
     },
     useConsumable(key) {

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { MONSTER_NAMES } from '../game/gameData.js';
-import { monsterPositions } from '../game/arenaLayout.js';
 
 export function attackStyle(attack) {
   const special = attack.attemptedSpecial;
@@ -30,19 +29,26 @@ export function EnemyResponseNotice({ response }) {
 }
 
 // One clock per committed enemy turn. Phase callbacks never resolve combat or roll RNG.
-export default function EnemyResponse({ response, enemies, onAdvance, onComplete }) {
+export function responseTravelMs(response, layout, reduced) {
+  if (reduced) return 100;
+  const attacker = layout.enemies.find(e => e.id === response?.attack.enemyId);
+  return Math.max(520, Math.min(1100, Math.abs((attacker?.x ?? layout.launcher.impact.x) - layout.launcher.impact.x) / 4));
+}
+
+export default function EnemyResponse({ response, layout, travelMs, onAdvance, onComplete }) {
   const projectile = useRef(null);
   const callbacks = useRef(null);
   callbacks.current = { onAdvance, onComplete };
   const { attack, stage, id } = response;
   const visual = attackStyle(attack);
-  const attacker = monsterPositions(enemies).find(enemy => enemy.id === attack.enemyId);
-  const source = { x: attacker?.x ?? 950, y: (attacker?.y ?? 615) - (attacker?.size ?? 92) * .55 };
-  const target = { x: 230, y: 569 };
+  const attacker = layout.enemies.find(enemy => enemy.id === attack.enemyId);
+  const source = { x: attacker?.x ?? layout.launcher.impact.x,
+    y: attacker ? attacker.y - attacker.size * .55 : layout.launcher.impact.y };
+  const target = layout.launcher.impact;
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const windup = reduced ? 150 : attack.attemptedSpecial ? 480 : 340;
-    const travel = reduced ? 100 : 520;
+    const travel = travelMs;
     const impact = reduced ? 400 : 520;
     const started = performance.now();
     let frame, canceled = false, previous = 'windup', done = false;
@@ -85,7 +91,7 @@ export default function EnemyResponse({ response, enemies, onAdvance, onComplete
   return <div className={`enemy-response enemy-response--${stage} ${attack.attemptedSpecial ? 'is-special' : ''}`}
     data-testid="enemy-attack" data-attacker-id={attack.enemyId} data-stage={stage}
     data-special={attack.attemptedSpecial || ''} role="img" aria-label={label}>
-    <svg viewBox="0 0 1200 800" aria-hidden="true" style={{ '--attack-color': visual.color }}>
+    <svg viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true" style={{ '--attack-color': visual.color }}>
       {stage === 'windup' && <g className="attack-telegraph" transform={`translate(${source.x} ${source.y - 70})`}>
         <circle r="22" /><text y="9" textAnchor="middle">!</text></g>}
       {!visual.melee && <g ref={projectile} data-testid="enemy-projectile" className="enemy-projectile"

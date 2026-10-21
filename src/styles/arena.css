@@ -9,15 +9,16 @@
 .fullscreen-button { background: #fffaf0; border: 1px solid #cec9b9; border-radius: 11px; width: 38px; height: 38px; font-size: 1.5rem; }
 .battle-arena { position: relative; isolation: isolate; width: 100%; height: 100%; min-height: 0; min-width: 0; margin: 0; overflow: hidden; border: 1px solid #738e79; border-radius: 16px; background: #a6d7c2; container-type: inline-size; touch-action: none; user-select: none; }
 .battle-arena:focus-visible { outline: 3px solid #477c61; outline-offset: 3px; }
-.arena-world { position: absolute; inset: auto 0 0; aspect-ratio: 3 / 2; isolation: isolate; }
-/* One proportional world fills the width. The viewport clips surplus sky/foreground. */
+.arena-world { position: absolute; top: 0; left: 0; isolation: isolate; transform-origin: 0 0; }
+/* All geometry stays in world units; only the viewport clips the camera. */
+.battlefield-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .scene-layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; pointer-events: none; }
 .scene-distant { z-index: 0; }
 .scene-midground { z-index: 1; }
 .scene-path { z-index: 2; }
 .scene-scenery { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
 .scene-foreground { z-index: 5; }
-.projectile-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; }
+.projectile-layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 6; pointer-events: none; }
 .arena-hud { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
 .hud-surface { pointer-events: auto; position: absolute; top: 20px; background: #fffdf5f5; border: 1px solid #d8d0b9; box-shadow: 0 4px 0 #33482416; border-radius: 16px; }
 .consumable-hud { left: 20px; width: 215px; padding: 12px 14px 7px; }
@@ -45,13 +46,13 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .ammo-dots .is-spent { background: #ede5d4; border-color: #d8cbb6; }
 .candy-hud .weapon-count { font-size: .62rem; color: #96846a; }
 .monster-group { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
-.monster { position: absolute; transform: translate(-50%, -100%); aspect-ratio: 1; border: 0; background: none; padding: 0; pointer-events: auto; }
+.monster { position: absolute; transform: translate(-50%, -100%); aspect-ratio: 1; border: 0; background: none; padding: 0; pointer-events: none; }
 .monster-art { width: 100%; height: 100%; object-fit: contain; position: relative; }
 .monster-body { position: absolute; inset: 0; display: block; transform-origin: 50% 90%; }
 .monster.is-attacking { z-index: 1; }
 .monster[data-attack-phase="windup"] .monster-body { animation: enemy-windup 340ms ease-out both; }
-.monster[data-attack-phase="travel"] .monster-body { animation: enemy-cast 520ms ease-out both; }
-.monster[data-melee="true"][data-attack-phase="travel"] .monster-body { animation: enemy-charge 520ms ease-in both; }
+.monster[data-attack-phase="travel"] .monster-body { animation: enemy-cast var(--attack-travel, 520ms) ease-out both; }
+.monster[data-melee="true"][data-attack-phase="travel"] .monster-body { animation: enemy-charge var(--attack-travel, 520ms) ease-in both; }
 .monster[data-melee="true"][data-attack-phase="impact"] .monster-body { animation: enemy-return 360ms ease-out both; }
 .enemy-response { position: absolute; inset: 0; z-index: 9; pointer-events: none; }
 .enemy-response > svg { display: block; width: 100%; height: 100%; overflow: visible; }
@@ -86,7 +87,7 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .hit-effect--spear { color: #e0f2ff; }
 .hit-effect--fireball { color: #ffce64; }
 @keyframes hit-rise { 0% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-35px); } }
-.launcher { position: absolute; left: 14%; top: 63%; width: 10.3333%; height: 17.75%; z-index: 8; }
+.launcher { position: absolute; z-index: 8; }
 .launcher-button { position: absolute; inset: 0; border: 0; padding: 0; background: transparent; width: 100%; height: 100%; }
 .launcher-button svg { display: block; width: 100%; height: 100%; overflow: visible; transform-origin: 50% 85%; }
 .slingshot-frame { filter: drop-shadow(1px 3px 1px #37241e70); }
@@ -110,9 +111,10 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .is-primed .power-meter-fill { filter: brightness(1.15); }
 .is-fireball .power-meter-fill { background: linear-gradient(0deg, #f5bd65, #ed663c); }
 .power-meter-mark { position: absolute; top: 25%; left: 0; width: 100%; border-top: 1px solid #fff8ce80; }
-.trajectory-outline, .trajectory-arc { stroke-dasharray: 5 10; stroke-linecap: round; }
-.trajectory-outline { stroke: #294538; stroke-width: 7; opacity: .7; }
-.trajectory-arc { stroke: #fff4c6; stroke-width: 3.5; opacity: .92; }
+.trajectory-outline, .trajectory-arc { stroke-dasharray: calc(5px / var(--camera-scale, 1)) calc(10px / var(--camera-scale, 1)); stroke-linecap: round; }
+/* SVG vector-effect does not cancel an ancestor's CSS camera transform in Chrome. */
+.trajectory-outline { stroke: #294538; stroke-width: calc(7px / var(--camera-scale, 1)); opacity: .7; }
+.trajectory-arc { stroke: #fff4c6; stroke-width: calc(3.5px / var(--camera-scale, 1)); opacity: .92; }
 .battle-arena[data-aim-phase="idle"] { cursor: crosshair; }
 .hud-surface { cursor: default; }
 .projectile-candy { filter: drop-shadow(0 2px 3px #55392b70); }
@@ -120,7 +122,9 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .launcher-button { cursor: grab; touch-action: none; }
 .launcher-button.is-drawn { cursor: grabbing; }
 .launcher-button.is-releasing svg { animation: sling-recoil 340ms ease-out; }
-.battle-arena[data-aim-phase="angle"], .battle-arena[data-aim-phase="power"], .battle-arena[data-aim-phase="direction"] { cursor: grabbing; }
+.battle-arena[data-aim-phase="dragging"] { cursor: grabbing; }
+.shot-impact { animation: shot-contact 600ms ease-out both; transform-box: fill-box; transform-origin: center; }
+@keyframes shot-contact { from { opacity: 1; transform: scale(.5); } to { opacity: 0; transform: scale(2); } }
 .aim-instructions { text-align: center; margin: 6px auto 0; color: #4b644b; font-size: .8rem; min-height: 22px; line-height: 1.6; }
 @keyframes sling-recoil { 0% { transform: rotate(-10deg) scale(.96, 1.04); } 30% { transform: rotate(7deg) scale(1.04, .96); } 65% { transform: rotate(-3deg); } 100% { transform: none; } }
 @keyframes sling-spark { from { opacity: .3; transform: translateY(3px) scale(.7); } to { opacity: 1; transform: translateY(-4px) scale(1.1); } }
@@ -166,9 +170,6 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .enemy-warning-long { display: none; }
   .enemy-warning-short { display: inline; }
   .shield-impact text { font-size: 36px; }
-  .shield-impact text:first-of-type { transform: translateY(272px); }
-  .shield-impact text:last-of-type { transform: translateY(66px); }
-  .player-impact text:not(.special-impact-label) { transform: translateY(60px); }
   .player-impact .special-impact-label { font-size: 28px; }
   .hud-surface { top: 7px; border-radius: 9px; }
   .consumable-hud { left: 7px; width: 143px; padding: 7px; }

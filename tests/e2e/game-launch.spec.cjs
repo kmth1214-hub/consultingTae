@@ -1,4 +1,4 @@
-const { test, expect, installGame, arena, phase, ammo, hp, snapshot, start, grabMap, charge, target, shoot } = require('./support.cjs');
+const { test, expect, installGame, arena, phase, ammo, hp, snapshot, start, grabMap, shoot } = require('./support.cjs');
 
 test('production landing and character selection start the real default engine state without prototype navigation', async ({ page }) => {
   await installGame(page);
@@ -22,14 +22,14 @@ test('production landing and character selection start the real default engine s
   expect(bundleTexts.join('')).not.toContain('__gameTest');
 });
 
-test('map drag previews a live 30% arc before Space, then real hit and miss update engine and HUD exactly once', async ({ page }) => {
+test('map drag previews a live partial arc with mouse movement alone, then real hit and miss update engine and HUD exactly once', async ({ page }) => {
   await installGame(page);
   await start(page);
   const initial = await grabMap(page);
-  await page.mouse.move(initial.x, initial.y - 16);
+  await page.mouse.move(initial.x - 16, initial.y + 16);
   await expect(page.getByTestId('trajectory-preview')).toBeVisible();
   const first = await page.getByTestId('trajectory-preview').getAttribute('d');
-  await page.mouse.move(initial.x, initial.y - 32);
+  await page.mouse.move(initial.x - 32, initial.y + 32);
   await expect(page.getByTestId('trajectory-preview')).not.toHaveAttribute('d', first);
   // Cancel the exploratory aim and use a fresh default-angle shot.
   await page.keyboard.press('Escape');
@@ -42,7 +42,7 @@ test('map drag previews a live 30% arc before Space, then real hit and miss upda
   expect(trace.lastEvent.hits[0].damage).toBe(2);
   expect(trace.run.enemies[0].hp).toBe(2);
   expect(trace.events.filter(event => event.name === 'resolveProjectile')).toHaveLength(1);
-  await shoot(page, { short: true, x: 500 });
+  await shoot(page, { short: true });
   await expect(ammo(page)).toHaveText('7');
   await expect(hp(page)).toHaveText('90');
   trace = await snapshot(page);
@@ -54,7 +54,7 @@ test('map drag previews a live 30% arc before Space, then real hit and miss upda
 test('last-ammo miss enters defeat, excludes bonus entry, and retry creates a fresh normal run', async ({ page }) => {
   await installGame(page, { initial: { ammo: 1, playerHp: 30 } });
   await start(page);
-  await shoot(page, { short: true, x: 500, finalHeading: '다음엔 조금 더 멀리' });
+  await shoot(page, { short: true, finalHeading: '다음엔 조금 더 멀리' });
   await expect(page.getByRole('button', { name: '혼돈 지역 도전 →' })).toHaveCount(0);
   expect((await snapshot(page)).run.terminal).toBe('defeat');
   await page.getByRole('button', { name: '새 원정 시작' }).click();

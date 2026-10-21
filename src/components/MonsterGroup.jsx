@@ -1,7 +1,6 @@
 import React from 'react';
 import { ASSETS } from '../game/assetCatalog.js';
 import { MONSTER_NAMES } from '../game/gameData.js';
-import { monsterPositions } from '../game/arenaLayout.js';
 import AssetImage from './AssetImage.jsx';
 import { attackStyle } from './EnemyResponse.jsx';
 
@@ -34,25 +33,28 @@ function MonsterArt({ enemy }) {
   </svg>;
 }
 
-export default function MonsterGroup({ enemies, selectedTargetId, onSelectTarget, lastEvent, response, groupRef, disabled }) {
+export default function MonsterGroup({ enemies, placements, selectedTargetId, lastEvent, response, groupRef, layout, travelMs }) {
   return <div ref={groupRef} className="monster-group" role="group" aria-label={`몬스터 ${enemies.filter(enemy => enemy.alive).length}마리`}>
-    {monsterPositions(enemies).map(enemy => {
+    {placements.map(placement => {
+      const live = enemies.find(e => e.id === placement.id);
+      const enemy = { ...live, ...placement };
       if (!enemy.alive) return null;
       const hit = lastEvent?.hits?.find(item => item.id === enemy.id);
       const attacking = response?.attack.enemyId === enemy.id;
       const melee = attacking && attackStyle(response.attack).melee;
       const hp = attacking && response.stage !== 'impact' ? enemy.hp - response.attack.healedEnemy : enemy.hp;
-      return <button className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''} ${attacking ? 'is-attacking' : ''}`}
+      return <div role="img" className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''} ${attacking ? 'is-attacking' : ''}`}
         data-attack-phase={attacking ? response.stage : undefined} data-melee={melee || undefined}
-        key={enemy.id} data-enemy-id={enemy.id} aria-pressed={selectedTargetId === enemy.id} disabled={disabled}
-        aria-label={`${MONSTER_NAMES[enemy.kind]}, 체력 ${hp}/${enemy.maxHp}, 목표 선택`}
-        style={{ left: `${enemy.x / 12}%`, top: `${enemy.y / 8}%`, width: `${enemy.size / 12}%`,
-          '--strike-x': `${(265 - enemy.x) / enemy.size * 100}%`, '--strike-y': `${(615 - enemy.y) / enemy.size * 100}%` }}
-        onClick={() => onSelectTarget(enemy.id)}>
+        key={enemy.id} data-enemy-id={enemy.id}
+        aria-label={`${MONSTER_NAMES[enemy.kind]}, 체력 ${hp}/${enemy.maxHp}${selectedTargetId === enemy.id ? ', 바람 유도 목표' : ''}`}
+        style={{ left: enemy.x, top: enemy.y, width: enemy.size,
+          '--attack-travel': `${travelMs}ms`,
+          '--strike-x': `${(layout.launcher.contact.x - enemy.x) / enemy.size * 100}%`,
+          '--strike-y': `${(layout.launcher.contact.y - enemy.y) / enemy.size * 100}%` }}>
         <span className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} />
           <span className="monster-health">{enemy.isBoss ? 'BOSS ' : ''}{hp}<span className="sr-only"> / {enemy.maxHp}</span></span></span>
         {hit && <span key={lastEvent.id} className={`hit-effect hit-effect--${lastEvent.visualKey}`}>−{hit.damage}</span>}
-      </button>;
+      </div>;
     })}
   </div>;
 }

@@ -1,19 +1,21 @@
 import React, { useId } from 'react';
-import { getSlingshotDraw } from '../game/trajectory.js';
+import { getDragDraw } from '../game/battlefieldModel.js';
 
-export default function Slingshot({ aim, run, lastEvent, response, launcherRef }) {
+export default function Slingshot({ aim, run, lastEvent, response, launcherRef, layout }) {
   const id = `sling-${useId().replace(/:/g, '')}`;
   const active = !['idle', 'launching'].includes(aim.phase);
   const launching = aim.phase === 'launching';
-  const { pouch, left, right, tension } = getSlingshotDraw(aim.angleDeg, aim.powerPercent, active);
-  const release = getSlingshotDraw(aim.angleDeg, aim.powerPercent, true).pouch;
+  const { pouch, left, right } = getDragDraw(aim, active);
+  const tension = aim.powerRatio;
+  const release = getDragDraw(aim, true).pouch;
   const frame = `M44 127 Q49 103 61 65 Q65 55 48 41 L${left.x} ${left.y} M61 65 Q74 43 ${right.x} ${right.y}`;
   const bands = `M${left.x} ${left.y} L${pouch.x} ${pouch.y} L${right.x} ${right.y}`;
-  const strength = aim.powerPercent < 45 ? '약하게 당김' : aim.powerPercent < 75 ? '보통으로 당김' : '강하게 당김';
+  const strength = tension < .35 ? '약하게 당김' : tension < .7 ? '보통으로 당김' : '강하게 당김';
   const shield = run.defenseArmed || response?.attack.blocked;
   const hit = response?.stage === 'impact' && !response.attack.blocked;
   return <div className={`launcher ${active ? 'is-aiming' : ''} ${active && tension >= .68 ? 'is-primed' : ''} ${run.fireballArmed ? 'is-fireball' : ''} ${shield ? 'has-shield' : ''} ${hit ? 'is-hit' : ''} ${lastEvent?.key === 'heal' ? 'is-healing' : ''}`}
-    style={{ '--sling-tension': tension, '--sling-color': run.fireballArmed ? '#ff9c53' : '#ffe5a0' }}>
+    style={{ left: layout.launcher.x, top: layout.launcher.y, width: layout.launcher.width, height: layout.launcher.height,
+      '--sling-tension': tension, '--sling-color': run.fireballArmed ? '#ff9c53' : '#ffe5a0' }}>
     <button ref={launcherRef} className={`launcher-button ${active ? 'is-drawn' : ''} ${launching ? 'is-releasing' : ''}`}
       aria-label="새총 잡기" aria-describedby="aim-instructions" disabled={launching || Boolean(response)}>
       <svg viewBox="0 0 124 142" aria-hidden="true">
@@ -90,7 +92,7 @@ export default function Slingshot({ aim, run, lastEvent, response, launcherRef }
       <span>{aim.phase === 'launching' ? '발사!' : active ? '당기는 중' : '잡아당기기'}</span>
     </button>
     <div className="power-meter" role="img" aria-label={`새총의 힘: ${strength}`}>
-      <span className="power-meter-fill" style={{ height: `${aim.powerPercent}%` }} />
+      <span className="power-meter-fill" style={{ height: `${aim.powerRatio * 100}%` }} />
       <span className="power-meter-mark" />
     </div>
   </div>;

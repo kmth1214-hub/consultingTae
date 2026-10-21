@@ -1,6 +1,6 @@
 # Task: T02 Playable Mouse Drag Integration
 
-## Status: pending
+## Status: done
 
 ## Goal
 Make the React game playable with direct mouse pull/release in the wide world, including reverse shots, real obstacle stops, Wind bypass and overview/aim/follow/enemy camera framing. Switch all coordinate consumers atomically so the weapon, path, collisions and attacks agree.
@@ -108,11 +108,11 @@ BattlefieldBackdrop({area,layout});
 - Keep every meaningful old case: primary/non-HUD entry, touch/right-click exclusions, cancellation/dead zone/lost capture/blur/resize/fullscreen, card timing, one ammo per real hit/miss, reload during flight, killing-shot unmount, reduced motion, real no-overflow/named HUD controls, Wind once and all item/progression tests. Replace only compact/matrix-specific assumptions, not the assertions that catch failures.
 
 ## Acceptance Criteria
-- [ ] Mouse-only grab/pull/release controls full forward/reverse/downward trajectories; Space no longer charges.
-- [ ] Screen fills the window; logical separation truly grows, actors keep their aspect ratio and dead slots stay stable.
-- [ ] Camera goes overview→aim→follow→enemy/overview, without modifying held power or shot/hit results.
-- [ ] Visible solid props stop normal candy and exclude behind-wall hits; valid forward Wind actually bypasses them once.
-- [ ] Existing combat/response/reward/bonus paths remain playable and no callback resolves more than once.
+- [x] Mouse-only grab/pull/release controls full forward/reverse/downward trajectories; Space no longer charges.
+- [x] Screen fills the window; logical separation truly grows, actors keep their aspect ratio and dead slots stay stable.
+- [x] Camera goes overview→aim→follow→enemy/overview, without modifying held power or shot/hit results.
+- [x] Visible solid props stop normal candy and exclude behind-wall hits; valid forward Wind actually bypasses them once.
+- [x] Existing combat/response/reward/bonus paths remain playable and no callback resolves more than once.
 
 ## Validation
 - `npm.cmd test` — pure math + session + unchanged engine rules pass.
@@ -133,9 +133,22 @@ Task: T02-playable-mouse-drag
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: prescribed source/task commit (hash recorded in phase/current after commit)
 
 ## Next pointer
 After source/task commit and state sync, advance to `T03-wide-scenery-and-tension.md`. Do not mark the entire visual feature complete yet.
+
+## Execution Notes — 2026-10-21
+- Connected the T01 pure modules without modifying them, the battle engine, legacy HTML or dependencies. Stable layout slots join current enemy HP/alive by id; all actors/props/projectile/enemy-attack SVGs now share the explicit 3600×1200 world.
+- Input now captures a fixed CSS-pixel origin and drag limit per grab. The only local phases are idle/dragging/launching; Space suppresses scrolling but never changes aim. Release snapshots the world solution, and guarded matching launch ids resolve the engine only at physical impact/end. Cancel/unmount invalidates pending work without spending ammo.
+- Added the camera hook with ResizeObserver, 200ms transitions and 90ms follow smoothing using refs/direct style writes. Reduced motion stays overview. Response travel duration is computed once per render from the same layout and shared with the melee CSS and response clock.
+- Session accepts the full angle range and zero power, rejects firing/items during a grab, honors explicit null target ids and prevents reverse metadata from forcing Wind. Presentation-only shotMeta survives response routing without entering run state or changing rules/RNG.
+- Functional regional sky/path colors and the exact registered obstacle polygons intentionally replace the compact illustrated backdrop here. T03 must complete illustrated continuity/materials and world-label readability; this is not final art acceptance. The old compact trajectory helper/tests remain disconnected until their planned T04 retirement.
+- Physical input fixtures needed no balance/model calibration: ordinary Forest hit45°/.80, weak miss45°/.08, reverse135°/.60. Test-only progression fixtures remain confined to the existing test engine wrapper; basic shot/hit/obstacle tests use real damage and physical input.
+- Necessary migration fix: Chrome's SVG vector-effect does not cancel an ancestor CSS camera transform. Inverse `--camera-scale` compensation keeps preview strokes at3.5 screen pixels (outline7) and dashes legible; desktop/narrow browser tests verify the actual stroke/CTM relationship and exposed segments.
+- Captures: untracked `tmp/wide-t02-{overview,drag,flight,response}-{1440,390}.jpg`; inspected actual framing/HUD/trajectory alignment. Narrow overview captures wait for resize easing to settle; flight captures wait until the candy is clear of the item table.
+- Final validation: `npm.cmd test`78/78; fresh production `npm.cmd run test:e2e`51/51 in actual Chrome (one worker/no retries); standalone `npm.cmd run build` passes; `git diff --check` clean. Browser health reports no runtime/console/asset failures. Covers2007/2560 desktop,1440 standard,844×390 short and390×844 portrait; actual default hits/misses, reverse/downward, blocked props, Wind, all cancellation paths, camera-invariant held pull, response/shields/boss specials and full reward/camp/Chaos routing.
+- Development URL `http://127.0.0.1:5173/` returns HTTP200. Existing4173/5173 services were left intact; browser tests use their own4180 preview. The first sandboxed diagnostic run needed its own stale4180 process identified/rechecked and closed; the final elevated full run exits cleanly.
+- Adjacent out-of-scope findings: none. Azure remains deferred.

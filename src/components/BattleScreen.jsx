@@ -7,7 +7,8 @@ function combatMessage(event) {
   const damage = event.hits?.reduce((total, hit) => total + hit.damage, 0) || 0;
   const action = event.key === 'heal' ? `체력 ${event.effect.healed} 회복`
     : event.key === 'defense' ? '보호막 사용' : event.key === 'fireball' ? '다음 사탕 피해 2배'
-      : event.missed ? '빗나갔어요' : `명중 · 피해 ${damage}`;
+      : event.missed ? event.shotMeta?.impactKind === 'obstacle' ? '장애물에 막혔어요'
+        : event.shotMeta?.reverse ? '뒤로 날아갔어요' : '빗나갔어요' : `명중 · 피해 ${damage}`;
   const attack = event.enemyAttack;
   return `${action}${attack ? attack.blocked ? ' · 적 공격 차단!' : ` · 적 반격 −${attack.damage}` : ''}`;
 }

@@ -1,4 +1,4 @@
-const { test, expect, installGame, arena, phase, start, grabMap, shoot, hp, snapshot } = require('./support.cjs');
+const { test, expect, installGame, arena, phase, start, grabMap, dragPull, shoot, hp, snapshot } = require('./support.cjs');
 
 for (const viewport of [{ width: 2007, height: 1037 }, { width: 2560, height: 1080 }]) {
   test(`${viewport.width}×${viewport.height} arena fills the window with proportional art and correctly aligned shots`, async ({ page }) => {
@@ -15,13 +15,13 @@ for (const viewport of [{ width: 2007, height: 1037 }, { width: 2560, height: 10
       const svg = document.querySelector('.projectile-layer').getScreenCTM();
       return { world: { width: world.width, height: world.height }, sx: svg.a, sy: svg.d,
         scrollWidth: document.documentElement.scrollWidth, scrollHeight: document.documentElement.scrollHeight,
-        layersAligned: [...document.querySelectorAll('.scene-layer')].every(node => {
+        layersAligned: [...document.querySelectorAll('.battlefield-backdrop, .scene-scenery, .projectile-layer')].every(node => {
           const rect = node.getBoundingClientRect();
           return Math.abs(rect.x - world.x) < 1 && Math.abs(rect.y - world.y) < 1
             && Math.abs(rect.width - world.width) < 1 && Math.abs(rect.height - world.height) < 1;
         }) };
     });
-    expect(layout.world.width / layout.world.height).toBeCloseTo(1.5, 2);
+    expect(layout.world.width / layout.world.height).toBeCloseTo(3, 2);
     expect(layout.sx).toBeCloseTo(layout.sy, 4);
     expect(layout.layersAligned).toBe(true);
     expect(layout.scrollWidth).toBeLessThanOrEqual(viewport.width);
@@ -99,14 +99,14 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
     }
     await page.getByRole('button', { name: '회복 사용', exact: true }).click();
     await phase(page, 'idle');
-    await grabMap(page);
-    const box = await arena(page).boundingBox();
-    await page.mouse.move(box.x + box.width * .5, box.y + box.height * .35);
+    await dragPull(page, { angleDeg: 25, powerRatio: .8 });
     await expect(page.getByTestId('trajectory-preview')).toBeVisible();
     const stroke = await page.getByTestId('trajectory-preview').evaluate(node => ({ width: getComputedStyle(node).strokeWidth,
-      opacity: getComputedStyle(node).opacity, vectorEffect: node.getAttribute('vector-effect') }));
+      opacity: getComputedStyle(node).opacity, vectorEffect: node.getAttribute('vector-effect'),
+      screenWidth: parseFloat(getComputedStyle(node).strokeWidth) * node.getScreenCTM().a }));
     expect(Number(stroke.opacity)).toBeGreaterThan(.8);
     expect(stroke.vectorEffect).toBe('non-scaling-stroke');
+    expect(stroke.screenWidth).toBeCloseTo(3.5, 1);
     const visibleSegments = await page.getByTestId('trajectory-preview').evaluate(path => {
       const length = path.getTotalLength(), matrix = path.getScreenCTM();
       const bounds = document.querySelector('.battle-arena').getBoundingClientRect();
@@ -122,7 +122,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
       return count;
     });
     expect(visibleSegments, 'preview must have exposed segments outside HUD/launcher bounds').toBeGreaterThanOrEqual(5);
-    await page.screenshot({ path: `test-results/t05-map-aim-${viewport.width}.jpg` });
+    await page.screenshot({ path: `tmp/wide-t02-drag-${viewport.width}.jpg` });
     await page.keyboard.press('Escape');
     await page.mouse.up();
     await phase(page, 'idle');
@@ -173,11 +173,13 @@ test('reduced-motion preferences retain feedback with no nonessential recoil ani
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await installGame(page);
   await start(page);
-  await grabMap(page);
+  const overviewScale = await page.locator('.arena-world').evaluate(node => new DOMMatrix(getComputedStyle(node).transform).a);
+  await dragPull(page);
   await page.keyboard.down('Space');
-  await phase(page, 'power');
-  expect(await page.locator('.arena-world').evaluate(node => new DOMMatrix(getComputedStyle(node).transform).a)).toBe(1);
-  await expect(page.getByText('Space를 놓으면 힘이 고정됩니다. 마우스는 계속 누르고 있으세요.', { exact: true })).toBeVisible();
+  await phase(page, 'dragging');
+  expect(await page.locator('.arena-world').evaluate(node => new DOMMatrix(getComputedStyle(node).transform).a)).toBe(overviewScale);
+  await expect(arena(page)).toHaveAttribute('data-camera-mode', 'overview');
+  await expect(page.locator('#aim-instructions')).toContainText('당긴 거리로 힘을');
   await page.keyboard.up('Space');
   await page.keyboard.press('Escape');
   await page.mouse.up();

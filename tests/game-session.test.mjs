@@ -142,9 +142,10 @@ test('empty/aiming items reject without spending turns; nine misses route to def
   const session = start();
   const { actions } = session;
   assert.equal(actions.useConsumable('spear').reason, 'empty');
-  actions.setAim({ phase: 'angle', angle: 200, power: -20 });
-  assert.equal(session.getSnapshot().aim.angle, 80);
-  assert.equal(session.getSnapshot().aim.power, 20);
+  actions.setAim({ phase: 'dragging', angle: 200, power: -20 });
+  assert.equal(session.getSnapshot().aim.angle, -160);
+  assert.equal(session.getSnapshot().aim.power, 0);
+  assert.equal(actions.fireShot().reason, 'aiming');
   assert.equal(actions.useConsumable('heal').reason, 'aiming');
   assert.equal(session.getSnapshot().run.turnNumber, 0);
   actions.resetAim();
@@ -167,6 +168,59 @@ test('visual layout keeps dead-enemy slots stable', () => {
   assert.deepEqual(monsterPositions(defeated).slice(1), positions.slice(1));
 });
 
+test('session supports full-vector angles and only the new phases; invalid metadata cannot spend a turn', () => {
+  const session = start();
+  const { actions } = session;
+  assert.deepEqual(session.getSnapshot().aim, { angle: 0, power: 0, phase: 'idle', selectedTargetId: null });
+  for (const [angle, expected] of [[-90, -90], [135, 135], [180, -180], [540, -180], [-540, -180]]) {
+    actions.setAim({ angle, power: 125, phase: 'dragging' });
+    assert.equal(session.getSnapshot().aim.angle, expected);
+    assert.equal(session.getSnapshot().aim.power, 100);
+  }
+  actions.setAim({ phase: 'direction', angle: NaN, power: NaN });
+  assert.equal(session.getSnapshot().aim.phase, 'dragging');
+  assert.equal(actions.fireShot().reason, 'aiming');
+  actions.setAim({ phase: 'launching', power: 0 });
+  const before = structuredClone(session.getSnapshot().run);
+  assert.equal(actions.useConsumable('defense').reason, 'aiming');
+  assert.equal(actions.fireShot({ shotMeta: { impactKind: 'unknown', reverse: false, obstacleId: null } }).accepted, false);
+  assert.deepEqual(session.getSnapshot().run, before);
+  const shotMeta = { impactKind: 'obstacle', obstacleId: 'forest-1-obstacle-0', reverse: false };
+  assert.equal(actions.fireShot({ selectedTargetId: null, shotMeta }).accepted, true);
+  assert.deepEqual(session.getSnapshot().lastEvent.shotMeta, shotMeta);
+  shotMeta.obstacleId = 'changed';
+  assert.equal(session.getSnapshot().lastEvent.shotMeta.obstacleId, 'forest-1-obstacle-0');
+  assert.equal('shotMeta' in session.getSnapshot().run, false);
+  const responseId = session.getSnapshot().enemyResponse.id;
+  const committed = structuredClone(session.getSnapshot().run);
+  actions.completeEnemyResponse(responseId); actions.completeEnemyResponse(responseId);
+  assert.deepEqual(session.getSnapshot().run, committed);
+  assert.equal(session.getSnapshot().lastEvent.shotMeta.impactKind, 'obstacle');
+});
+
+test('explicit null and reverse override a stale Wind target without consuming homing, then forward Wind works once', () => {
+  const engine = { ...BattleEngine, createRunState: options => BattleEngine.createRunState({ ...options,
+    weapons: [{ id: 'wind-candy', grade: 'C' }] }) };
+  const session = start({ engine, rng: () => .5 });
+  const { actions } = session, target = session.getSnapshot().run.enemies[0].id;
+  actions.setAim({ selectedTargetId: target });
+  actions.fireShot({ selectedTargetId: null, shotMeta: { impactKind: 'obstacle', obstacleId: 'wall', reverse: false } });
+  assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, false);
+  assert.equal(session.getSnapshot().run.enemies[0].hp, 4);
+  finishResponse(session);
+  actions.setAim({ selectedTargetId: target, phase: 'launching' });
+  actions.fireShot({ selectedTargetId: target, shotMeta: { impactKind: 'bounds', obstacleId: null, reverse: true } });
+  assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, false);
+  assert.equal(session.getSnapshot().run.enemies[0].hp, 4);
+  finishResponse(session);
+  actions.fireShot({ hitIds: [target], selectedTargetId: target });
+  assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, true);
+  assert.equal(session.getSnapshot().run.enemies[0].hp, 2);
+  finishResponse(session);
+  actions.fireShot({ hitIds: [], selectedTargetId: null });
+  assert.equal(session.getSnapshot().run.enemies[0].hp, 2);
+});
+
 test('enemy response locks combat, advances monotonically and ignores stale/duplicate animation callbacks', () => {
   const session = start({ rng: () => .5 });
   const { actions } = session;
@@ -180,7 +234,7 @@ test('enemy response locks combat, advances monotonically and ignores stale/dupl
   const committed = structuredClone(state.run);
   assert.equal(actions.fireShot().reason, 'responding');
   assert.equal(actions.useConsumable('heal').reason, 'responding');
-  actions.setAim({ phase: 'angle' });
+  actions.setAim({ phase: 'dragging' });
   assert.equal(session.getSnapshot().aim.phase, 'idle');
   actions.advanceEnemyResponse(id, 'impact');
   assert.equal(session.getSnapshot().enemyResponse.stage, 'windup');
