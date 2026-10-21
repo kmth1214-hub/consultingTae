@@ -80,7 +80,7 @@ Task: T02-gameplay-rule-completion
 ## Progress
 - [x] Implementation complete
 - [x] Validation passed
-- commit: pending
+- commit: `59cf5bc`
 
 ## Validation Results — 2026-10-21
 - Wrote failing rule tests before implementation: starter inventory, character passives, fusion prompts, Chaos bosses/score/progression, and profile storage initially failed against the original engine.
