@@ -1,6 +1,6 @@
 # Task: T01 World and Shot Model
 
-## Status: in_progress
+## Status: done
 
 ## Goal
 Create deterministic, DOM-independent wide-field geometry, mouse-pull ballistics, solid-obstacle ordering, Wind bypass and camera math. Validate them before switching the playable UI.
@@ -115,10 +115,10 @@ screenToWorld(point:Vec2,pose:CameraPose):Vec2|null;
 - Camera round trips, equal X/Y scale, wide/narrow/short viewports, focus clamping, reduced static overview and invalid input. No timing-sensitive performance assertions.
 
 ## Acceptance Criteria
-- [ ] Pure world/path/collision/camera contracts above exist with finite, deterministic results and no production UI change.
-- [ ] Ordinary shots cannot include a monster behind a solid obstacle; Wind visibly has a collision-free sampled bypass.
-- [ ] Real round layouts keep existing enemies and allow normal reachable shots.
-- [ ] All existing Node tests still pass; build still uses the old UI until T02.
+- [x] Pure world/path/collision/camera contracts above exist with finite, deterministic results and no production UI change.
+- [x] Ordinary shots cannot include a monster behind a solid obstacle; Wind visibly has a collision-free sampled bypass.
+- [x] Real round layouts keep existing enemies and allow normal reachable shots.
+- [x] All existing Node tests still pass; build still uses the old UI until T02.
 
 ## Validation
 - `node --test tests/battlefield-model.test.mjs tests/shot-geometry.test.mjs tests/battlefield-camera.test.mjs` — analytic/behavioral cases pass.
@@ -139,9 +139,17 @@ Task: T01-world-shot-model
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: prescribed source/task commit (hash recorded in phase/current after commit)
+
+## Execution Notes — 2026-10-21
+- Added three pure modules and three focused test files; production imports, UI, engine and legacy HTML remain unchanged.
+- `launcher.restPouch` is sprite-local `(64,54)`; `launcher.impact` and `launcher.contact` are world coordinates. `getDragDraw().pouch` is also sprite-local, including when idle.
+- Calibration: increased polygon contact bisection from the planned 20 to 32 subdivisions. A real moving-disc simultaneous wall/enemy regression showed 20 leaves about 1e-5 world-unit error, exceeding the specified 1e-6 obstacle-wins tolerance. Removed radius padding that advanced tangent contact. Both simultaneous and tangent contact tests now pass without relaxing assertions.
+- Focused tests: 14/14 pass. Full Node suite: 76/76 pass (existing 62 retained). Includes all Forest/Snow/City rounds and all Chaos waves at fixed RNG 0/.5/.999; every original enemy has an ordinary first-contact reachability witness. No balance/count/HP changes or RNG consumption in geometry.
+- `npm.cmd run build` and `git diff --check` pass. No browser run is needed for these unconnected pure modules; playable integration and browser verification belong to T02.
+- Adjacent out-of-scope findings: none. New world/controls are not visible in the game until T02 connects these APIs.
 
 ## Next pointer
 After the prescribed commit, update phase/current to `T02-playable-mouse-drag.md`. Do not start Azure work.
