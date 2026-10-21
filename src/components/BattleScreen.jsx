@@ -3,7 +3,7 @@ import { REGIONS } from '../game/gameData.js';
 import BattleArena from './BattleArena.jsx';
 
 function combatMessage(event) {
-  if (!event) return '새총을 눌러 조준하고, 옆에서 각도와 파워를 조절하세요.';
+  if (!event) return '아이템은 숫자키 1–4 · 조준 취소는 Esc';
   const damage = event.hits?.reduce((total, hit) => total + hit.damage, 0) || 0;
   const action = event.key === 'heal' ? `체력 ${event.effect.healed} 회복`
     : event.key === 'defense' ? '보호막 사용' : event.key === 'fireball' ? '다음 사탕 피해 2배'
@@ -39,7 +39,7 @@ export default function BattleScreen({ session }) {
         <span>{run.bonusMode ? '보너스' : '점수'} <strong>{(run.bonusMode ? run.bonusScore : run.score).toLocaleString()}</strong></span></div>
       <button className="fullscreen-button" onClick={fullscreen} aria-label="전체화면 전환">⛶</button>
     </header>
-    <BattleArena run={run} aim={aim} lastEvent={session.lastEvent} setAim={session.setAim}
+    <BattleArena key={`${run.area}-${run.round}`} run={run} aim={aim} lastEvent={session.lastEvent} setAim={session.setAim}
       onFire={session.fireShot} onConsumable={session.useConsumable} arenaRef={arenaRef} />
     <div className="battle-status" role="status" aria-live="polite">{combatMessage(session.lastEvent)}</div>
   </section>;

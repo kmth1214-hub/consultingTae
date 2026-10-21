@@ -75,7 +75,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       const aim = { ...state.aim };
       if (Number.isFinite(patch.angle)) aim.angle = Math.max(10, Math.min(80, patch.angle));
       if (Number.isFinite(patch.power)) aim.power = Math.max(20, Math.min(100, patch.power));
-      if (['idle', 'aiming', 'charging', 'locked', 'launching'].includes(patch.phase)) aim.phase = patch.phase;
+      if (['idle', 'angle', 'power', 'direction', 'launching'].includes(patch.phase)) aim.phase = patch.phase;
       if ('selectedTargetId' in patch) aim.selectedTargetId = state.run.enemies.some(enemy => enemy.id === patch.selectedTargetId && enemy.alive)
         ? patch.selectedTargetId : null;
       publish({ aim });

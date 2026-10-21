@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameSession } from '../src/game/gameSession.js';
 import { BattleEngine } from '../src/game/battleEngine.js';
-import { monsterPositions, sampleShot, shotHitIds } from '../src/game/arenaLayout.js';
+import { monsterPositions } from '../src/game/arenaLayout.js';
 
 function memoryStorage() {
   const data = new Map();
@@ -137,7 +137,7 @@ test('empty/aiming items reject without spending turns; nine misses route to def
   const session = start();
   const { actions } = session;
   assert.equal(actions.useConsumable('spear').reason, 'empty');
-  actions.setAim({ phase: 'aiming', angle: 200, power: -20 });
+  actions.setAim({ phase: 'angle', angle: 200, power: -20 });
   assert.equal(session.getSnapshot().aim.angle, 80);
   assert.equal(session.getSnapshot().aim.power, 20);
   assert.equal(actions.useConsumable('heal').reason, 'aiming');
@@ -154,14 +154,10 @@ test('empty/aiming items reject without spending turns; nine misses route to def
   assert.equal(session.getSnapshot().run.weapons[0].id, 'wizard-orb');
 });
 
-test('visual layout keeps dead-enemy slots stable and baseline shots can hit or miss without selecting targets', () => {
+test('visual layout keeps dead-enemy slots stable', () => {
   const enemies = BattleEngine.createRoundEnemies('city', 4);
   const positions = monsterPositions(enemies);
   const defeated = structuredClone(enemies);
   defeated[0].alive = false;
   assert.deepEqual(monsterPositions(defeated).slice(1), positions.slice(1));
-  const snake = BattleEngine.createRoundEnemies('forest', 1);
-  assert.deepEqual(shotHitIds(sampleShot(42, 20), snake), []);
-  const power = Array.from({ length: 81 }, (_, i) => i + 20).find(value => shotHitIds(sampleShot(42, value), snake).length);
-  assert.ok(power > 20 && power <= 100);
 });

@@ -1,6 +1,6 @@
 # Task: T04 Slingshot Arena Controls
 
-## Status: pending
+## Status: done
 
 ## Goal
 Make the React arena preserve the full confirmed slingshot interaction: close-up on grab, angle and power input, target selection, partial trajectory preview, animated release, and correct hit resolution.
@@ -10,6 +10,7 @@ Make the React arena preserve the full confirmed slingshot interaction: close-up
 - Close in immediately on grab; ease back during power charge, then freeze camera position when Space is released.
 - Show only the first 30% of the trajectory, visibly over forest foreground, with the initial target centered on the enemy group.
 - Keep the candy explanation hidden from launch until projectile impact/action resolution; reveal it again for the next loaded shot.
+- User update before execution: hide angle degrees, power percentages, and the angle slider. Communicate direction through the fork/bands/pouch and strength through the vertical meter only; keep qualitative accessible labels without exact numeric values.
 
 ## Implementation
 
@@ -47,12 +48,13 @@ Make the React arena preserve the full confirmed slingshot interaction: close-up
 - **Error Handling**: missing SVG geometry or disconnected arena falls back to a miss resolved through `fireShot`; never leave the view stuck in `launching`. CancelAnimationFrame and callback guards prevent stale shots from resolving twice.
 
 ## Acceptance Criteria
-- [ ] Clicking outside the slingshot does not start aim; pressing/capturing the launcher does.
-- [ ] Camera close-up begins immediately, zoom eases out during charge, and stays at its locked position after Space release.
-- [ ] Angle and charge visibly deform the slingshot; keyboard and mouse phase transitions match the existing behavior.
-- [ ] Only 30% trajectory is visible and is readable over the forest foreground.
-- [ ] Candy card hides at launch and returns after projectile impact/resolution; cancellation restores it.
-- [ ] Unmount, blur, pointer cancel, and screen change leave no active animation or phantom shot.
+- [x] Clicking outside the slingshot does not start aim; pressing/capturing the launcher does.
+- [x] Camera close-up begins immediately, zoom eases out during charge, and stays at its locked position after Space release.
+- [x] Angle and charge visibly deform the slingshot; keyboard and mouse phase transitions match the existing behavior.
+- [x] Only 30% trajectory is visible and is readable over the forest foreground.
+- [x] Candy card hides at launch and returns after projectile impact/resolution; cancellation restores it.
+- [x] Unmount, blur, pointer cancel, and screen change leave no active animation or phantom shot.
+- [x] Angle/power values and sliders are absent from the rendered UI. The vertical meter has qualitative accessible feedback.
 
 ## Validation
 - `npm test` — deterministic geometry/target-order tests pass.
@@ -71,6 +73,16 @@ Task: T04-slingshot-arena-controls
 ```
 
 ## Progress
-- [ ] Implementation complete
-- [ ] Validation passed
+- [x] Implementation complete
+- [x] Validation passed
 - commit: pending
+
+### Implementation / Validation Notes
+- `useAimController` owns the captured mouse sequence and animation frames. Only phase changes publish to the session's `aim` for item lockout; all gameplay still goes through the existing session and engine. Constants remain 10–80 degrees, .25 degree/pixel, 20–100 internal power and 80/second; power zoom eases from 1.5 to 1 over 1400ms and freezes at key release.
+- New `Slingshot`, `TrajectoryPreview` and `ProjectileFlight` components replace T03's temporary sliders/sample-shot functions. Pouch/bands deform opposite launch direction; the world alone transforms while the HUD stays fixed. No angle/power numeric labels, outputs, sliders or exact ARIA values remain.
+- One quadratic and its arc-length table drive the 30% preview, flight and screen-matrix hit testing. Power affects normal-shot range rather than guaranteeing a hit at the chosen X coordinate. Wind's existing once-per-round homing rule receives a matching visual path; no engine combat rules changed.
+- Flight resolves at the first physical impact (or at the end for a miss). Launch IDs invalidate callbacks before calling `fireShot`, preventing duplicate/stale completion. Pointer cancellation, lost capture, Escape, blur, visibility change, resize and unmount clean up capture/RAF/flight. Missing SVG matrices resolve misses and cannot hang the view. Card visibility and item lockout span the entire flight.
+- `npm.cmd test`: 60 deterministic Node tests pass, including six trajectory/draw/homing/coordinate tests. `npm.cmd run build`: pass. `git diff --check`: pass.
+- `npm.cmd run test:e2e`: 12 Chrome/Chromium tests pass. Covers real grab/vertical movement/Space/direction/release, camera and meter locking, exact preview fraction/layer order, shot hit/miss/ammo, qualitative UI, item lockout, all cancel paths, reduced motion, reload during flight, killing-shot arena unmount, Wind once-per-round behavior and SVG-matrix failure recovery.
+- Playwright 1.64.1 and a focused T04 harness were added because this task's acceptance requires real browser input; the installed Chrome channel avoids a browser download. Full first-release screen/region/production/responsive regression remains T05. Browser artifacts are ignored; approved preview captures are under untracked `tmp/react-t04-*.jpg`.
+- User operation remains desktop mouse + Space as planned; touch pointers are ignored. Decorative obstacles still have no collision or damage. Legacy HTML and the battle engine were not edited.

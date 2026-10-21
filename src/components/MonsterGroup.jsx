@@ -33,13 +33,13 @@ function MonsterArt({ enemy }) {
   </svg>;
 }
 
-export default function MonsterGroup({ enemies, selectedTargetId, onSelectTarget, lastEvent }) {
-  return <div className="monster-group" role="group" aria-label={`몬스터 ${enemies.filter(enemy => enemy.alive).length}마리`}>
+export default function MonsterGroup({ enemies, selectedTargetId, onSelectTarget, lastEvent, groupRef, disabled }) {
+  return <div ref={groupRef} className="monster-group" role="group" aria-label={`몬스터 ${enemies.filter(enemy => enemy.alive).length}마리`}>
     {monsterPositions(enemies).map(enemy => {
       if (!enemy.alive) return null;
       const hit = lastEvent?.hits?.find(item => item.id === enemy.id);
       return <button className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''}`}
-        key={enemy.id} data-enemy-id={enemy.id} aria-pressed={selectedTargetId === enemy.id}
+        key={enemy.id} data-enemy-id={enemy.id} aria-pressed={selectedTargetId === enemy.id} disabled={disabled}
         aria-label={`${MONSTER_NAMES[enemy.kind]}, 체력 ${enemy.hp}/${enemy.maxHp}, 목표 선택`}
         style={{ left: `${enemy.x / 12}%`, top: `${enemy.y / 8}%`, width: `${enemy.size / 12}%` }}
         onClick={() => onSelectTarget(enemy.id)}>
