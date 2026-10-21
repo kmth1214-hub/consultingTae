@@ -1,6 +1,6 @@
 # Task: T03 Wide Scenery and Elastic Feedback
 
-## Status: pending
+## Status: done
 
 ## Goal
 Make T02's functional wide battlefield read as a continuous illustrated region, with near/far depth, clearly solid obstacles and a visibly strong elastic pull in every direction. Finish visual quality without changing proven shot/collision rules.
@@ -72,12 +72,12 @@ type CosmeticImpact={id:number;kind:'enemy'|'obstacle'|'ground'|'bounds'|'timeou
 - Tension/art changes are reversible visual work: don't add unit tests that merely count SVG paths or mirror class construction. If a real overlap/cancel defect appears, add a DOM/input regression at that seam.
 
 ## Acceptance Criteria
-- [ ] All four regions read as one wide illustrated world, not a stretched/repeated compact backdrop with visible seams or labels.
-- [ ] Snow/City/Chaos each have independent sky/distant/midground/route/foreground composition, with standing-cookie space reserved beside the launcher.
-- [ ] Props look solid exactly where their registered polygons block; no extra unregistered barriers.
-- [ ] Full-angle strong and reverse pulls visibly stretch connected bands, and the meter stays outside the pouch envelope.
-- [ ] Release/impact/Wind/Fireball effects are clear and reduced-motion remains calm/readable.
-- [ ] No shot math, damage, item, camera or progression regression.
+- [x] All four regions read as one wide illustrated world, not a stretched/repeated compact backdrop with visible seams or labels.
+- [x] Snow/City/Chaos each have independent sky/distant/midground/route/foreground composition, with standing-cookie space reserved beside the launcher.
+- [x] Props look solid exactly where their registered polygons block; no extra unregistered barriers.
+- [x] Full-angle strong and reverse pulls visibly stretch connected bands, and the meter stays outside the pouch envelope.
+- [x] Release/impact/Wind/Fireball effects are clear and reduced-motion remains calm/readable.
+- [x] No shot math, damage, item, camera or progression regression.
 
 ## Validation
 - `npm.cmd test` — world, collision, camera and existing combat/session tests stay green.
@@ -98,9 +98,20 @@ Task: T03-wide-scenery-and-tension
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: this prescribed implementation commit; hash recorded in phase/current after commit
 
 ## Next pointer
 After commit/state sync, advance to `T04-player-cookie-feedback.md` for the selected cookie beside the weapon and cookie-centered enemy hit/shield/heal feedback. Final complete-game review is T05.
+
+## Execution Notes — 2026-10-21
+- Composed five independent uniformly transformed SVG layers per region. Restored source-art paint: Forest cottage/waterfall ends, wooded middle, proportional flower-bank/path texture tiles, distant landscape/clouds and foreground water/foliage; Snow/City/Chaos use different cropped districts from each original map blended into continuous scenery and native themed lane/foreground. Source PNGs/catalog unchanged; no bitmap generation, blur filter or extra obstacle.
+- Art composition was calibrated by real screenshots: staggered panels read as detached cards, so regional districts now share a baseline with overlapping alpha edges. Native continuation is subdued around painted landmarks. Label-bearing top60 source pixels are excluded. Proportional Forest path-bank tiles decorate the continuous lane rather than stretching one path image across3600 units. Native water below the lane is cosmetic foreground depth.
+- Fixed a visual-only integration defect caught by inspection: SVG accepts numeric-string props, but adding strings to mask endpoints hid source patches. ArtPatch normalizes bounds to numbers before gradient math. New browser validation compares actual pixels with/without source-art paint, requiring a meaningful source contribution, rather than treating loaded image nodes as proof of rendering.
+- Slingshot pouch/bands spring from the held release point to rest in200ms with a small overshoot. The frame bows internally under tension while the canonical brass anchors/pouch/shot stay fixed. Meter now starts at localx174.84 (left141%), outside the full reverse envelope. Existing release/body material effects remain; no added ball in an empty flying pouch. Wind wake is mint, Fireball remains orange.
+- Solid material facets/grain/rims stay clipped to each exact registered polygon. Cosmetic contact dust/ice glints last420ms and never resolve combat or move props. Their test waits for image decode then polls at16ms from release, because default locator backoff can skip the whole short animation. No production effect duration or assertion outcome was weakened.
+- Camera-scale compensation keeps health boxes readable outside overview; overview hides crowded individual health badges and retains boss/target cues and accessible enemy health names. Reduced motion keeps static tension/contact indication without camera/spin/shake/particles. Foreground reserves the future T04 cookie space; player actor/damage targets are not implemented in T03.
+- Inspected source references and captures under untracked `tmp/wide-t03-{area}-{state}-{width}.jpg`: all four areas at1440,2007 Forest,2560 City,844×390 Snow,390 portrait all areas including reduced Snow/Chaos; weak/strong/vertical/reverse, flight/response, obstacle contact. The field stays wide and illustrated; there are no hard poster frames or baked theme labels. Regional764×508 sources still limit large close-up sharpness; no new high-resolution art was fabricated or claimed.
+- Rules/canonical model, geometry, input/session/camera algorithms, assets, dependency files and legacy HTML remain unchanged. Obstacle count/placement remain exactly the T02 layout, per the user's request to revisit density later. Out-of-scope findings: none; T04 cookie feedback and T05 complete-game final review remain pending.
+- Final validation: `npm.cmd test` 78/78; prescribed affected actual-Chrome suite (`slingshot`, `accessibility`, `enemy-response`, `region-layers`) 51/51 with no retries. After the last Forest cloud/distant-crop variation, fresh `region-layers` 13/13 passed again and final Forest2007/1440 plus City/Chaos390 captures were inspected. Standalone production build and `git diff --check` pass; development URL returns HTTP200. No runtime/console/asset failures. This is the T03 affected suite, not the full T05 release review. Existing4173/5173 services preserved; browser tests used4180 and shut down cleanly.

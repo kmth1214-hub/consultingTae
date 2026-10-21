@@ -15,7 +15,7 @@ for (const viewport of [{ width: 2007, height: 1037 }, { width: 2560, height: 10
       const svg = document.querySelector('.projectile-layer').getScreenCTM();
       return { world: { width: world.width, height: world.height }, sx: svg.a, sy: svg.d,
         scrollWidth: document.documentElement.scrollWidth, scrollHeight: document.documentElement.scrollHeight,
-        layersAligned: [...document.querySelectorAll('.battlefield-backdrop, .scene-scenery, .projectile-layer')].every(node => {
+        layersAligned: [...document.querySelectorAll('.battlefield-layer, .scene-scenery, .projectile-layer')].every(node => {
           const rect = node.getBoundingClientRect();
           return Math.abs(rect.x - world.x) < 1 && Math.abs(rect.y - world.y) < 1
             && Math.abs(rect.width - world.width) < 1 && Math.abs(rect.height - world.height) < 1;

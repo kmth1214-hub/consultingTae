@@ -3,6 +3,7 @@ import { sampleAtDistance } from '../game/shotGeometry.js';
 
 export default function ProjectileFlight({ flight, onProgress, onComplete, onFailure }) {
   const id = `candy-${useId().replace(/:/g, '')}`;
+  const wake = flight.fireball ? ['#ff6c32', '#ff9f4d'] : flight.path?.kind === 'homing' ? ['#72d9c0', '#b7f8d4'] : ['#ffe5a2', '#ffe9af'];
   const candyRef = useRef(null);
   const trailRef = useRef(null), trailGlowRef = useRef(null), gradientRef = useRef(null);
   const complete = useRef(onComplete);
@@ -47,8 +48,8 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
   return <>
     <defs>
       <linearGradient ref={gradientRef} id={`${id}-trail`} gradientUnits="userSpaceOnUse">
-        <stop stopColor={flight.fireball ? '#ff6c32' : '#ffe5a2'} stopOpacity="0" />
-        <stop offset=".55" stopColor={flight.fireball ? '#ff9f4d' : '#ffe9af'} stopOpacity=".5" />
+        <stop stopColor={wake[0]} stopOpacity="0" />
+        <stop offset=".55" stopColor={wake[1]} stopOpacity=".5" />
         <stop offset="1" stopColor="#fff9df" />
       </linearGradient>
       <radialGradient id={`${id}-shell`} cx=".3" cy=".25" r=".8">

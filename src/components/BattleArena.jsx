@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import ConsumableTable from './ConsumableTable.jsx';
 import MagicCandyCard from './MagicCandyCard.jsx';
 import MonsterGroup from './MonsterGroup.jsx';
-import ArenaScenery from './ArenaScenery.jsx';
+import ArenaScenery, { ContactEffect } from './ArenaScenery.jsx';
 import BattlefieldBackdrop from './BattlefieldBackdrop.jsx';
 import Slingshot from './Slingshot.jsx';
 import TrajectoryPreview from './TrajectoryPreview.jsx';
@@ -80,8 +80,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
             visible={state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} onFailure={failLaunch}
             onProgress={({ id, point }) => { if (activeFlight.current === id) focusRef.current = point; }} />}
-          {lastImpact && <circle key={lastImpact.id} className="shot-impact" cx={lastImpact.point.x} cy={lastImpact.point.y}
-            r="22" fill="none" stroke={lastImpact.kind === 'obstacle' ? '#ffcd78' : '#fff4c6'} strokeWidth="4" />}
+          {lastImpact && <ContactEffect key={lastImpact.id} impact={lastImpact} obstacles={layout.obstacles} />}
         </svg>
         <MonsterGroup groupRef={enemyGroupRef} enemies={run.enemies} placements={layout.enemies} layout={layout} travelMs={travelMs}
           lastEvent={lastEvent} response={enemyResponse} selectedTargetId={solution?.selectedTargetId || flight?.selectedTargetId} />

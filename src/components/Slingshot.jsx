@@ -1,14 +1,34 @@
-import React, { useId } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { getDragDraw } from '../game/battlefieldModel.js';
 
 export default function Slingshot({ aim, run, lastEvent, response, launcherRef, layout }) {
   const id = `sling-${useId().replace(/:/g, '')}`;
   const active = !['idle', 'launching'].includes(aim.phase);
   const launching = aim.phase === 'launching';
-  const { pouch, left, right } = getDragDraw(aim, active);
+  const { pouch: drawn, left, right } = getDragDraw(aim, active);
   const tension = aim.powerRatio;
   const release = getDragDraw(aim, true).pouch;
-  const frame = `M44 127 Q49 103 61 65 Q65 55 48 41 L${left.x} ${left.y} M61 65 Q74 43 ${right.x} ${right.y}`;
+  const [recoil, setRecoil] = useState({ id: null, fraction: 1 });
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  useEffect(() => {
+    if (!launching || reduced) return;
+    let frame, canceled = false;
+    const started = performance.now();
+    const tick = time => {
+      if (canceled) return;
+      const t = Math.min(1, (time - started) / 200);
+      const fraction = 1 - (1 - t) ** 3 + Math.sin(t * Math.PI * 3) * (1 - t) * .12;
+      setRecoil({ id: aim.launchId, fraction });
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => { canceled = true; cancelAnimationFrame(frame); };
+  }, [launching, aim.launchId, reduced]);
+  const fraction = reduced ? 1 : recoil.id === aim.launchId ? recoil.fraction : 0;
+  const pouch = launching ? { x: release.x + (64 - release.x) * fraction,
+    y: release.y + (54 - release.y) * fraction } : drawn;
+  const bow = active ? { x: -aim.direction.x * tension * 3, y: -aim.direction.y * tension * 2 } : { x: 0, y: 0 };
+  const frame = `M44 127 Q${49 + bow.x} 103 ${61 + bow.x} ${65 + bow.y} Q${65 + bow.x} ${55 + bow.y} 48 41 L${left.x} ${left.y} M${61 + bow.x} ${65 + bow.y} Q${74 + bow.x} 43 ${right.x} ${right.y}`;
   const bands = `M${left.x} ${left.y} L${pouch.x} ${pouch.y} L${right.x} ${right.y}`;
   const strength = tension < .35 ? '약하게 당김' : tension < .7 ? '보통으로 당김' : '강하게 당김';
   const shield = run.defenseArmed || response?.attack.blocked;
@@ -68,9 +88,11 @@ export default function Slingshot({ aim, run, lastEvent, response, launcherRef, 
           <path d="M-6-4H6M-6 4H6" stroke="#fff0b9" strokeWidth="1.5" />
           <circle r="3" fill="#794d30" /><circle cx="-.7" cy="-.8" r="1.3" fill="#fff0ba" />
         </g>)}
+        <g transform={`translate(${bow.x} ${bow.y})`}>
         <path d="m61 49 12 13-12 14-12-14Z" fill={`url(#${id}-brass)`} stroke="#6f4b2f" strokeWidth="1.7" />
         <path className="sling-rune" d="m61 54 7 8-7 9-7-9Z" fill={run.fireballArmed ? '#fa9852' : '#8ad9be'} stroke="#305c4b" strokeWidth="1.5" />
         <path d="m58 61 3-4 3 4-3 5Z" fill="#edfff1" opacity=".85" />
+        </g>
         <path d={`M${left.x} ${left.y + 2} L${pouch.x} ${pouch.y + 3}`} fill="none" stroke="#59382b" strokeWidth="6" strokeLinecap="round" />
         <path d={`M${left.x} ${left.y + 1} L${pouch.x} ${pouch.y + 2}`} fill="none" stroke="#f3cf88" strokeWidth={3.5 - tension} strokeLinecap="round" />
         <g className="slingshot-pouch" transform={`translate(${pouch.x} ${pouch.y})`}>
