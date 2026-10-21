@@ -1,7 +1,7 @@
 # Plan: Wide Battlefield and Mouse Drag Slingshot
 
 - Date: 2026-10-21
-- Status: ready
+- Status: in_progress (1/4 tasks done; active P01-T02)
 - Decisions: [Confirmed interview](../decisions/2026-10-21-wide-battlefield-mouse-drag.md)
 
 ## Goal

@@ -3,13 +3,16 @@
 ## Tasks
 | Task | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| T01 | `in_progress` | Define wide world, pull-driven paths, solid collision, Wind bypass and camera math as tested pure functions. | [T01](./T01-world-shot-model.md) |
-| T02 | `pending` | Atomically wire mouse-only drag, wide world, camera, collision and enemy feedback into the playable game. | [T02](./T02-playable-mouse-drag.md) |
+| T01 | `done` | Define wide world, pull-driven paths, solid collision, Wind bypass and camera math as tested pure functions. | [T01](./T01-world-shot-model.md) |
+| T02 | `in_progress` | Atomically wire mouse-only drag, wide world, camera, collision and enemy feedback into the playable game. | [T02](./T02-playable-mouse-drag.md) |
 | T03 | `pending` | Complete regional wide scenery, matching obstacle art and elastic pull/release feedback. | [T03](./T03-wide-scenery-and-tension.md) |
 | T04 | `pending` | Validate complete gameplay, special cases and responsive visuals; retire superseded compact-only helpers. | [T04](./T04-wide-gameplay-regression.md) |
 
 ## Progress
-- done: 0/4 (active: T01; implementation not started)
+- done: 1/4 (active: T02; awaiting execution)
+
+## Completed
+- T01: `c49d8c9` — three pure world/shot/camera modules and three test files. Focused 14/14, full Node 76/76, production build and diff checks pass. All real round enemies are reachable by ordinary shots; Wind bypass, reverse shots and wall tie/grazing contacts verified. Polygon refinement uses 32 subdivisions to honor the 1e-6 wall-wins tolerance. Live UI integration starts in T02.
 
 ## Boundaries
 - Follow the exact task commit messages and update task → phase → current in order.
