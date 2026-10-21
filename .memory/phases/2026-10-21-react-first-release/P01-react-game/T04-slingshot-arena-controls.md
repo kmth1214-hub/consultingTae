@@ -86,3 +86,6 @@ Task: T04-slingshot-arena-controls
 - `npm.cmd run test:e2e`: 12 Chrome/Chromium tests pass. Covers real grab/vertical movement/Space/direction/release, camera and meter locking, exact preview fraction/layer order, shot hit/miss/ammo, qualitative UI, item lockout, all cancel paths, reduced motion, reload during flight, killing-shot arena unmount, Wind once-per-round behavior and SVG-matrix failure recovery.
 - Playwright 1.64.1 and a focused T04 harness were added because this task's acceptance requires real browser input; the installed Chrome channel avoids a browser download. Full first-release screen/region/production/responsive regression remains T05. Browser artifacts are ignored; approved preview captures are under untracked `tmp/react-t04-*.jpg`.
 - User operation remains desktop mouse + Space as planned; touch pointers are ignored. Decorative obstacles still have no collision or damage. Legacy HTML and the battle engine were not edited.
+
+### Follow-up Decision (T05)
+- After T04, the user changed the aim-entry requirement to any non-HUD map point and requested the trajectory while the mouse moves. T05 supersedes T04's launcher-only/direction-only preview acceptance; the 30% preview limit and hidden angle/power numbers remain unchanged. See T05 for implementation and regression evidence.

@@ -13,7 +13,7 @@ import { getTrajectory, getSlingshotDraw, getHitDetails } from '../game/trajecto
 import { useAimController } from '../game/useAimController.js';
 
 const INSTRUCTIONS = {
-  idle: '새총을 마우스로 누른 채 위아래로 움직여 각도를 잡으세요.',
+  idle: '맵 어디든 마우스를 누른 채 위아래로 움직여 각도를 잡으세요.',
   angle: '마우스를 누른 채 Space를 길게 눌러 힘을 모으세요.',
   power: 'Space를 놓으면 힘이 고정됩니다. 마우스는 계속 누르고 있으세요.',
   direction: '마우스를 좌우로 움직여 목표를 잡고, 버튼을 놓아 발사하세요.',
@@ -58,7 +58,7 @@ export default function BattleArena({ run, aim, lastEvent, setAim, onFire, onCon
     onAimChange: state => setAim({ phase: state.phase, angle: state.angleDeg, power: state.powerPercent }) });
   const state = controller.aimState;
   const aiming = state.phase !== 'idle';
-  const path = state.phase === 'direction' ? makePath(state) : flight?.path;
+  const path = ['angle', 'power', 'direction'].includes(state.phase) ? makePath(state) : flight?.path;
   function completeFlight(shot) {
     controller.completeLaunch(shot.id, () => onFire({ hitIds: shot.hitIds, selectedTargetId: shot.selectedTargetId }));
     setFlight(current => current?.id === shot.id ? null : current);
@@ -82,7 +82,7 @@ export default function BattleArena({ run, aim, lastEvent, setAim, onFire, onCon
         <Slingshot aim={state} run={run} lastEvent={lastEvent} launcherRef={launcherRef} />
         {run.area === 'forest' && <AssetImage className="scene-layer scene-foreground" src={ASSETS.forestLayers.foreground} />}
         <svg ref={svgRef} className="projectile-layer" viewBox="0 0 1200 800" aria-hidden="true">
-          <TrajectoryPreview path={path} visible={state.phase === 'direction'} />
+          <TrajectoryPreview path={path} visible={aiming && state.phase !== 'launching' && state.hasMoved} />
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} />}
         </svg>
         <MonsterGroup groupRef={enemyGroupRef} enemies={run.enemies} lastEvent={lastEvent} disabled={aiming}

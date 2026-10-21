@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./support.cjs');
 
 const arena = page => page.getByRole('group', { name: '전투 맵', exact: true });
 const ammo = page => page.locator('.battle-stats > span').nth(1).locator('strong');
@@ -19,7 +19,8 @@ async function grab(page) {
 async function charge(page, milliseconds = 600) {
   await page.keyboard.down('Space');
   await phase(page, 'power');
-  await page.waitForTimeout(milliseconds); // Exercise a real animation interval, not a mocked state setter.
+  await expect.poll(async () => parseFloat(await page.locator('.power-meter-fill').evaluate(el => el.style.height)),
+    { intervals: [8], timeout: 3000 }).toBeGreaterThan(20 + milliseconds * .08);
   await page.keyboard.up('Space');
   await phase(page, 'direction');
 }
@@ -33,9 +34,21 @@ test.beforeEach(async ({ page }) => {
   await start(page);
 });
 
-test('only a primary mouse grab starts aim; numeric angle and power controls are absent', async ({ page }) => {
+test('any map point starts a primary mouse aim, while HUD and other pointers remain independent', async ({ page }) => {
   const box = await arena(page).boundingBox();
-  await page.mouse.click(box.x + box.width * .5, box.y + box.height * .4);
+  await page.mouse.move(box.x + box.width * .5, box.y + box.height * .4);
+  await page.mouse.down();
+  await phase(page, 'angle');
+  await page.mouse.move(box.x + box.width * .5, box.y + box.height * .4 - 20);
+  await expect(page.getByTestId('trajectory-preview')).toBeVisible();
+  const arc = await page.getByTestId('trajectory-preview').getAttribute('d');
+  await page.mouse.move(box.x + box.width * .5, box.y + box.height * .4 - 40);
+  await expect(page.getByTestId('trajectory-preview')).not.toHaveAttribute('d', arc);
+  await page.mouse.up();
+  await phase(page, 'idle');
+  await page.getByRole('complementary', { name: '장전된 마법사탕' }).click();
+  await phase(page, 'idle');
+  await page.getByRole('button', { name: '방어 사용', exact: true }).click();
   await phase(page, 'idle');
   await page.getByRole('button', { name: '새총 잡기' }).click({ button: 'right' });
   await phase(page, 'idle');

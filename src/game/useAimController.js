@@ -4,7 +4,7 @@ import { clamp } from './trajectory.js';
 
 export const idleAim = () => ({ phase: 'idle', pointerId: null, isPointerHeld: false, angleDeg: 42,
   powerPercent: 20, powerDirection: 1, isPowerLocked: false, targetX: null, targetY: null,
-  hasSelectedDirection: false, cameraScale: 1, launchId: null });
+  hasSelectedDirection: false, hasMoved: false, cameraScale: 1, launchId: null });
 
 export function useAimController({ arenaRef, worldRef, launcherRef, enemyGroupRef, ammo, disabled,
   onLaunch, onAimChange, onCancel }) {
@@ -45,6 +45,7 @@ export function useAimController({ arenaRef, worldRef, launcherRef, enemyGroupRe
     window.addEventListener('blur', cancel);
     window.addEventListener('resize', cancel);
     document.addEventListener('visibilitychange', visibility);
+    document.addEventListener('fullscreenchange', cancel);
     return () => {
       mounted.current = false;
       stopFrame();
@@ -54,6 +55,7 @@ export function useAimController({ arenaRef, worldRef, launcherRef, enemyGroupRe
       window.removeEventListener('blur', cancel);
       window.removeEventListener('resize', cancel);
       document.removeEventListener('visibilitychange', visibility);
+      document.removeEventListener('fullscreenchange', cancel);
     };
   }, [cancelAim, releasePointer, stopFrame]);
   useEffect(() => { if (disabled || ammo <= 0) cancelAim(); }, [disabled, ammo, cancelAim]);
@@ -66,7 +68,7 @@ export function useAimController({ arenaRef, worldRef, launcherRef, enemyGroupRe
   }
   function onPointerDown(event) {
     if (event.pointerType !== 'mouse' || !event.isPrimary || event.button !== 0 || state.current.phase !== 'idle'
-      || latest.current.disabled || latest.current.ammo <= 0 || !launcherRef.current?.contains(event.target)) return;
+      || latest.current.disabled || latest.current.ammo <= 0 || event.target.closest('.arena-hud')) return;
     event.preventDefault();
     try { arenaRef.current.setPointerCapture(event.pointerId); } catch { return; }
     arenaRef.current.focus({ preventScroll: true });
@@ -81,11 +83,13 @@ export function useAimController({ arenaRef, worldRef, launcherRef, enemyGroupRe
     const current = state.current;
     if (!current.isPointerHeld || event.pointerId !== current.pointerId) return;
     if (current.phase === 'angle') {
-      update({ angleDeg: clamp(current.angleDeg + (lastY.current - event.clientY) * .25, 10, 80) });
+      update({ angleDeg: clamp(current.angleDeg + (lastY.current - event.clientY) * .25, 10, 80), hasMoved: true });
       lastY.current = event.clientY;
+    } else if (current.phase === 'power' && !current.hasMoved) {
+      update({ hasMoved: true });
     } else if (current.phase === 'direction') {
       const point = worldPoint(event.clientX, event.clientY);
-      if (point) update({ targetX: clamp(point.x, ARENA.launch.x + 40, ARENA.width - 16), targetY: point.y, hasSelectedDirection: true });
+      if (point) update({ targetX: clamp(point.x, ARENA.launch.x + 40, ARENA.width - 16), targetY: point.y, hasSelectedDirection: true, hasMoved: true });
     }
   }
   function onKeyDown(event) {

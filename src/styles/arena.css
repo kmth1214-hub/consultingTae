@@ -62,7 +62,11 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .power-meter { position: absolute; left: 108%; top: 0; width: 11%; height: 82%; border: 2px solid #fff6d5; border-radius: 20px; background: #604c3b79; overflow: hidden; box-shadow: 0 1px 4px #2c321938; pointer-events: none; }
 .power-meter-fill { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(0deg, #cbd275, #efbd5d 65%, #ec7846); border-radius: 10px; }
 .power-meter-mark { position: absolute; top: 25%; left: 0; width: 100%; border-top: 1px solid #fff8ce80; }
-.trajectory-arc { stroke: #fff1b9; stroke-width: 4; stroke-dasharray: 6 12; stroke-linecap: round; opacity: .6; filter: drop-shadow(0 1px 2px #253f2a); }
+.trajectory-outline, .trajectory-arc { stroke-dasharray: 5 10; stroke-linecap: round; }
+.trajectory-outline { stroke: #294538; stroke-width: 7; opacity: .7; }
+.trajectory-arc { stroke: #fff4c6; stroke-width: 3.5; opacity: .92; }
+.battle-arena[data-aim-phase="idle"] { cursor: crosshair; }
+.hud-surface { cursor: default; }
 .projectile-candy { filter: drop-shadow(0 2px 3px #55392b70); }
 .projectile-candy.is-fiery { filter: drop-shadow(0 0 9px #ff782b); }
 .launcher-button { cursor: grab; touch-action: none; }
@@ -117,6 +121,8 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .candy-hud .weapon-count { display: none; }
   .ammo-dots { gap: 3px; margin-top: 8px; }
   .ammo-dots i { width: 8px; height: 8px; }
+  .battle-arena:not([data-aim-phase="idle"]) .consumable-hud { width: 113px; }
+  .battle-arena:not([data-aim-phase="idle"]) .consumable-hud td:last-child { display: none; }
   .aim-instructions { font-size: .68rem; padding: 0 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
