@@ -1,6 +1,6 @@
 # Task: T05 Wide Gameplay Regression and Completion
 
-## Status: in_progress
+## Status: done
 
 ## Goal
 Prove the complete wide-field mouse-only game works through real input, obstacles, reverse shots, Wind and existing main/bonus progression; record visual evidence and finish the plan without starting deployment.
@@ -68,36 +68,46 @@ shoot(page,input?:DragInput & {short?:boolean;finalHeading?:string}):Promise<voi
 - After the source/task commit, mark Phase5/5 and plan complete, and set current to `Status: complete` with no pending task. Link deferred Azure configuration as the next **possible explicit** project task; do not run it, create fake credentials or mark deployment complete. User can continue with a new request.
 
 ## Acceptance Criteria
-- [ ] Core reverse/normal-block/Wind-bypass differences are proven through real UI and real engine results.
-- [ ] All main/bonus/item/enemy/progression regressions pass under the new controls.
-- [ ] No old Space/compact-target assumptions or unused alternate runtime physics remain.
-- [ ] All prescribed viewport/camera/feedback visuals are inspected; no stale animation/action or failed asset.
-- [ ] All four layered maps and five selected cookies pass proportion/occlusion checks; actual enemy damage/shield/heal effects are centered on the cookie with unchanged combat outcomes.
-- [ ] Plan/Phase/current accurately reflect completion; deployment remains separate.
+- [x] Core reverse/normal-block/Wind-bypass differences are proven through real UI and real engine results.
+- [x] All main/bonus/item/enemy/progression regressions pass under the new controls.
+- [x] No old Space/compact-target assumptions or unused alternate runtime physics remain; the disconnected target-X trajectory helper and its compact-only tests are retired.
+- [x] All prescribed viewport/camera/feedback visuals are inspected; no stale animation/action or failed asset was found.
+- [x] All four layered maps and five selected cookies pass proportion/occlusion checks; actual enemy damage/shield/heal effects are centered on the cookie with unchanged combat outcomes.
+- [x] Plan/Phase/current accurately reflect completion; deployment remains separate.
 
 ## Validation
-- `node --test tests/battlefield-model.test.mjs tests/shot-geometry.test.mjs tests/battlefield-camera.test.mjs` — pure behavior/analytic checks pass.
-- `npm.cmd test` — complete Node suite passes.
-- `npm.cmd run test:e2e` — complete fresh-production Chrome suite passes on4180 with no retries/errors.
+- `npm.cmd test` — 83/83 complete Node tests pass.
+- `npm.cmd run test:e2e` — all 78 fresh-production Chrome tests pass on4180 with no retries or browser errors; this includes main/bonus progression, items, all areas, all characters, real reverse/blocker/Wind behavior, actor response, and the five final T05 cases. The runner left its managed preview listener after printing all 78 successes; that task-owned listener was stopped by its exact port/PID.
+- `npm.cmd run test:studio` — all 8 development studio tests pass. `node scripts/verify-studio-build.cjs` confirms the studio remains absent from the production output.
+- `node scripts/verify-region-art.cjs all` — 24 PNGs (36,015,499 bytes) verify.
 - `npm.cmd run build` and `git diff --check` — pass.
-- `git status --short` — only related planned source/docs plus intentionally untracked sites/tmp; never stage them wholesale.
+- Focused `npm.cmd run test:e2e -- tests/e2e/wide-battlefield.spec.cjs` — 5/5 pass, including all four real obstacle materials and the same-input ordinary-vs-Wind differential.
+- `git status --short` — tracked changes are limited to the planned obstacle-observation attribute, final regression tests, and retired compact physics/tests. Existing user edits to `cookie-roguelike-mockup.html`, plus untracked `sites/` and `tmp/`, remain unstaged.
 
 ## Commit Message
 ```text
-test(game): verify wide battlefield mouse-only gameplay
+검증(전투): 광역 전장 조작과 전체 플레이 회귀 확인
 
 Plan: 2026-10-21-wide-battlefield-mouse-drag
 Phase: P01-wide-combat
 Task: T05-wide-gameplay-regression
 
-- Cover reverse shots, solid obstacles, Wind, layered regions and cookie-centered hits.
-- Verify existing progression and remove superseded compact-only geometry helpers.
+- 역발사, 지역별 장애물, 바람궁수, 레이어와 쿠키 피격을 검증한다.
+- 기존 진행을 확인하고 대체된 축약 궤적 계산을 제거한다.
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: `검증(전투): 광역 전장 조작과 전체 플레이 회귀 확인` (pending)
+
+## Visual Review — 2026-10-21
+- Captured and inspected fresh 1440×900 real-input contact frames for all four regional blockers: `tmp/wide-t05-{forest,snow,city,chaos}-obstacle-1440.jpg`. The cookie, launcher, candy, visible log/ice/crate and themed road remain legible together. Normal candy stops at the registered solid and leaves every enemy at full HP.
+- Inspected the Wind bypass flight at `tmp/wide-t05-wind-curve-1440.jpg`: the larger Wind cookie and weapon stay readable while the camera tracks the mint projectile past the foreground log. The sampled world-space center remains outside each obstacle polygon until the enemy contact.
+- Rechecked representative overviews at 2007×1037, 2560×1080, 844×390 and 390×844 (`tmp/wide-t03-*-overview-*.jpg`) alongside all four 1440-wide regions. The decorated route and independent depth remain coherent. In portrait overview, fitting the full 3600-unit battlefield to the narrow width leaves unused space below the panorama; the layout has no overflow and aim/follow cameras restore close action framing. This is the intended whole-field overview tradeoff for the selected wide-world camera.
+- Rechecked the five portrait assets and the selected cookie's heal, shield and ranged-hit captures documented in [T04 player review](../../../asset-reviews/2026-10-21-wide-t04-player-review.md). The fatal-response regression confirms HP reaches zero and the result appears after impact; the result transition unmounts the actor, so no terminal-pose screenshot is claimed.
+- Existing regional source paintings retain their documented 764×508 resolution limitation at close zoom; this task introduced no image resampling or visual distortion. No broken asset, stale action or cross-layer occlusion was observed.
+- Scope findings: none. Azure Static Web Apps configuration/authentication/deployment remains deferred.
 
 ## Next pointer
 None in this plan. Record completion and await the next explicit request; Azure release remains deferred.

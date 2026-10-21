@@ -8,7 +8,7 @@ export default function ArenaScenery({ layout }) {
       <linearGradient id={`${id}-ice`} x2=".9" y2=".8"><stop stopColor="#f3ffff" /><stop offset=".45" stopColor="#b7e9f1" /><stop offset="1" stopColor="#559fc2" /></linearGradient>
       <linearGradient id={`${id}-crate`} x2=".8" y2="1"><stop stopColor="#d4b587" /><stop offset="1" stopColor="#916843" /></linearGradient>
     </defs>
-    {layout.obstacles.map(prop => <g key={prop.id} data-obstacle-id={prop.id}>
+    {layout.obstacles.map(prop => <g key={prop.id} data-obstacle-id={prop.id} data-obstacle-kind={prop.kind}>
       <defs><clipPath id={`${id}-${prop.id}`}><polygon points={prop.polygon.map(p => `${p.x},${p.y}`).join(' ')} /></clipPath></defs>
       <polygon points={prop.polygon.map(p => `${p.x},${p.y}`).join(' ')}
         fill={`url(#${id}-${prop.kind})`} stroke={{ log: '#725337', ice: '#5298b7', crate: '#795d45' }[prop.kind]}

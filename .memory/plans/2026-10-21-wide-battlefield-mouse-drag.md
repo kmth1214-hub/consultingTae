@@ -1,12 +1,12 @@
 # Plan: Wide Battlefield and Mouse Drag Slingshot
 
 - Date: 2026-10-21
-- Status: in_progress (3/5 tasks done; active P01-T04; regional scene/studio dependency complete; T03 completed as455990b)
+- Status: complete (5/5 tasks done; regional scene/studio dependency complete)
 - Decisions: [Confirmed interview](../decisions/2026-10-21-wide-battlefield-mouse-drag.md)
 
 ## Inserted visual dependency — 2026-10-21
-- The inserted [Regional Layered World and Map Studio](./2026-10-21-regional-layered-world-and-map-studio.md) is complete. Resume this plan at P01-T04 (cookie feedback), then P01-T05. Preserve3/5 completion and all source commit history; no cookie work is implemented by this amendment.
-- The new scene plan supersedes only the earlier restriction against producing regional raster layers/decorative parallax. Combat/path/solids/input and shared camera ownership remain unchanged. T04/T05 must retain the new scene pose/lifecycle and production studio exclusion. Azure remains deferred.
+- The inserted [Regional Layered World and Map Studio](./2026-10-21-regional-layered-world-and-map-studio.md) is complete. This plan resumed at P01-T04 and has since completed both remaining Tasks; preserve the original source commit history.
+- The new scene plan superseded only the earlier restriction against producing regional raster layers/decorative parallax. Combat/path/solids/input and shared camera ownership remained unchanged. T04/T05 retained the new scene pose/lifecycle and production studio exclusion. Azure remains deferred.
 
 ## Goal
 Replace mouse + Space aiming with a direct mouse pull/release, including reverse shots, in an actual wide battlefield. Show overview → close aiming → projectile tracking, distribute existing enemies over near/far distances, stop normal candy at solid regional obstacles, and preserve Wind's once-per-round visible obstacle bypass. Complete independent depth layers for all four maps and place the selected cookie beside the weapon, receiving actual enemy hit/shield/heal feedback. Keep the full-window arena, polished weapon and existing combat/progression.
@@ -14,7 +14,7 @@ Replace mouse + Space aiming with a direct mouse pull/release, including reverse
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Implement and validate the wide-field mouse-drag combat as one connected game feature. | [P01](../phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/phase.md) |
+| P01 | `complete` | Implement and validate the wide-field mouse-drag combat as one connected game feature. | [P01](../phases/2026-10-21-wide-battlefield-mouse-drag/P01-wide-combat/phase.md) |
 
 ## Task order and rationale
 1. **T01 — Canonical world and shot math:** pure, deterministic world, pull, trajectory, obstruction, homing and camera calculations, with analytic/behavioral tests. Keep the shipped compact game working until integration.
@@ -58,3 +58,8 @@ This is one game domain with no external milestone, so it remains one Phase. T01
 
 ## Completion / pointer after this plan
 After T05 passes, mark this plan/Phase5/5 complete and set `current.md` to completed with no automatic new implementation task. Link the deferred Azure task as a possible next project step; do not start or mark deployment complete.
+
+## Completion — 2026-10-21
+- P01 completed 5/5 Tasks. Final validation: Node83/83; production Chrome78/78; studio8/8; all 24 region PNGs verified (36,015,499 bytes); production build, studio-exclusion verifier and diff check pass. Reviewed four regional obstacle contacts, Wind bypass flight, representative 2007/2560/1440/844×390/390×844 layouts and player feedback captures.
+- Superseded compact trajectory helper/tests were removed after verifying no live imports. No unresolved gameplay failures. Existing wide portrait overview remains width-fitted with unused vertical space; zoom/follow modes provide close framing. Source-art close zoom remains bounded by 764×508 originals.
+- Azure configuration and deployment remain a separate, deferred task; no deployment was started.

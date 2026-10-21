@@ -63,6 +63,7 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
   await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'hurt');
   await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-impact-id', /\d+/);
   await expect(page.getByTestId('player-impact')).toBeVisible();
+  await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-ranged-hit-1440.jpg' });
   await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-hit-1440.jpg' });
   await expect(hp(page)).toHaveText('95');
   await phase(page, 'idle');
@@ -116,7 +117,6 @@ test('a lethal enemy hit is shown before defeat, then retry has no stale respons
   await expect(hp(page)).toHaveText('1');
   await expect(page.getByRole('heading', { name: '다음엔 조금 더 멀리', exact: true })).toHaveCount(0);
   await expect(page.getByTestId('player-impact')).toBeVisible();
-  await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-ranged-hit-1440.jpg' });
   await expect(hp(page)).toHaveText('0');
   await expect(page.getByRole('heading', { name: '다음엔 조금 더 멀리', exact: true })).toBeVisible();
   expect((await snapshot(page)).run.playerHp).toBe(0);
