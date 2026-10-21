@@ -3,12 +3,13 @@
 ## Status: pending
 
 ## Goal
-Replace Snow/City/Chaos flat-map crop compositions with their accepted dedicated layers and make all four regions share restrained camera-driven depth and ambient life, with every gameplay coordinate unchanged.
+Replace Snow/City/Chaos flat-map crop compositions with their accepted dedicated layers, make all four regions share restrained camera-driven depth and ambient life, and add a compact player-facing minimap, with every gameplay coordinate unchanged.
 
 ## Decision Summary
 - Prerequisites: T01–T03 delivered eight accepted PNGs and version1 layers.json for each new region, plus the reusable browser asset verifier. Forest's existing four PNGs stay unchanged.
 - Five outer SVG siblings remain world-aligned. Only inner decorative planes move; route/solids/actors/preview never acquire depth offsets. One existing camera apply operation drives presentation. No competing game camera, package, combat or density change.
 - Existing Wide Combat T04 cookie actor is still queued. Reserve its x44,y748,152×152 space, but do not add the actor or redirect attacks in this task.
+- Add the player minimap as a read-only view of the existing canonical world/layout/camera. Show the player/launcher, remaining enemies, registered blockers and current camera viewport; never show a predicted trajectory or landing point.
 
 ## Implementation
 
@@ -96,7 +97,23 @@ SceneAtmosphere({area,band,active,reducedMotion}:
 - Animation spans roughly8–18s, modest <=40 world-unit drift, opacity<=.18 for fog and<=.35 for particles. Area-specific motifs/locations are presentation configuration. Foreground fog remains below1010 via the same fixed clip. Keep sky readable and do not obscure a target or new cookie space. Record final tuning in visual notes.
 - Active false pauses decorative CSS animations (`animation-play-state:paused`); reduced motion hides moving particle/glint motifs and keeps a static subtle ambient tint. Media preference change updates both scene activity and the existing camera behavior. No catch-up burst when visibility returns. Cleanup cannot cancel projectile/response completion or alter an accepted turn.
 
-### I04. Real painted-scene/depth regression
+### I04. Compact player-facing minimap
+- Related Files:
+  - `src/components/BattleArena.jsx` :: mount the minimap inside the gameplay arena
+  - `src/components/BattlefieldMinimap.jsx` :: `BattlefieldMinimap`; new presentational component
+  - `src/game/battlefieldModel.js` :: read-only `layout`, launcher/player and registered solid data
+  - `src/game/useBattlefieldCamera.js` :: consume the current pose/viewport; do not create another camera
+  - `src/styles/arena.css`; compact HUD styling and responsive placement
+  - `tests/e2e/scene-depth.spec.cjs`; minimap geometry, camera-window and visibility assertions
+
+#### Details
+- Render a small, legible overview inside the lower-right of the arena, away from the upper-corner consumable and candy HUDs and the lower-left launcher/player area. Keep it visually subordinate and responsive on narrow viewports.
+- Derive all marker positions from the existing 3600×1200 `layout`; render the player/launcher, only remaining enemies, and the registered blockers. Derive the camera rectangle from the existing camera pose and arena viewport using the canonical world-to-screen transform, including zoom and viewport resize.
+- This is presentation only: no new gameplay state, independent camera, DOM hit targets, session mutation, trajectory, aim vector, predicted landing point or hidden numeric power/angle. The minimap must not alter pointer aim or cover actionable HUD controls.
+- Give the view an accessible name and provide text/shape distinctions that remain legible at all supported scales. Hide it outside active gameplay; reduced motion has no animated minimap elements.
+- Verify overview, aim, candy-follow and enemy-response camera poses, remaining-enemy updates, resize, and narrow/fullscreen visibility against the real `layout` and camera. Assert that no trajectory or landing marker is rendered.
+
+### I05. Real painted-scene/depth regression
 - Related Files:
   - `tests/e2e/{region-layers,accessibility,slingshot,enemy-response}.spec.cjs`; retain/migrate necessary assumptions
   - `tests/e2e/scene-depth.spec.cjs`; add depth and activity cases
@@ -115,6 +132,7 @@ SceneAtmosphere({area,band,active,reducedMotion}:
 - [ ] Actual decorative parallax is visible while every gameplay transform/contact stays aligned.
 - [ ] Scene edges, route and future cookie space remain clear across all prescribed camera modes/viewports.
 - [ ] Hidden/reduced/unmount behavior is clean and all combat/input/session outcomes remain unchanged.
+- [ ] Minimap shows the live player/launcher, remaining enemies, blockers and camera viewport without exposing the shot solution or changing game input.
 
 ## Validation
 - `node scripts/verify-region-art.cjs all` — all24 regional images remain accepted.
@@ -133,6 +151,7 @@ Task: T04-shared-scene-depth
 
 - Replace flat regional crops with dedicated painted layers and continuous roads.
 - Drive decorative parallax and restrained ambient motion without moving gameplay geometry.
+- Add a read-only battlefield minimap tied to the existing layout and camera pose.
 ```
 
 ## Progress

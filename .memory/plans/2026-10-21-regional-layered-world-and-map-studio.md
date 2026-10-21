@@ -1,7 +1,7 @@
 # Plan: Regional Layered World and Development Map Studio
 
 - Date: 2026-10-21
-- Status: in_progress (2/6 tasks done; active P01-T03; T02 City artwork completed as86432cc, T01 Snow as82751e8)
+- Status: in_progress (3/6 tasks done; active P01-T04; T03 Chaos artwork completed as1cee22f, T02 City as86432cc, T01 Snow as82751e8)
 - Decisions: [Confirmed scope](../decisions/2026-10-21-regional-layered-world-and-map-studio.md)
 
 ## Goal
@@ -18,7 +18,7 @@ Give Snow, City and Chaos dedicated side-view painted scenery matching Forest, r
 | T01 | Snow west/east distant, midground, path and foreground art, native metadata, alpha/registration review tooling. | `assets/maps/snow-layers/`, `scripts/verify-region-art.cjs` |
 | T02 | City equivalent artwork and review. | `assets/maps/city-layers/` |
 | T03 | Chaos equivalent artwork and review. | `assets/maps/chaos-layers/` |
-| T04 | Shared five-layer runtime, dedicated art, decorative parallax and environment lifecycle. | `sceneCatalog.js`, `sceneParallax.js`, `useBattlefieldCamera.js`, backdrop/atmosphere components, CSS and relevant tests |
+| T04 | Shared five-layer runtime, dedicated art, decorative parallax, environment lifecycle and read-only player minimap. | `sceneCatalog.js`, `sceneParallax.js`, `useBattlefieldCamera.js`, backdrop/atmosphere/minimap components, CSS and relevant tests |
 | T05 | Separate development-only map studio and explicit production exclusion. | `src/main.jsx`, `src/dev/`, separate studio browser config/tests |
 | T06 | Cross-region visual/gameplay/production-boundary acceptance; hand back to existing cookie task. | scene/studio regressions, asset-review record, memory dashboards |
 
@@ -56,4 +56,4 @@ One Phase is sufficient: these are connected scene-presentation assets and their
 - Verify all areas at2007×1037,2560×1080,1440×900,844×390,390×844, normal/reduced motion; inspect entrance/middle/far follow and obstacle/Wind/reverse/enemy feedback.
 - Production boundary: actual browser negative route case plus emitted chunk/import checks. Development UI tests must not accidentally run against Vite preview.
 - Each Task: task done → prescribed implementation/art+task commit → phase/plan/current sync → next pointer. Keep sites/tmp/build/test artifacts out of commits. Final T06 restores Wide Combat T04.
-- Planning was documentation-only. Subsequent T01 completed Snow assets/verifier/review as82751e8; T02 completed City assets/review as86432cc (City8/8 + Snow8/8 asset checks and build pass). Chaos artwork and runtime/studio work remain pending. Adjacent unrequested code findings: none; Forest motion gap and test migration are already confirmed scope.
+- Planning was documentation-only. Subsequent T01 completed Snow assets/verifier/review as82751e8; T02 completed City assets/review as86432cc; T03 completed Chaos assets/review as1cee22f. All 24 new regional images passed browser-decoded asset checks and the production build. T04 now includes the compact gameplay minimap requested in this conversation: player/launcher, remaining enemies, blockers and camera viewport, with no trajectory/landing hint and no independent camera. Runtime/studio work remains pending. Adjacent unrequested code findings: none; Forest motion gap and test migration are already confirmed scope.
