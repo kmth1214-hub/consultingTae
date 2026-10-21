@@ -8,7 +8,7 @@ import ArenaScenery from './ArenaScenery.jsx';
 import Slingshot from './Slingshot.jsx';
 import TrajectoryPreview from './TrajectoryPreview.jsx';
 import ProjectileFlight from './ProjectileFlight.jsx';
-import EnemyResponse from './EnemyResponse.jsx';
+import EnemyResponse, { EnemyResponseNotice } from './EnemyResponse.jsx';
 import { ARENA, monsterPositions } from '../game/arenaLayout.js';
 import { getTrajectory, getSlingshotDraw, getHitDetails } from '../game/trajectory.js';
 import { useAimController } from '../game/useAimController.js';
@@ -95,6 +95,7 @@ export default function BattleArena({ run, aim, lastEvent, enemyResponse, onEnem
         {enemyResponse && <EnemyResponse response={enemyResponse} enemies={run.enemies}
           onAdvance={onEnemyAdvance} onComplete={onEnemyComplete} />}
       </div>
+      {enemyResponse && <EnemyResponseNotice response={enemyResponse} />}
       <div className="arena-hud">
         <ConsumableTable run={hudRun} disabled={aiming || Boolean(enemyResponse)} onConsumable={onConsumable} />
         <MagicCandyCard run={hudRun} hidden={state.phase === 'launching'} />

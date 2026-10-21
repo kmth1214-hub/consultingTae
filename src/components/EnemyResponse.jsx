@@ -14,6 +14,21 @@ export function attackStyle(attack) {
   return { label: '눈덩이 던지기', color: '#efffff' };
 }
 
+function responseLabel({ attack, stage }) {
+  const visual = attackStyle(attack);
+  return stage === 'windup' ? `${MONSTER_NAMES[attack.kind]} · ${visual.label} 준비!`
+    : stage === 'travel' ? `${visual.label}!` : attack.blocked ? '공격을 막았어요!' : `체력 −${attack.damage}`;
+}
+
+// Notices belong to the viewport, so cropping/zooming the world never hides them.
+export function EnemyResponseNotice({ response }) {
+  const label = responseLabel(response);
+  return <div className={`enemy-warning ${response.attack.attemptedSpecial ? 'is-special' : ''}`}>
+    <span className="enemy-warning-long">{label}</span>
+    <span className="enemy-warning-short">{response.stage === 'windup' ? `${attackStyle(response.attack).label} 준비!` : label}</span>
+  </div>;
+}
+
 // One clock per committed enemy turn. Phase callbacks never resolve combat or roll RNG.
 export default function EnemyResponse({ response, enemies, onAdvance, onComplete }) {
   const projectile = useRef(null);
@@ -66,13 +81,10 @@ export default function EnemyResponse({ response, enemies, onAdvance, onComplete
       document.removeEventListener('visibilitychange', visibility);
     };
   }, [id]);
-  const label = stage === 'windup' ? `${MONSTER_NAMES[attack.kind]} · ${visual.label} 준비!`
-    : stage === 'travel' ? `${visual.label}!` : attack.blocked ? '공격을 막았어요!' : `체력 −${attack.damage}`;
+  const label = responseLabel(response);
   return <div className={`enemy-response enemy-response--${stage} ${attack.attemptedSpecial ? 'is-special' : ''}`}
     data-testid="enemy-attack" data-attacker-id={attack.enemyId} data-stage={stage}
     data-special={attack.attemptedSpecial || ''} role="img" aria-label={label}>
-    <div className="enemy-warning"><span className="enemy-warning-long">{label}</span>
-      <span className="enemy-warning-short">{stage === 'windup' ? `${visual.label} 준비!` : label}</span></div>
     <svg viewBox="0 0 1200 800" aria-hidden="true" style={{ '--attack-color': visual.color }}>
       {stage === 'windup' && <g className="attack-telegraph" transform={`translate(${source.x} ${source.y - 70})`}>
         <circle r="22" /><text y="9" textAnchor="middle">!</text></g>}

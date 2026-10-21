@@ -1,4 +1,70 @@
-const { test, expect, installGame, arena, phase, start, grabMap } = require('./support.cjs');
+const { test, expect, installGame, arena, phase, start, grabMap, shoot, hp, snapshot } = require('./support.cjs');
+
+for (const viewport of [{ width: 2007, height: 1037 }, { width: 2560, height: 1080 }]) {
+  test(`${viewport.width}×${viewport.height} arena fills the window with proportional art and correctly aligned shots`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await installGame(page);
+    await start(page);
+    const bounds = await arena(page).boundingBox();
+    expect(bounds.x).toBeLessThanOrEqual(13);
+    expect(bounds.width).toBeGreaterThanOrEqual(viewport.width - 26);
+    expect(bounds.height).toBeGreaterThan(viewport.height * .8);
+    expect(bounds.y + bounds.height).toBeLessThan(viewport.height);
+    const layout = await page.evaluate(() => {
+      const world = document.querySelector('.arena-world').getBoundingClientRect();
+      const svg = document.querySelector('.projectile-layer').getScreenCTM();
+      return { world: { width: world.width, height: world.height }, sx: svg.a, sy: svg.d,
+        scrollWidth: document.documentElement.scrollWidth, scrollHeight: document.documentElement.scrollHeight,
+        layersAligned: [...document.querySelectorAll('.scene-layer')].every(node => {
+          const rect = node.getBoundingClientRect();
+          return Math.abs(rect.x - world.x) < 1 && Math.abs(rect.y - world.y) < 1
+            && Math.abs(rect.width - world.width) < 1 && Math.abs(rect.height - world.height) < 1;
+        }) };
+    });
+    expect(layout.world.width / layout.world.height).toBeCloseTo(1.5, 2);
+    expect(layout.sx).toBeCloseTo(layout.sy, 4);
+    expect(layout.layersAligned).toBe(true);
+    expect(layout.scrollWidth).toBeLessThanOrEqual(viewport.width);
+    expect(layout.scrollHeight).toBeLessThanOrEqual(viewport.height);
+    for (const node of [page.locator('.launcher-button'), page.locator('.monster').first()]) {
+      const box = await node.boundingBox();
+      expect(box.x).toBeGreaterThan(bounds.x);
+      expect(box.y).toBeGreaterThan(bounds.y);
+      expect(box.x + box.width).toBeLessThan(bounds.x + bounds.width);
+      expect(box.y + box.height).toBeLessThan(bounds.y + bounds.height);
+    }
+    await page.screenshot({ path: `tmp/react-t08-wide-${viewport.width}.jpg` });
+    await page.keyboard.press('3');
+    await expect(page.locator('.enemy-warning')).toBeVisible();
+    const warning = await page.locator('.enemy-warning').boundingBox();
+    expect(warning.y).toBeGreaterThan(bounds.y);
+    expect(warning.y + warning.height).toBeLessThan(bounds.y + bounds.height);
+    await phase(page, 'idle');
+    await shoot(page);
+    expect((await snapshot(page)).run.enemies[0].hp).toBe(2);
+    await expect(hp(page)).toHaveText('95');
+  });
+}
+
+test('short landscape keeps the launcher clear of the compact item table and remains playable', async ({ page }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await installGame(page, { initial: { inventory: { fireball: 1, spear: 1, defense: 1, heal: 1 } } });
+  await start(page);
+  const launcher = await page.locator('.launcher-button').boundingBox();
+  const inventory = await page.locator('.consumable-hud').boundingBox();
+  expect(launcher.y).toBeGreaterThan(inventory.y + inventory.height);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(390);
+  for (const name of ['불공', '창', '방어', '회복']) {
+    const button = page.getByRole('button', { name: `${name} 사용`, exact: true });
+    expect(await button.evaluate(node => {
+      const rect = node.getBoundingClientRect();
+      return node.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+    })).toBe(true);
+  }
+  await page.screenshot({ path: 'tmp/react-t08-short-landscape.jpg' });
+  await shoot(page);
+  expect((await snapshot(page)).run.enemies[0].hp).toBe(2);
+});
 
 async function assertLayout(page) {
   const dimensions = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
