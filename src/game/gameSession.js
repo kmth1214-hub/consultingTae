@@ -1,0 +1,147 @@
+import { BattleEngine } from './battleEngine.js';
+import { CHARACTERS } from './gameData.js';
+import { loadProfile, markSnowCleared, saveProfile } from './profileStore.js';
+
+const initialAim = () => ({ angle: 42, power: 20, phase: 'idle', selectedTargetId: null });
+const REASONS = {
+  empty: '이 소모품을 모두 사용했어요.', blocked: '얼음 숨결 때문에 이번 턴에는 소모품을 쓸 수 없어요.',
+  aiming: '조준을 마친 뒤 소모품을 사용하세요.', 'combat-ended': '이미 전투가 끝났어요.',
+  'inventory-full': '이 소모품은 최대 3개까지 보유할 수 있어요.', 'already-selected': '이미 선택한 보상이에요.',
+  'rewards-incomplete': '무기와 소모품을 하나씩 선택하세요.', 'camp-choice-locked': '시작한 무기 보상을 먼저 마무리하세요.',
+  locked: '눈 지역을 클리어하면 이 쿠키가 해금돼요.', 'invalid-state': '지금은 이 동작을 할 수 없어요.'
+};
+
+// Engine actions mutate a private draft. Subscribers only receive completed snapshots.
+// Keeping this controller outside React also makes full screen-flow tests deterministic.
+export function createGameSession({ rng = Math.random, now = Date.now, storage, engine = BattleEngine } = {}) {
+  let sequence = 0;
+  let state = { screen: 'home', profile: loadProfile(storage), selectedCharacter: null, run: null,
+    aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null };
+  const listeners = new Set();
+  const publish = patch => {
+    state = { ...state, ...patch };
+    listeners.forEach(listener => listener());
+  };
+  const reject = reason => {
+    publish({ notification: { id: ++sequence, message: REASONS[reason] || '동작을 완료할 수 없어요. 현재 상태를 확인하세요.', kind: 'error' } });
+    return { accepted: false, reason };
+  };
+  function persistUnlock(run) {
+    if (!run.snowAreaCleared || state.profile.snowAreaCleared) return {};
+    const profile = markSnowCleared();
+    const saved = saveProfile(profile, storage);
+    return { profile, notification: { id: ++sequence, kind: 'success', message: saved
+      ? '눈 지역 클리어! 우유맛 · 바람궁수 쿠키가 해금됐어요.'
+      : '쿠키가 해금됐어요. 브라우저 저장을 사용할 수 없어 새로고침하면 초기화돼요.' } };
+  }
+  function routeCombat(run, event) {
+    const patch = { run, lastEvent: { ...event, id: ++sequence,
+      visualKey: event.key || (state.run.fireballArmed ? 'fireball' : 'weapon') },
+      aim: { ...state.aim, phase: 'idle' }, ...persistUnlock(run) };
+    if (run.terminal === 'defeat') Object.assign(patch, {
+      screen: run.bonusMode ? 'bonus-results' : 'main-results', outcome: 'defeat', summary: engine.getRunSummary(run, now())
+    });
+    else if (run.terminal === 'bonus-clear') Object.assign(patch, {
+      screen: 'bonus-results', outcome: 'bonus-clear', summary: engine.getRunSummary(run, now())
+    });
+    else if (run.terminal === 'round-clear') {
+      if (run.bonusMode) {
+        engine.advanceRound(run, { rng, now: now() });
+        patch.aim = initialAim();
+      } else {
+        engine.drawRewardChoices(run, rng);
+        patch.screen = 'reward';
+      }
+    }
+    publish(patch);
+    return event;
+  }
+  const actions = {
+    startCharacterSelect() {
+      publish({ screen: 'characters', run: null, selectedCharacter: null, fusion: null, outcome: null,
+        summary: null, lastEvent: null, aim: initialAim(), notification: null });
+    },
+    startRun(characterId) {
+      if (state.screen !== 'characters') return reject('invalid-state');
+      const character = CHARACTERS.find(item => item.id === characterId);
+      if (!character) return reject('invalid-state');
+      if (character.locked && !state.profile.snowAreaCleared) return reject('locked');
+      const run = engine.createRunState({ characterId, area: 'forest', round: 1, rng, now: now() });
+      publish({ run, selectedCharacter: character, screen: 'battle', aim: initialAim(), notification: null, lastEvent: null });
+      return { accepted: true };
+    },
+    setAim(patch) {
+      if (state.screen !== 'battle' || state.run.terminal) return;
+      const aim = { ...state.aim };
+      if (Number.isFinite(patch.angle)) aim.angle = Math.max(10, Math.min(80, patch.angle));
+      if (Number.isFinite(patch.power)) aim.power = Math.max(20, Math.min(100, patch.power));
+      if (['idle', 'aiming', 'charging', 'locked', 'launching'].includes(patch.phase)) aim.phase = patch.phase;
+      if ('selectedTargetId' in patch) aim.selectedTargetId = state.run.enemies.some(enemy => enemy.id === patch.selectedTargetId && enemy.alive)
+        ? patch.selectedTargetId : null;
+      publish({ aim });
+    },
+    resetAim() { publish({ aim: initialAim() }); },
+    fireShot({ hitIds = [], selectedTargetId = state.aim.selectedTargetId } = {}) {
+      if (state.screen !== 'battle') return reject('invalid-state');
+      const run = structuredClone(state.run);
+      const event = engine.resolveProjectile(run, { hitIds, selectedTargetId, rng });
+      if (!event.accepted) return reject(event.reason);
+      return routeCombat(run, event);
+    },
+    useConsumable(key) {
+      if (state.screen !== 'battle') return reject('invalid-state');
+      const run = structuredClone(state.run);
+      const event = engine.useConsumable(run, key, { rng, isAiming: state.aim.phase !== 'idle' });
+      if (!event.accepted) return reject(event.reason);
+      return routeCombat(run, event);
+    },
+    selectReward(category, choiceId, mergeDuplicate) {
+      if (state.screen !== 'reward' || (state.fusion && mergeDuplicate === undefined)) return reject('invalid-state');
+      const run = structuredClone(state.run);
+      const event = engine.applyRewardChoice(run, category, choiceId, { mergeDuplicate });
+      if (event.reason === 'fusion-decision-required') {
+        publish({ fusion: { ...event.fusionCandidate, source: 'reward', category, choiceId } });
+        return event;
+      }
+      if (!event.accepted) return reject(event.reason);
+      publish({ run, fusion: null, notification: null });
+      return event;
+    },
+    continueAfterReward() {
+      if (state.screen !== 'reward' || state.fusion) return reject('invalid-state');
+      const run = structuredClone(state.run);
+      const event = engine.advanceRound(run, { rng, now: now() });
+      if (!event.accepted) return reject(event.reason);
+      publish({ run, screen: event.pendingCamp ? 'camp' : run.terminal === 'clear' ? 'main-results' : 'battle',
+        outcome: run.terminal === 'clear' ? 'clear' : null,
+        summary: run.terminal === 'clear' ? engine.getRunSummary(run, now()) : null,
+        aim: initialAim(), lastEvent: null, notification: null });
+      return event;
+    },
+    chooseCampReward(choice, mergeDuplicate) {
+      if (state.screen !== 'camp' || (state.fusion && mergeDuplicate === undefined)) return reject('invalid-state');
+      const run = structuredClone(state.run);
+      const event = engine.chooseCampReward(run, choice, { rng, now: now(), mergeDuplicate });
+      if (!event.accepted) return reject(event.reason);
+      publish({ run, fusion: event.requiresFusionChoice ? { ...event.fusionCandidate, source: 'camp' } : null,
+        screen: event.pendingCamp ? 'camp' : 'battle', aim: initialAim(), lastEvent: null });
+      return event;
+    },
+    resolveFusion(mergeDuplicate) {
+      const fusion = state.fusion;
+      if (!fusion || typeof mergeDuplicate !== 'boolean') return reject('invalid-state');
+      return fusion.source === 'camp' ? actions.chooseCampReward('weapon', mergeDuplicate)
+        : actions.selectReward(fusion.category, fusion.choiceId, mergeDuplicate);
+    },
+    enterBonusRoute() {
+      if (state.screen !== 'main-results' || state.outcome !== 'clear') return reject('invalid-state');
+      const run = structuredClone(state.run);
+      const event = engine.startBonusRoute(run, { rng, now: now() });
+      if (!event.accepted) return reject(event.reason);
+      publish({ run, screen: 'battle', outcome: null, summary: null, aim: initialAim(), lastEvent: null });
+      return event;
+    },
+    dismissNotification() { publish({ notification: null }); }
+  };
+  return { getSnapshot: () => state, subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); }, actions };
+}

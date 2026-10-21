@@ -1,6 +1,6 @@
 # Task: T03 React Game Screens
 
-## Status: pending
+## Status: done
 
 ## Goal
 Replace the prototype's imperative screen and HUD updates with accessible React components connected to the single tested battle engine and the confirmed first-release run flow.
@@ -9,6 +9,7 @@ Replace the prototype's imperative screen and HUD updates with accessible React 
 - Keep the layout and game information from the current mockup while removing fake in-app login, leaderboard, admin, and prototype navigation tabs.
 - Active run state is memory-only; local storage contains only the Snow-clear unlock from T02.
 - Include the optional Chaos combat entry and separate result; exclude QR and all extra bonus rewards.
+- Approved during T03: fix visual softness/proportions during migration. Keep the source aspect ratio and a single 1200×800 world, avoid oversized rescaling and added fog, keep HUD outside the camera world, and size decorative obstacles below actors. Replacing low-resolution regional source art remains a separate follow-up if necessary.
 
 ## Implementation
 
@@ -62,11 +63,11 @@ Replace the prototype's imperative screen and HUD updates with accessible React 
 - **Error Handling**: key and button use call the same `onConsumable` action; prevent repeated use during launching or terminal screens, and announce errors via `role=status`.
 
 ## Acceptance Criteria
-- [ ] Play CTA opens character select; choosing a character enters Forest round 1 with live engine values.
-- [ ] Battle, reward, camp, city result, optional Chaos bonus, and final bonus result flow all use React state and existing engine APIs.
-- [ ] UI contains no fake login, leaderboard data, admin functions, QR image placeholder, or top-level prototype stage tabs.
-- [ ] Items and candy explanation are in the arena's upper corners; angle/power are beside the slingshot.
-- [ ] Refresh starts a fresh run but preserves the Snow unlock in the same browser.
+- [x] Play CTA opens character select; choosing a character enters Forest round 1 with live engine values.
+- [x] Battle, reward, camp, city result, optional Chaos bonus, and final bonus result flow all use React state and existing engine APIs.
+- [x] UI contains no fake login, leaderboard data, admin functions, QR image placeholder, or top-level prototype stage tabs.
+- [x] Items and candy explanation are in the arena's upper corners; angle/power are beside the slingshot.
+- [x] Refresh starts a fresh run but preserves the Snow unlock in the same browser.
 
 ## Validation
 - `npm run build` — all JSX and image references compile.
@@ -85,6 +86,15 @@ Task: T03-react-game-screens
 ```
 
 ## Progress
-- [ ] Implementation complete
-- [ ] Validation passed
+- [x] Implementation complete
+- [x] Validation passed
 - commit: pending
+
+### Implementation / Validation Notes
+- Added a React-independent `createGameSession` external store plus `useSyncExternalStore` hook. Engine mutations happen on private cloned drafts, so React StrictMode cannot duplicate random rewards/actions through state-updater replays.
+- Added semantic home/character/battle/reward/camp/result screens, explicit reward and multi-step camp fusion choices, immediate Snow persistence, and reward-free Chaos routing.
+- `npm.cmd test`: 54 tests pass (48 existing plus six session/layout integration tests). New coverage includes all 15 main rounds/2 camps/3 bonus rounds, immutable previous snapshots, fusion gating, unlock reload, stale actions, item aim lockout, defeat/restart, and stable actor positions.
+- Chrome smoke: home → character → Forest battle; real angle/power input and hit; HP/ammo/score update; keyboard Defense and enemy block; duplicate reward fusion to B; item selection; round 2 reset; refresh returns home. No warning/error console entries or missing loaded art observed. 390px viewport has no horizontal overflow; desktop and narrow HUD visually inspected; viewport restored.
+- Forest layers render at identical 3:2 bounds with no inflated parent or extra blur/masking. HUD is a sibling of the world; scenery is decorative and reduced in size. Existing 764×508 regional images retain source-resolution limits.
+- T03 offers baseline accessible angle/power controls and synchronous trajectory hit resolution. Captured pointer/Space phases, camera movement, deformation, animated flight/impact, and launch-time candy visibility are deliberately T04. Full Playwright regression infrastructure remains T05.
+- No gameplay-engine or legacy HTML changes in this task. `sites/` and `tmp/` stay untracked.
