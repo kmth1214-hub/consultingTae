@@ -88,7 +88,7 @@ Task: T03-react-game-screens
 ## Progress
 - [x] Implementation complete
 - [x] Validation passed
-- commit: pending
+- commit: `ba09a9d` (`feat(react): build playable game screens`)
 
 ### Implementation / Validation Notes
 - Added a React-independent `createGameSession` external store plus `useSyncExternalStore` hook. Engine mutations happen on private cloned drafts, so React StrictMode cannot duplicate random rewards/actions through state-updater replays.
