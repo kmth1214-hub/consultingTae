@@ -67,7 +67,7 @@ Task: T01-vite-react-foundation
 ## Progress
 - [x] Implementation complete
 - [x] Validation passed
-- commit: pending
+- commit: `804586e`
 
 ## Validation Results — 2026-10-21
 - Node v24.18.0, npm 11.16.0, React/React DOM 19.3.1, Vite 8.3.4.

@@ -1,21 +1,22 @@
 # Current Context
 
 ## Active Plan
-[Combat State Repair](./plans/2026-10-20-combat-state-repair.md)
+[React First Release](./plans/2026-10-21-react-first-release.md)
 
 ## Active Phase
-[P01 Gameplay State](./phases/2026-10-20-combat-state-repair/P01-gameplay-state/phase.md)
+[P01 React Game](./phases/2026-10-21-react-first-release/P01-react-game/phase.md)
 
 ## Active Task
-Complete — no active task.
+[T02 Gameplay Rule Completion](./phases/2026-10-21-react-first-release/P01-react-game/T02-gameplay-rule-completion.md)
 
 ## Status
-- Diagnosis reproduction: in the active battle screen, click Heal. The toast claims +25 HP and an enemy turn, while Heal count remains 1, HP remains 74, and enemies remain unchanged. Reproduced twice.
-- Ranked hypotheses shared: static/mock-only handlers, UI state not connected to combat model, round/run state not wired to terminal transitions, or a stale page build. The browser repro and source trace confirm state transitions are absent in the active served file.
-- Existing decision record defines the expected combat/item/reward rules; implementation is split into T01 projectile combat, T02 consumables, and T03 rewards/progression.
-- T01 completed and committed as `ae99826` (`feat(game): resolve projectile combat and run endings`). The shared engine resolves projectile path hits, damage, score, enemy responses, and terminal screens; 8 deterministic tests pass. Browser start-state regression passed with no console errors. The CUA API could not reproduce the held-mouse-plus-Space gesture end-to-end.
-- T02 completed and committed as `a6ac47d` (`fix(game): apply consumable effects and turn costs`). All four consumables now spend inventory, apply their effects, and resolve the correct enemy response; Heal browser regression passed. Engine suite: 13 tests.
-- T03 completed and committed as `4cfef5f` (`feat(game): connect rewards and run progression`). Reward selection gates, fusion, camp choices, round refresh, dynamic HUD/results, and unused-item score were added; the final engine suite has 19 passing tests. Browser start/Heal regression passed without console errors.
+- T01 completed as `804586e` (`feat(react): bootstrap Vite game application`).
+- Added npm lockfile, Vite/React entry, landing shell, asset catalog, and UMD engine adapter. Existing engine/legacy mockup were not modified.
+- Validation passed: clean cached npm ci, 19 Node engine tests, production build with 19 catalog PNGs, Chrome dev/production smoke checks with no errors or missing visible images.
+- React 19.3.1 and Vite 8.3.4 run on the installed Node v24.18.0. Use `npm.cmd` because PowerShell blocks `npm.ps1`.
+- Development server: http://127.0.0.1:5173/ (landing shell only). Browser regression harness and Azure configuration remain future tasks.
+- `sites/` and `tmp/` preview outputs remain outside this implementation plan.
+- P02 requires owner-provided Azure subscription/resource, Entra tenant ID and app-registration credentials, and SWA deployment token.
 
 ## Next Step
-Plan complete. The controlled browser cannot reproduce the held-mouse-plus-Space launch gesture, so shot/reward-screen traversal remains covered by deterministic engine tests rather than a full UI fire simulation.
+Read the T02 blueprint and complete confirmed engine rules with deterministic tests: character weapon effects, starting consumable, explicit fusion choice, Chaos bonus combat/scoring, and browser Snow unlock persistence. Keep the React app shell and original UI reference intact while T02 focuses on game rules.
