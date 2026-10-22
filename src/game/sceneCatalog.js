@@ -1,6 +1,6 @@
 import { ASSETS } from './assetCatalog.js';
 
-const DISTANT_ART_LIFT = 80;
+const DISTANT_ART_LIFT = { default: 80, city: 220 };
 
 export const SCENE_PROFILES = Object.freeze({
   forest: Object.freeze({ area: 'forest', renderer: 'forest', palette: Object.freeze({ sky: '#72d5d3', horizon: '#f0efbd', bank: '#527c51', ground: '#386c58', lane: '#deaa83', light: '#f8cdab', dark: '#af775d' }), panels: null }),
@@ -26,7 +26,7 @@ function profile(area, sky, upperSky, horizon, bank, ground, lane, light, dark) 
       const width = region.worldWidth;
       const height = width * source.height / source.width;
       return Object.freeze({ href: layers[role][side], x: region.x, width, height,
-        y: 900 - meta.baselineRatio * height - (role === 'distant' ? DISTANT_ART_LIFT : 0),
+        y: 900 - meta.baselineRatio * height - (role === 'distant' ? DISTANT_ART_LIFT[area] ?? DISTANT_ART_LIFT.default : 0),
         sourceWidth: source.width, sourceHeight: source.height, side });
     });
   }

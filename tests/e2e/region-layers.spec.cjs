@@ -57,7 +57,7 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
       ? await page.locator('.scene-distant [data-depth-plane="distant"] > svg').evaluateAll(nodes => nodes.map(node => +node.getAttribute('y')))
       : await page.locator('.scene-distant [data-painted-panel="distant"] svg').evaluateAll(nodes => nodes.map(node => +node.getAttribute('y')));
     expect(distantPositions.length).toBeGreaterThan(0);
-    expect(new Set(distantPositions)).toEqual(new Set([area === 'forest' ? -600 : -530]));
+    expect(new Set(distantPositions)).toEqual(new Set([area === 'forest' ? -600 : area === 'city' ? -670 : -530]));
     const props = await page.locator('.scene-scenery [data-obstacle-id]').evaluateAll(nodes => nodes.map(n => n.dataset.obstacleId));
     expect(props).toHaveLength(3);
     // Loaded images can still be entirely hidden by a broken mask. Compare real
@@ -126,8 +126,9 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
       }, { base64: screenshot.toString('base64'), edgeRatio });
       const topColorDistance = samples[0].reduce((sum, channel, index) => sum + Math.abs(channel - samples[1][index]), 0);
       const seamColorDistance = samples[2].reduce((sum, channel, index) => sum + Math.abs(channel - samples[3][index]), 0);
-      if (area !== 'forest' && width === 1440) expect(topColorDistance, `${area} upper sky should have a visible color transition`).toBeGreaterThan(10);
-      expect(seamColorDistance, `${area} sky seam should blend with the distant artwork`).toBeLessThan(30);
+      if (area === 'city' && width === 1440) expect(topColorDistance, `${area} raised distant artwork should blend into the upper sky`).toBeLessThan(30);
+      else if (area !== 'forest' && width === 1440) expect(topColorDistance, `${area} upper sky should retain its established color transition`).toBeGreaterThan(10);
+      if (edgeRatio > 0 && edgeRatio < 1) expect(seamColorDistance, `${area} visible sky seam should blend with the distant artwork`).toBeLessThan(30);
     });
   }
 }
