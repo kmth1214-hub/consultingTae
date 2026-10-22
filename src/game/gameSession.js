@@ -104,13 +104,19 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       if (state.screen !== 'battle') return reject('invalid-state');
       if (state.enemyResponse) return reject('responding');
       if (state.aim.phase === 'dragging') return reject('aiming');
+      const obstacleKinds = ['log', 'ice', 'crate'];
       if (shotMeta !== undefined && (!shotMeta || !['enemy', 'obstacle', 'ground', 'bounds', 'timeout'].includes(shotMeta.impactKind)
-        || !(shotMeta.obstacleId === null || typeof shotMeta.obstacleId === 'string')
-        || typeof shotMeta.reverse !== 'boolean')) return reject('invalid-state');
+        || typeof shotMeta.reverse !== 'boolean' || typeof shotMeta.rolling !== 'boolean'
+        || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')
+        || new Set(shotMeta.obstacleTargetIds).size !== shotMeta.obstacleTargetIds.length
+        || (shotMeta.impactKind === 'obstacle'
+          ? (typeof shotMeta.obstacleId !== 'string' || !obstacleKinds.includes(shotMeta.obstacleKind))
+          : (shotMeta.obstacleId !== null || shotMeta.obstacleKind !== null || shotMeta.obstacleTargetIds.length !== 0)))) return reject('invalid-state');
       const run = structuredClone(state.run);
-      const event = engine.resolveProjectile(run, { hitIds, selectedTargetId: shotMeta?.reverse ? null : selectedTargetId, rng });
+      const event = engine.resolveProjectile(run, { hitIds, selectedTargetId: shotMeta?.reverse ? null : selectedTargetId,
+        shotMeta: shotMeta && structuredClone(shotMeta), aimInversionApplied: Boolean(run.pendingAimInversion), rng });
       if (!event.accepted) return reject(event.reason);
-      if (shotMeta) event.shotMeta = { impactKind: shotMeta.impactKind, obstacleId: shotMeta.obstacleId, reverse: shotMeta.reverse };
+      if (shotMeta) event.shotMeta = structuredClone(shotMeta);
       return routeCombat(run, event);
     },
     useConsumable(key) {

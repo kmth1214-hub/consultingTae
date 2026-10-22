@@ -205,9 +205,21 @@ test('session supports full-vector angles and only the new phases; invalid metad
   actions.setAim({ phase: 'launching', power: 0 });
   const before = structuredClone(session.getSnapshot().run);
   assert.equal(actions.useConsumable('defense').reason, 'aiming');
-  assert.equal(actions.fireShot({ shotMeta: { impactKind: 'unknown', reverse: false, obstacleId: null } }).accepted, false);
+  const validMissMeta = { impactKind: 'ground', obstacleId: null, obstacleKind: null, obstacleTargetIds: [], rolling: false, reverse: false };
+  assert.equal(actions.fireShot({ shotMeta: { ...validMissMeta, impactKind: 'unknown' } }).accepted, false);
+  for (const malformed of [
+    { ...validMissMeta, rolling: 'false' },
+    { ...validMissMeta, obstacleKind: 'log' },
+    { ...validMissMeta, obstacleTargetIds: ['same', 'same'] },
+    { ...validMissMeta, impactKind: 'obstacle', obstacleId: 'log-1' },
+    { ...validMissMeta, impactKind: 'obstacle', obstacleId: 'log-1', obstacleKind: 'log', obstacleTargetIds: [2] }
+  ]) {
+    const snapshot = structuredClone(session.getSnapshot().run);
+    assert.equal(actions.fireShot({ shotMeta: malformed }).reason, 'invalid-state');
+    assert.deepEqual(session.getSnapshot().run, snapshot);
+  }
   assert.deepEqual(session.getSnapshot().run, before);
-  const shotMeta = { impactKind: 'obstacle', obstacleId: 'forest-1-obstacle-0', reverse: false };
+  const shotMeta = { impactKind: 'obstacle', obstacleId: 'forest-1-obstacle-0', obstacleKind: 'log', obstacleTargetIds: [], rolling: false, reverse: false };
   assert.equal(actions.fireShot({ selectedTargetId: null, shotMeta }).accepted, true);
   assert.deepEqual(session.getSnapshot().lastEvent.shotMeta, shotMeta);
   shotMeta.obstacleId = 'changed';
@@ -226,12 +238,12 @@ test('explicit null and reverse override a stale Wind target without consuming h
   const session = start({ engine, rng: () => .5 });
   const { actions } = session, target = session.getSnapshot().run.enemies[0].id;
   actions.setAim({ selectedTargetId: target });
-  actions.fireShot({ selectedTargetId: null, shotMeta: { impactKind: 'obstacle', obstacleId: 'wall', reverse: false } });
+  actions.fireShot({ selectedTargetId: null, shotMeta: { impactKind: 'obstacle', obstacleId: 'wall', obstacleKind: 'log', obstacleTargetIds: [], rolling: false, reverse: false } });
   assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, false);
   assert.equal(session.getSnapshot().run.enemies[0].hp, 4);
   finishResponse(session);
   actions.setAim({ selectedTargetId: target, phase: 'launching' });
-  actions.fireShot({ selectedTargetId: target, shotMeta: { impactKind: 'bounds', obstacleId: null, reverse: true } });
+  actions.fireShot({ selectedTargetId: target, shotMeta: { impactKind: 'bounds', obstacleId: null, obstacleKind: null, obstacleTargetIds: [], rolling: false, reverse: true } });
   assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, false);
   assert.equal(session.getSnapshot().run.enemies[0].hp, 4);
   finishResponse(session);

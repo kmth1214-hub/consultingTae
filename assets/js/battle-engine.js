@@ -146,7 +146,9 @@
       furthestArea:area, playStartedAt:timestamp(config.now), roundStartedAt:timestamp(config.now), pendingCamp:false,
       pendingCampReward: null,
       defenseArmed: false,
-      fireballArmed: false
+      fireballArmed: false,
+      nextAttackDamageMultiplier: null,
+      pendingAimInversion: false
     };
     refillWeaponQueue(state,config.rng);
     return state;
@@ -374,12 +376,16 @@
     }
     const blocked = blockedBy !== null;
     state.defenseArmed = false;
-    const damage = blocked ? 0 : randomInt(sourceRng, minDamage, maxDamage);
+    const damageMultiplier = state.nextAttackDamageMultiplier === null ? 1 : state.nextAttackDamageMultiplier;
+    state.nextAttackDamageMultiplier = null;
+    const rawDamage = blocked ? 0 : randomInt(sourceRng, minDamage, maxDamage);
+    const damage = blocked ? 0 : Math.floor(rawDamage * damageMultiplier);
     const playerHpBefore = state.playerHp;
     state.playerHp = Math.max(0, state.playerHp - damage);
     const event = { enemyId: enemy.id, kind: enemy.kind, damage, special: blocked ? null : special,
       attemptedSpecial: special, playerHpBefore, playerHpAfter: state.playerHp,
       blocked, blockedBy, healedEnemy: 0, ammoLost: 0, consumablesBlocked: false };
+    if (damageMultiplier < 1) event.damageReduction = 1 - damageMultiplier;
 
     if (!blocked && special === 'frozen-breath') {
       state.consumablesBlockedTurns = 1;
@@ -490,9 +496,62 @@
       missed: hits.length === 0,
       scoreDelta: activeScore(state) - scoreBefore,
       enemyAttack: null,
+      obstacleEffect: null,
       roundCleared: false,
       runDefeated: false
     };
+
+    const shotMeta = config.shotMeta;
+    if (permanent && shotMeta?.impactKind === 'obstacle' && shotMeta.obstacleKind) {
+      const helpers = {
+        log: () => {
+          const target = (shotMeta.obstacleTargetIds || []).map(id => state.enemies.find(enemy => enemy.id === id && enemy.alive && enemy.hp > 0)).find(Boolean);
+          const effectHits = [];
+          if (target) {
+            const removed = Math.min(target.hp, 3);
+            target.hp -= removed;
+            target.alive = target.hp > 0;
+            const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+            addScore(state, scoreDelta);
+            effectHits.push({ id: target.id, kind: target.kind, damage: removed, remainingHp: target.hp, defeated: !target.alive, scoreDelta });
+          }
+          return { kind: 'log-strike', hits: effectHits };
+        },
+        ice: () => {
+          state.nextAttackDamageMultiplier = 0.5;
+          return { kind: 'ice-guard', hits: [], damageReduction: 0.5, armed: true };
+        },
+        crate: () => {
+          const effectHits = [];
+          for (const target of getLivingEnemies(state).slice()) {
+            const removed = Math.min(target.hp, randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 1, 2));
+            target.hp -= removed;
+            target.alive = target.hp > 0;
+            const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+            addScore(state, scoreDelta);
+            effectHits.push({ id: target.id, kind: target.kind, damage: removed, remainingHp: target.hp, defeated: !target.alive, scoreDelta });
+          }
+          return { kind: 'jar-burst', hits: effectHits };
+        }
+      };
+      if (state.area === 'chaos') {
+        const effectIndex = randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 0, 3);
+        event.obstacleEffect = effectIndex === 3
+          ? (state.pendingAimInversion = true, { kind: 'aim-inversion', hits: [], armed: true })
+          : helpers[['log', 'ice', 'crate'][effectIndex]]();
+      } else {
+        const expectedKind = { forest: 'log', snow: 'ice', city: 'crate' }[state.area];
+        if (shotMeta.obstacleKind === expectedKind) event.obstacleEffect = helpers[expectedKind]();
+      }
+      if (event.obstacleEffect) {
+        hits.push(...event.obstacleEffect.hits);
+        event.missed = hits.length === 0 && !['ice-guard', 'aim-inversion'].includes(event.obstacleEffect.kind);
+        event.scoreDelta = activeScore(state) - scoreBefore;
+      }
+    }
+    // A chaos inversion is consumed by the next permanent shot. Geometry applies it before
+    // this event is committed; clear it here after that shot has resolved.
+    if (permanent && config.aimInversionApplied) state.pendingAimInversion = false;
 
     return finishAction(state, event, config.rng);
   }

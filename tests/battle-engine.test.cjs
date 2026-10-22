@@ -89,6 +89,74 @@ test('clearing the final enemy ends the action before an enemy response', () => 
   assert.equal(event.enemyAttack, null);
 });
 
+test('Forest log damages the first living ordered candidate and adds scored hits to the event', () => {
+  const state = engine.createRunState({ area: 'forest', round: 2, rng: () => 0 });
+  const [dead, target] = state.enemies;
+  dead.hp = 0; dead.alive = false;
+  target.hp = 2;
+  const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, weaponGrade: 'B', rng: () => 0,
+    shotMeta: { impactKind: 'obstacle', obstacleId: 'forest-log', obstacleKind: 'log', obstacleTargetIds: [dead.id, target.id], rolling: true, reverse: false } });
+  assert.equal(event.obstacleEffect.kind, 'log-strike');
+  assert.deepEqual(event.obstacleEffect.hits, [{ id: target.id, kind: target.kind, damage: 2, remainingHp: 0, defeated: true, scoreDelta: 4 }]);
+  assert.equal(event.hits.length, 1);
+  assert.equal(state.score, 4);
+  assert.equal(event.roundCleared, true);
+  assert.equal(event.enemyAttack, null);
+});
+
+test('Snow ice halves the next attack once and a blocked attack consumes the guard', () => {
+  const state = engine.createRunState({ area: 'snow', round: 1, rng: () => 0 });
+  const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, rng: () => .999,
+    shotMeta: { impactKind: 'obstacle', obstacleId: 'ice-1', obstacleKind: 'ice', obstacleTargetIds: [], rolling: false, reverse: false } });
+  assert.equal(event.obstacleEffect.damageReduction, .5);
+  assert.equal(event.enemyAttack.damage, 4);
+  assert.equal(event.enemyAttack.damageReduction, .5);
+  assert.equal(state.nextAttackDamageMultiplier, null);
+
+  state.nextAttackDamageMultiplier = .5;
+  state.defenseArmed = true;
+  const blocked = engine.resolveEnemyTurn(state, () => .999);
+  assert.equal(blocked.blocked, true);
+  assert.equal(blocked.damage, 0);
+  assert.equal(state.nextAttackDamageMultiplier, null);
+});
+
+test('City jars deal injected 1–2 damage to every living enemy and score the actual HP removed', () => {
+  const state = engine.createRunState({ area: 'city', round: 1, rng: () => 0 });
+  state.enemies = state.enemies.slice(0, 2);
+  state.enemies[0].hp = 1;
+  const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, weaponGrade: 'C', rng: () => .999,
+    shotMeta: { impactKind: 'obstacle', obstacleId: 'jar-stack', obstacleKind: 'crate', obstacleTargetIds: [], rolling: false, reverse: false } });
+  assert.equal(event.obstacleEffect.kind, 'jar-burst');
+  assert.deepEqual(event.obstacleEffect.hits.map(hit => hit.damage), [1, 2]);
+  assert.deepEqual(event.hits.map(hit => hit.scoreDelta), [1, 2]);
+  assert.equal(state.score, 3);
+});
+
+test('Chaos chooses each obstacle effect from injected RNG, routes score to bonus, and consumes aim inversion on one shot', () => {
+  const kinds = ['log-strike', 'ice-guard', 'jar-burst', 'aim-inversion'];
+  for (let choice = 0; choice < 4; choice++) {
+    const state = engine.createRunState({ area: 'chaos', round: 1, rng: () => 0 });
+    state.enemies = [{ id: 'target', kind: 'snake', hp: 10, maxHp: 10, isBoss: false, attackCount: 0, alive: true }];
+    const values = [choice / 4, .999, .999, .999];
+    let index = 0;
+    const rng = () => values[Math.min(index++, values.length - 1)];
+    const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, rng,
+      shotMeta: { impactKind: 'obstacle', obstacleId: 'chaos-prop', obstacleKind: 'crate', obstacleTargetIds: ['target'], rolling: false, reverse: false } });
+    assert.equal(event.obstacleEffect.kind, kinds[choice]);
+    assert.equal(state.score, 0);
+    if (choice === 0) assert.equal(state.bonusScore, 3);
+    if (choice === 1) assert.equal(state.nextAttackDamageMultiplier, null); // consumed by this action's response
+    if (choice === 2) assert.equal(state.bonusScore, 2);
+    if (choice === 3) {
+      assert.equal(state.pendingAimInversion, true);
+      const next = engine.resolveProjectile(state, { hitIds: [], damage: 0, aimInversionApplied: true, rng: () => 0 });
+      assert.equal(next.accepted, true);
+      assert.equal(state.pendingAimInversion, false);
+    }
+  }
+});
+
 test('boss special attack replaces the normal attack on its third attack', () => {
   const state = engine.createRunState({ area: 'forest', round: 3 });
   const boss = state.enemies[0];

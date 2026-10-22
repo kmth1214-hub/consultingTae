@@ -28,7 +28,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
     enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss })) }), [run.area, run.round, slotKey]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const activeFlight = useRef(null);
-  const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
+  const makeSolution = pull => planShot({ layout, pull: run.pendingAimInversion
+    ? { ...pull, direction: { x: -pull.direction.x, y: -pull.direction.y } } : pull, enemies: run.enemies,
     windAvailable: run.weapons.some(w => w.id === 'wind-candy') && !run.roundEffects.windHomingUsed });
   function clearFlight() { activeFlight.current = null; setFlight(null); }
   function failLaunch() { controller.cancelAim(); setRetry('조준을 다시 잡고 당겨 주세요.'); }
@@ -61,7 +62,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
     controller.completeLaunch(shot.id, () => {
       setImpact({ id: shot.id, point: sampleAtDistance(shot.path, shot.impactDistance), kind: shot.impactKind, obstacleId: shot.obstacleId });
       onFire({ hitIds: shot.hitIds, selectedTargetId: shot.selectedTargetId,
-        shotMeta: { impactKind: shot.impactKind, obstacleId: shot.obstacleId, reverse: shot.reverse } });
+        shotMeta: { impactKind: shot.impactKind, obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind,
+          obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollDistance > 0, reverse: shot.reverse } });
     });
     setFlight(current => current?.id === shot.id ? null : current);
   }
