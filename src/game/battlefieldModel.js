@@ -2,6 +2,7 @@
 export const BATTLEFIELD = Object.freeze({
   width: 3600, height: 1200, groundY: 900, minY: -1200, candyRadius: 10,
   gravity: 1200, minSpeed: 240, maxSpeed: 1960, sampleStep: 1 / 120, maxSeconds: 8,
+  maxRollDiameters: 5, groundRollDeceleration: 16000,
 });
 
 const SHAPES = {

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BattleEngine } from '../src/game/battleEngine.js';
-import { buildBattlefield, getDragDraw } from '../src/game/battlefieldModel.js';
+import { BATTLEFIELD, buildBattlefield, getDragDraw } from '../src/game/battlefieldModel.js';
 import { getPull, getBallisticPath, getHomingPath, sampleAtDistance, pathPrefixD,
-  findObstacleContact, planShot } from '../src/game/shotGeometry.js';
+  appendGroundRoll, findObstacleContact, planShot } from '../src/game/shotGeometry.js';
 
 const close = (a, b, eps = 1e-7) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 const empty = () => buildBattlefield({ area: 'forest', round: 1, enemies: [] });
@@ -69,6 +69,90 @@ test('sampled ballistics match independent equations, refine physical bounds and
   assert.equal(getBallisticPath({ start, direction: { x: 0, y: 0 }, powerRatio: 1, layout }), null);
   const ground = getBallisticPath({ start: { x: 10, y: 890 }, direction: { x: 0, y: 1 }, powerRatio: 1, layout });
   assert.equal(ground.length, 0); assert.equal(ground.endKind, 'ground');
+});
+
+test('ground roll uses friction, signed landing speed, bounded samples, and world-edge clipping', () => {
+  const layout = empty(), start = { x: 100, y: 890 };
+  const grounded = getBallisticPath({ start, direction: { x: 1, y: 0 }, powerRatio: 1, layout });
+  assert.equal(grounded.endKind, 'ground'); close(grounded.length, 0);
+  assert.equal(BATTLEFIELD.maxRollDiameters, 5);
+  assert.equal(BATTLEFIELD.groundRollDeceleration, 16000);
+
+  const strong = appendGroundRoll(grounded, BATTLEFIELD.maxSpeed, layout);
+  close(strong.rollDistance, 100); close(strong.path.end.x, 200); close(strong.path.end.y, 890);
+  close(strong.rollStartDistance, grounded.length);
+  assert.equal(strong.path.rollStartDistance, grounded.length);
+  assert.equal(strong.path.endKind, 'ground');
+  assert.ok(strong.path.samples.slice(1).every((p, i) => p.distance - strong.path.samples[i].distance <= 4 + 1e-8));
+  assert.ok(strong.path.samples.every((p, i) => !i || (p.time > strong.path.samples[i - 1].time
+    && p.distance > strong.path.samples[i - 1].distance)));
+  const lastTime = (BATTLEFIELD.maxSpeed - Math.sqrt(BATTLEFIELD.maxSpeed ** 2
+    - 2 * BATTLEFIELD.groundRollDeceleration * 100)) / BATTLEFIELD.groundRollDeceleration;
+  close(strong.path.durationSeconds, lastTime);
+  close(sampleAtDistance(strong.path, 50).x, 150);
+  assert.match(pathPrefixD(strong.path, 50), /L150,890$/);
+
+  const weak = appendGroundRoll(grounded, 240, layout);
+  close(weak.rollDistance, 240 ** 2 / (2 * BATTLEFIELD.groundRollDeceleration));
+  const reverse = appendGroundRoll(grounded, -400, layout);
+  close(reverse.path.end.x, 95);
+  const stationary = appendGroundRoll(grounded, .99, layout);
+  assert.equal(stationary.rollDistance, 0); assert.equal(stationary.path.rollStartDistance, null);
+  const vertical = appendGroundRoll(grounded, 0, layout);
+  assert.equal(vertical.rollDistance, 0);
+
+  const edgeLayout = { ...layout, width: 150 };
+  const nearEdge = getBallisticPath({ start: { x: 145, y: 890 }, direction: { x: 1, y: 0 }, powerRatio: 1, layout: edgeLayout });
+  const clipped = appendGroundRoll(nearEdge, BATTLEFIELD.maxSpeed, edgeLayout);
+  close(clipped.rollDistance, 15); close(clipped.path.end.x, 160); assert.equal(clipped.path.endKind, 'bounds');
+  assert.throws(() => appendGroundRoll({ ...grounded, endKind: 'bounds' }, 100, layout), TypeError);
+  assert.throws(() => appendGroundRoll(grounded, NaN, layout), TypeError);
+});
+
+test('planShot rolls only after an unobstructed landing and reports the first roll contact', () => {
+  const layout = empty(), pull = pullAt(0, 1), baseline = planShot({ layout, pull, enemies: [] });
+  assert.equal(baseline.impactKind, 'ground');
+  assert.equal(baseline.rollDistance, 100);
+  assert.ok(baseline.rollStartDistance > 0);
+  const targetPoint = sampleAtDistance(baseline.path, baseline.rollStartDistance + 35);
+  const laterTarget = sampleAtDistance(baseline.path, baseline.rollStartDistance + 72);
+  layout.enemies = [circle('roll-target', targetPoint), circle('later-roll-target', laterTarget)];
+  const hit = planShot({ layout, pull, enemies: living(['roll-target', 'later-roll-target']) });
+  assert.equal(hit.impactKind, 'enemy'); assert.deepEqual(hit.hitIds, ['roll-target']);
+  assert.equal(hit.rollDistance, 100);
+  assert.ok(hit.impactDistance > hit.rollStartDistance);
+
+  const blockedLayout = empty(), openPath = planShot({ layout: blockedLayout, pull, enemies: [] });
+  const rollStart = sampleAtDistance(openPath.path, openPath.rollStartDistance);
+  const wallX = rollStart.x + 42;
+  blockedLayout.obstacles = [{ ...box('roll-wall', wallX, 896, 12, 14), kind: 'log' }];
+  const wallOnly = planShot({ layout: blockedLayout, pull, enemies: [] });
+  assert.equal(wallOnly.impactKind, 'obstacle'); assert.equal(wallOnly.obstacleId, 'roll-wall');
+  assert.equal(wallOnly.obstacleKind, 'log'); assert.deepEqual(wallOnly.hitIds, []);
+  assert.ok(wallOnly.impactDistance > wallOnly.rollStartDistance);
+
+  const contact = sampleAtDistance(wallOnly.path, wallOnly.impactDistance);
+  blockedLayout.enemies = [circle('roll-tie', { x: contact.x + 20, y: contact.y })];
+  const tied = planShot({ layout: blockedLayout, pull, enemies: living(['roll-tie']) });
+  assert.equal(tied.impactKind, 'obstacle'); assert.deepEqual(tied.hitIds, []);
+  blockedLayout.enemies = [circle('far-target', { x: contact.x + 150, y: contact.y }),
+    circle('near-target', { x: contact.x + 70, y: contact.y })];
+  const wallWithTargets = planShot({ layout: blockedLayout, pull, enemies: living(['far-target', 'near-target']) });
+  assert.equal(wallWithTargets.impactKind, 'obstacle');
+  assert.deepEqual(wallWithTargets.obstacleTargetIds, ['near-target', 'far-target']);
+
+  const beforeGroundLayout = empty(), ordinary = planShot({ layout: beforeGroundLayout, pull, enemies: [] });
+  const flightTarget = sampleAtDistance(ordinary.path, ordinary.path.length * .55);
+  beforeGroundLayout.enemies = [circle('flight-target', flightTarget)];
+  const beforeLanding = planShot({ layout: beforeGroundLayout, pull, enemies: living(['flight-target']) });
+  assert.equal(beforeLanding.impactKind, 'enemy'); assert.equal(beforeLanding.rollDistance, 0);
+  assert.equal(beforeLanding.rollStartDistance, null); assert.equal(beforeLanding.path.rollStartDistance, null);
+
+  const windEnemies = BattleEngine.createRoundEnemies('city', 3);
+  const homingLayout = buildBattlefield({ area: 'city', round: 3, enemies: windEnemies });
+  const homing = planShot({ layout: homingLayout, pull: pullAt(25, .6), enemies: windEnemies, windAvailable: true });
+  assert.equal(homing.path.kind, 'homing'); assert.equal(homing.rollDistance, 0);
+  assert.equal(homing.rollStartDistance, null);
 });
 
 test('distance sampling and preview use stored arc length and reject malformed tables', () => {
