@@ -41,6 +41,19 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
   });
 }
 
+test('minimap monsters stay readable at desktop and narrow viewport sizes', async ({ page }) => {
+  await installGame(page, { initial: { area: 'forest', round: 1 } });
+  await start(page);
+  const marker = page.locator('.battlefield-minimap .minimap-enemy').first();
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const bounds = await marker.boundingBox();
+    expect(bounds, `missing monster marker at ${width}px viewport`).not.toBeNull();
+    expect(bounds.width, `monster marker too small at ${width}px viewport`).toBeGreaterThanOrEqual(14);
+    expect(bounds.height, `monster marker too small at ${width}px viewport`).toBeGreaterThanOrEqual(14);
+  }
+});
+
 test('decorative atmosphere pauses for reduced motion and window focus lifecycle events', async ({ page }) => {
   await installGame(page, { initial: { area: 'snow', round: 1 } }); await start(page);
   const atmosphere = page.locator('.scene-atmosphere--far');
