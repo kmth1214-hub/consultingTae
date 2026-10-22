@@ -30,9 +30,11 @@ test('SWA principal accepts only authenticated Entra identities and never trusts
 
 test('submission validation accepts only main-run data within safe bounds', () => {
   assert.deepEqual(validateSubmission(valid), { ok: true, value: valid });
+  for (const round of [1, 3]) assert.equal(validateSubmission({ ...valid, round }).ok, true);
   for (const value of [null, [], { ...valid, email: 'user@example.com' }, { ...valid, userId: 'client' },
     { ...valid, score: -1 }, { ...valid, score: 1_000_001 }, { ...valid, score: 1.5 },
-    { ...valid, cookieId: 'unknown' }, { ...valid, furthestArea: 'chaos' }, { ...valid, round: 6 },
+    { ...valid, cookieId: 'unknown' }, { ...valid, furthestArea: 'chaos' },
+    ...[0, 4, 5, 1.5].map(round => ({ ...valid, round })),
     { ...valid, durationMs: -1 }, { ...valid, durationMs: Number.MAX_SAFE_INTEGER + 1 }]) {
     assert.equal(validateSubmission(value).ok, false, JSON.stringify(value));
   }

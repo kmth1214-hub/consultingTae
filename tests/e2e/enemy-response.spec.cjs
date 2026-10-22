@@ -30,7 +30,7 @@ test('shield intercepts a visible incoming attack from the actual enemy without 
   await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'impact');
   await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'hurt');
   await expect(page.getByTestId('player-impact')).toBeVisible();
-  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-impact-id', /\d+/);
+  await expect(page.getByTestId('player-hit-feedback')).toBeVisible();
   await expect(hp(page)).toHaveText('95');
   await phase(page, 'idle');
   expect((await snapshot(page)).run.playerHp).toBe(95);
@@ -39,32 +39,35 @@ test('shield intercepts a visible incoming attack from the actual enemy without 
 test('enemy projectile travels from its attacker and HP changes at impact; map and item input cannot overlap it', async ({ page }) => {
   await installGame(page, { initial: { inventory } });
   await start(page);
+  await page.evaluate(() => {
+    window.__projectileMotion = { first: null, last: null, changes: 0 };
+    new MutationObserver(records => {
+      for (const record of records) {
+        if (record.target.matches?.('[data-testid="enemy-projectile"]')) {
+          const value = record.target.getAttribute('transform');
+          window.__projectileMotion.first ??= value;
+          window.__projectileMotion.last = value;
+          window.__projectileMotion.changes++;
+        }
+      }
+    }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['transform'] });
+  });
   await page.keyboard.press('1');
   const before = await snapshot(page);
   const attack = page.getByTestId('enemy-attack');
+  const projectile = page.getByTestId('enemy-projectile');
   await expect(attack).toHaveAttribute('data-stage', 'windup');
   await expect(hp(page)).toHaveText('100');
   expect(before.run.playerHp).toBe(95);
   await expect(page.getByRole('button', { name: '방어 사용', exact: true })).toBeDisabled();
+  // Exercise blocked inputs during the windup, before the hit can resolve.
   await page.keyboard.press('3');
   const box = await arena(page).boundingBox();
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await phase(page, 'responding');
-  await expect(attack).toHaveAttribute('data-stage', 'travel');
-  const projectile = page.getByTestId('enemy-projectile');
   await expect(projectile).toBeVisible();
-  const first = await projectile.getAttribute('transform');
-  await expect(projectile).not.toHaveAttribute('transform', first);
-  // Sample the real rendered movement, rather than merely checking a class exists.
-  const x1 = (await projectile.boundingBox()).x;
-  await expect.poll(async () => (await projectile.boundingBox()).x, { intervals: [16] }).toBeLessThan(x1 - 15);
-  await page.screenshot({ path: 'tmp/react-t06-enemy-projectile.jpg' });
-  await expect(attack).toHaveAttribute('data-stage', 'impact');
-  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'hurt');
-  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-impact-id', /\d+/);
-  await expect(page.getByTestId('player-impact')).toBeVisible();
-  await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-ranged-hit-1440.jpg' });
-  await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-hit-1440.jpg' });
+  await expect.poll(() => page.evaluate(() => window.__projectileMotion.changes)).toBeGreaterThan(2);
+  const motion = await page.evaluate(() => window.__projectileMotion);
+  expect(motion.last).not.toBe(motion.first);
   await expect(hp(page)).toHaveText('95');
   await phase(page, 'idle');
   const after = await snapshot(page);

@@ -56,7 +56,7 @@ test('home board handles retry and shows only the selected public fields plus ou
 });
 
 test('main clear submits once and the optional bonus result never submits bonus score', async ({ page }) => {
-  await installGame(page, { initial: { area: 'city', round: 5 }, fastCombat: true });
+  await installGame(page, { initial: { area: 'city', round: 3 }, fastCombat: true });
   let posts = 0;
   let submitted;
   await page.route('**/api/leaderboard', async route => {

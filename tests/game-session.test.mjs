@@ -80,7 +80,7 @@ test('reward fusion blocks progression, resolves explicitly, and rejects repeate
 test('camp weapon queue survives multiple fusion prompts without rerolling or allowing a switch', () => {
   let rolls = 0;
   const session = start({ engine: clearingEngine, rng: () => { rolls++; return .999; } });
-  for (let i = 0; i < 5; i++) { clear(session); rewards(session); }
+  for (let i = 0; i < 3; i++) { clear(session); rewards(session); }
   assert.equal(session.getSnapshot().screen, 'camp');
   session.actions.chooseCampReward('weapon');
   assert.equal(session.getSnapshot().fusion.source, 'camp');
@@ -96,16 +96,16 @@ test('camp weapon queue survives multiple fusion prompts without rerolling or al
   assert.equal(session.getSnapshot().run.area, 'snow');
 });
 
-test('15 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bonus rounds follow screen routing', () => {
+test('9 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bonus rounds follow screen routing', () => {
   const storage = memoryStorage();
   const session = start({ engine: clearingEngine, storage });
   let rewardScreens = 0;
   let camps = 0;
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 9; i++) {
     clear(session);
     assert.equal(session.getSnapshot().screen, 'reward');
     rewardScreens++;
-    if (i === 9) {
+    if (i === 5) {
       assert.equal(session.getSnapshot().profile.snowAreaCleared, true);
       const reload = createGameSession({ storage });
       assert.equal(reload.getSnapshot().screen, 'home');
@@ -116,7 +116,7 @@ test('15 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bon
     rewards(session, true);
     if (session.getSnapshot().screen === 'camp') { camps++; session.actions.chooseCampReward('heal'); }
   }
-  assert.equal(rewardScreens, 15);
+  assert.equal(rewardScreens, 9);
   assert.equal(camps, 2);
   assert.equal(session.getSnapshot().screen, 'main-results');
   assert.equal(session.getSnapshot().outcome, 'clear');
@@ -183,7 +183,7 @@ test('leaderboard opened from home returns to home and rejects entry from battle
 });
 
 test('visual layout keeps dead-enemy slots stable', () => {
-  const enemies = BattleEngine.createRoundEnemies('city', 4);
+  const enemies = BattleEngine.createRoundEnemies('city', 2);
   const positions = monsterPositions(enemies);
   const defeated = structuredClone(enemies);
   defeated[0].alive = false;

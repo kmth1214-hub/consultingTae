@@ -29,7 +29,7 @@ test('GET rejects malformed data, email names, and non-success responses as reco
 
 test('POST projects main final score and sends no identity, email, or bonus score', async () => {
   let request;
-  const summary = { finalScore: 440, score: 400, bonusScore: 99_999, furthestArea: 'snow', round: 4, durationMs: 88_000 };
+  const summary = { finalScore: 440, score: 400, bonusScore: 99_999, furthestArea: 'snow', round: 3, durationMs: 88_000 };
   const result = await submitMainRunRecord({ summary, selectedCharacterId: 'wizard', fetchImpl: async (...args) => {
     request = args;
     return response({ saved: true, record: { rank: 7, cookieId: 'wizard', score: 440 } });
@@ -37,7 +37,7 @@ test('POST projects main final score and sends no identity, email, or bonus scor
   assert.equal(request[0], '/api/leaderboard');
   assert.equal(request[1].method, 'POST');
   assert.equal(request[1].credentials, 'same-origin');
-  assert.deepEqual(JSON.parse(request[1].body), { score: 440, cookieId: 'wizard', furthestArea: 'snow', round: 4, durationMs: 88_000 });
+  assert.deepEqual(JSON.parse(request[1].body), { score: 440, cookieId: 'wizard', furthestArea: 'snow', round: 3, durationMs: 88_000 });
   assert.deepEqual(result, { saved: true, record: { rank: 7, cookieId: 'wizard', score: 440 } });
   assert.doesNotMatch(request[1].body, /userId|displayName|email|bonusScore|99999/);
 });
