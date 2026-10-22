@@ -38,7 +38,24 @@ function PanoramaLayer({ role, panels, area, profile, prefix, activity, visible 
         <rect x="1500" y="-700" width="2700" height="2200" fill="white" />
         <rect x="1500" y="-700" width="240" height="2200" fill={`url(#${prefix}-east-feather)`} />
       </mask>
-      {role === 'midground' && <clipPath id={clipId}><rect x="-600" y="-500" width="4800" height="1320" /></clipPath>}
+      {area === 'city' && role === 'midground' && <>
+        <linearGradient id={`${prefix}-city-west-frame`} x1="450" x2="600" gradientUnits="userSpaceOnUse">
+          <stop stopColor="white" /><stop offset="1" stopColor="black" />
+        </linearGradient>
+        <linearGradient id={`${prefix}-city-east-frame`} x1="3000" x2="3150" gradientUnits="userSpaceOnUse">
+          <stop stopColor="black" /><stop offset="1" stopColor="white" />
+        </linearGradient>
+        <mask id={`${prefix}-city-midground-mask`} maskUnits="userSpaceOnUse" x="0" y="-500" width="3600" height="1320">
+          <rect x="0" y="-500" width="3600" height="1320" fill="black" />
+          <rect x="0" y="-500" width="450" height="1320" fill="white" />
+          <rect x="450" y="-500" width="150" height="1320" fill={`url(#${prefix}-city-west-frame)`} />
+          <rect x="3000" y="-500" width="150" height="1320" fill={`url(#${prefix}-city-east-frame)`} />
+          <rect x="3150" y="-500" width="450" height="1320" fill="white" />
+        </mask>
+      </>}
+      {role === 'midground' && <clipPath id={clipId}>
+        <rect x="-600" y="-500" width="4800" height="1320" />
+      </clipPath>}
       {isForeground && <clipPath id={clipId}><path d="M-100-200H36V1010H3564V-200H3700V1800H-100Z" /></clipPath>}
     </defs>
     {role === 'sky' && <>
@@ -51,7 +68,8 @@ function PanoramaLayer({ role, panels, area, profile, prefix, activity, visible 
       <path d="M-100 900H3700" stroke={profile.palette.dark} strokeWidth="142" />
       <path d="M-100 900H3700" stroke={`url(#${prefix}-road)`} strokeWidth="110" />
     </>}
-    <g clipPath={role === 'midground' || isForeground ? `url(#${clipId})` : undefined}>
+    <g clipPath={role === 'midground' || isForeground ? `url(#${clipId})` : undefined}
+      mask={area === 'city' && role === 'midground' ? `url(#${prefix}-city-midground-mask)` : undefined}>
     <g data-depth-plane={layer}>
       {(panels || []).map(panel => {
         const mask = `${prefix}-${panel.side}-mask`;

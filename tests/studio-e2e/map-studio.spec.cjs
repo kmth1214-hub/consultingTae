@@ -33,6 +33,15 @@ test('all four areas use their real painted layers and registered blocker placem
     await expect(preview.locator('.scene-scenery [data-obstacle-id]')).toHaveCount(3);
     if (area === 'forest') await expect(preview.locator('[data-painted-panel]')).toHaveCount(0);
     else await expect(preview.locator('[data-painted-panel]')).toHaveCount(8);
+    if (area === 'city') {
+      const frameMask = await preview.locator('.scene-midground > g[mask]').evaluate(node => {
+        const id = node.getAttribute('mask').match(/#([^)]*)/)[1];
+        return [...document.getElementById(id).querySelectorAll('rect')].map(rect => [
+          +rect.getAttribute('x'), +rect.getAttribute('width')
+        ]);
+      });
+      expect(frameMask).toEqual([[0, 3600], [0, 450], [450, 150], [3000, 150], [3150, 450]]);
+    }
     await page.screenshot({ path: `tmp/map-studio-${area}-overview-1440.jpg` });
   }
 });

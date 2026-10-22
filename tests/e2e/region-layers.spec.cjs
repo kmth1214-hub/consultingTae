@@ -20,6 +20,33 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
     expect(layers.every(l => l.area === area && l.parent === 'arena-world' && l.filter === 'none')).toBe(true);
     for (const l of layers) { expect(l.scaleX).toBeCloseTo(l.scaleY, 5); expect(l.scaleX).toBeCloseTo(layers[0].scaleX, 5); }
     expect(layers.map(l => l.z)).toEqual([0, 0, 1, 2, 5]);
+    if (area === 'forest') {
+      await expect(page.locator('.scene-midground > g[clip-path]')).toHaveCount(0);
+    } else {
+      const midgroundClip = await page.locator('.scene-midground > g[clip-path]').evaluate(node => {
+        const id = node.getAttribute('clip-path').match(/#([^)]*)/)[1];
+        return [...document.getElementById(id).querySelectorAll('rect')].map(rect => ({
+          x: +rect.getAttribute('x'), y: +rect.getAttribute('y'),
+          width: +rect.getAttribute('width'), height: +rect.getAttribute('height')
+        }));
+      });
+      expect(midgroundClip).toEqual([{ x: -600, y: -500, width: 4800, height: 1320 }]);
+    }
+    if (area === 'city') {
+      const frameMask = await page.locator('.scene-midground > g[mask]').evaluate(node => {
+        const id = node.getAttribute('mask').match(/#([^)]*)/)[1];
+        const mask = document.getElementById(id);
+        const rects = [...mask.querySelectorAll('rect')].map(rect => [
+          +rect.getAttribute('x'), +rect.getAttribute('width')
+        ]);
+        const fades = [...mask.querySelectorAll('rect[fill^="url("]')].map(rect => rect.getAttribute('fill'));
+        return { rects, fades: fades.length };
+      });
+      expect(frameMask.rects).toEqual([[0, 3600], [0, 450], [450, 150], [3000, 150], [3150, 450]]);
+      expect(frameMask.fades).toBe(2);
+    } else {
+      await expect(page.locator('.scene-midground > g[mask]')).toHaveCount(0);
+    }
     const proportions = await page.locator('.battlefield-layer [data-source-patch] svg, .battlefield-layer [data-painted-panel] svg').evaluateAll(nodes => nodes.map(node => {
       const vb = node.viewBox.baseVal;
       return { actual: node.width.baseVal.value / node.height.baseVal.value, source: vb.width / vb.height };

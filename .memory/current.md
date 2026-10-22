@@ -1,18 +1,19 @@
 ﻿# Current Context
 
 ## Active Plan
-[Candy Roll and Obstacle Interactions](./plans/2026-10-22-candy-roll-obstacle-interactions.md)
+[City Panorama Visibility](./plans/2026-10-22-city-panorama-visibility.md)
 
 ## Active Phase
-[P01 Candy Roll Combat](./phases/2026-10-22-candy-roll-obstacle-interactions/P01-candy-roll-combat/phase.md)
+[P01 City Composition](./phases/2026-10-22-city-panorama-visibility/P01-city-composition/phase.md)
 
 ## Active Task
-none
+[T02 City View Visual Acceptance](./phases/2026-10-22-city-panorama-visibility/P01-city-composition/T02-visual-acceptance.md)
 
 ## Status
-- complete: Candy Roll and Obstacle Interactions — T01–T04 done.
-- Validation passed: 105 Node tests, 94 production-browser tests, production build, and `git diff --check`.
-- Azure release remains a separate unfinished plan.
+- T01 complete: City midground now frames the sides and fades out toward the central scenic window; gameplay road and coordinates are unchanged.
+- Validation passed: 26 production-browser tests, 8 studio tests, production build, and `git diff --check`.
+- Confirmed composition: prioritize the distant view and keep the road below, with City midground framing the edges.
+- Preserve the existing uncommitted City distant-art lift and other workspace changes.
 
 ## Next Step
-No active Task. Start the next plan only when requested.
+Read the T02 blueprint and review the actual City game/studio compositions, record visual evidence and run the full relevant regression before completing this plan.
