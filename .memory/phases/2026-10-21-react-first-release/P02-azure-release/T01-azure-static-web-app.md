@@ -33,7 +33,7 @@ Deploy the tested Vite static build and the Node.js 22 managed leaderboard API f
   - `.github/workflows/azure-static-web-apps.yml` :: test/build/deploy workflow with `dist/` and managed `api/`; new
   - `docs/azure-static-web-apps.md` :: Azure, Table Storage and GitHub setup runbook; new
   - `.gitignore` :: ensure `dist/` and Playwright output are ignored; modify if absent
-- **Data & Schema Fields**: GitHub secret `AZURE_STATIC_WEB_APPS_API_TOKEN`; GitHub variable `ENTRA_TENANT_ID`; Azure Static Web App application settings `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, `LEADERBOARD_STORAGE_CONNECTION_STRING`, and optional `LEADERBOARD_TABLE_NAME` (default `LeaderboardRecords`). Never put the Table connection string in GitHub variables or tracked files. Entra app registration uses single-tenant audience (`AzureADMyOrg`) and redirect URI `https://<SWA_HOST>/.auth/login/aad/callback`. Workflow runs Node 22, `npm ci`, `npx playwright install --with-deps chromium`, `npm test`, `npm run test:e2e`, `npm run build:azure`, then deploys static output `dist/` and managed function source `api/` with `Azure/static-web-apps-deploy@v1`; configure `app_location`, `api_location:api`, `output_location:dist`, and ensure API dependency installation/build is not skipped.
+- **Data & Schema Fields**: GitHub secret `AZURE_STATIC_WEB_APPS_API_TOKEN`; GitHub variable `ENTRA_TENANT_ID`; Azure Static Web App application settings `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, `LEADERBOARD_STORAGE_CONNECTION_STRING`, and optional `LEADERBOARD_TABLE_NAME` (default `LeaderboardRecords`). Never put the Table connection string in GitHub variables or tracked files. Entra app registration uses single-tenant audience (`AzureADMyOrg`) and redirect URI `https://<SWA_HOST>/.auth/login/aad/callback`. Workflow runs Node 22, `npm ci`, `npx playwright install --with-deps chrome`, `npm test`, `npm run test:e2e`, and `npm run test:studio`; builds `dist/` with `npm run build:azure`, then deploys the tested output and managed function source `api/` with `Azure/static-web-apps-deploy@v1`. The prebuilt Vite artifact uses `app_location: dist`, `skip_app_build: true`, and empty `output_location`; `api_location: api` keeps the managed API build enabled.
 - **Execution Flow / Logic**:
   1. Trigger on pushes to `main` and manual `workflow_dispatch`; gate deployment on successful engine, browser, and Azure-config build checks.
   2. Configure the SWA deploy action to upload the already-tested `dist` output and package `api/` with its Node 22 runtime/dependencies; do not let Oryx rebuild a different frontend artifact or skip the API build.
@@ -43,10 +43,10 @@ Deploy the tested Vite static build and the Node.js 22 managed leaderboard API f
 - **Error Handling**: fail the workflow if any test/build/config generation fails; fail deployment clearly if the SWA deployment token is missing. Do not echo secret values to logs.
 
 ## Acceptance Criteria
-- [ ] `npm run build:azure` emits a valid `dist/staticwebapp.config.json` with the supplied tenant v1 issuer, name `userDetailsClaim`, `platform.apiRuntime:'node:22'`, authenticated `/api/*`, and no placeholders.
-- [ ] Static config protects `/*`, redirects unauthenticated access to Entra, and does not expose `.auth` routes to SPA fallback.
+- [x] `npm run build:azure` emits a valid `dist/staticwebapp.config.json` with the supplied tenant v1 issuer, name `userDetailsClaim`, `platform.apiRuntime:'node:22'`, authenticated `/api/*`, and no placeholders.
+- [x] Static config protects `/*`, redirects unauthenticated access to Entra, and does not expose `.auth` routes to SPA fallback.
 - [ ] GitHub Actions tests and deploys the built Vite output plus managed API from `api/` on `main`.
-- [ ] Deployment runbook identifies every owner-supplied Azure/GitHub value, including Table Storage configuration, and never asks to commit a secret.
+- [x] Deployment runbook identifies every owner-supplied Azure/GitHub value, including Table Storage configuration, and never asks to commit a secret.
 - [ ] After owner supplies tenant/app/resource/token inputs, company-tenant sign-in succeeds and an account from another tenant is rejected.
 
 ## Validation
@@ -57,17 +57,19 @@ Deploy the tested Vite static build and the Node.js 22 managed leaderboard API f
 
 ## Commit Message
 ```text
-ci(azure): deploy React game with tenant-restricted access
+배포준비(azure): 회사 계정 전용 앱 구성
 
 Plan: 2026-10-21-react-first-release
 Phase: P02-azure-release
 Task: T01-azure-static-web-app
 
-- Generate authenticated single-tenant Static Web Apps config.
-- Test and deploy the Vite artifact through GitHub Actions.
+- 빌드 시 테넌트 전용 Static Web Apps 인증 설정을 생성한다.
+- 검증된 Vite 산출물과 관리형 API 배포 workflow를 구성한다.
 ```
 
 ## Progress
-- [ ] Implementation complete
-- [ ] Validation passed
-- commit: pending
+- [x] Local implementation complete: build-time auth config, gated GitHub Actions workflow, and owner setup runbook.
+- [x] Local validation passed: 105 Node tests; 94 production browser assertions and 8 studio browser assertions all reported `ok`; Azure config positive/negative tenant checks and production build.
+- [ ] GitHub Actions execution, Azure deployment, and tenant-isolation smoke test remain pending owner cloud configuration.
+- Required before deployment: Standard SWA resource; Entra tenant/app and Azure settings; Table Storage; repository variable `ENTRA_TENANT_ID`; secret `AZURE_STATIC_WEB_APPS_API_TOKEN`; set `AZURE_DEPLOY_ENABLED=true` only after the Azure resource settings are complete.
+- commit: implementation checkpoint recorded in Git history

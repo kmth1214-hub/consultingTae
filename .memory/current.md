@@ -1,22 +1,21 @@
 # Current Context
 
 ## Active Plan
-[City Panorama Visibility](./plans/2026-10-22-city-panorama-visibility.md)
+[React First Release](./plans/2026-10-21-react-first-release.md)
 
 ## Active Phase
-[P01 City Composition](./phases/2026-10-22-city-panorama-visibility/P01-city-composition/phase.md)
+[P02 Azure Release](./phases/2026-10-21-react-first-release/P02-azure-release/phase.md)
 
 ## Active Task
-none
+[T01 Azure Static Web App](./phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md)
 
 ## Status
-complete
+in_progress
 
-- T01 and T02 complete: City midground frames the sides with feathered alpha fades so the central panorama remains visible; gameplay road and coordinates are unchanged.
-- Validation passed: Node suite 105/105, production-browser region/scene-depth suite 26/26, studio suite 8/8, production build, and `git diff --check`.
-- Visual acceptance passed at 1440x900 and 390x844 in gameplay and 1440x900 in the studio; pan review found no abrupt mask edge or blank panel.
-- T01 implementation commit: `4053517`.
-- Preserve the existing uncommitted City distant-art lift and other workspace changes.
+- Azure build configuration, tenant-bound auth policy, GitHub Actions release workflow, and setup runbook are prepared locally.
+- Cloud rollout is gated until the owner configures the Azure Standard resource, Entra registration, Table Storage, GitHub tenant variable, deployment token, and explicit `AZURE_DEPLOY_ENABLED=true` variable.
+- Never commit or print the Entra client secret, SWA deployment token, or Table Storage connection string.
+- Local validation: 105 Node tests passed; all 94 production browser test cases and 8 studio test cases reported success; Azure config generation passed with a dummy tenant and correctly failed without one.
 
 ## Next Step
-none
+Owner completes the Azure/GitHub settings in `docs/azure-static-web-apps.md`; then trigger the main-branch workflow and verify company-tenant allow/deny plus leaderboard storage.

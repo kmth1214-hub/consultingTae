@@ -10,6 +10,7 @@
     "dev": "vite",
     "dev:leaderboard": "swa start http://127.0.0.1:5173 --api-location api",
     "build": "vite build",
+    "build:azure": "npm run build && node scripts/write-swa-config.mjs",
     "preview": "vite preview",
     "test": "node --test tests/*.test.cjs tests/*.test.mjs tests/api/*.test.cjs",
     "test:e2e": "playwright test",
