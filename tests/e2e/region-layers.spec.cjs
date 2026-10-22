@@ -121,7 +121,12 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
         const x = Math.floor(canvas.width * .5);
         return [.002, Math.max(.003, edgeRatio - .01), Math.max(.002, edgeRatio - .01), edgeRatio + .01].map(ratio => {
           const y = Math.floor(canvas.height * ratio);
-          return [...context.getImageData(x, y, 1, 1).data].slice(0, 3);
+          const patch = context.getImageData(Math.max(0, x - 2), Math.max(0, y - 2), 5, 5).data;
+          return [0, 1, 2].map(channel => {
+            let total = 0;
+            for (let pixel = channel; pixel < patch.length; pixel += 4) total += patch[pixel];
+            return total / 25;
+          });
         });
       }, { base64: screenshot.toString('base64'), edgeRatio });
       const topColorDistance = samples[0].reduce((sum, channel, index) => sum + Math.abs(channel - samples[1][index]), 0);
