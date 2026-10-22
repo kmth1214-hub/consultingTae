@@ -219,11 +219,14 @@ test('session supports full-vector angles and only the new phases; invalid metad
     assert.deepEqual(session.getSnapshot().run, snapshot);
   }
   assert.deepEqual(session.getSnapshot().run, before);
-  const shotMeta = { impactKind: 'obstacle', obstacleId: 'forest-1-obstacle-0', obstacleKind: 'log', obstacleTargetIds: [], rolling: false, reverse: false };
+  const shotMeta = { impactKind: 'obstacle', obstacleId: 'forest-1-obstacle-0', obstacleKind: 'log', obstacleTargetIds: [], rolling: true, reverse: false };
   assert.equal(actions.fireShot({ selectedTargetId: null, shotMeta }).accepted, true);
   assert.deepEqual(session.getSnapshot().lastEvent.shotMeta, shotMeta);
+  assert.equal(session.getSnapshot().lastEvent.obstacleEffect.kind, 'log-strike');
   shotMeta.obstacleId = 'changed';
+  shotMeta.obstacleTargetIds.push('changed');
   assert.equal(session.getSnapshot().lastEvent.shotMeta.obstacleId, 'forest-1-obstacle-0');
+  assert.deepEqual(session.getSnapshot().lastEvent.shotMeta.obstacleTargetIds, []);
   assert.equal('shotMeta' in session.getSnapshot().run, false);
   const responseId = session.getSnapshot().enemyResponse.id;
   const committed = structuredClone(session.getSnapshot().run);

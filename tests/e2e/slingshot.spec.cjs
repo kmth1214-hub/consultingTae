@@ -112,7 +112,7 @@ test('weak and reverse misses spend one shot each; blur during flight cancels wi
   expect((await snapshot(page)).events.filter(e => e.name === 'resolveProjectile')).toHaveLength(2);
 });
 
-test('solid prop stops the candy at its visible polygon and no enemy behind receives damage', async ({ page }) => {
+test('solid prop stops flight and applies the regional collision effect once', async ({ page }) => {
   await dragPull(page, { angleDeg: 0, powerRatio: 1 }); await page.mouse.up();
   await phase(page, 'launching');
   await expect(arena(page)).toHaveAttribute('data-impact-kind', 'obstacle');
@@ -120,8 +120,11 @@ test('solid prop stops the candy at its visible polygon and no enemy behind rece
   await expect(page.locator(`.scene-scenery [data-obstacle-id="${id}"]`)).toHaveCount(1);
   await phase(page, 'idle');
   const trace = await snapshot(page);
-  expect(trace.run.enemies[0].hp).toBe(4); expect(trace.lastEvent.hits).toEqual([]);
-  await expect(page.locator('.battle-status')).toContainText('장애물에 막혔어요');
+  expect(trace.lastEvent.hits.map(hit => hit.damage)).toEqual([3]);
+  await expect(page.locator('.battle-status')).toContainText('통나무 충돌');
+  expect(trace.lastEvent.obstacleEffect.kind).toBe('log-strike');
+  await expect(arena(page)).toHaveAttribute('data-obstacle-effect', 'log-strike');
+  expect(trace.run.enemies[0].hp).toBe(1);
 });
 
 test('a vertical downward shot is legal, lands promptly and consumes one ordinary miss', async ({ page }) => {

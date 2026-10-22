@@ -5,10 +5,10 @@ export const idleAim = () => ({ phase: 'idle', pointerId: null, origin: null,
   delta: { x: 0, y: 0 }, direction: { x: 1, y: 0 }, angleDeg: 0, powerRatio: 0,
   maxDragPx: 0, hasMoved: false, ready: false, launchId: null });
 
-export function useAimController({ arenaRef, ammo, disabled, onLaunch, onAimChange, onCancel }) {
+export function useAimController({ arenaRef, ammo, disabled, invertDirection = false, onLaunch, onAimChange, onCancel }) {
   const [aimState, setState] = useState(idleAim);
   const state = useRef(aimState), mounted = useRef(false), sequence = useRef(0), latest = useRef(null);
-  latest.current = { ammo, disabled, onLaunch, onAimChange, onCancel };
+  latest.current = { ammo, disabled, invertDirection, onLaunch, onAimChange, onCancel };
   const update = useCallback(patch => {
     const previous = state.current;
     state.current = { ...previous, ...patch };
@@ -71,7 +71,10 @@ export function useAimController({ arenaRef, ammo, disabled, onLaunch, onAimChan
     const delta = { x: event.clientX - current.origin.x, y: event.clientY - current.origin.y };
     const pull = getPull(delta, current.maxDragPx);
     if (!pull) { cancelAim(); return; }
-    update({ ...pull, delta, hasMoved: current.hasMoved || pull.distancePx > 0 });
+    const direction = latest.current.invertDirection
+      ? { x: -pull.direction.x, y: -pull.direction.y } : pull.direction;
+    update({ ...pull, direction, angleDeg: Math.atan2(-direction.y, direction.x) * 180 / Math.PI,
+      delta, hasMoved: current.hasMoved || pull.distancePx > 0 });
   }
   function onPointerUp(event) {
     if (event.pointerId !== state.current.pointerId || state.current.phase !== 'dragging') return;

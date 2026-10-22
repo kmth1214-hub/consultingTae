@@ -37,7 +37,7 @@ export default function ArenaScenery({ layout }) {
 }
 
 // A cosmetic timer never resolves combat; the frozen contact point owns this effect.
-export function ContactEffect({ impact, obstacles }) {
+export function ContactEffect({ impact, obstacles, effect }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => {
     setVisible(true);
@@ -47,7 +47,8 @@ export function ContactEffect({ impact, obstacles }) {
   if (!visible || !Number.isFinite(impact.point?.x) || !Number.isFinite(impact.point?.y)) return null;
   const prop = obstacles.find(o => o.id === impact.obstacleId);
   const color = prop?.kind === 'ice' ? '#d9faff' : prop?.kind === 'crate' ? '#e9c88c' : '#f1d2a3';
-  return <g data-testid="contact-effect" data-obstacle-impact={prop?.id} className="contact-effect"
+  return <g data-testid="contact-effect" data-obstacle-impact={prop?.id} data-effect={effect?.kind || undefined}
+    className={`contact-effect ${effect?.kind ? `contact-effect--${effect.kind}` : ''}`}
     transform={`translate(${impact.point.x} ${impact.point.y})`} style={{ '--contact-color': color }}>
     <circle className="contact-ring" r="17" fill="none" stroke={prop ? color : '#fff1bd'} strokeWidth="3" />
     {prop && Array.from({ length: 7 }, (_, i) => <g key={i} className="contact-particle" style={{ '--dx': `${Math.cos(i * 2.4) * (25 + i % 3 * 11)}px`, '--dy': `${-15 - i % 4 * 15}px` }}>

@@ -5,10 +5,15 @@ import BattleArena from './BattleArena.jsx';
 function combatMessage(event) {
   if (!event) return '아이템은 숫자키 1–4 · 조준 취소는 Esc';
   const damage = event.hits?.reduce((total, hit) => total + hit.damage, 0) || 0;
-  const action = event.key === 'heal' ? `체력 ${event.effect.healed} 회복`
+  const obstacle = event.obstacleEffect;
+  const obstacleMessage = obstacle?.kind === 'log-strike' ? `통나무 충돌 · 적 피해 ${obstacle.hits.reduce((sum, hit) => sum + hit.damage, 0)}`
+    : obstacle?.kind === 'ice-guard' ? '얼음 파괴 · 다음 적 공격 피해 50% 감소'
+      : obstacle?.kind === 'jar-burst' ? `항아리 폭발 · 전체 적 피해 ${obstacle.hits.reduce((sum, hit) => sum + hit.damage, 0)}`
+        : obstacle?.kind === 'aim-inversion' ? '혼돈의 역풍 · 다음 한 발 조작 반전' : null;
+  const action = obstacleMessage || (event.key === 'heal' ? `체력 ${event.effect.healed} 회복`
     : event.key === 'defense' ? '보호막 사용' : event.key === 'fireball' ? '다음 사탕 피해 2배'
       : event.missed ? event.shotMeta?.impactKind === 'obstacle' ? '장애물에 막혔어요'
-        : event.shotMeta?.reverse ? '뒤로 날아갔어요' : '빗나갔어요' : `명중 · 피해 ${damage}`;
+        : event.shotMeta?.reverse ? '뒤로 날아갔어요' : '빗나갔어요' : `명중 · 피해 ${damage}`);
   const attack = event.enemyAttack;
   return `${action}${attack ? attack.blocked ? ' · 적 공격 차단!' : ` · 적 반격 −${attack.damage}` : ''}`;
 }

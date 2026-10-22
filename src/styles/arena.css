@@ -142,6 +142,8 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .hud-surface { cursor: default; }
 .projectile-candy { filter: drop-shadow(0 2px 3px #55392b70); }
 .projectile-candy.is-fiery { filter: drop-shadow(0 0 9px #ff782b); }
+.projectile-candy[data-rolling="true"] { filter: drop-shadow(0 2px 5px #9b642a88); }
+.roll-dust { fill: #d5bd88; opacity: .6; animation: roll-dust 180ms ease-in-out infinite alternate; }
 .launcher-button { cursor: grab; touch-action: none; }
 .launcher-button.is-drawn { cursor: grabbing; }
 .launcher-button.is-releasing svg { animation: sling-recoil 340ms ease-out; }
@@ -149,6 +151,10 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .shot-impact { animation: shot-contact 600ms ease-out both; transform-box: fill-box; transform-origin: center; }
 .contact-ring { transform-box: fill-box; transform-origin: center; animation: contact-ring 420ms ease-out both; }
 .contact-particle { animation: contact-dust 420ms ease-out both; }
+.contact-effect--ice-guard .contact-ring { stroke: #b9f5ff; stroke-width: 5; }
+.contact-effect--jar-burst .contact-ring { stroke: #ffdb83; stroke-width: 5; }
+.contact-effect--aim-inversion .contact-ring { stroke: #c7a5ff; stroke-width: 5; stroke-dasharray: 5 4; }
+@keyframes roll-dust { from { opacity: .2; transform: translateY(-2px) scale(.75); } to { opacity: .75; transform: translateY(2px) scale(1.1); } }
 @keyframes contact-ring { from { opacity: .9; transform: scale(.55); } to { opacity: 0; transform: scale(1.8); } }
 @keyframes contact-dust { from { opacity: .9; transform: translate(0, 0); } to { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
 @keyframes shot-contact { from { opacity: 1; transform: scale(.5); } to { opacity: 0; transform: scale(2); } }

@@ -28,8 +28,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
     enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss })) }), [run.area, run.round, slotKey]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const activeFlight = useRef(null);
-  const makeSolution = pull => planShot({ layout, pull: run.pendingAimInversion
-    ? { ...pull, direction: { x: -pull.direction.x, y: -pull.direction.y } } : pull, enemies: run.enemies,
+  const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
     windAvailable: run.weapons.some(w => w.id === 'wind-candy') && !run.roundEffects.windHomingUsed });
   function clearFlight() { activeFlight.current = null; setFlight(null); }
   function failLaunch() { controller.cancelAim(); setRetry('조준을 다시 잡고 당겨 주세요.'); }
@@ -41,7 +40,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
     focusRef.current = shot.path.start;
     setFlight(shot);
   }
-  const controller = useAimController({ arenaRef, ammo: run.ammo,
+  const controller = useAimController({ arenaRef, ammo: run.ammo, invertDirection: run.pendingAimInversion,
     disabled: Boolean(run.terminal || enemyResponse), onLaunch: startFlight, onCancel: clearFlight,
     onAimChange: state => {
       if (state.phase === 'dragging') { setImpact(null); setRetry(''); }
@@ -60,10 +59,14 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
     if (activeFlight.current !== shot.id) return;
     activeFlight.current = null;
     controller.completeLaunch(shot.id, () => {
-      setImpact({ id: shot.id, point: sampleAtDistance(shot.path, shot.impactDistance), kind: shot.impactKind, obstacleId: shot.obstacleId });
+      setImpact({ id: shot.id, point: sampleAtDistance(shot.path, shot.impactDistance), kind: shot.impactKind,
+        obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind, rollStartDistance: shot.rollStartDistance,
+        impactDistance: shot.impactDistance, rollDistance: shot.rollDistance,
+        rolling: shot.rollStartDistance !== null && shot.impactDistance > shot.rollStartDistance });
       onFire({ hitIds: shot.hitIds, selectedTargetId: shot.selectedTargetId,
         shotMeta: { impactKind: shot.impactKind, obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind,
-          obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollDistance > 0, reverse: shot.reverse } });
+          obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollStartDistance !== null
+            && shot.impactDistance > shot.rollStartDistance, reverse: shot.reverse } });
     });
     setFlight(current => current?.id === shot.id ? null : current);
   }
@@ -71,7 +74,12 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
     <div ref={arenaRef} className={`battle-arena battle-arena--${run.area}`} tabIndex={0} role="group" aria-label="전투 맵"
       data-camera-mode={camera.reducedMotion ? 'overview' : mode}
       data-aim-phase={enemyResponse ? 'responding' : state.phase} data-enemy-phase={enemyResponse?.stage || 'idle'}
-      data-impact-kind={flight?.impactKind} data-obstacle-id={flight?.obstacleId || undefined} aria-describedby="aim-instructions"
+      data-impact-kind={flight?.impactKind || lastImpact?.kind} data-obstacle-id={flight?.obstacleId || lastImpact?.obstacleId || undefined}
+      data-roll-start-distance={flight?.rollStartDistance ?? lastImpact?.rollStartDistance ?? undefined}
+      data-roll-distance={flight?.rollDistance ?? lastImpact?.rollDistance ?? undefined}
+      data-shot-rolling={flight ? undefined : lastImpact ? (lastImpact.rolling ? 'true' : 'false') : undefined}
+      data-aim-inverted={run.pendingAimInversion ? 'true' : undefined}
+      data-obstacle-effect={lastEvent?.obstacleEffect?.kind || undefined} aria-describedby="aim-instructions"
       onPointerDown={controller.onPointerDown} onPointerMove={controller.onPointerMove} onPointerUp={controller.onPointerUp}
       onPointerCancel={controller.onPointerCancel} onLostPointerCapture={controller.onLostPointerCapture}
       onContextMenu={controller.onContextMenu} onKeyDown={controller.onKeyDown}>
@@ -87,7 +95,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
             visible={state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} onFailure={failLaunch}
             onProgress={({ id, point }) => { if (activeFlight.current === id) focusRef.current = point; }} />}
-          {lastImpact && <ContactEffect key={lastImpact.id} impact={lastImpact} obstacles={layout.obstacles} />}
+          {lastImpact && <ContactEffect key={lastImpact.id} impact={lastImpact} effect={lastEvent?.obstacleEffect} obstacles={layout.obstacles} />}
         </svg>
         <MonsterGroup groupRef={enemyGroupRef} enemies={run.enemies} placements={layout.enemies} layout={layout} travelMs={travelMs}
           lastEvent={lastEvent} response={enemyResponse} selectedTargetId={solution?.selectedTargetId || flight?.selectedTargetId} />
@@ -102,6 +110,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
       </div>
     </div>
     <p id="aim-instructions" className="aim-instructions" role="status" aria-live="polite">{enemyResponse
-      ? '적의 반격 중 · 쉴드는 적의 공격과 특수 효과를 막아줍니다.' : retry || INSTRUCTIONS[state.phase]}</p>
+      ? '적의 반격 중 · 쉴드는 적의 공격과 특수 효과를 막아줍니다.' : retry || (run.pendingAimInversion
+        ? state.phase === 'dragging' ? '혼돈의 역풍 · 드래그 방향이 양 축 모두 반대로 적용 중 · 놓으면 발사' : '혼돈의 역풍 · 다음 한 발 조작 반전'
+        : INSTRUCTIONS[state.phase])}</p>
   </>;
 }

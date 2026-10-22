@@ -6,6 +6,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
   const wake = flight.fireball ? ['#ff6c32', '#ff9f4d'] : flight.path?.kind === 'homing' ? ['#72d9c0', '#b7f8d4'] : ['#ffe5a2', '#ffe9af'];
   const candyRef = useRef(null);
   const trailRef = useRef(null), trailGlowRef = useRef(null), gradientRef = useRef(null);
+  const rollDustRef = useRef(null);
   const complete = useRef(onComplete);
   complete.current = { onComplete, onProgress, onFailure };
   useEffect(() => {
@@ -23,9 +24,17 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
       }
       try {
         const distance = progress * flight.impactDistance;
+        const rolling = Number.isFinite(flight.rollStartDistance) && distance > flight.rollStartDistance;
         const point = sampleAtDistance(flight.path, distance);
         complete.current.onProgress?.({ id: flight.id, point });
-        candyRef.current.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${reduced ? 0 : progress * 600})`);
+        candyRef.current.dataset.rolling = String(rolling);
+        const rollDistance = rolling ? distance - flight.rollStartDistance : 0;
+        const rotation = reduced ? 0 : rolling ? 600 + rollDistance * 3.4 : progress * 600;
+        candyRef.current.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${rotation})`);
+        if (rollDustRef.current) {
+          rollDustRef.current.style.display = !reduced && rolling ? '' : 'none';
+          rollDustRef.current.setAttribute('transform', `translate(${point.x} ${point.y + 13})`);
+        }
         if (!reduced) {
           // Decorative wake samples only the path already flown; never reveal the landing point.
           const tailStart = Math.max(0, distance - 86);
@@ -66,6 +75,9 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
       <circle r="10" fill={`url(#${id}-shell)`} stroke={flight.fireball ? '#c85f30' : '#9b6936'} strokeWidth="1.5" />
       <path d="M-5-2Q0-8 5-2T-3 4" fill="none" stroke="#fff8d9" strokeWidth="3" strokeLinecap="round" />
       <circle cx="-3" cy="-4" r="2" fill="#fffce9" />
+    </g>
+    <g ref={rollDustRef} className="roll-dust" aria-hidden="true" style={{ display: 'none' }}>
+      <circle cx="-12" cy="1" r="3" /><circle cx="-24" cy="5" r="2" /><circle cx="-36" cy="0" r="3.5" />
     </g>
   </>;
 }
