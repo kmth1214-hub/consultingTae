@@ -4,7 +4,8 @@ test('production landing and character selection start the real default engine s
   await installGame(page);
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('오븐 밖으로');
-  await expect(page.getByRole('button', { name: /로그인|리더보드|관리자|QR/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /로그인|관리자|QR/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '리더보드 보기' })).toBeVisible();
   await page.getByRole('button', { name: '모험 시작' }).click();
   await expect(page.getByRole('button', { name: /^우유맛 쿠키/ })).toBeDisabled();
   await expect(page.getByRole('button', { name: /^바람궁수 쿠키/ })).toBeDisabled();

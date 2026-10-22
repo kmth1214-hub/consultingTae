@@ -41,6 +41,13 @@ async function installGame(page, fixture = {}) {
 const test = base.extend({
   browserHealth: [async ({ page }, use, testInfo) => {
     const errors = [], assetFailures = [];
+    await page.route('**/api/leaderboard', async route => {
+      if (route.request().method() === 'POST') {
+        const submission = route.request().postDataJSON();
+        return route.fulfill({ json: { saved: true, record: { rank: 1, cookieId: submission.cookieId, score: submission.score } } });
+      }
+      return route.fulfill({ json: { entries: [], personalBest: null } });
+    });
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => { if (message.type() === 'error') errors.push(`${message.text()} (${message.location().url})`); });
     page.on('response', response => {

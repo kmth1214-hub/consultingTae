@@ -1,16 +1,16 @@
 # Current Context
 
 ## Active Plan
-[Company Leaderboard](./plans/2026-10-22-company-leaderboard.md)
+[React First Release](./plans/2026-10-21-react-first-release.md)
 
 ## Active Phase
-[P01 Company Board](./phases/2026-10-22-company-leaderboard/P01-company-board/phase.md)
+[P02 Azure Release](./phases/2026-10-21-react-first-release/P02-azure-release/phase.md)
 
 ## Active Task
-[T03 Local SWA Workflow, Regression, and Azure Plan Alignment](./phases/2026-10-22-company-leaderboard/P01-company-board/T03-leaderboard-integration.md)
+[T01 Azure Static Web App](./phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md)
 
 ## Status
-- T01 API and T02 UI/submission are implemented, validated, and committed. Azure resources and live deployment remain in React First Release P02.
+- Company leaderboard T01-T03 are complete, validated, and committed. The next task is Azure Static Web Apps deployment; owner-supplied tenant, resource, and token values are still required for live deployment verification.
 
 ## Next Step (IMPORTANT)
-Read `phases/2026-10-22-company-leaderboard/P01-company-board/T03-leaderboard-integration.md` and implement the local SWA workflow, integrated regression checks, and Azure release-plan alignment.
+Read `phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md` and implement the tenant-restricted Azure Static Web Apps configuration and deployment workflow when owner-provided Azure inputs are available.
