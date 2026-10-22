@@ -1,7 +1,7 @@
 const { test, expect, installGame, start, shoot, dragPull, phase, arena, snapshot } = require('./support.cjs');
 
 for (const [area, material] of [['forest', 'log'], ['snow', 'ice'], ['city', 'crate'], ['chaos', 'log']]) {
-  test(`${area} solid material stops a real mouse-launched candy at its registered obstacle`, async ({ page }) => {
+  test(`${area} solid material stops a real mouse-launched candy and applies its regional effect`, async ({ page }) => {
     await installGame(page, { initial: { area } });
     await start(page);
     await dragPull(page, { angleDeg: 0, powerRatio: 1 });
@@ -18,8 +18,20 @@ for (const [area, material] of [['forest', 'log'], ['snow', 'ice'], ['city', 'cr
     await phase(page, 'idle');
     const trace = await snapshot(page);
     expect(impactKind).toBe('obstacle');
-    expect(trace.lastEvent.hits).toEqual([]);
-    expect(trace.run.enemies.every(enemy => enemy.hp === enemy.maxHp)).toBe(true);
+    const expectedEffect = { forest: 'log-strike', snow: 'ice-guard', city: 'jar-burst', chaos: 'jar-burst' }[area];
+    expect(trace.lastEvent.obstacleEffect.kind).toBe(expectedEffect);
+    if (area === 'forest') {
+      expect(trace.lastEvent.hits.map(hit => hit.damage)).toEqual([3]);
+      expect(trace.run.enemies[0].hp).toBe(trace.run.enemies[0].maxHp - 3);
+      expect(trace.run.score).toBe(3);
+    } else if (area === 'snow') {
+      expect(trace.lastEvent.enemyAttack.damageReduction).toBe(.5);
+      expect(trace.run.enemies.every(enemy => enemy.hp === enemy.maxHp)).toBe(true);
+    } else {
+      expect(trace.lastEvent.obstacleEffect.hits.map(hit => hit.damage)).toEqual(trace.run.enemies.map(() => 2));
+      expect(trace.run.enemies.every(enemy => enemy.hp === enemy.maxHp - 2)).toBe(true);
+      expect(area === 'chaos' ? trace.run.bonusScore : trace.run.score).toBe(trace.run.enemies.length * 2);
+    }
     expect(trace.events.filter(event => event.name === 'resolveProjectile')).toHaveLength(1);
   });
 }
@@ -45,7 +57,8 @@ test('the same straight full-power pull stops for an ordinary cookie and curves 
   await phase(page, 'idle');
   const ordinary = await snapshot(page);
   expect(ordinaryImpactKind).toBe('obstacle');
-  expect(ordinary.run.enemies[0].hp).toBe(4);
+  expect(ordinary.run.enemies[0].hp).toBe(1);
+  expect(ordinary.run.score).toBe(3);
 
   const windPage = await page.context().newPage();
   const browserErrors = [];

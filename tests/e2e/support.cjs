@@ -4,7 +4,7 @@ const { test: base, expect } = require('@playwright/test');
 // engine assignment; normal cases delegate every action unchanged to the real engine.
 async function installGame(page, fixture = {}) {
   await page.addInitScript(config => {
-    Math.random = () => .5;
+    Math.random = () => typeof config.random === 'number' ? config.random : .5;
     const trace = { run: null, lastEvent: null, lastAction: null, events: [], creates: 0 };
     window.__gameTest = trace;
     let api;

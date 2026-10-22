@@ -13,10 +13,16 @@ test('shield intercepts a visible incoming attack from the actual enemy without 
   await expect(attack).toBeVisible();
   await expect(attack).toHaveAttribute('data-attacker-id', trace.lastEvent.enemyAttack.enemyId);
   await expect(page.locator('.monster.is-attacking')).toHaveCount(1);
+  await expect.poll(() => page.evaluate(() => ({
+    stage: document.querySelector('[data-testid="enemy-attack"]')?.dataset.stage,
+    characterId: document.querySelector('[data-testid="player-cookie"]')?.dataset.characterId,
+    pose: document.querySelector('[data-testid="player-cookie"]')?.dataset.playerPose,
+    shield: Boolean(document.querySelector('[data-testid="player-shield"]'))
+  }))).toEqual({ stage: 'impact', characterId: 'adventurer', pose: 'blocked', shield: true });
+  await expect(page.getByTestId('player-shield')).toBeVisible();
   await expect(attack).toHaveAttribute('data-stage', 'impact');
   await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-character-id', 'adventurer');
   await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'blocked');
-  await expect(page.getByTestId('player-shield')).toBeVisible();
   await expect(page.getByTestId('player-cookie').locator('img')).toHaveJSProperty('naturalWidth', 312);
   await expect(hp(page)).toHaveText('100');
   await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-blocked-1440.jpg' });
