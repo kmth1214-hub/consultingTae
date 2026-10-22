@@ -10,6 +10,20 @@ test('creates a fresh Forest run with one snake, 100 HP, and nine shots', () => 
   assert.deepEqual(state.enemies.map(enemy => enemy.kind), ['snake']);
 });
 
+test('main regions keep regular rounds 1–2, put their boss in round 3, and reject other rounds', () => {
+  for (const area of ['forest', 'snow', 'city']) {
+    for (const round of [1, 2]) {
+      assert.equal(engine.createRoundEnemies(area, round).every(enemy => !enemy.isBoss), true);
+    }
+    const bosses = engine.createRoundEnemies(area, 3);
+    assert.equal(bosses.length, 1);
+    assert.equal(bosses[0].isBoss, true);
+  }
+  for (const area of ['forest', 'snow', 'city']) {
+    for (const round of [0, 4, 1.5]) assert.throws(() => engine.createRoundEnemies(area, round), RangeError);
+  }
+});
+
 test('samples C-grade damage with the documented weighted outcomes and caps zero rolls', () => {
   assert.equal(engine.rollWeaponDamage(() => 0.005, 'C', 0), 0);
   assert.equal(engine.rollWeaponDamage(() => 0.02, 'C', 0), 1);
@@ -76,7 +90,7 @@ test('clearing the final enemy ends the action before an enemy response', () => 
 });
 
 test('boss special attack replaces the normal attack on its third attack', () => {
-  const state = engine.createRunState({ area: 'forest', round: 5 });
+  const state = engine.createRunState({ area: 'forest', round: 3 });
   const boss = state.enemies[0];
   state.playerHp = 100;
   engine.resolveEnemyTurn(state, () => 0);
@@ -98,7 +112,7 @@ test('Heal spends one item, restores 25 up to max HP, and resolves one enemy att
 });
 
 test('Defense consumes its turn and cancels a boss special completely', () => {
-  const state = engine.createRunState({ area: 'forest', round: 5, inventory: { defense: 1 }, rng: () => 0.99 });
+  const state = engine.createRunState({ area: 'forest', round: 3, inventory: { defense: 1 }, rng: () => 0.99 });
   state.enemies[0].attackCount = 2;
   const event = engine.useConsumable(state, 'defense', { rng: () => 0.99 });
   assert.equal(event.enemyAttack.blocked, true);
@@ -118,7 +132,7 @@ test('Fireball doubles only the next permanent projectile and preserves a zero r
 });
 
 test('Spear hits up to three enemies with falling damage, even when a target survives', () => {
-  const state = engine.createRunState({ area: 'forest', round: 4, inventory: { spear: 2 }, rng: () => 0.5 });
+  const state = engine.createRunState({ area: 'city', round: 2, inventory: { spear: 2 }, rng: () => 0.5 });
   state.enemies = state.enemies.slice(0, 3);
   state.enemies.forEach((enemy) => { enemy.hp = 10; enemy.maxHp = 10; });
   const event = engine.useConsumable(state, 'spear', { rng: () => 0.5 }); // 4, 3, 2
@@ -180,7 +194,7 @@ test('matching C and B copies require an explicit fusion decision, while A copie
 
 test('camp healing enters Snow round 1 with refreshed ammo and preserved run progress', () => {
   const state = engine.createRunState({ playerHp: 50, ammo: 3, score: 100 });
-  state.area = 'forest'; state.round = 5; state.terminal = 'round-clear';
+  state.area = 'forest'; state.round = 3; state.terminal = 'round-clear';
   const choices = engine.drawRewardChoices(state, () => 0.5);
   engine.applyRewardChoice(state, 'weapon', choices.weapons[0].choiceId, { mergeDuplicate: true });
   engine.applyRewardChoice(state, 'consumable', choices.consumables[0].choiceId);
@@ -194,7 +208,7 @@ test('camp healing enters Snow round 1 with refreshed ammo and preserved run pro
 });
 
 test('City boss reward completion produces a live clear summary', () => {
-  const state = engine.createRunState({ area: 'city', round: 5, score: 432, now: 1000 });
+  const state = engine.createRunState({ area: 'city', round: 3, score: 432, now: 1000 });
   state.terminal = 'round-clear';
   const choices = engine.drawRewardChoices(state, () => 0.5);
   engine.applyRewardChoice(state, 'weapon', choices.weapons[0].choiceId, { mergeDuplicate: true });
@@ -204,6 +218,13 @@ test('City boss reward completion produces a live clear summary', () => {
   assert.equal(result.summary.score, 432);
   assert.equal(result.summary.finalScore, 434); // one starter item plus the chosen reward
   assert.equal(result.summary.durationMs, 4000);
+});
+
+test('main progression rejects advancing an out-of-range round', () => {
+  const state = engine.createRunState({ area: 'forest', round: 1 });
+  state.round = 4;
+  state.terminal = 'round-clear';
+  assert.deepEqual(engine.advanceRound(state), { accepted: false, reason: 'invalid-round' });
 });
 
 test('a full consumable slot is excluded from reward choices and cannot exceed three', () => {
@@ -216,7 +237,7 @@ test('a full consumable slot is excluded from reward choices and cannot exceed t
 });
 
 test('Oven Robot overheat that removes the final ammo ends the run immediately', () => {
-  const state=engine.createRunState({area:'city',round:5,ammo:1,playerHp:100});
+  const state=engine.createRunState({area:'city',round:3,ammo:1,playerHp:100});
   state.enemies[0].attackCount=2;
   const event=engine.resolveEnemyTurn(state,()=>0.5);
   assert.equal(event.special,'oven-overheat');

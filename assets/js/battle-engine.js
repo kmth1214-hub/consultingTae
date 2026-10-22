@@ -6,6 +6,7 @@
   'use strict';
 
   const AREAS = Object.freeze(['forest', 'snow', 'city', 'chaos']);
+  const MAIN_REGION_ROUND_COUNT = 3;
   const GRADE_MULTIPLIER = Object.freeze({ C: 1, B: 2, A: 4 });
   const DAMAGE_WEIGHTS = Object.freeze([0.02, 0.40, 0.40, 0.10, 0.08]);
   const AREA_BOSSES = Object.freeze({
@@ -75,11 +76,14 @@
     if (area === 'chaos' && (!Number.isInteger(round) || round < 1 || round > 3)) {
       throw new RangeError('Chaos round must be 1, 2, or 3');
     }
-    const roundNumber = Math.max(1, Math.floor(Number(round) || 1));
+    if (area !== 'chaos' && (!Number.isInteger(round) || round < 1 || round > MAIN_REGION_ROUND_COUNT)) {
+      throw new RangeError(`Main region round must be 1, 2, or ${MAIN_REGION_ROUND_COUNT}`);
+    }
+    const roundNumber = round;
     if (area === 'chaos' && roundNumber === 3) {
       return Object.values(AREA_BOSSES).map(boss => createBoss(boss, area, true));
     }
-    if (roundNumber >= 5 && AREA_BOSSES[area]) {
+    if (roundNumber === MAIN_REGION_ROUND_COUNT && AREA_BOSSES[area]) {
       return [createBoss(AREA_BOSSES[area], area, false)];
     }
 
@@ -251,13 +255,16 @@
       if (state.round === 3) { state.terminal='bonus-clear'; return {accepted:true,terminal:'bonus-clear',summary:getRunSummary(state,options&&options.now)}; }
       state.round++;enterRound(state,options);return {accepted:true,area:state.area,round:state.round};
     }
+    if (!Number.isInteger(state.round) || state.round < 1 || state.round > MAIN_REGION_ROUND_COUNT) {
+      return {accepted:false,reason:'invalid-round'};
+    }
     if(!state.selectedRewards.weapon||!state.selectedRewards.consumable)return {accepted:false,reason:'rewards-incomplete'};
-    if(state.area==='city'&&state.round>=5){
+    if(state.area==='city'&&state.round===MAIN_REGION_ROUND_COUNT){
       state.terminal='clear';
       state.mainRunSummary=Object.freeze(getRunSummary(state,options&&options.now));
       return {accepted:true,terminal:'clear',summary:state.mainRunSummary};
     }
-    if(state.round>=5){state.pendingCamp=true;return {accepted:true,pendingCamp:true};}
+    if(state.round===MAIN_REGION_ROUND_COUNT){state.pendingCamp=true;return {accepted:true,pendingCamp:true};}
     state.round+=1;enterRound(state,options);return {accepted:true,area:state.area,round:state.round};
   }
   function chooseCampReward(state,choice,options) {
@@ -289,7 +296,8 @@
     return {accepted:true,effect,area:state.area,round:state.round};
   }
   function startBonusRoute(state, options) {
-    if (!state || state.terminal !== 'clear' || state.area !== 'city' || state.round !== 5 || state.bonusMode) {
+    if (!state || state.terminal !== 'clear' || state.area !== 'city'
+      || state.round !== MAIN_REGION_ROUND_COUNT || state.bonusMode) {
       return {accepted:false,reason:'bonus-not-ready'};
     }
     const config=options||{};
@@ -316,7 +324,7 @@
   }
 
   function markRoundClear(state) {
-    if (state.area === 'snow' && state.round === 5) state.snowAreaCleared = true;
+    if (state.area === 'snow' && state.round === MAIN_REGION_ROUND_COUNT) state.snowAreaCleared = true;
     state.terminal = state.area === 'chaos' && state.round === 3 ? 'bonus-clear' : 'round-clear';
   }
 

@@ -11,7 +11,7 @@ function sturdyEnemy(state) {
   return state.enemies[0].id;
 }
 function clearCity() {
-  const state = create(['adventurer-candy'], { area: 'city', round: 5, score: 100, now: 0 });
+  const state = create(['adventurer-candy'], { area: 'city', round: 3, score: 100, now: 0 });
   state.terminal = 'round-clear';
   const rewards = engine.drawRewardChoices(state, () => 0.5);
   engine.applyRewardChoice(state, 'weapon', rewards.weapons[0].choiceId, { mergeDuplicate: false });
@@ -63,7 +63,7 @@ test('zero damage counts as a collision and Wizard boosts the third collision wi
 });
 
 test('one projectile counts successive spillover collisions, but stops at a surviving enemy', () => {
-  const state = create(['wizard-orb'], { area: 'forest', round: 4 });
+  const state = create(['wizard-orb'], { area: 'city', round: 2 });
   state.enemies[0].hp = 1;
   state.enemies[1].hp = 1;
   const result = engine.resolveProjectile(state, { hitIds: state.enemies.map(e => e.id), damage: 3, rng: () => 0 });
@@ -79,7 +79,7 @@ test('Milk heals at the third collision, caps HP, and keeps counters across area
   const third = engine.resolveProjectile(state, { hitIds: [id], damage: 0, rng: () => 0 });
   assert.equal(third.healedPlayer, 1);
   assert.equal(state.playerHp, 48);
-  state.area = 'forest'; state.round = 5; state.pendingCamp = true;
+  state.area = 'forest'; state.round = 3; state.pendingCamp = true;
   engine.chooseCampReward(state, 'heal', { rng: () => 0 });
   assert.equal(state.effectCounters.projectileCollisions, 3);
   state.effectCounters.projectileCollisions = 5;
@@ -88,7 +88,7 @@ test('Milk heals at the third collision, caps HP, and keeps counters across area
 });
 
 test('Defense takes priority over Milk boss protection; Milk cancels the next whole attack once', () => {
-  const state = create(['milk-candy', 'milk-candy'], { area: 'city', round: 5, inventory: { defense: 1 } });
+  const state = create(['milk-candy', 'milk-candy'], { area: 'city', round: 3, inventory: { defense: 1 } });
   state.enemies[0].attackCount = 2;
   const defense = engine.useConsumable(state, 'defense', { rng: () => 0 });
   assert.equal(defense.enemyAttack.blockedBy, 'defense');
@@ -128,7 +128,7 @@ test('round transitions reset Wind and Milk flags but retain run effect counters
 });
 
 test('Spear gets Alchemist use points but no permanent collision, Wizard, Milk heal, or Wind effect', () => {
-  const state = create(engine.WEAPON_CATALOG.map(w => w.id), { area: 'forest', round: 4, inventory: { spear: 1 }, playerHp: 50 });
+  const state = create(engine.WEAPON_CATALOG.map(w => w.id), { area: 'city', round: 2, inventory: { spear: 1 }, playerHp: 50 });
   state.enemies.forEach(e => { e.hp = e.maxHp = 10; });
   state.effectCounters.permanentWeaponHits = 2;
   state.effectCounters.projectileCollisions = 2;
@@ -180,7 +180,7 @@ test('fusion prompts have no side effects; declining keeps copies; C cannot merg
 
 test('camp duplicate offers a stable fusion choice without rerolling or silently upgrading', () => {
   const state = create(['alchemist-candy']);
-  state.area = 'forest'; state.round = 5; state.pendingCamp = true;
+  state.area = 'forest'; state.round = 3; state.pendingCamp = true;
   const first = engine.chooseCampReward(state, 'weapon', { rng: () => 0.5 });
   assert.equal(first.pendingCamp, true);
   assert.equal(first.requiresFusionChoice, true);
@@ -270,7 +270,7 @@ test('Chaos transitions bypass every reward/camp, refresh ammo, and end at bonus
 
 test('Snow boss clear emits an unlock flag for projectile and Spear, but Forest does not', () => {
   for (const source of ['projectile', 'spear']) {
-    const state = create([], { area: 'snow', round: 5, inventory: { spear: 1 } });
+    const state = create([], { area: 'snow', round: 3, inventory: { spear: 1 } });
     state.enemies[0].hp = 1;
     const result = source === 'spear'
       ? engine.useConsumable(state, 'spear', { rng: () => 0 })
@@ -301,7 +301,7 @@ test('invalid target does not spend the Wind charge and duplicate Wind copies ca
 });
 
 test('Fireball waits through Spear and doubles the next permanent shot only', () => {
-  const state = create(['adventurer-candy'], { area: 'forest', round: 4, inventory: { fireball: 1, spear: 1 } });
+  const state = create(['adventurer-candy'], { area: 'city', round: 2, inventory: { fireball: 1, spear: 1 } });
   state.enemies.forEach(e => { e.hp = e.maxHp = 20; });
   engine.useConsumable(state, 'fireball', { rng: () => 0 });
   engine.useConsumable(state, 'spear', { rng: () => 0 });
@@ -312,7 +312,7 @@ test('Fireball waits through Spear and doubles the next permanent shot only', ()
 });
 
 test('normal Oven Robot heals to 18 and a dead player cannot launch another projectile', () => {
-  const state = create([], { area: 'city', round: 5 });
+  const state = create([], { area: 'city', round: 3 });
   const robot = state.enemies[0];
   robot.hp = 17; robot.attackCount = 2;
   assert.equal(engine.resolveEnemyTurn(state, () => 0).healedEnemy, 1);
@@ -339,7 +339,7 @@ test('bonus waves can contain all five species and reject stale standard reward 
 test('a complete main run can choose rewards, clear both camps, and finish bonus without adding rewards', () => {
   const state = create(['adventurer-candy'], { inventory: { heal: 1 }, now: 0 });
   const visited = [];
-  for (let action = 0; action < 15; action++) {
+  for (let action = 0; action < 9; action++) {
     visited.push(`${state.area}:${state.round}`);
     const shot = engine.resolveProjectile(state, { damage: 100, hitIds: state.enemies.map(e => e.id), rng: () => 0 });
     assert.equal(shot.roundCleared, true);
@@ -352,8 +352,8 @@ test('a complete main run can choose rewards, clear both camps, and finish bonus
     assert.equal(next.accepted, true);
     if (next.pendingCamp) assert.equal(engine.chooseCampReward(state, 'heal', { rng: () => 0 }).accepted, true);
   }
-  assert.equal(visited.length, 15);
-  assert.deepEqual(visited.filter(value => value.endsWith(':5')), ['forest:5', 'snow:5', 'city:5']);
+  assert.equal(visited.length, 9);
+  assert.deepEqual(visited.filter(value => value.endsWith(':3')), ['forest:3', 'snow:3', 'city:3']);
   assert.equal(state.terminal, 'clear');
   assert.equal(state.snowAreaCleared, true);
   const main = engine.getRunSummary(state);
