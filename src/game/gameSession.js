@@ -17,7 +17,8 @@ const REASONS = {
 export function createGameSession({ rng = Math.random, now = Date.now, storage, engine = BattleEngine } = {}) {
   let sequence = 0;
   let state = { screen: 'home', profile: loadProfile(storage), selectedCharacter: null, run: null,
-    aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null, enemyResponse: null };
+    aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null, enemyResponse: null,
+    leaderboardReturnScreen: null };
   const listeners = new Set();
   const publish = patch => {
     state = { ...state, ...patch };
@@ -67,7 +68,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
   const actions = {
     startCharacterSelect() {
       publish({ screen: 'characters', run: null, selectedCharacter: null, fusion: null, outcome: null,
-        summary: null, lastEvent: null, enemyResponse: null, aim: initialAim(), notification: null });
+        summary: null, lastEvent: null, enemyResponse: null, aim: initialAim(), notification: null, leaderboardReturnScreen: null });
     },
     startRun(characterId) {
       if (state.screen !== 'characters') return reject('invalid-state');
@@ -165,6 +166,17 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       if (!event.accepted) return reject(event.reason);
       publish({ run, screen: 'battle', outcome: null, summary: null, aim: initialAim(), lastEvent: null });
       return event;
+    },
+    openLeaderboard() {
+      if (!['home', 'main-results'].includes(state.screen)) return reject('invalid-state');
+      publish({ screen: 'leaderboard', leaderboardReturnScreen: state.screen, notification: null });
+      return { accepted: true };
+    },
+    closeLeaderboard() {
+      if (state.screen !== 'leaderboard') return reject('invalid-state');
+      publish({ screen: state.leaderboardReturnScreen === 'main-results' ? 'main-results' : 'home',
+        leaderboardReturnScreen: null, notification: null });
+      return { accepted: true };
     },
     dismissNotification() { publish({ notification: null }); }
   };

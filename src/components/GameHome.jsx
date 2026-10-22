@@ -16,6 +16,9 @@ export default function GameHome({ session }) {
       </div>
       <AssetImage className="hero-cookie" src={ASSETS.characters.adventurer} />
     </section>
+    <div className="home-leaderboard-entry">
+      <button className="secondary-button" onClick={session.openLeaderboard}>리더보드 보기</button>
+    </div>
     <p className="game-footer">한 발씩, 더 멀리.</p>
   </div>;
 }

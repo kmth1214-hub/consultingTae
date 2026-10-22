@@ -135,6 +135,7 @@ test('15 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bon
   assert.equal(session.getSnapshot().summary.finalScore, finalScore);
   assert.ok(session.getSnapshot().summary.bonusScore > 0);
   assert.equal(session.getSnapshot().outcome, 'bonus-clear');
+  assert.equal(session.actions.openLeaderboard().accepted, false);
   assert.equal(session.actions.selectReward('weapon', 'old').accepted, false);
 });
 
@@ -152,12 +153,33 @@ test('empty/aiming items reject without spending turns; nine misses route to def
   for (let i = 0; i < 9; i++) { actions.fireShot(); finishResponse(session); }
   assert.equal(session.getSnapshot().screen, 'main-results');
   assert.equal(session.getSnapshot().outcome, 'defeat');
+  const resultRun = structuredClone(session.getSnapshot().run);
+  const resultSummary = structuredClone(session.getSnapshot().summary);
+  assert.equal(actions.openLeaderboard().accepted, true);
+  assert.equal(session.getSnapshot().screen, 'leaderboard');
+  assert.equal(session.getSnapshot().leaderboardReturnScreen, 'main-results');
+  assert.equal(actions.closeLeaderboard().accepted, true);
+  assert.equal(session.getSnapshot().screen, 'main-results');
+  assert.deepEqual(session.getSnapshot().run, resultRun);
+  assert.deepEqual(session.getSnapshot().summary, resultSummary);
   assert.equal(actions.fireShot().accepted, false);
   assert.equal(session.getSnapshot().run.ammo, 0);
   actions.startCharacterSelect();
   actions.startRun('wizard');
   assert.equal(session.getSnapshot().run.ammo, 9);
   assert.equal(session.getSnapshot().run.weapons[0].id, 'wizard-orb');
+});
+
+test('leaderboard opened from home returns to home and rejects entry from battle', () => {
+  const session = createGameSession({ storage: memoryStorage() });
+  assert.equal(session.actions.openLeaderboard().accepted, true);
+  assert.equal(session.getSnapshot().leaderboardReturnScreen, 'home');
+  assert.equal(session.actions.closeLeaderboard().accepted, true);
+  assert.equal(session.getSnapshot().screen, 'home');
+  session.actions.startCharacterSelect();
+  session.actions.startRun('adventurer');
+  assert.equal(session.actions.openLeaderboard().accepted, false);
+  assert.equal(session.getSnapshot().screen, 'battle');
 });
 
 test('visual layout keeps dead-enemy slots stable', () => {
