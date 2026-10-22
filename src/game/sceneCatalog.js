@@ -2,12 +2,12 @@ import { ASSETS } from './assetCatalog.js';
 
 export const SCENE_PROFILES = Object.freeze({
   forest: Object.freeze({ area: 'forest', renderer: 'forest', palette: Object.freeze({ sky: '#72d5d3', horizon: '#f0efbd', bank: '#527c51', ground: '#386c58', lane: '#deaa83', light: '#f8cdab', dark: '#af775d' }), panels: null }),
-  snow: profile('snow', '#91badf', '#edf5ff', '#a5c7da', '#739cb6', '#bad4e5', '#f4fbff', '#81a4c3'),
-  city: profile('city', '#654a75', '#f5c798', '#7b657d', '#49425f', '#927da5', '#d9b8bb', '#66547e'),
-  chaos: profile('chaos', '#23214d', '#b598e7', '#726296', '#292750', '#9f8abd', '#d2bce9', '#655783')
+  snow: profile('snow', '#55adfd', '#9bd2ff', '#edf5ff', '#a5c7da', '#739cb6', '#bad4e5', '#f4fbff', '#81a4c3'),
+  city: profile('city', '#8378c8', '#b09be0', '#f5c798', '#7b657d', '#49425f', '#927da5', '#d9b8bb', '#66547e'),
+  chaos: profile('chaos', '#212671', '#48458d', '#b598e7', '#726296', '#292750', '#9f8abd', '#d2bce9', '#655783')
 });
 
-function profile(area, sky, horizon, bank, ground, lane, light, dark) {
+function profile(area, sky, upperSky, horizon, bank, ground, lane, light, dark) {
   const layers = ASSETS.regionLayers[area];
   const meta = layers.metadata;
   if (meta.version !== 1 || meta.area !== area || !meta.panels?.west || !meta.panels?.east
@@ -27,7 +27,7 @@ function profile(area, sky, horizon, bank, ground, lane, light, dark) {
         y: 900 - meta.baselineRatio * height, sourceWidth: source.width, sourceHeight: source.height, side });
     });
   }
-  return Object.freeze({ area, renderer: 'panorama', palette: Object.freeze({ sky, horizon, bank, ground, lane, light, dark }), panels: Object.freeze(panels) });
+  return Object.freeze({ area, renderer: 'panorama', palette: Object.freeze({ sky, upperSky, horizon, bank, ground, lane, light, dark }), panels: Object.freeze(panels) });
 }
 
 export function getSceneProfile(area) {

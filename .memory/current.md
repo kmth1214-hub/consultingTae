@@ -1,17 +1,18 @@
-# Current Context
+﻿# Current Context
 
 ## Active Plan
-[Three-Round Regional Progression](./plans/2026-10-22-three-round-regional-progression.md)
+[Battlefield Sky and Enemy Projectile Visibility](./plans/2026-10-22-battlefield-sky-projectile-visibility.md)
 
 ## Active Phase
-[P01 Three-Round Progression](./phases/2026-10-22-three-round-regional-progression/P01-three-round-progression/phase.md)
+[P01 Scene and Projectile Clarity](./phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/phase.md)
 
 ## Active Task
-None — all Tasks in this plan are complete.
+[T02 Enemy Projectile Trail](./phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/T02-enemy-projectile-trail.md)
 
 ## Status
-- Status: complete. Forest, Snow, and City each have two regular rounds and a boss in round 3; Chaos remains unchanged.
-- React First Release P02 T01 Azure Static Web App remains a separate, pending deployment task requiring owner-supplied Azure tenant, application, resource, and deployment-token values.
+- T01 complete: sky color boundary blends across all regions at desktop and mobile sizes; 21 regional browser tests pass.
+- Enemy projectiles move along the existing arc, but no visible path/trail exists; T02 is active.
+- Candy Roll and Obstacle Interactions remains pending at its original task files; resume it after this focused visual fix.
 
 ## Next Step
-No pending Tasks remain in this plan. Azure deployment is the separate pending task in `phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md`.
+Read T02, add a visible travel-only trajectory behind enemy projectiles, and verify it without changing combat timing or damage.

@@ -65,6 +65,35 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
   });
 }
 
+for (const area of ['forest', 'snow', 'city', 'chaos']) {
+  for (const [width, height] of [[1440, 900], [390, 844]]) {
+    test(`${area} sky blends into distant artwork at ${width}x${height}`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await installGame(page, { initial: { area, round: 1 } });
+      await start(page); await readyArt(page);
+      const screenshot = await arena(page).screenshot();
+      const samples = await page.evaluate(async base64 => {
+        const image = new Image();
+        image.src = `data:image/png;base64,${base64}`;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width; canvas.height = image.height;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context.drawImage(image, 0, 0);
+        const x = Math.floor(canvas.width * .5);
+        return [.02, .075, .08, .09].map(ratio => {
+          const y = Math.floor(canvas.height * ratio);
+          return [...context.getImageData(x, y, 1, 1).data].slice(0, 3);
+        });
+      }, screenshot.toString('base64'));
+      const topColorDistance = samples[0].reduce((sum, channel, index) => sum + Math.abs(channel - samples[1][index]), 0);
+      const seamColorDistance = samples[2].reduce((sum, channel, index) => sum + Math.abs(channel - samples[3][index]), 0);
+      if (area !== 'forest' && width === 1440) expect(topColorDistance, `${area} upper sky should have a visible color transition`).toBeGreaterThan(10);
+      expect(seamColorDistance, `${area} sky seam should blend with the distant artwork`).toBeLessThan(30);
+    });
+  }
+}
+
 for (const [width, height, area, reduced] of [[2007, 1037, 'forest', false], [2560, 1080, 'city', false],
   [844, 390, 'snow', false], [390, 844, 'forest', false], [390, 844, 'snow', true],
   [390, 844, 'city', false], [390, 844, 'chaos', true]]) {

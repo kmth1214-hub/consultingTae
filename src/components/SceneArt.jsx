@@ -13,8 +13,10 @@ function PanoramaLayer({ role, panels, area, profile, prefix, activity, visible 
     style={{ display: visible ? undefined : 'none' }}
     viewBox="0 0 3600 1200" aria-hidden="true">
     <defs>
-      <linearGradient id={`${prefix}-sky`} x1="0" x2="0" y1="-300" y2="900" gradientUnits="userSpaceOnUse">
-        <stop stopColor={profile.palette.sky} /><stop offset="1" stopColor={profile.palette.horizon} />
+      <linearGradient id={`${prefix}-sky`} x1="0" x2="0" y1="-850" y2="900" gradientUnits="userSpaceOnUse">
+        <stop stopColor={profile.palette.upperSky || profile.palette.sky} />
+        <stop offset=".23" stopColor={profile.palette.sky} />
+        <stop offset="1" stopColor={profile.palette.horizon} />
       </linearGradient>
       <linearGradient id={`${prefix}-bank`} x1="0" x2="0" y1="830" y2="1050" gradientUnits="userSpaceOnUse">
         <stop stopColor={profile.palette.bank} /><stop offset="1" stopColor={profile.palette.ground} />
@@ -41,7 +43,7 @@ function PanoramaLayer({ role, panels, area, profile, prefix, activity, visible 
     </defs>
     {role === 'sky' && <>
       <rect x="-5000" y="-5000" width="13600" height="5900" fill={profile.palette.sky} />
-      <rect x="-5000" y="-1200" width="13600" height="2100" fill={`url(#${prefix}-sky)`} />
+      <rect x="-5000" y="-5000" width="13600" height="5900" fill={`url(#${prefix}-sky)`} />
     </>}
     {role === 'midground' && <path d="M-300 840Q80 780 360 805T1010 803T1740 810T2490 799T3200 806T3900 790V1080H-300Z" fill={`url(#${prefix}-bank)`} />}
     {role === 'route' && <>
