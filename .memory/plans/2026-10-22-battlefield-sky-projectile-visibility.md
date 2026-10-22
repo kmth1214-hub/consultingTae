@@ -6,7 +6,7 @@ Remove the flat-color band visible at the top of Snow, City, and Chaos battlefie
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Fix sky coverage, lift low distant artwork in Snow/City/Chaos, and add a travel-only enemy projectile trail with browser regression coverage. | [P01](../phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/phase.md) |
+| P01 | `done` | Fix sky coverage, lift low distant artwork in Snow/City/Chaos, and add a travel-only enemy projectile trail with browser regression coverage. | [P01](../phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/phase.md) |
 
 ## Decisions
 - [Battlefield Sky and Enemy Projectile Visibility](../decisions/2026-10-22-battlefield-sky-projectile-visibility.md)
@@ -16,7 +16,7 @@ Remove the flat-color band visible at the top of Snow, City, and Chaos battlefie
 | :--- | :--- | :--- | :--- |
 | T01 | `done` | Extend regional sky paint to cover the full camera-visible sky and add a pixel-based regression check. | [T01](../phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/T01-regional-sky-coverage.md) |
 | T02 | `done` | Render a travel-only path behind enemy projectiles and verify its geometry and visibility in browser tests. | [T02](../phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/T02-enemy-projectile-trail.md) |
-| T03 | `in_progress` | Raise distant artwork in Snow, City, and Chaos while preserving the Forest composition and gameplay geometry. | [T03](../phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/T03-raise-distant-art.md) |
+| T03 | `done` | Raise distant artwork in Snow, City, and Chaos while preserving the Forest composition and gameplay geometry. | [T03](../phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/T03-raise-distant-art.md) |
 
 ## Scope and compatibility
 - Regional sky gradient extent, non-Forest distant-art elevation, and enemy projectile presentation change.

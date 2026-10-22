@@ -1,19 +1,17 @@
 ﻿# Current Context
 
 ## Active Plan
-[Battlefield Sky and Enemy Projectile Visibility](./plans/2026-10-22-battlefield-sky-projectile-visibility.md)
+[Candy Roll and Obstacle Interactions](./plans/2026-10-22-candy-roll-obstacle-interactions.md)
 
 ## Active Phase
-[P01 Scene and Projectile Clarity](./phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/phase.md)
+[P01 Candy Roll Combat](./phases/2026-10-22-candy-roll-obstacle-interactions/P01-candy-roll-combat/phase.md)
 
 ## Active Task
-[T03 Raise Distant Artwork](./phases/2026-10-22-battlefield-sky-projectile-visibility/P01-scene-and-projectile-clarity/T03-raise-distant-art.md)
+[T01 Ground Roll Geometry](./phases/2026-10-22-candy-roll-obstacle-interactions/P01-candy-roll-combat/T01-ground-roll-geometry.md)
 
 ## Status
-- T01 complete: sky color boundary blends across all regions at desktop and mobile sizes; 21 regional browser tests pass.
-- T02 complete: a travel-only path follows normal enemy arcs and frozen breath is rendered straight; all 11 enemy response browser tests pass.
-- T03 is active to lift the low Snow/City/Chaos distant-art panels while preserving Forest composition and gameplay geometry.
-- Candy Roll and Obstacle Interactions remains pending at its original task files; resume it after this focused visual fix.
+- Battlefield Sky and Enemy Projectile Visibility is complete: regional sky blends, enemy projectiles show travel paths, and Snow/City/Chaos distant artwork is raised. Validation passed (26 scene tests, 11 enemy-response tests, production build).
+- Resume Candy Roll and Obstacle Interactions at its original P01-T01 blueprint; its task files were preserved.
 
 ## Next Step
-Read T03 and raise only Snow/City/Chaos distant artwork; retest the moved sky/art boundary and verify gameplay positions stay fixed.
+Read the active Candy Roll T01 blueprint and resume the planned ground-roll geometry implementation.

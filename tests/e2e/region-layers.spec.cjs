@@ -26,6 +26,11 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
     }));
     expect(proportions.length).toBeGreaterThan(2);
     for (const p of proportions) expect(p.actual).toBeCloseTo(p.source, 4);
+    const distantPositions = area === 'forest'
+      ? await page.locator('.scene-distant [data-depth-plane="distant"] > svg').evaluateAll(nodes => nodes.map(node => +node.getAttribute('y')))
+      : await page.locator('.scene-distant [data-painted-panel="distant"] svg').evaluateAll(nodes => nodes.map(node => +node.getAttribute('y')));
+    expect(distantPositions.length).toBeGreaterThan(0);
+    expect(new Set(distantPositions)).toEqual(new Set([area === 'forest' ? -600 : -530]));
     const props = await page.locator('.scene-scenery [data-obstacle-id]').evaluateAll(nodes => nodes.map(n => n.dataset.obstacleId));
     expect(props).toHaveLength(3);
     // Loaded images can still be entirely hidden by a broken mask. Compare real
@@ -72,7 +77,13 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
       await installGame(page, { initial: { area, round: 1 } });
       await start(page); await readyArt(page);
       const screenshot = await arena(page).screenshot();
-      const samples = await page.evaluate(async base64 => {
+      const arenaBox = await arena(page).boundingBox();
+      const distantSelector = area === 'forest'
+        ? '.scene-distant [data-depth-plane="distant"] > svg'
+        : '.scene-distant [data-painted-panel="distant"] svg';
+      const distantBox = await page.locator(distantSelector).first().boundingBox();
+      const edgeRatio = (distantBox.y - arenaBox.y) / arenaBox.height;
+      const samples = await page.evaluate(async ({ base64, edgeRatio }) => {
         const image = new Image();
         image.src = `data:image/png;base64,${base64}`;
         await image.decode();
@@ -81,11 +92,11 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
         const context = canvas.getContext('2d', { willReadFrequently: true });
         context.drawImage(image, 0, 0);
         const x = Math.floor(canvas.width * .5);
-        return [.02, .075, .08, .09].map(ratio => {
+        return [.002, Math.max(.003, edgeRatio - .01), Math.max(.002, edgeRatio - .01), edgeRatio + .01].map(ratio => {
           const y = Math.floor(canvas.height * ratio);
           return [...context.getImageData(x, y, 1, 1).data].slice(0, 3);
         });
-      }, screenshot.toString('base64'));
+      }, { base64: screenshot.toString('base64'), edgeRatio });
       const topColorDistance = samples[0].reduce((sum, channel, index) => sum + Math.abs(channel - samples[1][index]), 0);
       const seamColorDistance = samples[2].reduce((sum, channel, index) => sum + Math.abs(channel - samples[3][index]), 0);
       if (area !== 'forest' && width === 1440) expect(topColorDistance, `${area} upper sky should have a visible color transition`).toBeGreaterThan(10);

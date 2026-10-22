@@ -15,7 +15,7 @@ function PanoramaLayer({ role, panels, area, profile, prefix, activity, visible 
     <defs>
       <linearGradient id={`${prefix}-sky`} x1="0" x2="0" y1="-850" y2="900" gradientUnits="userSpaceOnUse">
         <stop stopColor={profile.palette.upperSky || profile.palette.sky} />
-        <stop offset=".23" stopColor={profile.palette.sky} />
+        <stop offset=".183" stopColor={profile.palette.sky} />
         <stop offset="1" stopColor={profile.palette.horizon} />
       </linearGradient>
       <linearGradient id={`${prefix}-bank`} x1="0" x2="0" y1="830" y2="1050" gradientUnits="userSpaceOnUse">

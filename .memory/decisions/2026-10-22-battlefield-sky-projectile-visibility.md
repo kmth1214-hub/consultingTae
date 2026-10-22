@@ -21,5 +21,5 @@
 
 ## D04. Raise the low distant art selectively
 - Snow, City, and Chaos place their distant panels too low in the visible battlefield, leaving too little of the scenic artwork visible. Their source art begins at world y=-450; Forest uses a separate layered composition whose distant artwork already sits higher.
-- Lift only the Snow/City/Chaos distant panels by 150 world units. Keep Forest's composition, midground, route, foreground, actors, obstacles, camera, and collision positions unchanged.
+- Lift only the Snow/City/Chaos distant panels by 80 world units. Keep Forest's composition, midground, route, foreground, actors, obstacles, camera, and collision positions unchanged.
 - Recheck the sky-to-art blend after the move because the distant panel edge will also move upward. Prefer a modest lift that reveals more of the artwork while keeping the sky transition seamless.
