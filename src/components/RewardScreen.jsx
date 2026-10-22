@@ -8,7 +8,7 @@ export default function RewardScreen({ session }) {
   const { run, fusion } = session;
   const ready = run.selectedRewards.weapon && run.selectedRewards.consumable && !fusion;
   return <section className="screen-shell reward-screen" aria-labelledby="reward-title">
-    <p className="eyebrow">{REGIONS[run.area].name} · {run.round} / 5 클리어</p>
+    <p className="eyebrow">{REGIONS[run.area].name} · {run.round} / 3 클리어</p>
     <h1 id="reward-title">다음 한 발을 위한 선물</h1><p className="screen-intro">무기와 소모품을 하나씩 선택하세요.</p>
     <FusionChoice fusion={fusion} onChoose={session.resolveFusion} />
     <fieldset disabled={Boolean(fusion)} className="reward-section"><legend>마법사탕 <span>C 등급 · 1개 선택</span></legend>
@@ -30,6 +30,6 @@ export default function RewardScreen({ session }) {
       </button>)}</div> : <p className="muted">모든 소모품이 가득 차 있어요. 이번 소모품 보상은 자동으로 건너뜁니다.</p>}
     </fieldset>
     <button className="primary-button continue-button" disabled={!ready} onClick={session.continueAfterReward}>
-      {run.round === 5 ? (run.area === 'city' ? '원정 결과 보기' : '야영지로 이동') : '다음 라운드 →'}</button>
+      {run.round === 3 ? (run.area === 'city' ? '원정 결과 보기' : '야영지로 이동') : '다음 라운드 →'}</button>
   </section>;
 }

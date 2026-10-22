@@ -76,7 +76,7 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
 for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breath'], ['city', 'oven-overheat']]) {
   for (const blocked of [false, true]) {
     test(`${area} boss third response visibly ${blocked ? 'hits the shield and suppresses' : 'executes'} ${special}`, async ({ page }) => {
-      await installGame(page, { initial: { area, round: 5, inventory } });
+      await installGame(page, { initial: { area, round: 3, inventory } });
       await start(page);
       for (let turn = 0; turn < 2; turn++) {
         await page.keyboard.press('4');
@@ -128,7 +128,7 @@ test('a lethal enemy hit is shown before defeat, then retry has no stale respons
 });
 
 test('Milk first-boss protection uses the same visible interception without spending a Defense item', async ({ page }) => {
-  await installGame(page, { initial: { area: 'forest', round: 5, inventory }, allWeapons: true });
+  await installGame(page, { initial: { area: 'forest', round: 3, inventory }, allWeapons: true });
   await start(page);
   await page.keyboard.press('4');
   await expect(page.getByTestId('shield-impact')).toContainText('우유 보호막');

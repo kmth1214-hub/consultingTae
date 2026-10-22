@@ -180,7 +180,7 @@ test('Wind selects nearest endpoint target, bypasses solids visibly, and leaves 
 test('all real rounds and density extremes have an ordinary first-contact shot for every enemy', () => {
   let checked = 0;
   for (const area of ['forest', 'snow', 'city', 'chaos']) {
-    for (let round = 1; round <= (area === 'chaos' ? 3 : 5); round++) {
+    for (let round = 1; round <= 3; round++) {
       for (const rng of [() => 0, () => .5, () => .999]) {
         const enemies = BattleEngine.createRoundEnemies(area, round, { rng });
         const layout = buildBattlefield({ area, round, enemies });
@@ -210,7 +210,7 @@ test('all real rounds and density extremes have an ordinary first-contact shot f
       }
     }
   }
-  assert.ok(checked > 200);
+  assert.ok(checked > 100);
 });
 
 test('a meaningful low blocker can be cleared by a high ordinary shot', () => {

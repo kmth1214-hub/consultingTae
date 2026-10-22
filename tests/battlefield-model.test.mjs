@@ -8,7 +8,7 @@ test('real round slots and regional solids are deterministic without changing li
   try {
     Math.random = () => { throw new Error('Layout must not roll RNG'); };
     for (const area of ['forest', 'snow', 'city', 'chaos']) {
-      for (let round = 1; round <= (area === 'chaos' ? 3 : 5); round++) {
+      for (let round = 1; round <= 3; round++) {
         for (const rng of [() => 0, () => .5, () => .999]) {
           const enemies = BattleEngine.createRoundEnemies(area, round, { rng });
           const snapshot = structuredClone(enemies);

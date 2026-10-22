@@ -85,6 +85,8 @@ for (const merge of [false, true]) {
     await start(page);
     await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
     const before = (await snapshot(page)).run;
+    await expect(page.locator('.reward-screen .eyebrow')).toContainText('1 / 3');
+    await expect(page.locator('.continue-button')).toHaveText('다음 라운드 →');
     await expect(page.locator('.continue-button')).toBeDisabled();
     await page.locator('.reward-section').nth(0).getByRole('button').first().click();
     await expect(page.getByRole('heading', { name: '같은 등급의 사탕을 발견했어요', exact: true })).toBeVisible();
@@ -98,15 +100,17 @@ for (const merge of [false, true]) {
     await page.locator('.reward-section').nth(1).getByRole('button').first().click();
     await page.locator('.continue-button').click();
     await phase(page, 'idle');
-    await expect(page.getByRole('heading', { name: '숲 지역 2 / 5', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '숲 지역 2 / 3', exact: true })).toBeVisible();
     await expect(ammo(page)).toHaveText('9');
   });
 }
 
 test('Forest boss rewards lead to camp; healing continues to Snow with refreshed ammo', async ({ page }) => {
-  await installGame(page, { initial: { area: 'forest', round: 5, playerHp: 30 }, allWeapons: true, fastCombat: true });
+  await installGame(page, { initial: { area: 'forest', round: 3, playerHp: 30 }, allWeapons: true, fastCombat: true });
   await start(page);
   await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
+  await expect(page.locator('.reward-screen .eyebrow')).toContainText('3 / 3');
+  await expect(page.locator('.continue-button')).toHaveText('야영지로 이동');
   await selectRewards(page);
   await expect(page.getByRole('heading', { name: '잠깐, 모닥불 곁에서', exact: true })).toBeVisible();
   await page.getByRole('button', { name: /따뜻한 휴식/ }).click();
@@ -120,9 +124,11 @@ test('Forest boss rewards lead to camp; healing continues to Snow with refreshed
 });
 
 test('camp weapon rewards can finish two consecutive fusion decisions without switching rewards', async ({ page }) => {
-  await installGame(page, { initial: { area: 'forest', round: 5 }, allWeapons: true, fastCombat: true });
+  await installGame(page, { initial: { area: 'forest', round: 3 }, allWeapons: true, fastCombat: true });
   await start(page);
   await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
+  await expect(page.locator('.reward-screen .eyebrow')).toContainText('3 / 3');
+  await expect(page.locator('.continue-button')).toHaveText('야영지로 이동');
   await selectRewards(page);
   await page.getByRole('button', { name: /새로운 마법사탕/ }).click();
   await expect(page.getByRole('heading', { name: '같은 등급의 사탕을 발견했어요', exact: true })).toBeVisible();
@@ -138,7 +144,7 @@ test('camp weapon rewards can finish two consecutive fusion decisions without sw
 });
 
 test('Snow boss unlock persists immediately across refresh without restoring the active run', async ({ page }) => {
-  await installGame(page, { initial: { area: 'snow', round: 5 }, allWeapons: true, fastCombat: true });
+  await installGame(page, { initial: { area: 'snow', round: 3 }, allWeapons: true, fastCombat: true });
   await start(page);
   await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
   expect((await snapshot(page)).run.snowAreaCleared).toBe(true);
@@ -151,9 +157,11 @@ test('Snow boss unlock persists immediately across refresh without restoring the
 });
 
 test('City clear offers optional Chaos; three rounds bypass rewards and display independent bonus/main scores', async ({ page }) => {
-  await installGame(page, { initial: { area: 'city', round: 5, playerHp: 80, inventory }, allWeapons: true, fastCombat: true });
+  await installGame(page, { initial: { area: 'city', round: 3, playerHp: 80, inventory }, allWeapons: true, fastCombat: true });
   await start(page);
   await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
+  await expect(page.locator('.reward-screen .eyebrow')).toContainText('3 / 3');
+  await expect(page.locator('.continue-button')).toHaveText('원정 결과 보기');
   await selectRewards(page);
   await expect(page.getByRole('heading', { name: '오븐 밖, 끝까지!', exact: true })).toBeVisible();
   const main = (await snapshot(page)).run.mainRunSummary;
