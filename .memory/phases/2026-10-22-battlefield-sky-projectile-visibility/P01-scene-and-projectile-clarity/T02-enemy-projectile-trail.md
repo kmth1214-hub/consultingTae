@@ -1,6 +1,6 @@
 # Task: T02 Enemy Projectile Trail
 
-## Status: pending
+## Status: done
 
 ## Goal
 Make the existing enemy projectile arc perceptible by drawing a subtle path behind the moving projectile only while the attack is in its travel stage.
@@ -26,14 +26,14 @@ Make the existing enemy projectile arc perceptible by drawing a subtle path behi
 - Hide the trail by default and show it using `.enemy-response--travel .enemy-projectile-trail`. Do not animate or move the path independently. Keep the parent response's stage lifecycle and reduced-motion policy unchanged.
 
 ## Acceptance Criteria
-- [ ] Test fails before the path exists and passes afterward; path endpoints and apex match current projectile movement.
-- [ ] Trail appears only during travel and does not alter HP timing, response stages, or combat event count.
-- [ ] Trail remains legible without overpowering the projectile or blocking the scene.
+- [x] Test fails before the path exists and passes afterward; path endpoints and apex match current projectile movement.
+- [x] Trail appears only during travel and does not alter HP timing, response stages, or combat event count.
+- [x] Trail remains legible without overpowering the projectile or blocking the scene.
 
 ## Validation
-- `npx playwright test tests/e2e/enemy-response.spec.cjs -g "enemy projectile travels"` — first red, then green.
-- `npx playwright test tests/e2e/enemy-response.spec.cjs` — incoming attack, shield, special, and defeat flows.
-- `npm.cmd run build` and `git diff --check` — production build and whitespace validation.
+- `npx playwright test --config=tmp/diagnostic.config.cjs tests/e2e/enemy-response.spec.cjs -g "enemy projectile travels"` — failed before implementation, passed after.
+- `npx playwright test --config=tmp/diagnostic.config.cjs tests/e2e/enemy-response.spec.cjs` — 11 passed, including shield, special, defeat, and reduced-motion flows.
+- `npm.cmd run build` and `git diff --check` — passed.
 
 ## Commit Message
 ```text
@@ -48,6 +48,6 @@ Task: T02-enemy-projectile-trail
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

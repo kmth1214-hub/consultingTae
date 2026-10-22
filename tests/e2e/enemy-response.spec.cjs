@@ -56,7 +56,10 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
   const before = await snapshot(page);
   const attack = page.getByTestId('enemy-attack');
   const projectile = page.getByTestId('enemy-projectile');
+  const trail = page.getByTestId('enemy-projectile-trail');
   await expect(attack).toHaveAttribute('data-stage', 'windup');
+  await expect(trail).toHaveCount(1);
+  await expect(trail).toHaveCSS('visibility', 'hidden');
   await expect(hp(page)).toHaveText('100');
   expect(before.run.playerHp).toBe(95);
   await expect(page.getByRole('button', { name: '방어 사용', exact: true })).toBeDisabled();
@@ -65,6 +68,13 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
   const box = await arena(page).boundingBox();
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(projectile).toBeVisible();
+  await expect(attack).toHaveAttribute('data-stage', 'travel');
+  await expect(trail).toHaveCSS('visibility', 'visible');
+  const coordinates = (await trail.getAttribute('d')).match(/M(-?[\d.]+) (-?[\d.]+) Q(-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)/).slice(1).map(Number);
+  const [sourceX, sourceY, controlX, controlY, targetX, targetY] = coordinates;
+  expect(sourceX).toBeGreaterThan(targetX);
+  expect(controlX).toBeCloseTo((sourceX + targetX) / 2, 5);
+  expect(controlY).toBeCloseTo((sourceY + targetY) / 2 - 150, 5);
   await expect.poll(() => page.evaluate(() => window.__projectileMotion.changes)).toBeGreaterThan(2);
   const motion = await page.evaluate(() => window.__projectileMotion);
   expect(motion.last).not.toBe(motion.first);
@@ -93,6 +103,15 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
       expect(event.special).toBe(blocked ? null : special);
       expect(event.blocked).toBe(blocked);
       await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-special', special);
+      if (special === 'frozen-breath') {
+        const attackLayer = page.getByTestId('enemy-attack');
+        const trail = page.getByTestId('enemy-projectile-trail');
+        await expect(attackLayer).toHaveAttribute('data-stage', 'travel');
+        await expect(trail).toHaveCSS('visibility', 'visible');
+        const [, sourceY, , controlY, , targetY] = (await trail.getAttribute('d'))
+          .match(/M(-?[\d.]+) (-?[\d.]+) Q(-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)/).slice(1).map(Number);
+        expect(controlY).toBeCloseTo((sourceY + targetY) / 2, 5);
+      }
       if (area === 'forest') {
         const body = page.locator('.monster.is-attacking .monster-body');
         await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'travel');

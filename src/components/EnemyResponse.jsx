@@ -45,6 +45,8 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
   const source = { x: attacker?.x ?? layout.player.impact.x,
     y: attacker ? attacker.y - attacker.size * .55 : layout.player.impact.y };
   const target = layout.player.impact;
+  const middle = { x: (source.x + target.x) / 2, y: (source.y + target.y) / 2 };
+  const control = { x: middle.x, y: middle.y - (visual.breath ? 0 : 150) };
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const windup = reduced ? 150 : attack.attemptedSpecial ? 480 : 340;
@@ -94,6 +96,9 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
     <svg viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true" style={{ '--attack-color': visual.color }}>
       {stage === 'windup' && <g className="attack-telegraph" transform={`translate(${source.x} ${source.y - 70})`}>
         <circle r="22" /><text y="9" textAnchor="middle">!</text></g>}
+      {!visual.melee && <path data-testid="enemy-projectile-trail" className="enemy-projectile-trail"
+        d={`M${source.x} ${source.y} Q${control.x} ${control.y} ${target.x} ${target.y}`}
+        vectorEffect="non-scaling-stroke" />}
       {!visual.melee && <g ref={projectile} data-testid="enemy-projectile" className="enemy-projectile"
         transform={`translate(${source.x} ${source.y})`}>
         {visual.breath ? <path d="M-55 0 50-34 27 0 50 34Z" />
