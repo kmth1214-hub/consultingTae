@@ -84,4 +84,4 @@ Task: T01-open-city-skyline
 - [x] 구현 완료
 - [x] 검증 통과 — production E2E 26/26, studio E2E 8/8, production build, `git diff --check`
 - Visual review: `tmp/wide-t03-city-overview-1440.jpg`, `tmp/wide-t03-city-overview-390.jpg`, `tmp/map-studio-city-overview-1440.jpg`; first hard-edged mask was rejected and replaced by 150-unit feathered alpha fades.
-- commit: pending
+- commit: `4053517`

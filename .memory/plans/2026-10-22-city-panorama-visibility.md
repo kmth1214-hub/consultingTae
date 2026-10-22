@@ -1,7 +1,7 @@
 # Plan: City Panorama Visibility
 
 ## Status
-- in_progress
+- complete
 
 ## Goal
 Make the marked warm city skyline panorama a prominent, unobstructed part of the ordinary battle view while retaining an interactive, readable road and the current gameplay geometry. The improvement must appear in both the game and development map studio at desktop and mobile sizes.
@@ -9,7 +9,7 @@ Make the marked warm city skyline panorama a prominent, unobstructed part of the
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Open the City midground composition around the central skyline, then verify the actual runtime and studio views. | [P01](../phases/2026-10-22-city-panorama-visibility/P01-city-composition/phase.md) |
+| P01 | `complete` | Open the City midground composition around the central skyline, then verify the actual runtime and studio views. | [P01](../phases/2026-10-22-city-panorama-visibility/P01-city-composition/phase.md) |
 
 ## Decisions
 - [City Panorama Visibility](../decisions/2026-10-22-city-panorama-visibility.md)
@@ -19,7 +19,7 @@ Make the marked warm city skyline panorama a prominent, unobstructed part of the
 | Task | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
 | T01 | `done` | Recompose City midground as edge framing so the existing distant skyline reads across the broad center, with the road and gameplay geometry untouched. | [T01](../phases/2026-10-22-city-panorama-visibility/P01-city-composition/T01-open-city-skyline.md) |
-| T02 | `in_progress` | Review actual gameplay and studio screenshots at desktop/mobile sizes, fix only reproduced composition defects, and complete memory state. | [T02](../phases/2026-10-22-city-panorama-visibility/P01-city-composition/T02-visual-acceptance.md) |
+| T02 | `done` | Review actual gameplay and studio screenshots at desktop/mobile sizes, fix only reproduced composition defects, and complete memory state. | [T02](../phases/2026-10-22-city-panorama-visibility/P01-city-composition/T02-visual-acceptance.md) |
 
 ## Scope and compatibility
 - City-only decorative rendering change, using existing City assets. Preserve City distant art, route, parallax/camera ownership and existing user changes as the baseline.
