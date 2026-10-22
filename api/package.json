@@ -1,0 +1,12 @@
+{
+  "name": "cookie-roguelike-leaderboard-api",
+  "private": true,
+  "main": "src/functions/*.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.2",
+    "@azure/functions": "^4.16.5"
+  }
+}
