@@ -102,7 +102,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
         {enemyResponse && <EnemyResponse response={enemyResponse} layout={layout} travelMs={travelMs}
           onAdvance={onEnemyAdvance} onComplete={onEnemyComplete} />}
       </div>
-      {!run.terminal && <BattlefieldMinimap layout={layout} enemies={run.enemies} />}
+      {!run.terminal && <BattlefieldMinimap layout={layout} enemies={run.enemies} aim={state} />}
       {enemyResponse && <EnemyResponseNotice response={enemyResponse} />}
       <div className="arena-hud">
         <ConsumableTable run={hudRun} disabled={aiming || Boolean(enemyResponse)} onConsumable={onConsumable} />

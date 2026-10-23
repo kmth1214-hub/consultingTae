@@ -54,6 +54,38 @@ test('minimap monsters stay readable at desktop and narrow viewport sizes', asyn
   }
 });
 
+test('minimap aim guide stays short and stops before every monster', async ({ page }) => {
+  await installGame(page, { initial: { area: 'forest', round: 2 } });
+  await start(page);
+  const minimap = page.locator('.battlefield-minimap');
+  const guide = minimap.getByTestId('minimap-aim-guide');
+  await expect(guide).toHaveCount(0);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await dragPull(page, { angleDeg: 0, powerRatio: .8 });
+    await expect(guide).toHaveCount(1);
+    const segment = await guide.evaluate(line => {
+      const matrix = line.getScreenCTM();
+      const point = (x, y) => new DOMPoint(Number(line.getAttribute(x)), Number(line.getAttribute(y))).matrixTransform(matrix);
+      const start = point('x1', 'y1'), end = point('x2', 'y2');
+      return { start: { x: start.x, y: start.y }, end: { x: end.x, y: end.y } };
+    });
+    const length = Math.hypot(segment.end.x - segment.start.x, segment.end.y - segment.start.y);
+    expect(length).toBeGreaterThan(5);
+    expect(length).toBeLessThanOrEqual(22);
+    const monsters = await minimap.locator('.minimap-enemy').evaluateAll(nodes => nodes.map(node => {
+      const rect = node.getBoundingClientRect();
+      return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, radius: rect.width / 2 };
+    }));
+    for (const monster of monsters) {
+      expect(Math.hypot(segment.end.x - monster.x, segment.end.y - monster.y))
+        .toBeGreaterThan(monster.radius + 2);
+    }
+    await page.keyboard.press('Escape'); await page.mouse.up(); await phase(page, 'idle');
+    await expect(guide).toHaveCount(0);
+  }
+});
+
 test('decorative atmosphere pauses for reduced motion and window focus lifecycle events', async ({ page }) => {
   await installGame(page, { initial: { area: 'snow', round: 1 } }); await start(page);
   const atmosphere = page.locator('.scene-atmosphere--far');
