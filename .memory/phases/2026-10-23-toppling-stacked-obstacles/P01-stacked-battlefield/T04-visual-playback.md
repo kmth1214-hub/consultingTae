@@ -50,4 +50,4 @@ Task: T04-visual-playback
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: `7f4bd4b`

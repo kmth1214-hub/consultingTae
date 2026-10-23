@@ -1,21 +1,18 @@
 # Current Context
 
 ## Active Plan
-[React First Release](./plans/2026-10-21-react-first-release.md)
+[Toppling Stacked Obstacles](./plans/2026-10-23-toppling-stacked-obstacles.md)
 
 ## Active Phase
-[P02 Azure Release](./phases/2026-10-21-react-first-release/P02-azure-release/phase.md)
+[P01 Stacked Battlefield](./phases/2026-10-23-toppling-stacked-obstacles/P01-stacked-battlefield/phase.md)
 
 ## Active Task
-[T01 Azure Static Web App](./phases/2026-10-21-react-first-release/P02-azure-release/T01-azure-static-web-app.md)
+none — [T04 Themed Topple and Visual Acceptance](./phases/2026-10-23-toppling-stacked-obstacles/P01-stacked-battlefield/T04-visual-playback.md) complete
 
 ## Status
-in_progress
+complete
 
-- Azure build configuration, tenant-bound auth policy, GitHub Actions release workflow, and setup runbook are prepared locally.
-- Cloud rollout is gated until the owner configures the Azure Standard resource, Entra registration, Table Storage, GitHub tenant variable, deployment token, and explicit `AZURE_DEPLOY_ENABLED=true` variable.
-- Never commit or print the Entra client secret, SWA deployment token, or Table Storage connection string.
-- Local validation: 105 Node tests passed; all 94 production browser test cases and 8 studio test cases reported success; Azure config generation passed with a dummy tenant and correctly failed without one.
+T01 complete (`fe6e5fa`); T02 complete (`4ded20d`); T03 complete (`c6d90d9`); T04 complete (`7f4bd4b`). Azure release remains separately gated.
 
 ## Next Step
-Owner completes the Azure/GitHub settings in `docs/azure-static-web-apps.md`; then trigger the main-branch workflow and verify company-tenant allow/deny plus leaderboard storage.
+The toppling-stacked-obstacles plan is complete. Azure release remains a separate, gated task.
