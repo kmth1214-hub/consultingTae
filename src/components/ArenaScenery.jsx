@@ -1,38 +1,88 @@
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-export default function ArenaScenery({ layout }) {
-  const id = `props-${useId().replace(/:/g, '')}`;
-  return <svg className="scene-scenery" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
-    <defs>
-      <linearGradient id={`${id}-log`} x2=".15" y2="1"><stop stopColor="#d5ad6c" /><stop offset=".42" stopColor="#a17848" /><stop offset="1" stopColor="#6b5035" /></linearGradient>
-      <linearGradient id={`${id}-ice`} x2=".9" y2=".8"><stop stopColor="#f3ffff" /><stop offset=".45" stopColor="#b7e9f1" /><stop offset="1" stopColor="#559fc2" /></linearGradient>
-      <linearGradient id={`${id}-crate`} x2=".8" y2="1"><stop stopColor="#d4b587" /><stop offset="1" stopColor="#916843" /></linearGradient>
-    </defs>
-    {layout.obstacles.map(prop => <g key={prop.id} data-obstacle-id={prop.id} data-obstacle-kind={prop.kind}>
-      <defs><clipPath id={`${id}-${prop.id}`}><polygon points={prop.polygon.map(p => `${p.x},${p.y}`).join(' ')} /></clipPath></defs>
-      <polygon points={prop.polygon.map(p => `${p.x},${p.y}`).join(' ')}
-        fill={`url(#${id}-${prop.kind})`} stroke={{ log: '#725337', ice: '#5298b7', crate: '#795d45' }[prop.kind]}
-        strokeWidth="3" strokeLinejoin="round" />
-      <g clipPath={`url(#${id}-${prop.id})`}><g transform={`translate(${prop.x} ${prop.y})`}>
-        {prop.kind === 'ice' ? <>
-          <path d="m13 78 1-49L45 0 39 84M14 29 71 84M14 29 54 34" fill="#ddfbff65" stroke="#f4ffff" strokeWidth="2" />
-          <path d="M23 36 30 20M24 47l-2 15M52 54l8 10M41 13l8 8" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
-          <path d="M0 81H72" stroke="#4488ae" strokeWidth="8" opacity=".4" />
-        </> : prop.kind === 'log' ? <>
-          <path d="m15 19 49-8m-48 18 45-7m-42 17 50-5m-47 14 44-5m-46 16 42-5m-41 11 47-6" stroke="#67432e" strokeWidth="2.5" opacity=".7" />
-          <ellipse cx="8" cy="47" rx="12" ry="23" fill="#e2c68c" stroke="#795334" strokeWidth="3" />
-          <ellipse cx="8" cy="47" rx="7" ry="17" fill="none" stroke="#b08b54" strokeWidth="2" />
-          <path d="M8 38Q-1 47 9 55M26 31q13-9 22-5m-17 19q11-7 18-3" fill="none" stroke="#8c643c" strokeWidth="2" />
-          <path d="m14 22 49-8" stroke="#dfbd7c" strokeWidth="3" />
-        </> : <>
-          <path d="M34 9 34 78M10 20v49M57 19v52" stroke="#7e593a" strokeWidth="2" />
-          <path d="m4 17 62 47m-59 5L65 19" stroke="#765237" strokeWidth="10" />
-          <path d="m4 16 62 47m-59 5L65 18" stroke="#d8b17a" strokeWidth="6" />
-          {[[10, 22], [59, 59], [11, 62], [58, 23]].map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.7" fill="#5e4734" />)}
-          <path d="M0 12 34 3 73 16" fill="none" stroke="#eed2a2" strokeWidth="3" />
-        </>}
-      </g></g>
+function LogStack() {
+  return <>
+    {[10, 46, 82, 118].map((y, index) => <g key={y} transform={`translate(${index % 2 ? 5 : 0} ${y})`}>
+      <rect x="8" y="0" width="65" height="31" rx="10" fill={index % 2 ? '#a9673f' : '#b97947'} stroke="#593823" strokeWidth="3" />
+      <path d="M26 5h36M27 24h30" stroke="#e0a563" strokeWidth="2.5" strokeLinecap="round" opacity=".85" />
+      <path d="M38 12h23M31 20h18" stroke="#76452d" strokeWidth="2" strokeLinecap="round" />
+      <ellipse cx="9" cy="15.5" rx="8" ry="14" fill="#edc183" stroke="#684125" strokeWidth="3" />
+      <ellipse cx="9" cy="15.5" rx="4" ry="8" fill="none" stroke="#b17a49" strokeWidth="2" />
     </g>)}
+    <path d="M13 149q24-5 49 0" fill="none" stroke="#f3d09a" strokeWidth="3" opacity=".8" />
+  </>;
+}
+
+function IceStack() {
+  return <>
+    <path d="M9 153 4 116 19 104 40 113 70 101 77 123 70 157Z" fill="#71bfd5" stroke="#387caa" strokeWidth="3" />
+    <path d="m7 111 10-47 21-12 20 13 10 48-30 16Z" fill="#b9ecf3" stroke="#579dbd" strokeWidth="3" />
+    <path d="M17 64 26 13 42 3 58 20 64 64 37 78Z" fill="#e6fbf8" stroke="#73bcd2" strokeWidth="3" />
+    <path d="m26 13 16-10-5 74-20-13m25-61 16 17-21 57m1-25 30 61-30 16m0-52L4 116" fill="none" stroke="#fff" strokeWidth="3" opacity=".85" />
+    <path d="m43 79 15-13 9 40M24 119l12 9-5 24" fill="none" stroke="#4a9bbb" strokeWidth="3" opacity=".65" />
+    <path d="M10 149q26 9 59 0" fill="none" stroke="#efffff" strokeWidth="4" opacity=".9" />
+  </>;
+}
+
+function CityStack() {
+  return <>
+    {[102, 137].map((y, i) => <g key={y} transform={`translate(${i ? 5 : 0} ${y})`}>
+      <rect x="7" y="0" width="68" height="31" rx="4" fill={i ? '#ae7654' : '#c18b5e'} stroke="#67443b" strokeWidth="3" />
+      <path d="M10 2 72 28m0-26L10 28" stroke="#ebc692" strokeWidth="4" />
+      <circle cx="16" cy="7" r="2" fill="#594139" /><circle cx="65" cy="23" r="2" fill="#594139" />
+    </g>)}
+    {[{x:15,y:52},{x:42,y:57},{x:28,y:11}].map(({ x, y }) => <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}>
+      <path d="M2 6q-6 9 1 31 13 9 24 0 7-22 1-31Z" fill="#d79c70" stroke="#744944" strokeWidth="3" />
+      <path d="M5 2h22v8H5Z" fill="#f5c89a" stroke="#744944" strokeWidth="2" />
+      <path d="M7 21q8 6 17 0M8 30q8 5 16 0" fill="none" stroke="#fff0bf" strokeWidth="2" />
+    </g>)}
+  </>;
+}
+
+function StackBody({ kind, chaos }) {
+  return <>
+    {kind === 'log' ? <LogStack /> : kind === 'ice' ? <IceStack /> : <CityStack />}
+    {chaos && <>
+      <path d="M23 9 61 146M56 15 17 140" fill="none" stroke="#492d68" strokeWidth="6" opacity=".7" />
+      <path d="M24 15 51 108M54 21 23 129" fill="none" stroke="#dc9aee" strokeWidth="2" opacity=".8" />
+      <circle cx="39" cy="78" r="5" fill="#f6b8ff" opacity=".9" />
+    </>}
+  </>;
+}
+
+function Debris({ kind }) {
+  return kind === 'ice' ? <>
+    <path d="m3 156 12-22 18 21Zm22 0 15-30 15 30Zm31 0 10-22 12 22Z" fill="#a6e4f1" stroke="#5aa2c3" strokeWidth="3" />
+    <path d="m18 143 4 9m20-18 2 15m22-11 5 14" stroke="#fff" strokeWidth="2" />
+  </> : kind === 'crate' ? <>
+    <path d="M2 145 24 139 37 155 5 158Zm38 10 15-22 21 9-4 16Z" fill="#bc8863" stroke="#674438" strokeWidth="3" />
+    <path d="m15 139 3-16 8 4 7 22m22-17 4-13 10 4-1 17" fill="#e2ac83" stroke="#855347" strokeWidth="2" />
+  </> : <>
+    <rect x="3" y="139" width="49" height="18" rx="8" fill="#a66d42" stroke="#68412b" strokeWidth="3" />
+    <rect x="34" y="132" width="42" height="20" rx="8" fill="#b97e4a" stroke="#68412b" strokeWidth="3" />
+    <ellipse cx="8" cy="148" rx="5" ry="8" fill="#e9be80" stroke="#68412b" strokeWidth="2" />
+  </>;
+}
+
+export default function ArenaScenery({ layout, area = layout.area,
+  toppledObstacleIds = [], visualContacts = [] }) {
+  const fallen = new Set(toppledObstacleIds);
+  const active = new Map(visualContacts.map(contact => [contact.obstacleId, contact]));
+  return <svg className="scene-scenery" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
+    {layout.obstacles.map(prop => {
+      const touching = active.get(prop.id);
+      const state = fallen.has(prop.id) ? 'toppled' : touching ? 'falling' : 'standing';
+      const direction = touching?.direction < 0 ? 'left' : 'right';
+      return <g key={prop.id} data-obstacle-id={prop.id} data-obstacle-kind={prop.kind}
+        data-stack-state={state} className={`stack stack--${prop.kind} stack--${state} stack--fall-${direction}`}
+        transform={`translate(${prop.x} ${prop.y})`}>
+        <ellipse cx={prop.width / 2} cy={prop.height - 4} rx={prop.width * .54} ry="9" fill="#2e281c" opacity=".25" />
+        <g transform={`scale(${prop.width / 80} ${prop.height / 160})`}>
+          <g className="stack-body"><StackBody kind={prop.kind} chaos={area === 'chaos'} /></g>
+          <g className="stack-debris"><Debris kind={prop.kind} /></g>
+        </g>
+      </g>;
+    })}
   </svg>;
 }
 

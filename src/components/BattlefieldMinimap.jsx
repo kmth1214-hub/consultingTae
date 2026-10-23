@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function BattlefieldMinimap({ layout, enemies, aim }) {
+export default function BattlefieldMinimap({ layout, enemies, aim, toppledObstacleIds = [] }) {
   const living = layout.enemies.filter(slot => enemies.some(enemy => enemy.id === slot.id && enemy.alive));
   const player = { x: layout.launcher.impact.x, y: layout.launcher.contact.y - 34 };
   const nearestEnemy = Math.min(...living.map(enemy => Math.hypot(enemy.x - player.x,
@@ -13,7 +13,7 @@ export default function BattlefieldMinimap({ layout, enemies, aim }) {
     <svg viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true" focusable="false">
       <rect className="minimap-ground" x="0" y="0" width={layout.width} height={layout.height} rx="55" />
       <path className="minimap-road" d={`M0 ${layout.groundY}H${layout.width}`} />
-      {layout.obstacles.map(item => <polygon key={item.id} className={`minimap-obstacle minimap-obstacle--${item.kind}`}
+      {layout.obstacles.map(item => <polygon key={item.id} className={`minimap-obstacle minimap-obstacle--${item.kind}${toppledObstacleIds.includes(item.id) ? ' is-toppled' : ''}`}
         points={item.polygon.map(point => `${point.x},${point.y}`).join(' ')} />)}
     </svg>
     <span className="minimap-camera-window" aria-hidden="true" />

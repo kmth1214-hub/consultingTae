@@ -26,7 +26,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         const distance = progress * flight.impactDistance;
         const rolling = Number.isFinite(flight.rollStartDistance) && distance > flight.rollStartDistance;
         const point = sampleAtDistance(flight.path, distance);
-        complete.current.onProgress?.({ id: flight.id, point });
+        complete.current.onProgress?.({ id: flight.id, point, distance });
         candyRef.current.dataset.rolling = String(rolling);
         const rollDistance = rolling ? distance - flight.rollStartDistance : 0;
         const rotation = reduced ? 0 : rolling ? 600 + rollDistance * 3.4 : progress * 600;

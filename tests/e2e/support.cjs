@@ -5,6 +5,18 @@ const { test: base, expect } = require('@playwright/test');
 async function installGame(page, fixture = {}) {
   await page.addInitScript(config => {
     Math.random = () => typeof config.random === 'number' ? config.random : .5;
+    {
+      // Browser assertions need one repeatable battlefield; production keeps a fresh seed per round.
+      const layoutSeed = Number.isInteger(config.layoutSeed) ? config.layoutSeed : 13;
+      const nativeRandomValues = Crypto.prototype.getRandomValues;
+      Crypto.prototype.getRandomValues = function (values) {
+        if (values instanceof Uint32Array && values.length === 1) {
+          values[0] = layoutSeed >>> 0;
+          return values;
+        }
+        return nativeRandomValues.call(this, values);
+      };
+    }
     const trace = { run: null, lastEvent: null, lastAction: null, events: [], creates: 0 };
     window.__gameTest = trace;
     let api;
@@ -20,6 +32,8 @@ async function installGame(page, fixture = {}) {
           if (config.enemyHp) run.enemies.forEach(enemy => { enemy.hp = config.enemyHp; enemy.maxHp = config.enemyHp; });
         }
         trace.run = structuredClone(run);
+        // The session assigns its layout seed immediately after createRunState returns.
+        queueMicrotask(() => { if (!trace.lastAction) trace.run = structuredClone(run); });
         return run;
       };
       for (const name of ['resolveProjectile', 'useConsumable', 'drawRewardChoices', 'applyRewardChoice', 'advanceRound', 'chooseCampReward', 'startBonusRoute']) {

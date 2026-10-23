@@ -25,7 +25,10 @@ for (const area of ['forest', 'snow', 'city', 'chaos']) {
     await expect(minimap).toBeVisible();
     await expect(minimap).toHaveAttribute('aria-label', /전장 미니맵/);
     await expect(minimap.locator('.minimap-player')).toHaveCount(1);
-    await expect(minimap.locator('.minimap-obstacle')).toHaveCount(3);
+    const obstacleCount = await page.locator('.scene-scenery [data-obstacle-id]').count();
+    expect(obstacleCount).toBeGreaterThanOrEqual(2);
+    expect(obstacleCount).toBeLessThanOrEqual(4);
+    await expect(minimap.locator('.minimap-obstacle')).toHaveCount(obstacleCount);
     await expect(minimap.locator('.minimap-enemy')).toHaveCount(await page.locator('.monster[data-enemy-id]').count());
     await expect(minimap.locator('[data-testid="trajectory-preview"]')).toHaveCount(0);
     const overviewWindow = await arena(page).evaluate(el => getComputedStyle(el).getPropertyValue('--minimap-camera-width').trim());

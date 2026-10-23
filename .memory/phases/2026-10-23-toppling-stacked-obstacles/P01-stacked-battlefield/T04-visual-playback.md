@@ -1,6 +1,6 @@
 # Task: T04 Themed Topple and Visual Acceptance
 
-## Status: pending
+## Status: done
 
 ## Goal
 All regions show recognizable tall stacks; each visibly wobbles and topples toward the candy, then remains as non-blocking debris without hiding actors or the City skyline.
@@ -27,8 +27,8 @@ All regions show recognizable tall stacks; each visibly wobbles and topples towa
 - Inject stable `layoutRng`/seed where tests require exact geometry. Check a stack down after later aim, no duplicate effect, chain visual order, forest/snow/city/chaos contrast, City panorama, mobile viewport, and reduced motion. Preserve meaningful old gameplay assertions.
 
 ## Acceptance Criteria
-- [ ] Four region silhouettes and sequential topple/debris are legible in the real battle view; city skyline and enemies remain visible.
-- [ ] Playback/camera/minimap work at desktop and mobile widths, including reduced-motion; one gameplay resolve per shot.
+- [x] Four region silhouettes and sequential topple/debris are legible in the real battle view; city skyline and enemies remain visible.
+- [x] Playback/camera/minimap work at desktop and mobile widths, including reduced-motion; one gameplay resolve per shot.
 
 ## Validation
 - `npm test` — pass.
@@ -48,6 +48,6 @@ Task: T04-visual-playback
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

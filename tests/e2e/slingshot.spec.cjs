@@ -112,13 +112,15 @@ test('weak and reverse misses spend one shot each; blur during flight cancels wi
   expect((await snapshot(page)).events.filter(e => e.name === 'resolveProjectile')).toHaveLength(2);
 });
 
-test('solid prop stops flight and applies the regional collision effect once', async ({ page }) => {
+test('stack contact topples the prop and applies the regional collision effect once', async ({ page }) => {
   await dragPull(page, { angleDeg: 0, powerRatio: 1 }); await page.mouse.up();
   await phase(page, 'launching');
-  await expect(arena(page)).toHaveAttribute('data-impact-kind', 'obstacle');
+  // Momentum can carry the candy past the first stack, so the final landing may be ground.
+  await expect(arena(page)).toHaveAttribute('data-impact-kind', 'ground');
   const id = await arena(page).getAttribute('data-obstacle-id');
   await expect(page.locator(`.scene-scenery [data-obstacle-id="${id}"]`)).toHaveCount(1);
   await phase(page, 'idle');
+  await expect(page.locator(`.scene-scenery [data-obstacle-id="${id}"]`)).toHaveAttribute('data-stack-state', 'toppled');
   const trace = await snapshot(page);
   expect(trace.lastEvent.hits.map(hit => hit.damage)).toEqual([3]);
   await expect(page.locator('.battle-status')).toContainText('통나무 충돌');

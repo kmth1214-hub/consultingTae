@@ -29,24 +29,27 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
     enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss, alive: true, hp: 1 })) }),
   [run.area, run.round, run.layoutSeed, slotKey]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
-  const activeFlight = useRef(null);
+  const [visualContacts, setVisualContacts] = useState([]);
+  const activeFlight = useRef(null), triggeredContacts = useRef(new Set());
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
     toppledObstacleIds: run.toppledObstacleIds || [],
     windAvailable: run.weapons.some(w => w.id === 'wind-candy') && !run.roundEffects.windHomingUsed });
-  function clearFlight() { activeFlight.current = null; setFlight(null); }
+  function clearFlight() { activeFlight.current = null; setFlight(null); setVisualContacts([]); triggeredContacts.current.clear(); }
   function failLaunch() { controller.cancelAim(); setRetry('조준을 다시 잡고 당겨 주세요.'); }
   function startFlight(pull) {
     const solution = makeSolution(pull);
     if (!solution || !camera.valid) { failLaunch(); return; }
     const shot = { ...solution, id: pull.launchId, fireball: run.fireballArmed };
     activeFlight.current = shot.id;
+    triggeredContacts.current.clear();
+    setVisualContacts([]);
     focusRef.current = shot.path.start;
     setFlight(shot);
   }
   const controller = useAimController({ arenaRef, ammo: run.ammo, invertDirection: run.pendingAimInversion,
     disabled: Boolean(run.terminal || enemyResponse), onLaunch: startFlight, onCancel: clearFlight,
     onAimChange: state => {
-      if (state.phase === 'dragging') { setImpact(null); setRetry(''); }
+      if (state.phase === 'dragging') { setImpact(null); setRetry(''); setVisualContacts([]); }
       setAim({ phase: state.phase, angle: state.angleDeg, power: state.powerRatio * 100, selectedTargetId: null });
     } });
   const state = controller.aimState;
@@ -62,10 +65,13 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
     if (activeFlight.current !== shot.id) return;
     activeFlight.current = null;
     controller.completeLaunch(shot.id, () => {
-      setImpact({ id: shot.id, point: sampleAtDistance(shot.path, shot.impactDistance), kind: shot.impactKind,
-        obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind, rollStartDistance: shot.rollStartDistance,
-        impactDistance: shot.impactDistance, rollDistance: shot.rollDistance,
-        rolling: shot.rollStartDistance !== null && shot.impactDistance > shot.rollStartDistance });
+      setImpact(shot.contacts?.length && shot.impactKind !== 'enemy' ? null
+        : { id: shot.id, point: sampleAtDistance(shot.path, shot.impactDistance), kind: shot.impactKind,
+          obstacleId: shot.impactKind === 'obstacle' ? shot.obstacleId : null,
+          obstacleKind: shot.impactKind === 'obstacle' ? shot.obstacleKind : null,
+          rollStartDistance: shot.rollStartDistance, impactDistance: shot.impactDistance,
+          rollDistance: shot.rollDistance,
+          rolling: shot.rollStartDistance !== null && shot.impactDistance > shot.rollStartDistance });
       onFire({ hitIds: shot.hitIds, selectedTargetId: shot.selectedTargetId,
         shotMeta: { impactKind: shot.impactKind, obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind,
           contacts: shot.contacts || [], obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollStartDistance !== null
@@ -73,11 +79,23 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
     });
     setFlight(current => current?.id === shot.id ? null : current);
   }
+  function showFlightContacts(shot, progressDistance) {
+    const fresh = [];
+    for (const contact of shot.contacts || []) {
+      if (contact.distance > progressDistance || triggeredContacts.current.has(contact.obstacleId)) continue;
+      triggeredContacts.current.add(contact.obstacleId);
+      const before = sampleAtDistance(shot.path, Math.max(0, contact.distance - 4));
+      fresh.push({ ...contact, direction: Math.sign(contact.point.x - before.x) || 1,
+        id: `${shot.id}-${contact.obstacleId}` });
+    }
+    if (fresh.length) setVisualContacts(current => [...current, ...fresh]);
+  }
   return <>
     <div ref={arenaRef} className={`battle-arena battle-arena--${run.area}`} tabIndex={0} role="group" aria-label="전투 맵"
       data-camera-mode={camera.reducedMotion ? 'overview' : mode}
       data-aim-phase={enemyResponse ? 'responding' : state.phase} data-enemy-phase={enemyResponse?.stage || 'idle'}
-      data-impact-kind={flight?.impactKind || lastImpact?.kind} data-obstacle-id={flight?.obstacleId || lastImpact?.obstacleId || undefined}
+      data-impact-kind={flight?.impactKind || lastImpact?.kind || lastEvent?.shotMeta?.impactKind}
+      data-obstacle-id={flight?.obstacleId || lastEvent?.obstacleEffect?.obstacleId || lastImpact?.obstacleId || undefined}
       data-roll-start-distance={flight?.rollStartDistance ?? lastImpact?.rollStartDistance ?? undefined}
       data-roll-distance={flight?.rollDistance ?? lastImpact?.rollDistance ?? undefined}
       data-shot-rolling={flight ? undefined : lastImpact ? (lastImpact.rolling ? 'true' : 'false') : undefined}
@@ -88,7 +106,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
       onContextMenu={controller.onContextMenu} onKeyDown={controller.onKeyDown}>
       <div ref={worldRef} className="arena-world" style={{ width: layout.width, height: layout.height }}>
         <BattlefieldBackdrop area={run.area} layout={layout} motionPaused={Boolean(run.terminal)} />
-        <ArenaScenery layout={layout} />
+        <ArenaScenery layout={layout} area={run.area} toppledObstacleIds={run.toppledObstacleIds || []}
+          visualContacts={visualContacts} />
         <Slingshot aim={state} run={run} launcherRef={launcherRef} layout={layout} />
         <PlayerCookie characterId={run.characterId} placement={layout.player} aimPhase={state.phase}
           launchId={state.launchId} response={enemyResponse} playerHp={beforeImpact
@@ -97,7 +116,14 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
           <TrajectoryPreview path={solution?.path || flight?.path} previewD={solution?.previewD}
             visible={state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} onFailure={failLaunch}
-            onProgress={({ id, point }) => { if (activeFlight.current === id) focusRef.current = point; }} />}
+            onProgress={({ id, point, distance }) => {
+              if (activeFlight.current !== id) return;
+              focusRef.current = point;
+              showFlightContacts(flight, distance);
+            }} />}
+          {visualContacts.map(contact => <ContactEffect key={contact.id} impact={{
+            id: contact.id, point: contact.point, obstacleId: contact.obstacleId }}
+            obstacles={layout.obstacles} />)}
           {lastImpact && <ContactEffect key={lastImpact.id} impact={lastImpact} effect={lastEvent?.obstacleEffect} obstacles={layout.obstacles} />}
         </svg>
         <MonsterGroup groupRef={enemyGroupRef} enemies={run.enemies} placements={layout.enemies} layout={layout} travelMs={travelMs}
@@ -105,7 +131,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
         {enemyResponse && <EnemyResponse response={enemyResponse} layout={layout} travelMs={travelMs}
           onAdvance={onEnemyAdvance} onComplete={onEnemyComplete} />}
       </div>
-      {!run.terminal && <BattlefieldMinimap layout={layout} enemies={run.enemies} aim={state} />}
+      {!run.terminal && <BattlefieldMinimap layout={layout} enemies={run.enemies} aim={state}
+        toppledObstacleIds={[...(run.toppledObstacleIds || []), ...visualContacts.map(contact => contact.obstacleId)]} />}
       {enemyResponse && <EnemyResponseNotice response={enemyResponse} />}
       <div className="arena-hud">
         <ConsumableTable run={hudRun} disabled={aiming || Boolean(enemyResponse)} onConsumable={onConsumable} />

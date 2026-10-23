@@ -1,7 +1,7 @@
 const { test, expect, installGame, arena, phase, snapshot, start, dragPull } = require('./support.cjs');
 
 test('grounded candy rolls along the sampled path, then resolves the miss one time', async ({ page }) => {
-  await installGame(page); await start(page);
+  await installGame(page, { layoutSeed: 4927 }); await start(page);
   await dragPull(page, { angleDeg: -5, powerRatio: .6 });
   await expect(page.getByTestId('trajectory-preview')).toBeVisible();
   await page.mouse.up(); await phase(page, 'launching');
@@ -51,17 +51,19 @@ test('real obstacle contacts apply each regional effect with fixed RNG', async (
       expectedHp: [20 - ([3, 0, 2, 0][index])], expectedScore: 0, expectedBonus: [3, 0, 2, 0][index] }))
   ];
   for (const scenario of cases) {
-    await installGame(page, { random: scenario.random, stateOverride: {
+    await installGame(page, { random: scenario.random, layoutSeed: 4927, stateOverride: {
       area: scenario.area, round: scenario.round || 1, bonusMode: Boolean(scenario.bonusMode),
       enemies: scenario.enemies
     } });
     await start(page);
-    await dragPull(page, { angleDeg: 0, powerRatio: 1 }); await page.mouse.up();
-    await expect(arena(page)).toHaveAttribute('data-impact-kind', 'obstacle');
+    await dragPull(page, { angleDeg: 0, powerRatio: .8 }); await page.mouse.up();
+    await expect(arena(page)).toHaveAttribute('data-obstacle-id', /obstacle-\d/);
     await expect(arena(page)).toHaveAttribute('data-obstacle-effect', scenario.effect);
     const trace = await snapshot(page);
     expect(trace.events.filter(event => event.name === 'resolveProjectile')).toHaveLength(1);
     expect(trace.lastEvent.obstacleEffect.kind).toBe(scenario.effect);
+    expect(trace.lastEvent.obstacleEffects.length).toBeGreaterThan(0);
+    expect(trace.run.toppledObstacleIds.length).toBeGreaterThan(0);
     expect(trace.run.enemies.map(item => item.hp)).toEqual(scenario.expectedHp);
     expect(trace.run.score).toBe(scenario.expectedScore);
     expect(trace.run.bonusScore).toBe(scenario.expectedBonus);
@@ -73,7 +75,7 @@ test('real obstacle contacts apply each regional effect with fixed RNG', async (
 test('mobile reduced-motion ground roll still resolves and keeps the arena inside the viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await installGame(page); await start(page);
+  await installGame(page, { layoutSeed: 4927 }); await start(page);
   await dragPull(page, { angleDeg: -5, powerRatio: .6 }); await page.mouse.up();
   await expect(arena(page)).toHaveAttribute('data-roll-start-distance', /\d/);
   await expect(arena(page)).toHaveAttribute('data-shot-rolling', 'true');
