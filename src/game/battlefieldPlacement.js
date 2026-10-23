@@ -1,0 +1,69 @@
+import { buildBattlefield } from './battlefieldModel.js';
+import { planShot } from './shotGeometry.js';
+
+const ANGLES = [45, 55, 35, 65, 25, 70, 15, 75];
+const asPull = (angle, powerRatio) => {
+  const radians = angle * Math.PI / 180;
+  return { direction: { x: Math.cos(radians), y: -Math.sin(radians) },
+    angleDeg: angle, powerRatio, ready: true };
+};
+
+function witnessAt(layout, enemies, x, y, matches) {
+  for (const angle of ANGLES) {
+    const pullAt = power => asPull(angle, power);
+    const error = power => {
+      const pull = pullAt(power);
+      const stretch = 12 + 60 * power;
+      const x0 = 284 - pull.direction.x * stretch;
+      const y0 = 812 - pull.direction.y * stretch;
+      const speed = 240 + 1720 * power;
+      const time = (x - x0) / (pull.direction.x * speed);
+      return y0 + pull.direction.y * speed * time + 600 * time * time - y;
+    };
+    if (error(0) * error(1) > 0) continue;
+    let low = 0, high = 1;
+    for (let i = 0; i < 25; i++) {
+      const mid = (low + high) / 2;
+      if (error(mid) > 0) low = mid;
+      else high = mid;
+    }
+    const shot = planShot({ layout, pull: pullAt((low + high) / 2), enemies });
+    if (matches(shot)) return true;
+  }
+  return false;
+}
+
+/** Use actual first-contact shots to reject random layouts that cannot be played. */
+export function isPlayableBattlefield(layout, enemies) {
+  if (!layout || !Array.isArray(enemies) || !Array.isArray(layout.obstacles)) return false;
+  const fullRound = layout.enemies.map(slot => ({ id: slot.id, alive: true, hp: 1 }));
+  for (const slot of layout.enemies) {
+    const c = slot.collider;
+    if (![c.y, c.y - c.radius * .5, c.y + c.radius * .5].some(y =>
+      witnessAt(layout, fullRound, c.x, y, shot => shot?.impactKind === 'enemy'
+        && shot.hitIds[0] === slot.id))) return false;
+  }
+  for (const stack of layout.obstacles) {
+    const x = stack.x + stack.width / 2;
+    if (![.25, .5, .75].some(ratio => witnessAt(layout, fullRound,
+      x, stack.y + stack.height * ratio, shot => shot?.impactKind === 'obstacle'
+        && shot.obstacleId === stack.id))) return false;
+  }
+  return true;
+}
+
+/** All attempts derive from one round seed, so rerenders cannot shuffle the battlefield. */
+export function buildPlayableBattlefield({ area, round, enemies, seed = 0 } = {}) {
+  if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) {
+    throw new TypeError('Invalid battlefield seed');
+  }
+  for (let attempt = 0; attempt < 32; attempt++) {
+    const candidateSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
+    const layout = buildBattlefield({ area, round, enemies, seed: candidateSeed });
+    if (isPlayableBattlefield(layout, enemies)) return layout;
+  }
+  // A deliberately placed two-stack layout is still verified before use.
+  const fallback = buildBattlefield({ area, round, enemies, seed: 0 });
+  if (isPlayableBattlefield(fallback, enemies)) return fallback;
+  throw new Error('Could not place a playable battlefield');
+}

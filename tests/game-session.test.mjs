@@ -35,6 +35,28 @@ function rewards(session, merge = false) {
   assert.equal(actions.continueAfterReward().accepted, true);
 }
 
+test('layout seed is drawn once at each round entry, independently of combat rolls', () => {
+  const draws = [.125, .625];
+  let layoutCalls = 0, combatCalls = 0;
+  const session = start({ engine: clearingEngine,
+    rng: () => { combatCalls++; return .999; },
+    layoutRng: () => draws[layoutCalls++] });
+  const firstSeed = session.getSnapshot().run.layoutSeed;
+  assert.equal(firstSeed, 0x20000000);
+  assert.equal(layoutCalls, 1);
+  const afterStartRolls = combatCalls;
+  session.actions.setAim({ angle: 45, power: 60, phase: 'dragging' });
+  session.actions.resetAim();
+  assert.equal(session.getSnapshot().run.layoutSeed, firstSeed);
+  assert.equal(layoutCalls, 1);
+  assert.equal(combatCalls, afterStartRolls);
+  clear(session);
+  assert.equal(session.getSnapshot().run.layoutSeed, firstSeed);
+  rewards(session);
+  assert.equal(session.getSnapshot().run.layoutSeed, 0xa0000000);
+  assert.equal(layoutCalls, 2);
+});
+
 test('home selection enforces character locks and publishes fresh snapshots without mutating prior HUD data', () => {
   const session = createGameSession({ rng: () => .999, storage: memoryStorage() });
   assert.equal(session.getSnapshot().screen, 'home');

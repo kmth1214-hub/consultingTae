@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BattleEngine } from '../src/game/battleEngine.js';
 import { BATTLEFIELD, buildBattlefield, getDragDraw } from '../src/game/battlefieldModel.js';
+import { buildPlayableBattlefield, isPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
 
-test('real round slots and regional solids are deterministic without changing live enemies or RNG', () => {
+test('seeded round layouts stay stable, avoid overlaps and remain playable at density extremes', () => {
   const originalRandom = Math.random;
   try {
     Math.random = () => { throw new Error('Layout must not roll RNG'); };
@@ -12,14 +13,16 @@ test('real round slots and regional solids are deterministic without changing li
         for (const rng of [() => 0, () => .5, () => .999]) {
           const enemies = BattleEngine.createRoundEnemies(area, round, { rng });
           const snapshot = structuredClone(enemies);
-          const layout = buildBattlefield({ area, round, enemies });
+          const layout = buildPlayableBattlefield({ area, round, enemies, seed: 4927 });
           assert.deepEqual(enemies, snapshot);
+          assert.deepEqual(buildPlayableBattlefield({ area, round, enemies, seed: 4927 }), layout);
+          assert.ok(isPlayableBattlefield(layout, enemies));
           assert.equal(layout.enemies.length, enemies.length);
           assert.deepEqual(layout.enemies.map(e => e.id), enemies.map(e => e.id));
           assert.equal(layout.width, 3600);
           assert.deepEqual(layout.player, { x: 44, y: 748, width: 152, height: 152,
             impact: { x: 120, y: 824 }, contact: { x: 170, y: 900 } });
-          assert.ok(layout.obstacles.length >= 1);
+          assert.ok(layout.obstacles.length >= 2 && layout.obstacles.length <= 4);
           assert.equal(new Set(layout.obstacles.map(o => o.id)).size, layout.obstacles.length);
           for (const [i, enemy] of layout.enemies.entries()) {
             assert.equal(enemy.kind, enemies[i].kind);
@@ -30,30 +33,36 @@ test('real round slots and regional solids are deterministic without changing li
             assert.equal(enemy.size, enemy.isBoss ? 130 : enemies.length <= 6 ? 92 : 60);
           }
           for (const [i, prop] of layout.obstacles.entries()) {
-            assert.equal(prop.kind, area === 'chaos' ? ['log', 'ice', 'crate'][i]
+            assert.equal(prop.kind, area === 'chaos' ? ['log', 'ice', 'crate'][i % 3]
               : { forest: 'log', snow: 'ice', city: 'crate' }[area]);
             assert.equal(prop.id, `${area}-${round}-obstacle-${i}`);
-            assert.equal(prop.width, 72);
+            assert.equal(prop.width, 80);
+            assert.ok(prop.height >= (enemies.length <= 6 ? 92 : 60) * 1.5);
+            assert.ok(prop.height <= (enemies.length <= 6 ? 92 : 60) * 2);
             assert.equal(prop.y + prop.height, 900);
-            assert.ok(prop.polygon.every(p => p.x >= prop.x && p.x <= prop.x + 72
+            assert.ok(prop.polygon.every(p => p.x >= prop.x && p.x <= prop.x + 80
               && p.y >= prop.y && p.y <= 900));
             for (const enemy of layout.enemies) assert.ok(prop.x + prop.width <= enemy.x - enemy.size / 2 - 8
               || prop.x >= enemy.x + enemy.size / 2 + 8, `${prop.id} overlaps ${enemy.id}`);
             for (const previous of layout.obstacles.slice(0, i)) {
-              assert.ok(Math.abs(prop.x - previous.x) >= 180 - 1e-9);
+              assert.ok(Math.abs(prop.x - previous.x) >= 145 - 1e-9);
             }
           }
           const dead = enemies.map((e, i) => ({ ...e, alive: i > 0, hp: i ? 2 : 0 }));
-          assert.deepEqual(buildBattlefield({ area, round, enemies: dead }), layout);
-          if (enemies.length === 1) assert.equal(layout.enemies[0].x - 284, 3 * (950 - 232));
-          else {
-            assert.equal(layout.enemies[0].x, 1000);
-            assert.equal(layout.enemies.at(-1).x, 2860);
-          }
+          assert.deepEqual(buildPlayableBattlefield({ area, round, enemies: dead, seed: 4927 }), layout);
         }
       }
     }
   } finally { Math.random = originalRandom; }
+});
+
+test('distinct round seeds change positions without changing enemy identity', () => {
+  const enemies = BattleEngine.createRoundEnemies('city', 2, { rng: () => .5 });
+  const first = buildPlayableBattlefield({ area: 'city', round: 2, enemies, seed: 1 });
+  const second = buildPlayableBattlefield({ area: 'city', round: 2, enemies, seed: 2 });
+  assert.deepEqual(first.enemies.map(enemy => enemy.id), second.enemies.map(enemy => enemy.id));
+  assert.notDeepEqual(first.enemies.map(enemy => enemy.x), second.enemies.map(enemy => enemy.x));
+  assert.notEqual(first.key, second.key);
 });
 
 test('builder rejects invalid identities and gives fresh empty layouts and frozen constants', () => {
@@ -71,6 +80,7 @@ test('builder rejects invalid identities and gives fresh empty layouts and froze
     { ...input, enemies: Array(2).fill({ id: 'same', kind: 'snake', isBoss: false }) }]) {
     assert.throws(() => buildBattlefield(invalid), TypeError);
   }
+  assert.throws(() => buildPlayableBattlefield({ ...input, seed: -1 }), TypeError);
 });
 
 test('draw follows all normalized vectors, clamps power, resets and keeps candy above ground', () => {

@@ -3,6 +3,9 @@ import { CHARACTERS } from './gameData.js';
 import { loadProfile, markSnowCleared, saveProfile } from './profileStore.js';
 
 const initialAim = () => ({ angle: 0, power: 0, phase: 'idle', selectedTargetId: null });
+const defaultLayoutRng = () => globalThis.crypto?.getRandomValues
+  ? globalThis.crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000
+  : Math.random();
 const REASONS = {
   responding: '적이 공격하고 있어요. 반격이 끝나면 행동할 수 있어요.',
   empty: '이 소모품을 모두 사용했어요.', blocked: '얼음 숨결 때문에 이번 턴에는 소모품을 쓸 수 없어요.',
@@ -14,7 +17,13 @@ const REASONS = {
 
 // Engine actions mutate a private draft. Subscribers only receive completed snapshots.
 // Keeping this controller outside React also makes full screen-flow tests deterministic.
-export function createGameSession({ rng = Math.random, now = Date.now, storage, engine = BattleEngine } = {}) {
+export function createGameSession({ rng = Math.random, layoutRng = defaultLayoutRng,
+  now = Date.now, storage, engine = BattleEngine } = {}) {
+  const assignLayoutSeed = run => {
+    const draw = layoutRng();
+    if (!Number.isFinite(draw) || draw < 0 || draw >= 1) throw new RangeError('Invalid layout RNG');
+    run.layoutSeed = Math.floor(draw * 0x100000000);
+  };
   let sequence = 0;
   let state = { screen: 'home', profile: loadProfile(storage), selectedCharacter: null, run: null,
     aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null, enemyResponse: null,
@@ -46,6 +55,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
     else if (run.terminal === 'round-clear') {
       if (run.bonusMode) {
         engine.advanceRound(run, { rng, now: now() });
+        if (!run.terminal) assignLayoutSeed(run);
         patch.aim = initialAim();
       } else {
         engine.drawRewardChoices(run, rng);
@@ -76,6 +86,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       if (!character) return reject('invalid-state');
       if (character.locked && !state.profile.snowAreaCleared) return reject('locked');
       const run = engine.createRunState({ characterId, area: 'forest', round: 1, rng, now: now() });
+      assignLayoutSeed(run);
       publish({ run, selectedCharacter: character, screen: 'battle', aim: initialAim(), notification: null, lastEvent: null });
       return { accepted: true };
     },
@@ -144,6 +155,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       const run = structuredClone(state.run);
       const event = engine.advanceRound(run, { rng, now: now() });
       if (!event.accepted) return reject(event.reason);
+      if (!event.pendingCamp && !run.terminal) assignLayoutSeed(run);
       publish({ run, screen: event.pendingCamp ? 'camp' : run.terminal === 'clear' ? 'main-results' : 'battle',
         outcome: run.terminal === 'clear' ? 'clear' : null,
         summary: run.terminal === 'clear' ? engine.getRunSummary(run, now()) : null,
@@ -155,6 +167,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       const run = structuredClone(state.run);
       const event = engine.chooseCampReward(run, choice, { rng, now: now(), mergeDuplicate });
       if (!event.accepted) return reject(event.reason);
+      if (!event.pendingCamp) assignLayoutSeed(run);
       publish({ run, fusion: event.requiresFusionChoice ? { ...event.fusionCandidate, source: 'camp' } : null,
         screen: event.pendingCamp ? 'camp' : 'battle', aim: initialAim(), lastEvent: null });
       return event;
@@ -170,6 +183,7 @@ export function createGameSession({ rng = Math.random, now = Date.now, storage, 
       const run = structuredClone(state.run);
       const event = engine.startBonusRoute(run, { rng, now: now() });
       if (!event.accepted) return reject(event.reason);
+      assignLayoutSeed(run);
       publish({ run, screen: 'battle', outcome: null, summary: null, aim: initialAim(), lastEvent: null });
       return event;
     },

@@ -10,7 +10,7 @@ import TrajectoryPreview from './TrajectoryPreview.jsx';
 import ProjectileFlight from './ProjectileFlight.jsx';
 import EnemyResponse, { EnemyResponseNotice, responseTravelMs } from './EnemyResponse.jsx';
 import BattlefieldMinimap from './BattlefieldMinimap.jsx';
-import { buildBattlefield } from '../game/battlefieldModel.js';
+import { buildPlayableBattlefield } from '../game/battlefieldPlacement.js';
 import { planShot, sampleAtDistance } from '../game/shotGeometry.js';
 import { useAimController } from '../game/useAimController.js';
 import { useBattlefieldCamera } from '../game/useBattlefieldCamera.js';
@@ -24,8 +24,10 @@ const INSTRUCTIONS = {
 export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef }) {
   const worldRef = useRef(null), launcherRef = useRef(null), enemyGroupRef = useRef(null), focusRef = useRef(null);
   const slotKey = JSON.stringify(run.enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss]));
-  const layout = useMemo(() => buildBattlefield({ area: run.area, round: run.round,
-    enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss })) }), [run.area, run.round, slotKey]);
+  const layout = useMemo(() => buildPlayableBattlefield({ area: run.area, round: run.round,
+    seed: run.layoutSeed ?? 0,
+    enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss, alive: true, hp: 1 })) }),
+  [run.area, run.round, run.layoutSeed, slotKey]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const activeFlight = useRef(null);
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
