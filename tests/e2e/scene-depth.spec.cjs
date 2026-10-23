@@ -54,7 +54,7 @@ test('minimap monsters stay readable at desktop and narrow viewport sizes', asyn
   }
 });
 
-test('minimap aim guide stays short and stops before every monster', async ({ page }) => {
+test('minimap aim guide grows with power but stops before every monster', async ({ page }) => {
   await installGame(page, { initial: { area: 'forest', round: 2 } });
   await start(page);
   const minimap = page.locator('.battlefield-minimap');
@@ -62,17 +62,22 @@ test('minimap aim guide stays short and stops before every monster', async ({ pa
   await expect(guide).toHaveCount(0);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    await dragPull(page, { angleDeg: 0, powerRatio: .8 });
+    const origin = await dragPull(page, { angleDeg: 0, powerRatio: .2 });
     await expect(guide).toHaveCount(1);
-    const segment = await guide.evaluate(line => {
+    const readSegment = () => guide.evaluate(line => {
       const matrix = line.getScreenCTM();
       const point = (x, y) => new DOMPoint(Number(line.getAttribute(x)), Number(line.getAttribute(y))).matrixTransform(matrix);
       const start = point('x1', 'y1'), end = point('x2', 'y2');
       return { start: { x: start.x, y: start.y }, end: { x: end.x, y: end.y } };
     });
+    const shortSegment = await readSegment();
+    const shortLength = Math.hypot(shortSegment.end.x - shortSegment.start.x, shortSegment.end.y - shortSegment.start.y);
+    await dragPull(page, { angleDeg: 0, powerRatio: 1, origin });
+    const segment = await readSegment();
     const length = Math.hypot(segment.end.x - segment.start.x, segment.end.y - segment.start.y);
-    expect(length).toBeGreaterThan(5);
-    expect(length).toBeLessThanOrEqual(22);
+    expect(length).toBeGreaterThan(shortLength + 3);
+    expect(length).toBeGreaterThan(width === 1440 ? 16 : 10);
+    expect(length).toBeLessThanOrEqual(44);
     const monsters = await minimap.locator('.minimap-enemy').evaluateAll(nodes => nodes.map(node => {
       const rect = node.getBoundingClientRect();
       return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, radius: rect.width / 2 };

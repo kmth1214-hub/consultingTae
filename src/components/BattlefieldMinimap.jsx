@@ -5,7 +5,8 @@ export default function BattlefieldMinimap({ layout, enemies, aim }) {
   const player = { x: layout.launcher.impact.x, y: layout.launcher.contact.y - 34 };
   const nearestEnemy = Math.min(...living.map(enemy => Math.hypot(enemy.x - player.x,
     enemy.y - enemy.size * .42 - player.y)));
-  const guideLength = Math.min(420, nearestEnemy * .38);
+  const power = Number.isFinite(aim?.powerRatio) ? Math.max(0, Math.min(1, aim.powerRatio)) : 0;
+  const guideLength = Math.min(840, nearestEnemy * .48) * (.22 + .78 * power);
   const showGuide = aim?.phase === 'dragging' && aim.hasMoved && living.length > 0
     && Number.isFinite(aim.direction?.x) && Number.isFinite(aim.direction?.y);
   return <div className="battlefield-minimap" role="img" aria-label={`전장 미니맵: 플레이어 1명, 남은 적 ${living.length}마리, 장애물 ${layout.obstacles.length}개`}>
@@ -33,6 +34,6 @@ export default function BattlefieldMinimap({ layout, enemies, aim }) {
     </span>)}
     <span className="minimap-player" aria-hidden="true"
       style={{ left: `${player.x / layout.width * 100}%`, top: `${player.y / layout.height * 100}%` }} />
-    <span className="sr-only">조준 중에는 짧은 방향선만 표시합니다. 착탄 위치는 표시하지 않습니다.</span>
+    <span className="sr-only">조준 중에는 파워에 따라 늘어나는 방향선만 표시합니다. 착탄 위치는 표시하지 않습니다.</span>
   </div>;
 }
