@@ -1,6 +1,6 @@
 # Task: T02 Momentum-Based Projectile Chain
 
-## Status: pending
+## Status: done
 
 ## Goal
 A candy hitting a standing stack loses speed yet may fly or roll to more stacks and a monster. The visible projectile path and collision order must use one world-unit simulation.
@@ -41,6 +41,6 @@ Task: T02-momentum-chain
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: recorded in Git history

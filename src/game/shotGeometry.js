@@ -41,12 +41,17 @@ function makePath(kind, points, endKind, targetId = null) {
 export function getBallisticPath({ start, direction, powerRatio, layout } = {}) {
   const u = unit(direction);
   if (!point(start) || !u || !Number.isFinite(powerRatio) || !validLayout(layout)) return null;
-  const ground = layout.groundY - layout.candyRadius;
-  if (start.y > ground || start.y < layout.minY || start.x < -layout.candyRadius
-    || start.x > layout.width + layout.candyRadius) return null;
   const speed = BATTLEFIELD.minSpeed + (BATTLEFIELD.maxSpeed - BATTLEFIELD.minSpeed)
     * clamp(powerRatio, 0, 1);
-  const vx = u.x * speed, vy = u.y * speed, g = BATTLEFIELD.gravity;
+  return ballisticFromVelocity(start, { x: u.x * speed, y: u.y * speed }, layout);
+}
+
+function ballisticFromVelocity(start, velocity, layout) {
+  if (!point(start) || !point(velocity) || !validLayout(layout)) return null;
+  const ground = layout.groundY - layout.candyRadius;
+  if (start.y > ground + EPS || start.y < layout.minY || start.x < -layout.candyRadius
+    || start.x > layout.width + layout.candyRadius) return null;
+  const vx = velocity.x, vy = velocity.y, g = BATTLEFIELD.gravity;
   let endTime = BATTLEFIELD.maxSeconds, endKind = 'timeout';
   const consider = (time, kind) => {
     if (Number.isFinite(time) && time >= 0 && time < endTime) {
@@ -70,12 +75,13 @@ export function getBallisticPath({ start, direction, powerRatio, layout } = {}) 
 }
 
 /** Add a friction-limited, horizontal ground segment to a grounded ballistic path. */
-export function appendGroundRoll(path, horizontalSpeed, layout) {
+export function appendGroundRoll(path, horizontalSpeed, layout,
+  maxRollDistance = layout?.candyRadius * 2 * BATTLEFIELD.maxRollDiameters) {
   if (!path || path.kind !== 'ballistic' || path.endKind !== 'ground'
     || !point(path.end) || !Number.isFinite(path.durationSeconds) || path.durationSeconds < 0
     || !Number.isFinite(horizontalSpeed) || !validLayout(layout)
     || !Number.isFinite(BATTLEFIELD.groundRollDeceleration) || BATTLEFIELD.groundRollDeceleration <= 0
-    || !Number.isFinite(BATTLEFIELD.maxRollDiameters) || BATTLEFIELD.maxRollDiameters < 0) {
+    || !Number.isFinite(maxRollDistance) || maxRollDistance < 0) {
     throw new TypeError('Ground roll requires a grounded ballistic path and valid speed/layout');
   }
   validateSamples(path);
@@ -87,8 +93,7 @@ export function appendGroundRoll(path, horizontalSpeed, layout) {
 
   const speed = Math.abs(horizontalSpeed), acceleration = BATTLEFIELD.groundRollDeceleration;
   const rollStartDistance = path.length;
-  const maxDistance = layout.candyRadius * 2 * BATTLEFIELD.maxRollDiameters;
-  const frictionDistance = speed < 1 ? 0 : Math.min(speed * speed / (2 * acceleration), maxDistance);
+  const frictionDistance = speed < 1 ? 0 : Math.min(speed * speed / (2 * acceleration), maxRollDistance);
   const direction = Math.sign(horizontalSpeed);
   const edge = direction < 0 ? -layout.candyRadius : layout.width + layout.candyRadius;
   const availableDistance = direction ? Math.abs(edge - path.end.x) : 0;
@@ -268,14 +273,117 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
   return findObstacleContact(path, obstacles, layout.candyRadius) ? null : path;
 }
 
-export function planShot({ layout, pull, enemies, windAvailable = false } = {}) {
+function planStackedShot({ layout, start, direction, powerRatio, living }) {
+  const initialSpeed = BATTLEFIELD.minSpeed + (BATTLEFIELD.maxSpeed - BATTLEFIELD.minSpeed)
+    * clamp(powerRatio, 0, 1);
+  let velocity = { x: direction.x * initialSpeed, y: direction.y * initialSpeed };
+  let position = start, rolling = false;
+  let rollBudget = layout.candyRadius * 2 * BATTLEFIELD.maxRollDiameters;
+  let rollDistance = 0, rollStartDistance = null;
+  let elapsed = 0, traveled = 0;
+  let samples = [{ ...start, time: 0 }];
+  const contacts = [], ignored = new Set();
+  let firstContactDistance = null, terminal = 'timeout', targetId = null;
+
+  const appendPrefix = (segment, endDistance) => {
+    const prefix = [...segment.samples.filter(p => p.distance < endDistance - EPS),
+      sampleUnchecked(segment, endDistance)];
+    for (const p of prefix.slice(1)) {
+      const next = { x: p.x, y: p.y, time: elapsed + p.time };
+      if (next.time > samples.at(-1).time + EPS
+        && distance(next, samples.at(-1)) > EPS) samples.push(next);
+    }
+    traveled += endDistance;
+    elapsed += sampleUnchecked(segment, endDistance).time;
+    position = { x: samples.at(-1).x, y: samples.at(-1).y };
+  };
+
+  for (let iteration = 0; iteration <= layout.obstacles.length; iteration++) {
+    let segment = rolling
+      ? makePath('ballistic', [{ ...position, time: 0 }], 'ground')
+      : ballisticFromVelocity(position, velocity, layout);
+    if (!segment) return null;
+    let localRollStart = rolling ? 0 : null;
+    if (segment.endKind === 'ground' && rollBudget > 0) {
+      const extended = appendGroundRoll(segment, velocity.x, layout, rollBudget);
+      segment = extended.path;
+      if (extended.rollDistance > 0 && !rolling) localRollStart = extended.rollStartDistance;
+    }
+    const remaining = layout.obstacles.filter(item => !ignored.has(item.id));
+    const barrier = findObstacleContact(segment, remaining, layout.candyRadius);
+    const enemyHits = living.map(enemy => ({ id: enemy.id,
+      distance: circleContact(segment, enemy.collider, layout.candyRadius) }))
+      .filter(hit => hit.distance !== null).sort((a, b) => a.distance - b.distance);
+    const enemy = enemyHits[0];
+    const obstacleFirst = barrier && (!enemy || barrier.distance <= enemy.distance + EPS);
+    const endDistance = obstacleFirst ? barrier.distance : enemy ? enemy.distance : segment.length;
+    const hitPoint = sampleUnchecked(segment, endDistance);
+    const isRolling = localRollStart !== null && endDistance > localRollStart + EPS;
+    if (localRollStart !== null && endDistance > localRollStart) {
+      if (rollStartDistance === null) rollStartDistance = traveled + localRollStart;
+      const moved = endDistance - localRollStart;
+      rollDistance += moved;
+      rollBudget = Math.max(0, rollBudget - moved);
+    }
+    appendPrefix(segment, endDistance);
+
+    if (obstacleFirst) {
+      const obstacle = remaining.find(item => item.id === barrier.id);
+      if (firstContactDistance === null) firstContactDistance = traveled;
+      const obstacleTargetIds = [...living]
+        .sort((a, b) => distance(hitPoint, a.collider) - distance(hitPoint, b.collider))
+        .map(item => item.id);
+      contacts.push({ obstacleId: obstacle.id, obstacleKind: obstacle.kind,
+        point: { x: hitPoint.x, y: hitPoint.y }, distance: traveled, time: elapsed,
+        rolling: isRolling, obstacleTargetIds });
+      ignored.add(obstacle.id);
+      const impactVelocity = isRolling ? {
+        x: Math.sign(velocity.x) * Math.sqrt(Math.max(0, velocity.x ** 2
+          - 2 * BATTLEFIELD.groundRollDeceleration * (endDistance - localRollStart))), y: 0 }
+        : { x: velocity.x, y: velocity.y + BATTLEFIELD.gravity * hitPoint.time };
+      const speed = Math.hypot(impactVelocity.x, impactVelocity.y);
+      if (isRolling) {
+        rolling = true;
+        velocity = { x: impactVelocity.x * .55, y: 0 };
+        if (Math.abs(velocity.x) < 30 || rollBudget <= EPS) { terminal = 'ground'; break; }
+      } else if (speed >= 520) {
+        rolling = false;
+        velocity = { x: impactVelocity.x * .72, y: impactVelocity.y * .72 };
+      } else {
+        rolling = false;
+        velocity = { x: impactVelocity.x * .22, y: Math.max(120, impactVelocity.y * .5) };
+      }
+      continue;
+    }
+    terminal = enemy ? 'enemy' : segment.endKind;
+    targetId = enemy?.id ?? null;
+    break;
+  }
+  const path = makePath('ballistic', samples, terminal);
+  path.rollStartDistance = rollStartDistance;
+  const first = contacts[0], last = contacts.at(-1);
+  return { path, hitIds: targetId ? [targetId] : [], selectedTargetId: null,
+    impactKind: terminal, impactDistance: path.length,
+    obstacleId: first?.obstacleId ?? null, obstacleKind: first?.obstacleKind ?? null,
+    obstacleTargetIds: first?.obstacleTargetIds ?? [], contacts,
+    rollStartDistance, rollDistance, blockerDistance: firstContactDistance,
+    previewD: pathPrefixD(path, Math.min(.30 * path.length, firstContactDistance ?? Infinity)),
+    reverse: direction.x < 0,
+    durationMs: clamp(elapsed * 1000, 420, 3200) };
+}
+
+export function planShot({ layout, pull, enemies, windAvailable = false,
+  toppledObstacleIds = [] } = {}) {
   if (!validLayout(layout) || !validObstacles(layout.obstacles)
     || !Array.isArray(layout.enemies) || !layout.enemies.every(e => validCircle(e?.collider))
     || !point(layout.launcher) || !Array.isArray(enemies) || !pull?.ready
-    || !unit(pull.direction) || !Number.isFinite(pull.powerRatio)) return null;
+    || !unit(pull.direction) || !Number.isFinite(pull.powerRatio)
+    || !Array.isArray(toppledObstacleIds)) return null;
+  const activeLayout = { ...layout, obstacles: layout.obstacles.filter(item =>
+    !toppledObstacleIds.includes(item.id)) };
   const direction = unit(pull.direction), draw = getDragDraw({ ...pull, direction });
   const start = { x: layout.launcher.x + draw.pouch.x, y: layout.launcher.y + draw.pouch.y };
-  const ballistic = getBallisticPath({ start, direction, powerRatio: pull.powerRatio, layout });
+  const ballistic = getBallisticPath({ start, direction, powerRatio: pull.powerRatio, layout: activeLayout });
   if (!ballistic) return null;
   const alive = new Set(enemies.filter(e => e && e.alive === true && Number.isFinite(e.hp) && e.hp > 0).map(e => e.id));
   const living = layout.enemies.filter(e => alive.has(e.id));
@@ -286,15 +394,19 @@ export function planShot({ layout, pull, enemies, windAvailable = false } = {}) 
     candidates.sort((a, b) => Math.abs(a.collider.x - ballistic.end.x) - Math.abs(b.collider.x - ballistic.end.x));
     target = candidates[0] ?? null;
     if (target) {
-      path = getHomingPath({ start, target: target.collider, obstacles: layout.obstacles, layout });
+      path = getHomingPath({ start, target: target.collider, obstacles: activeLayout.obstacles, layout });
       if (!path) return null;
     }
+  }
+  if (!target && activeLayout.obstacles.some(item => item.kind)) {
+    return planStackedShot({ layout: activeLayout, start, direction,
+      powerRatio: pull.powerRatio, living });
   }
   const hitsFor = candidate => target ? [{ id: target.id, distance: candidate.length }]
     : living.map(e => ({ id: e.id, distance: circleContact(candidate, e.collider, layout.candyRadius) }))
       .filter(h => h.distance !== null)
       .sort((a, b) => a.distance - b.distance);
-  let barrier = findObstacleContact(path, layout.obstacles, layout.candyRadius);
+  let barrier = findObstacleContact(path, activeLayout.obstacles, layout.candyRadius);
   let hits = hitsFor(path).filter(h => !barrier || h.distance < barrier.distance - EPS);
   let first = hits[0];
   let obstacleFirst = Boolean(barrier && (!first || barrier.distance <= first.distance + EPS));
@@ -308,14 +420,14 @@ export function planShot({ layout, pull, enemies, windAvailable = false } = {}) 
     path = rolling.path;
     rollDistance = rolling.rollDistance;
     rollStartDistance = rollDistance > 0 ? rolling.rollStartDistance : null;
-    barrier = findObstacleContact(path, layout.obstacles, layout.candyRadius);
+    barrier = findObstacleContact(path, activeLayout.obstacles, layout.candyRadius);
     hits = hitsFor(path).filter(h => !barrier || h.distance < barrier.distance - EPS);
     first = hits[0];
     obstacleFirst = Boolean(barrier && (!first || barrier.distance <= first.distance + EPS));
   }
 
   const impactDistance = obstacleFirst ? barrier.distance : first ? first.distance : path.length;
-  const obstacle = obstacleFirst ? layout.obstacles.find(item => item.id === barrier.id) : null;
+  const obstacle = obstacleFirst ? activeLayout.obstacles.find(item => item.id === barrier.id) : null;
   const impactPoint = obstacleFirst ? sampleUnchecked(path, impactDistance) : null;
   const obstacleTargetIds = obstacleFirst ? [...living]
     .sort((a, b) => distance(impactPoint, a.collider) - distance(impactPoint, b.collider))
@@ -325,7 +437,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false } = {}) 
     impactKind: obstacleFirst ? 'obstacle' : first ? 'enemy' : path.endKind,
     impactDistance, obstacleId: obstacleFirst ? barrier.id : null,
     obstacleKind: obstacle?.kind ?? null, obstacleTargetIds, rollStartDistance, rollDistance,
-    blockerDistance: barrier?.distance ?? null,
+    blockerDistance: barrier?.distance ?? null, contacts: [],
     previewD: pathPrefixD(path, Math.min(.30 * path.length, barrier?.distance ?? Infinity)),
     reverse: direction.x < 0,
     durationMs: clamp(sampleUnchecked(path, impactDistance).time * 1000, 420, 3200) };

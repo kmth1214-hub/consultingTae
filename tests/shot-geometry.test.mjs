@@ -127,19 +127,21 @@ test('planShot rolls only after an unobstructed landing and reports the first ro
   const wallX = rollStart.x + 42;
   blockedLayout.obstacles = [{ ...box('roll-wall', wallX, 896, 12, 14), kind: 'log' }];
   const wallOnly = planShot({ layout: blockedLayout, pull, enemies: [] });
-  assert.equal(wallOnly.impactKind, 'obstacle'); assert.equal(wallOnly.obstacleId, 'roll-wall');
-  assert.equal(wallOnly.obstacleKind, 'log'); assert.deepEqual(wallOnly.hitIds, []);
-  assert.ok(wallOnly.impactDistance > wallOnly.rollStartDistance);
+  assert.equal(wallOnly.contacts[0].obstacleId, 'roll-wall');
+  assert.equal(wallOnly.contacts[0].obstacleKind, 'log'); assert.deepEqual(wallOnly.hitIds, []);
+  assert.ok(wallOnly.contacts[0].rolling);
+  assert.ok(wallOnly.contacts[0].distance > wallOnly.rollStartDistance);
 
-  const contact = sampleAtDistance(wallOnly.path, wallOnly.impactDistance);
+  const contact = wallOnly.contacts[0].point;
   blockedLayout.enemies = [circle('roll-tie', { x: contact.x + 20, y: contact.y })];
   const tied = planShot({ layout: blockedLayout, pull, enemies: living(['roll-tie']) });
-  assert.equal(tied.impactKind, 'obstacle'); assert.deepEqual(tied.hitIds, []);
+  assert.equal(tied.contacts[0].obstacleId, 'roll-wall');
+  assert.ok(tied.contacts[0].distance <= tied.impactDistance);
   blockedLayout.enemies = [circle('far-target', { x: contact.x + 150, y: contact.y }),
     circle('near-target', { x: contact.x + 70, y: contact.y })];
   const wallWithTargets = planShot({ layout: blockedLayout, pull, enemies: living(['far-target', 'near-target']) });
-  assert.equal(wallWithTargets.impactKind, 'obstacle');
-  assert.deepEqual(wallWithTargets.obstacleTargetIds, ['near-target', 'far-target']);
+  assert.equal(wallWithTargets.contacts[0].obstacleId, 'roll-wall');
+  assert.deepEqual(wallWithTargets.contacts[0].obstacleTargetIds, ['near-target', 'far-target']);
 
   const beforeGroundLayout = empty(), ordinary = planShot({ layout: beforeGroundLayout, pull, enemies: [] });
   const flightTarget = sampleAtDistance(ordinary.path, ordinary.path.length * .55);
@@ -153,6 +155,41 @@ test('planShot rolls only after an unobstructed landing and reports the first ro
   const homing = planShot({ layout: homingLayout, pull: pullAt(25, .6), enemies: windEnemies, windAvailable: true });
   assert.equal(homing.path.kind, 'homing'); assert.equal(homing.rollDistance, 0);
   assert.equal(homing.rollStartDistance, null);
+});
+
+test('a fast candy topples two distinct stacks then directly hits an enemy', () => {
+  const layout = empty();
+  layout.obstacles = [{ ...box('first', 400, 780, 35, 120), kind: 'log' },
+    { ...box('second', 600, 780, 35, 120), kind: 'log' }];
+  layout.enemies = [circle('target', { x: 715, y: 867 }, 20)];
+  const shot = planShot({ layout, pull: pullAt(0, 1), enemies: living(['target']) });
+  assert.equal(shot.impactKind, 'enemy');
+  assert.deepEqual(shot.hitIds, ['target']);
+  assert.deepEqual(shot.contacts.map(contact => contact.obstacleId), ['first', 'second']);
+  assert.ok(shot.contacts[0].distance < shot.contacts[1].distance);
+  assert.ok(shot.contacts[0].time < shot.contacts[1].time);
+  assert.ok(shot.contacts[1].distance < shot.impactDistance);
+  assert.deepEqual(shot.contacts.map(contact => contact.rolling), [false, false]);
+  for (const contact of shot.contacts) {
+    const point = sampleAtDistance(shot.path, contact.distance);
+    close(point.x, contact.point.x, .001); close(point.y, contact.point.y, .001);
+  }
+  const noFirst = planShot({ layout, pull: pullAt(0, 1), enemies: living(['target']),
+    toppledObstacleIds: ['first'] });
+  assert.ok(noFirst.contacts.every(contact => contact.obstacleId !== 'first'));
+});
+
+test('weak contact drops the candy and preserves the total five-diameter roll cap', () => {
+  const layout = empty();
+  layout.obstacles = [{ ...box('weak', 320, 780, 35, 120), kind: 'log' }];
+  const shot = planShot({ layout, pull: pullAt(0, .1), enemies: [] });
+  assert.deepEqual(shot.contacts.map(contact => contact.obstacleId), ['weak']);
+  assert.equal(shot.impactKind, 'ground');
+  assert.ok(shot.rollDistance > 0 && shot.rollDistance <= 100);
+  assert.ok(shot.path.end.y <= layout.groundY - layout.candyRadius);
+  assert.ok(shot.path.samples.every((sample, i) => i === 0
+    || (sample.time > shot.path.samples[i - 1].time
+      && sample.distance > shot.path.samples[i - 1].distance)));
 });
 
 test('distance sampling and preview use stored arc length and reject malformed tables', () => {
@@ -301,10 +338,10 @@ test('a meaningful low blocker can be cleared by a high ordinary shot', () => {
   const enemies = [{ id: 'target', kind: 'snake', isBoss: false, hp: 4, alive: true }];
   const layout = buildBattlefield({ area: 'forest', round: 1, enemies });
   const low = planShot({ layout, pull: pullAt(0, 1), enemies });
-  assert.equal(low.impactKind, 'obstacle');
+  assert.ok(low.contacts.length > 0);
   const high = planShot({ layout, pull: pullAt(55, 1), enemies });
   assert.ok(high.path.samples.some(p => p.x > 2300 && p.y < 700));
-  assert.equal(high.blockerDistance, null);
+  assert.equal(high.contacts.length, 0);
   const draw = getDragDraw(pullAt(55, 1));
   close(high.path.start.x, layout.launcher.x + draw.pouch.x);
 });

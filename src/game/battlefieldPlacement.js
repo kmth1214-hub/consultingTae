@@ -46,8 +46,8 @@ export function isPlayableBattlefield(layout, enemies) {
   for (const stack of layout.obstacles) {
     const x = stack.x + stack.width / 2;
     if (![.25, .5, .75].some(ratio => witnessAt(layout, fullRound,
-      x, stack.y + stack.height * ratio, shot => shot?.impactKind === 'obstacle'
-        && shot.obstacleId === stack.id))) return false;
+      x, stack.y + stack.height * ratio, shot => shot?.contacts?.some(contact =>
+        contact.obstacleId === stack.id)))) return false;
   }
   return true;
 }
