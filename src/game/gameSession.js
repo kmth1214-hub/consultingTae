@@ -116,11 +116,33 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       if (state.enemyResponse) return reject('responding');
       if (state.aim.phase === 'dragging') return reject('aiming');
       const obstacleKinds = ['log', 'ice', 'crate'];
+      const contacts = shotMeta?.contacts;
+      const validContacts = contacts === undefined || (Array.isArray(contacts)
+        && contacts.every((contact, index) => contact && typeof contact.obstacleId === 'string'
+          && contact.obstacleId.length > 0 && obstacleKinds.includes(contact.obstacleKind)
+          && Number.isFinite(contact.distance) && contact.distance >= 0
+          && Number.isFinite(contact.time) && contact.time >= 0
+          && Number.isFinite(contact.point?.x) && Number.isFinite(contact.point?.y)
+          && typeof contact.rolling === 'boolean'
+          && Array.isArray(contact.obstacleTargetIds)
+          && contact.obstacleTargetIds.every(id => typeof id === 'string')
+          && new Set(contact.obstacleTargetIds).size === contact.obstacleTargetIds.length
+          && (!index || (contact.distance >= contacts[index - 1].distance
+            && contact.time >= contacts[index - 1].time)))
+        && new Set(contacts.map(contact => contact.obstacleId)).size === contacts.length);
       if (shotMeta !== undefined && (!shotMeta || !['enemy', 'obstacle', 'ground', 'bounds', 'timeout'].includes(shotMeta.impactKind)
         || typeof shotMeta.reverse !== 'boolean' || typeof shotMeta.rolling !== 'boolean'
         || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')
         || new Set(shotMeta.obstacleTargetIds).size !== shotMeta.obstacleTargetIds.length
-        || (shotMeta.impactKind === 'obstacle'
+        || !validContacts
+        || (contacts !== undefined
+          ? (contacts.length ? shotMeta.obstacleId !== contacts[0].obstacleId
+              || shotMeta.obstacleKind !== contacts[0].obstacleKind
+              || shotMeta.obstacleTargetIds.length !== contacts[0].obstacleTargetIds.length
+              || shotMeta.obstacleTargetIds.some((id, index) => id !== contacts[0].obstacleTargetIds[index])
+              : shotMeta.obstacleId !== null || shotMeta.obstacleKind !== null
+                || shotMeta.obstacleTargetIds.length !== 0)
+          : shotMeta.impactKind === 'obstacle'
           ? (typeof shotMeta.obstacleId !== 'string' || !obstacleKinds.includes(shotMeta.obstacleKind))
           : (shotMeta.obstacleId !== null || shotMeta.obstacleKind !== null || shotMeta.obstacleTargetIds.length !== 0)))) return reject('invalid-state');
       const run = structuredClone(state.run);

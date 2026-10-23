@@ -1,6 +1,6 @@
 # Task: T03 Once-Per-Stack Regional Combat
 
-## Status: pending
+## Status: done
 
 ## Goal
 Resolve every new topple in path order exactly once per stack/round, keep the established regional effects and direct candy damage, then trigger one enemy response.
@@ -43,6 +43,6 @@ Task: T03-topple-combat
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: recorded in Git history

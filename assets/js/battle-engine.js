@@ -148,7 +148,8 @@
       defenseArmed: false,
       fireballArmed: false,
       nextAttackDamageMultiplier: null,
-      pendingAimInversion: false
+      pendingAimInversion: false,
+      toppledObstacleIds: []
     };
     refillWeaponQueue(state,config.rng);
     return state;
@@ -245,6 +246,7 @@
     state.ammo=state.maxAmmo;state.zeroRollsThisRound=0;state.enemyTurnIndex=0;state.terminal=null;state.pendingCamp=false;
     state.roundStartedAt=timestamp(config.now);state.enemies=createRoundEnemies(state.area,state.round,{rng:config.rng});
     state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
+    state.toppledObstacleIds=[];
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
     state.rewardChoices=null;state.selectedRewards={weapon:null,consumable:null};
     if(AREAS.indexOf(state.area)>AREAS.indexOf(state.furthestArea))state.furthestArea=state.area;
@@ -448,110 +450,117 @@
     }
     let healedPlayer = 0;
     let bonusDamage = 0;
-    for (const id of hitIds) {
-      // A zero roll can still collide with the first target. An exhausted projectile cannot reach another.
-      if (hits.length > 0 && damage <= 0) break;
-      if (seen.has(id)) continue;
-      seen.add(id);
-      const enemy = state.enemies.find(candidate => candidate.id === id && candidate.alive && candidate.hp > 0);
-      if (!enemy) continue;
-      if (permanent) {
-        state.effectCounters.projectileCollisions++;
-        let extra = homingTarget === enemy && enemy.isBoss ? 1 : 0;
-        if (state.effectCounters.projectileCollisions % 3 === 0) {
-          if (hasEffect(state, 'wizard-orb')) extra++;
-          if (hasEffect(state, 'milk-candy')) {
-            const before = state.playerHp;
-            state.playerHp = Math.min(state.maxPlayerHp, state.playerHp + 1);
-            healedPlayer += state.playerHp - before;
+    const shotMeta = config.shotMeta;
+    const hasContactStream = Array.isArray(shotMeta?.contacts);
+    const contacts = hasContactStream ? shotMeta.contacts
+      : shotMeta?.impactKind === 'obstacle' && shotMeta.obstacleKind
+        ? [{ obstacleId: shotMeta.obstacleId, obstacleKind: shotMeta.obstacleKind,
+          obstacleTargetIds: shotMeta.obstacleTargetIds || [] }] : [];
+    const toppled = state.toppledObstacleIds || (state.toppledObstacleIds = []);
+    let directHitCount = 0;
+    const applyDirectHits = () => {
+      for (const id of hitIds) {
+        if (directHitCount > 0 && damage <= 0) break;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const enemy = state.enemies.find(candidate => candidate.id === id && candidate.alive && candidate.hp > 0);
+        if (!enemy) continue;
+        if (permanent) {
+          state.effectCounters.projectileCollisions++;
+          let extra = homingTarget === enemy && enemy.isBoss ? 1 : 0;
+          if (state.effectCounters.projectileCollisions % 3 === 0) {
+            if (hasEffect(state, 'wizard-orb')) extra++;
+            if (hasEffect(state, 'milk-candy')) {
+              const before = state.playerHp;
+              state.playerHp = Math.min(state.maxPlayerHp, state.playerHp + 1);
+              healedPlayer += state.playerHp - before;
+            }
           }
+          bonusDamage += extra * damageMultiplier;
+          damage += extra * damageMultiplier;
         }
-        bonusDamage += extra * damageMultiplier;
-        damage += extra * damageMultiplier;
+        const removed = Math.min(enemy.hp, damage);
+        enemy.hp -= removed;
+        enemy.alive = enemy.hp > 0;
+        damage -= removed;
+        const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+        addScore(state, scoreDelta);
+        hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp,
+          defeated: !enemy.alive, scoreDelta });
+        directHitCount++;
+        if (enemy.alive) break;
       }
-      const before = enemy.hp;
-      const removed = Math.min(before, damage);
-      enemy.hp = before - removed;
-      enemy.alive = enemy.hp > 0;
-      damage -= removed;
-      const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
-      addScore(state, scoreDelta);
-      hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp, defeated: !enemy.alive, scoreDelta });
-      if (enemy.alive) break;
+    };
+    const applyObstacle = contact => {
+      const effectHits = [];
+      const strike = () => {
+        const target = (contact.obstacleTargetIds || []).map(id => state.enemies.find(enemy =>
+          enemy.id === id && enemy.alive && enemy.hp > 0)).find(Boolean);
+        if (target) {
+          const removed = Math.min(target.hp, 3);
+          target.hp -= removed;
+          target.alive = target.hp > 0;
+          const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+          addScore(state, scoreDelta);
+          effectHits.push({ id: target.id, kind: target.kind, damage: removed,
+            remainingHp: target.hp, defeated: !target.alive, scoreDelta });
+        }
+        return { kind: 'log-strike', hits: effectHits };
+      };
+      const guard = () => {
+        state.nextAttackDamageMultiplier = .5;
+        return { kind: 'ice-guard', hits: [], damageReduction: .5, armed: true };
+      };
+      const burst = () => {
+        for (const target of getLivingEnemies(state).slice()) {
+          const removed = Math.min(target.hp, randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 1, 2));
+          target.hp -= removed;
+          target.alive = target.hp > 0;
+          const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+          addScore(state, scoreDelta);
+          effectHits.push({ id: target.id, kind: target.kind, damage: removed,
+            remainingHp: target.hp, defeated: !target.alive, scoreDelta });
+        }
+        return { kind: 'jar-burst', hits: effectHits };
+      };
+      if (state.area === 'chaos') {
+        const choice = randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 0, 3);
+        return choice === 3
+          ? (state.pendingAimInversion = true, { kind: 'aim-inversion', hits: [], armed: true })
+          : [strike, guard, burst][choice]();
+      }
+      const regional = ({ forest: contact.obstacleKind === 'log' && strike,
+        snow: contact.obstacleKind === 'ice' && guard,
+        city: contact.obstacleKind === 'crate' && burst })[state.area];
+      return typeof regional === 'function' ? regional() : null;
+    };
+    // Consume a previously armed inversion before contacts; a new Chaos topple may arm the next shot.
+    if (permanent && config.aimInversionApplied) state.pendingAimInversion = false;
+    if (!hasContactStream) applyDirectHits();
+    const obstacleEffects = [];
+    if (permanent) for (const contact of contacts) {
+      if (!contact?.obstacleId || toppled.includes(contact.obstacleId)) continue;
+      toppled.push(contact.obstacleId);
+      const effect = applyObstacle(contact);
+      if (!effect) continue;
+      obstacleEffects.push({ ...effect, obstacleId: contact.obstacleId });
+      hits.push(...effect.hits);
     }
-    if (permanent && hits.length) {
+    if (hasContactStream) applyDirectHits();
+    if (permanent && directHitCount) {
       state.effectCounters.permanentWeaponHits++;
       if (hasEffect(state, 'adventurer-candy') && state.effectCounters.permanentWeaponHits % 3 === 0) addScore(state, 10);
     }
     const event = {
-      accepted: true,
-      source: config.source || 'weapon',
-      weaponId: usedWeaponId,
-      damage: rolledDamage * damageMultiplier,
-      bonusDamage,
-      healedPlayer,
-      homingTargetId: homingTarget && homingTarget.id,
-      spillover: damage,
-      hits,
-      missed: hits.length === 0,
-      scoreDelta: activeScore(state) - scoreBefore,
-      enemyAttack: null,
-      obstacleEffect: null,
-      roundCleared: false,
-      runDefeated: false
+      accepted: true, source: config.source || 'weapon', weaponId: usedWeaponId,
+      damage: rolledDamage * damageMultiplier, bonusDamage, healedPlayer,
+      homingTargetId: homingTarget && homingTarget.id, spillover: damage, hits,
+      missed: hits.length === 0 && !obstacleEffects.some(effect =>
+        ['ice-guard', 'aim-inversion'].includes(effect.kind)),
+      scoreDelta: activeScore(state) - scoreBefore, enemyAttack: null,
+      obstacleEffects, obstacleEffect: obstacleEffects.at(-1) || null,
+      roundCleared: false, runDefeated: false
     };
-
-    const shotMeta = config.shotMeta;
-    if (permanent && shotMeta?.impactKind === 'obstacle' && shotMeta.obstacleKind) {
-      const helpers = {
-        log: () => {
-          const target = (shotMeta.obstacleTargetIds || []).map(id => state.enemies.find(enemy => enemy.id === id && enemy.alive && enemy.hp > 0)).find(Boolean);
-          const effectHits = [];
-          if (target) {
-            const removed = Math.min(target.hp, 3);
-            target.hp -= removed;
-            target.alive = target.hp > 0;
-            const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
-            addScore(state, scoreDelta);
-            effectHits.push({ id: target.id, kind: target.kind, damage: removed, remainingHp: target.hp, defeated: !target.alive, scoreDelta });
-          }
-          return { kind: 'log-strike', hits: effectHits };
-        },
-        ice: () => {
-          state.nextAttackDamageMultiplier = 0.5;
-          return { kind: 'ice-guard', hits: [], damageReduction: 0.5, armed: true };
-        },
-        crate: () => {
-          const effectHits = [];
-          for (const target of getLivingEnemies(state).slice()) {
-            const removed = Math.min(target.hp, randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 1, 2));
-            target.hp -= removed;
-            target.alive = target.hp > 0;
-            const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
-            addScore(state, scoreDelta);
-            effectHits.push({ id: target.id, kind: target.kind, damage: removed, remainingHp: target.hp, defeated: !target.alive, scoreDelta });
-          }
-          return { kind: 'jar-burst', hits: effectHits };
-        }
-      };
-      if (state.area === 'chaos') {
-        const effectIndex = randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 0, 3);
-        event.obstacleEffect = effectIndex === 3
-          ? (state.pendingAimInversion = true, { kind: 'aim-inversion', hits: [], armed: true })
-          : helpers[['log', 'ice', 'crate'][effectIndex]]();
-      } else {
-        const expectedKind = { forest: 'log', snow: 'ice', city: 'crate' }[state.area];
-        if (shotMeta.obstacleKind === expectedKind) event.obstacleEffect = helpers[expectedKind]();
-      }
-      if (event.obstacleEffect) {
-        hits.push(...event.obstacleEffect.hits);
-        event.missed = hits.length === 0 && !['ice-guard', 'aim-inversion'].includes(event.obstacleEffect.kind);
-        event.scoreDelta = activeScore(state) - scoreBefore;
-      }
-    }
-    // A chaos inversion is consumed by the next permanent shot. Geometry applies it before
-    // this event is committed; clear it here after that shot has resolved.
-    if (permanent && config.aimInversionApplied) state.pendingAimInversion = false;
 
     return finishAction(state, event, config.rng);
   }

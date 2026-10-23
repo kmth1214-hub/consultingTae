@@ -233,6 +233,12 @@ test('session supports full-vector angles and only the new phases; invalid metad
     { ...validMissMeta, rolling: 'false' },
     { ...validMissMeta, obstacleKind: 'log' },
     { ...validMissMeta, obstacleTargetIds: ['same', 'same'] },
+    { ...validMissMeta, contacts: [{ obstacleId: 'stack', obstacleKind: 'log',
+      point: { x: 1, y: 2 }, distance: 4, time: .1, rolling: false, obstacleTargetIds: [] }] },
+    { ...validMissMeta, contacts: [{ obstacleId: 'stack', obstacleKind: 'log',
+      point: { x: 1, y: 2 }, distance: 4, time: .1, rolling: false, obstacleTargetIds: [] },
+      { obstacleId: 'stack', obstacleKind: 'log', point: { x: 2, y: 2 },
+        distance: 5, time: .2, rolling: false, obstacleTargetIds: [] }] },
     { ...validMissMeta, impactKind: 'obstacle', obstacleId: 'log-1' },
     { ...validMissMeta, impactKind: 'obstacle', obstacleId: 'log-1', obstacleKind: 'log', obstacleTargetIds: [2] }
   ]) {

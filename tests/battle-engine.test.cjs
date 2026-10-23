@@ -157,6 +157,46 @@ test('Chaos chooses each obstacle effect from injected RNG, routes score to bonu
   }
 });
 
+test('chained topples resolve once in path order before a direct hit and refresh next round', () => {
+  const state = engine.createRunState({ area: 'forest', round: 2, rng: () => 0 });
+  const [first, second] = state.enemies;
+  first.hp = 12; first.maxHp = 12;
+  second.hp = 12; second.maxHp = 12;
+  const contacts = [
+    { obstacleId: 'stack-a', obstacleKind: 'log', obstacleTargetIds: [first.id, second.id] },
+    { obstacleId: 'stack-b', obstacleKind: 'log', obstacleTargetIds: [second.id, first.id] }
+  ];
+  const shotMeta = { impactKind: 'enemy', contacts, obstacleId: 'stack-a', obstacleKind: 'log',
+    obstacleTargetIds: contacts[0].obstacleTargetIds, rolling: false, reverse: false };
+  const event = engine.resolveProjectile(state, { hitIds: [first.id], damage: 2, rng: () => 0, shotMeta });
+  assert.deepEqual(event.obstacleEffects.map(effect => effect.obstacleId), ['stack-a', 'stack-b']);
+  assert.deepEqual(event.hits.map(hit => [hit.id, hit.damage]), [[first.id, 3], [second.id, 3], [first.id, 2]]);
+  assert.deepEqual(state.toppledObstacleIds, ['stack-a', 'stack-b']);
+  assert.equal(state.score, 8);
+  assert.equal(state.ammo, 8);
+  assert.ok(event.enemyAttack);
+  const repeated = engine.resolveProjectile(state, { hitIds: [], damage: 0, rng: () => 0, shotMeta });
+  assert.deepEqual(repeated.obstacleEffects, []);
+  assert.equal(state.score, 8);
+  assert.deepEqual(state.toppledObstacleIds, ['stack-a', 'stack-b']);
+  state.terminal = 'round-clear';
+  state.selectedRewards = { weapon: 'chosen', consumable: 'chosen' };
+  assert.equal(engine.advanceRound(state, { rng: () => 0 }).accepted, true);
+  assert.deepEqual(state.toppledObstacleIds, []);
+});
+
+test('a new Chaos inversion from this topple remains armed after consuming the prior inversion', () => {
+  const state = engine.createRunState({ area: 'chaos', round: 1, rng: () => 0 });
+  state.pendingAimInversion = true;
+  const event = engine.resolveProjectile(state, { hitIds: [], damage: 0,
+    aimInversionApplied: true, rng: () => .999,
+    shotMeta: { impactKind: 'ground', contacts: [{ obstacleId: 'chaos-new', obstacleKind: 'ice',
+      obstacleTargetIds: [] }], obstacleId: 'chaos-new', obstacleKind: 'ice',
+      obstacleTargetIds: [], rolling: false, reverse: true } });
+  assert.equal(event.obstacleEffects[0].kind, 'aim-inversion');
+  assert.equal(state.pendingAimInversion, true);
+});
+
 test('boss special attack replaces the normal attack on its third attack', () => {
   const state = engine.createRunState({ area: 'forest', round: 3 });
   const boss = state.enemies[0];

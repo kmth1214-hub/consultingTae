@@ -31,6 +31,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const activeFlight = useRef(null);
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
+    toppledObstacleIds: run.toppledObstacleIds || [],
     windAvailable: run.weapons.some(w => w.id === 'wind-candy') && !run.roundEffects.windHomingUsed });
   function clearFlight() { activeFlight.current = null; setFlight(null); }
   function failLaunch() { controller.cancelAim(); setRetry('조준을 다시 잡고 당겨 주세요.'); }
@@ -67,7 +68,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
         rolling: shot.rollStartDistance !== null && shot.impactDistance > shot.rollStartDistance });
       onFire({ hitIds: shot.hitIds, selectedTargetId: shot.selectedTargetId,
         shotMeta: { impactKind: shot.impactKind, obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind,
-          obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollStartDistance !== null
+          contacts: shot.contacts || [], obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollStartDistance !== null
             && shot.impactDistance > shot.rollStartDistance, reverse: shot.reverse } });
     });
     setFlight(current => current?.id === shot.id ? null : current);
