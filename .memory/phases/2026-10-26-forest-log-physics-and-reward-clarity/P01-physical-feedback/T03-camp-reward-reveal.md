@@ -61,4 +61,3 @@ Task: T03-camp-reward-reveal
 - [ ] 구현 완료
 - [ ] 검증 통과
 - commit: pending
-

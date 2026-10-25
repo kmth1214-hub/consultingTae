@@ -7,7 +7,7 @@ async function installGame(page, fixture = {}) {
     Math.random = () => typeof config.random === 'number' ? config.random : .5;
     {
       // Browser assertions need one repeatable battlefield; production keeps a fresh seed per round.
-      const layoutSeed = Number.isInteger(config.layoutSeed) ? config.layoutSeed : 13;
+      const layoutSeed = Number.isInteger(config.layoutSeed) ? config.layoutSeed : 0;
       const nativeRandomValues = Crypto.prototype.getRandomValues;
       Crypto.prototype.getRandomValues = function (values) {
         if (values instanceof Uint32Array && values.length === 1) {
@@ -133,4 +133,21 @@ async function selectRewards(page, merge = false) {
   if (await items.count()) await items.first().click();
   await page.locator('.continue-button').click();
 }
-module.exports = { test, expect, installGame, arena, phase, ammo, hp, snapshot, start, grabMap, dragPull, shoot, selectRewards };
+async function stackShot({ area = 'forest', round = 1, seed = 0, physical = false, enemies: inputEnemies } = {}) {
+  const [{ BattleEngine }, { buildPlayableBattlefield }, { planShot }] = await Promise.all([
+    import('../../src/game/battleEngine.js'), import('../../src/game/battlefieldPlacement.js'), import('../../src/game/shotGeometry.js')]);
+  const enemies = inputEnemies || BattleEngine.createRoundEnemies(area, round, { rng: () => .5 });
+  const layout = buildPlayableBattlefield({ area, round, enemies, seed });
+  for (let angleDeg = 0; angleDeg <= 75; angleDeg += 2.5) for (let step = 1; step <= 20; step++) {
+    const powerRatio = step / 20, radians = angleDeg * Math.PI / 180;
+    const shot = planShot({ layout, enemies, pull: { ready: true, powerRatio,
+      direction: { x: Math.cos(radians), y: -Math.sin(radians) } } });
+    if (!shot?.contacts.length || shot.hitIds.length) continue;
+    const hitCount = shot.contacts.filter(c => c.logHit).length;
+    if (physical && hitCount !== 1) continue;
+    const physicalHit = hitCount > 0;
+    if (area !== 'forest' || physicalHit === physical) return { angleDeg, powerRatio, shot, layout };
+  }
+  throw new Error(`No ${area} stack shot with physical=${physical}`);
+}
+module.exports = { test, expect, installGame, arena, phase, ammo, hp, snapshot, start, grabMap, dragPull, shoot, selectRewards, stackShot };

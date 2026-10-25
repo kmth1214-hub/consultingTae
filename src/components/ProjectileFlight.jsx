@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef } from 'react';
-import { sampleAtDistance } from '../game/shotGeometry.js';
+import { sampleAtDistance, sampleAtTime } from '../game/shotGeometry.js';
 
 export default function ProjectileFlight({ flight, onProgress, onComplete, onFailure }) {
   const id = `candy-${useId().replace(/:/g, '')}`;
@@ -23,16 +23,22 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         done = true; complete.current.onFailure?.(); return;
       }
       try {
-        const distance = progress * flight.impactDistance;
+        const candyTime = flight.directHitTime ?? sampleAtDistance(flight.path, flight.impactDistance).time;
+        const simulationTime = progress * (flight.simulationSeconds ?? candyTime);
+        const point = sampleAtTime(flight.path, simulationTime);
+        const distance = Math.min(flight.impactDistance, point.distance);
+        const candyFinished = simulationTime > candyTime;
         const rolling = Number.isFinite(flight.rollStartDistance) && distance > flight.rollStartDistance;
-        const point = sampleAtDistance(flight.path, distance);
-        complete.current.onProgress?.({ id: flight.id, point, distance });
+        complete.current.onProgress?.({ id: flight.id, point, distance, time: simulationTime });
+        candyRef.current.style.visibility = candyFinished ? 'hidden' : '';
+        if (trailRef.current) trailRef.current.style.visibility = candyFinished ? 'hidden' : '';
+        if (trailGlowRef.current) trailGlowRef.current.style.visibility = candyFinished ? 'hidden' : '';
         candyRef.current.dataset.rolling = String(rolling);
         const rollDistance = rolling ? distance - flight.rollStartDistance : 0;
         const rotation = reduced ? 0 : rolling ? 600 + rollDistance * 3.4 : progress * 600;
         candyRef.current.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${rotation})`);
         if (rollDustRef.current) {
-          rollDustRef.current.style.display = !reduced && rolling ? '' : 'none';
+          rollDustRef.current.style.display = !reduced && rolling && !candyFinished ? '' : 'none';
           rollDustRef.current.setAttribute('transform', `translate(${point.x} ${point.y + 13})`);
         }
         if (!reduced) {

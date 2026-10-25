@@ -155,6 +155,17 @@ export function sampleAtDistance(path, requested) {
   return sampleUnchecked(path, requested);
 }
 
+export function sampleAtTime(path, requested) {
+  validateSamples(path);
+  if (!Number.isFinite(requested)) throw new TypeError('Time must be finite');
+  const time = clamp(requested, 0, path.durationSeconds), samples = path.samples;
+  let low = 0, high = samples.length - 1;
+  while (low < high) { const mid = (low + high) >>> 1; if (samples[mid].time < time) low = mid + 1; else high = mid; }
+  if (!low) return { ...samples[0] };
+  const a = samples[low - 1], b = samples[low], t = (time - a.time) / (b.time - a.time);
+  return { ...lerp(a, b, t), time, distance: a.distance + (b.distance - a.distance) * t };
+}
+
 export function pathPrefixD(path, requested) {
   validateSamples(path);
   if (!Number.isFinite(requested)) throw new TypeError('Distance must be finite');
@@ -447,5 +458,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     blockerDistance: barrier?.distance ?? null, contacts: [],
     previewD: pathPrefixD(path, Math.min(.30 * path.length, barrier?.distance ?? Infinity)),
     reverse: direction.x < 0,
+    directHitTime: sampleUnchecked(path, impactDistance).time,
+    simulationSeconds: sampleUnchecked(path, impactDistance).time,
     durationMs: clamp(sampleUnchecked(path, impactDistance).time * 1000, 420, 3200) };
 }

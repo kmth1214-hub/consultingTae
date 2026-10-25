@@ -56,7 +56,10 @@ test('real obstacle contacts apply each regional effect with fixed RNG', async (
       enemies: scenario.enemies
     } });
     await start(page);
-    await dragPull(page, { angleDeg: 0, powerRatio: .8 }); await page.mouse.up();
+    const options = scenario.area === 'forest'
+      ? await require('./support.cjs').stackShot({ area: 'forest', seed: 4927, physical: true, enemies: scenario.enemies })
+      : { angleDeg: 0, powerRatio: .8 };
+    await dragPull(page, options); await page.mouse.up();
     await expect(arena(page)).toHaveAttribute('data-obstacle-id', /obstacle-\d/);
     await expect(arena(page)).toHaveAttribute('data-obstacle-effect', scenario.effect);
     const trace = await snapshot(page);
@@ -64,7 +67,9 @@ test('real obstacle contacts apply each regional effect with fixed RNG', async (
     expect(trace.lastEvent.obstacleEffect.kind).toBe(scenario.effect);
     expect(trace.lastEvent.obstacleEffects.length).toBeGreaterThan(0);
     expect(trace.run.toppledObstacleIds.length).toBeGreaterThan(0);
-    expect(trace.run.enemies.map(item => item.hp)).toEqual(scenario.expectedHp);
+    const expectedHp = scenario.area === 'forest' ? scenario.enemies.map(item =>
+      item.hp - (options.shot.contacts.some(c => c.logHit?.id === item.id) ? 3 : 0)) : scenario.expectedHp;
+    expect(trace.run.enemies.map(item => item.hp)).toEqual(expectedHp);
     expect(trace.run.score).toBe(scenario.expectedScore);
     expect(trace.run.bonusScore).toBe(scenario.expectedBonus);
     if (scenario.effect === 'ice-guard') expect(trace.lastEvent.enemyAttack.damageReduction).toBe(.5);

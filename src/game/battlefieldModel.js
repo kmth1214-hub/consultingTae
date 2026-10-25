@@ -58,8 +58,11 @@ export function buildBattlefield({ area, round, enemies, seed = 0 } = {}) {
   const obstacles = [];
   const count = placements.length ? 2 + Math.floor(random() * 3) : 0;
   const regularSize = enemies.length <= 6 ? 92 : 60;
+  const nearEnemy = area === 'forest' && placements.length ? placements[Math.floor(random() * placements.length)] : null;
   for (let slot = 0; slot < count; slot++) {
-    const nominal = [740, 1510, 2290, 3050][slot] + (random() * 2 - 1) * 190;
+    const nominal = slot === 0 && nearEnemy
+      ? nearEnemy.x - nearEnemy.size / 2 - STACK_WIDTH / 2 - (24 + random() * 86)
+      : [740, 1510, 2290, 3050][slot] + (random() * 2 - 1) * 190;
     const choices = centers.map(([a, b]) => Math.max(a, Math.min(b, nominal)));
     choices.sort((a, b) => Math.abs(a - nominal) - Math.abs(b - nominal) || a - b);
     if (!choices.length) break;

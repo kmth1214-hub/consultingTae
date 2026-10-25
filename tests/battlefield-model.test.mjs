@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BattleEngine } from '../src/game/battleEngine.js';
 import { BATTLEFIELD, buildBattlefield, getDragDraw } from '../src/game/battlefieldModel.js';
-import { buildPlayableBattlefield, isPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
+import { buildPlayableBattlefield, isPlayableBattlefield, findForestLogOpportunity } from '../src/game/battlefieldPlacement.js';
 
 test('seeded round layouts stay stable, avoid overlaps and remain playable at density extremes', () => {
   const originalRandom = Math.random;
@@ -63,6 +63,17 @@ test('distinct round seeds change positions without changing enemy identity', ()
   assert.deepEqual(first.enemies.map(enemy => enemy.id), second.enemies.map(enemy => enemy.id));
   assert.notDeepEqual(first.enemies.map(enemy => enemy.x), second.enemies.map(enemy => enemy.x));
   assert.notEqual(first.key, second.key);
+});
+
+test('each Forest seed has a real non-overlapping log hit opportunity, stable across rerenders', () => {
+  for (const round of [1, 2, 3]) for (const seed of [0, 1, 13, 4927, 999999]) {
+    const enemies = BattleEngine.createRoundEnemies('forest', round);
+    const layout = buildPlayableBattlefield({ area: 'forest', round, enemies, seed });
+    const witness = findForestLogOpportunity(layout);
+    assert.ok(witness, `missing physical opportunity at ${round}/${seed}`);
+    assert.ok(witness.shot.contacts.some(c => c.logMotion?.hit));
+    assert.deepEqual(buildPlayableBattlefield({ area: 'forest', round, enemies, seed }), layout);
+  }
 });
 
 test('builder rejects invalid identities and gives fresh empty layouts and frozen constants', () => {

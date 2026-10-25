@@ -113,7 +113,7 @@ test('weak and reverse misses spend one shot each; blur during flight cancels wi
 });
 
 test('stack contact topples the prop and applies the regional collision effect once', async ({ page }) => {
-  await dragPull(page, { angleDeg: 0, powerRatio: 1 }); await page.mouse.up();
+  await dragPull(page, await require('./support.cjs').stackShot({ physical: true })); await page.mouse.up();
   await phase(page, 'launching');
   // Momentum can carry the candy past the first stack, so the final landing may be ground.
   await expect(arena(page)).toHaveAttribute('data-impact-kind', 'ground');

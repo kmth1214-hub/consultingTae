@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import { sampleLogMotion } from '../game/forestLogPhysics.js';
 
 function LogStack() {
   return <>
@@ -64,12 +65,44 @@ function Debris({ kind }) {
   </>;
 }
 
-export default function ArenaScenery({ layout, area = layout.area,
-  toppledObstacleIds = [], visualContacts = [] }) {
+const ArenaScenery = forwardRef(function ArenaScenery({ layout, area = layout.area,
+  toppledObstacleIds = [], visualContacts = [], flight, forestLogDebris = [] }, ref) {
+  const nodes = useRef(new Map()), clock = useRef(0);
+  const motions = new Map((flight?.contacts || []).filter(c => c.logMotion).map(c => [c.obstacleId, c.logMotion]));
+  const debris = new Map(forestLogDebris.map(pose => [pose.obstacleId, pose]));
+  const advance = time => {
+    clock.current = time;
+    let focus = null;
+    for (const [id, motion] of motions) {
+      const node = nodes.current.get(id);
+      if (!node) continue;
+      const pose = sampleLogMotion(motion, time), started = time >= motion.startTime;
+      node.setAttribute('transform', `translate(${pose.x} ${pose.y}) rotate(${pose.angle * 180 / Math.PI})`);
+      node.dataset.stackState = !started ? 'standing' : pose.phase === 'settled' ? 'toppled' : 'falling';
+      node.dataset.motionPhase = !started ? 'standing' : pose.phase;
+      if (started && pose.phase !== 'settled') focus = { x: pose.x, y: pose.y };
+    }
+    return focus;
+  };
+  useImperativeHandle(ref, () => ({ advance }));
+  useLayoutEffect(() => { advance(flight ? clock.current : 0); });
+  useLayoutEffect(() => { clock.current = 0; advance(0); }, [flight?.id]);
   const fallen = new Set(toppledObstacleIds);
   const active = new Map(visualContacts.map(contact => [contact.obstacleId, contact]));
   return <svg className="scene-scenery" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
     {layout.obstacles.map(prop => {
+      const motion = motions.get(prop.id), finalPose = debris.get(prop.id);
+      if (motion || finalPose) {
+        const pose = finalPose || motion.samples[0];
+        return <g key={prop.id} ref={node => node ? nodes.current.set(prop.id, node) : nodes.current.delete(prop.id)}
+          data-obstacle-id={prop.id} data-obstacle-kind={prop.kind} data-stack-state={finalPose ? 'toppled' : 'standing'}
+          data-motion-phase={finalPose ? 'settled' : 'standing'} className="stack stack--physical"
+          transform={`translate(${pose.x} ${pose.y}) rotate(${pose.angle * 180 / Math.PI})`}>
+          <g transform={`translate(${-prop.width / 2} ${-prop.height / 2}) scale(${prop.width / 80} ${prop.height / 160})`}>
+            <g className="stack-body"><LogStack /></g>
+          </g>
+        </g>;
+      }
       const touching = active.get(prop.id);
       const state = fallen.has(prop.id) ? 'toppled' : touching ? 'falling' : 'standing';
       const direction = touching?.direction < 0 ? 'left' : 'right';
@@ -84,7 +117,8 @@ export default function ArenaScenery({ layout, area = layout.area,
       </g>;
     })}
   </svg>;
-}
+});
+export default ArenaScenery;
 
 // A cosmetic timer never resolves combat; the frozen contact point owns this effect.
 export function ContactEffect({ impact, obstacles, effect }) {

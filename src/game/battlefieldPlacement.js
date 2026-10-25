@@ -28,9 +28,19 @@ function witnessAt(layout, enemies, x, y, matches) {
       else high = mid;
     }
     const shot = planShot({ layout, pull: pullAt((low + high) / 2), enemies });
-    if (matches(shot)) return true;
+    if (matches(shot)) return { shot, pull: pullAt((low + high) / 2) };
   }
   return false;
+}
+
+export function findForestLogOpportunity(layout) {
+  const enemies = layout.enemies.map(slot => ({ id: slot.id, alive: true, hp: 1 }));
+  for (const stack of layout.obstacles) for (const height of [.25, .5, .75, .1, .9]) {
+    const witness = witnessAt(layout, enemies, stack.x + stack.width / 2,
+      stack.y + stack.height * height, shot => shot?.contacts?.some(contact => contact.logMotion?.hit));
+    if (witness) return witness;
+  }
+  return null;
 }
 
 /** Use actual first-contact shots to reject random layouts that cannot be played. */
@@ -49,7 +59,7 @@ export function isPlayableBattlefield(layout, enemies) {
       x, stack.y + stack.height * ratio, shot => shot?.contacts?.some(contact =>
         contact.obstacleId === stack.id)))) return false;
   }
-  return true;
+  return layout.area !== 'forest' || !layout.enemies.length || Boolean(findForestLogOpportunity(layout));
 }
 
 /** All attempts derive from one round seed, so rerenders cannot shuffle the battlefield. */

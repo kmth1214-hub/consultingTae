@@ -353,7 +353,7 @@ test('all real rounds and density extremes have an ordinary first-contact shot f
 test('a meaningful low blocker can be cleared by a high ordinary shot', () => {
   const enemies = [{ id: 'target', kind: 'snake', isBoss: false, hp: 4, alive: true }];
   const layout = buildBattlefield({ area: 'forest', round: 1, enemies });
-  const low = planShot({ layout, pull: pullAt(0, 1), enemies });
+  const low = planShot({ layout, pull: pullAt(15, .8), enemies });
   assert.ok(low.contacts.length > 0);
   const high = planShot({ layout, pull: pullAt(55, 1), enemies });
   assert.ok(high.path.samples.some(p => p.x > 2300 && p.y < 700));

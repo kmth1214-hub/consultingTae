@@ -23,6 +23,7 @@ const INSTRUCTIONS = {
 
 export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef }) {
   const worldRef = useRef(null), launcherRef = useRef(null), enemyGroupRef = useRef(null), focusRef = useRef(null);
+  const sceneryRef = useRef(null);
   const slotKey = JSON.stringify(run.enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss]));
   const layout = useMemo(() => buildPlayableBattlefield({ area: run.area, round: run.round,
     seed: run.layoutSeed ?? 0,
@@ -74,15 +75,17 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
           rolling: shot.rollStartDistance !== null && shot.impactDistance > shot.rollStartDistance });
       onFire({ hitIds: shot.hitIds, selectedTargetId: shot.selectedTargetId,
         shotMeta: { impactKind: shot.impactKind, obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind,
-          contacts: shot.contacts || [], obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollStartDistance !== null
+          contacts: (shot.contacts || []).map(({ logMotion, ...contact }) => contact),
+          directHitTime: shot.directHitTime ?? shot.path.durationSeconds,
+          obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollStartDistance !== null
             && shot.impactDistance > shot.rollStartDistance, reverse: shot.reverse } });
     });
     setFlight(current => current?.id === shot.id ? null : current);
   }
-  function showFlightContacts(shot, progressDistance) {
+  function showFlightContacts(shot, progressTime) {
     const fresh = [];
     for (const contact of shot.contacts || []) {
-      if (contact.distance > progressDistance || triggeredContacts.current.has(contact.obstacleId)) continue;
+      if (contact.time > progressTime || triggeredContacts.current.has(contact.obstacleId)) continue;
       triggeredContacts.current.add(contact.obstacleId);
       const before = sampleAtDistance(shot.path, Math.max(0, contact.distance - 4));
       fresh.push({ ...contact, direction: Math.sign(contact.point.x - before.x) || 1,
@@ -106,8 +109,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
       onContextMenu={controller.onContextMenu} onKeyDown={controller.onKeyDown}>
       <div ref={worldRef} className="arena-world" style={{ width: layout.width, height: layout.height }}>
         <BattlefieldBackdrop area={run.area} layout={layout} motionPaused={Boolean(run.terminal)} />
-        <ArenaScenery layout={layout} area={run.area} toppledObstacleIds={run.toppledObstacleIds || []}
-          visualContacts={visualContacts} />
+        <ArenaScenery ref={sceneryRef} layout={layout} area={run.area} toppledObstacleIds={run.toppledObstacleIds || []}
+          visualContacts={visualContacts} flight={flight} forestLogDebris={run.forestLogDebris || []} />
         <Slingshot aim={state} run={run} launcherRef={launcherRef} layout={layout} />
         <PlayerCookie characterId={run.characterId} placement={layout.player} aimPhase={state.phase}
           launchId={state.launchId} response={enemyResponse} playerHp={beforeImpact
@@ -116,10 +119,11 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
           <TrajectoryPreview path={solution?.path || flight?.path} previewD={solution?.previewD}
             visible={state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} onFailure={failLaunch}
-            onProgress={({ id, point, distance }) => {
+            onProgress={({ id, point, time }) => {
               if (activeFlight.current !== id) return;
-              focusRef.current = point;
-              showFlightContacts(flight, distance);
+              const logFocus = sceneryRef.current?.advance(time);
+              focusRef.current = time > flight.directHitTime && logFocus ? logFocus : point;
+              showFlightContacts(flight, time);
             }} />}
           {visualContacts.map(contact => <ContactEffect key={contact.id} impact={{
             id: contact.id, point: contact.point, obstacleId: contact.obstacleId }}

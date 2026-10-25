@@ -21,6 +21,8 @@
 .scene-scenery { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
 .stack-body { transform-box: fill-box; transform-origin: 50% 100%; filter: drop-shadow(2px 4px 3px #2b29246b); }
 .stack-debris { opacity: 0; filter: drop-shadow(1px 2px 2px #33291c88); }
+.stack--physical .stack-body { animation: none !important; transform: none !important; display: inline !important; }
+.stack--physical[data-motion-phase="settled"] { opacity: .65; }
 .stack--falling.stack--fall-right .stack-body { animation: stack-fall-right 650ms ease-in both; }
 .stack--falling.stack--fall-left .stack-body { animation: stack-fall-left 650ms ease-in both; }
 .stack--falling .stack-debris { animation: stack-debris-arrive 480ms 180ms ease-out both; }

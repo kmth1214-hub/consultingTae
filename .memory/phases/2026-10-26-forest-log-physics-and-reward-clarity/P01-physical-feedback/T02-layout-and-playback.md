@@ -1,6 +1,6 @@
 # Task: T02 Forest Layout and Playback
 
-## Status: pending
+## Status: done
 
 ## Goal
 숲 라운드마다 실제 노릴 수 있는 근접 통나무를 최소 한 개 제공하고, 화면의 통나무가 T01의 판정 경로 그대로 움직인다.
@@ -40,8 +40,8 @@
 - Test real Forest target hit vs distant/log miss, no damage before physical contact, final body movement, one resolution, next aim debris stable, one near opportunity per round, narrow/reduced motion and no runtime errors. Preserve other region and Wind assertions; use fixed fixture seeds and recorded legal pull witnesses rather than random luck. Visually inspect Forest/City overview and flight; city panorama must remain unobscured.
 
 ## Acceptance Criteria
-- [ ] Seeded Forest rounds have at least one non-overlapping usable nearby log and remain stable within a round.
-- [ ] Visible log movement and its final debris position match the physics result at desktop/mobile sizes.
+- [x] Seeded Forest rounds have at least one non-overlapping usable nearby log and remain stable within a round.
+- [x] Visible log movement and its final debris position match the physics result at desktop/mobile sizes.
 
 ## Validation
 - `node --test tests/battlefield-model.test.mjs tests/forest-log-physics.test.mjs tests/shot-geometry.test.mjs` — pass
@@ -61,7 +61,6 @@ Task: T02-layout-and-playback
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과 — 23 unit tests, build, and 31 browser tests passed on isolated port 4192.
 - commit: pending
-

@@ -1,10 +1,10 @@
-const { test, expect, installGame, start, dragPull, phase, arena, snapshot } = require('./support.cjs');
+const { test, expect, installGame, start, dragPull, phase, arena, snapshot, stackShot } = require('./support.cjs');
 
 for (const [area, material] of [['forest', 'log'], ['snow', 'ice'], ['city', 'crate'], ['chaos', 'log']]) {
   test(`${area} stack topples, keeps its regional effect, and remains as debris`, async ({ page }) => {
     await installGame(page, { initial: { area }, layoutSeed: 4927 });
     await start(page);
-    await dragPull(page, { angleDeg: 0, powerRatio: 1 });
+    await dragPull(page, area === 'forest' ? await stackShot({ seed: 4927, physical: true }) : { angleDeg: 0, powerRatio: 1 });
     await page.mouse.up();
     await phase(page, 'launching');
     const battle = arena(page);
@@ -33,7 +33,7 @@ for (const [area, material] of [['forest', 'log'], ['snow', 'ice'], ['city', 'cr
 test('ordinary candy topples a stack while Wind homing flies to its enemy without toppling', async ({ page }) => {
   await installGame(page, { layoutSeed: 4927 });
   await start(page);
-  await dragPull(page, { angleDeg: 0, powerRatio: 1 });
+  await dragPull(page, await stackShot({ seed: 4927, physical: true }));
   await page.mouse.up();
   await expect(arena(page)).toHaveAttribute('data-obstacle-id', /obstacle-\d/);
   await expect.poll(async () => (await snapshot(page)).events.filter(event => event.name === 'resolveProjectile').length).toBe(1);
