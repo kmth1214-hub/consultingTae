@@ -58,4 +58,4 @@ Task: T04-candy-details
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — 123 unit tests and build passed. Full browser run: 100/102 passed; two obsolete fixed-layout assertions were updated and both passed on targeted rerun. Current/expanded/phone HUD and camp reveal screenshots inspected.
-- commit: pending
+- commit: `88bfa47`

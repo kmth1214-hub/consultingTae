@@ -7,10 +7,10 @@
 [P01 Physical Feedback](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/phase.md)
 
 ## Active Task
-[T04 Accurate Candy Details](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/T04-candy-details.md)
+none — [T04 Accurate Candy Details](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/T04-candy-details.md) complete
 
 ## Status
-in_progress — T01 done (`f3f946e`), T02 done (`e8a8354`), T03 done (`72b695a`), T04 active.
+complete — T01 (`f3f946e`), T02 (`e8a8354`), T03 (`72b695a`), T04 (`88bfa47`) done.
 
 ## Next Step
-T04 청사진을 읽고 사탕 피해 범위·능력·강화·다음 사탕 HUD를 구현하고 전체 검증한다.
+계획 완료. 다음 활성 Task 없음. Azure 배포는 별도 작업이다.
