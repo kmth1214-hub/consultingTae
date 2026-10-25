@@ -27,7 +27,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
   let sequence = 0;
   let state = { screen: 'home', profile: loadProfile(storage), selectedCharacter: null, run: null,
     aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null, enemyResponse: null,
-    leaderboardReturnScreen: null };
+    leaderboardReturnScreen: null, campRewardReveal: null };
   const listeners = new Set();
   const publish = patch => {
     state = { ...state, ...patch };
@@ -78,7 +78,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
   const actions = {
     startCharacterSelect() {
       publish({ screen: 'characters', run: null, selectedCharacter: null, fusion: null, outcome: null,
-        summary: null, lastEvent: null, enemyResponse: null, aim: initialAim(), notification: null, leaderboardReturnScreen: null });
+        summary: null, lastEvent: null, enemyResponse: null, aim: initialAim(), notification: null, leaderboardReturnScreen: null,
+        campRewardReveal: null });
     },
     startRun(characterId) {
       if (state.screen !== 'characters') return reject('invalid-state');
@@ -87,7 +88,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       if (character.locked && !state.profile.snowAreaCleared) return reject('locked');
       const run = engine.createRunState({ characterId, area: 'forest', round: 1, rng, now: now() });
       assignLayoutSeed(run);
-      publish({ run, selectedCharacter: character, screen: 'battle', aim: initialAim(), notification: null, lastEvent: null });
+      publish({ run, selectedCharacter: character, screen: 'battle', aim: initialAim(), notification: null, lastEvent: null,
+        campRewardReveal: null });
       return { accepted: true };
     },
     setAim(patch) {
@@ -198,9 +200,17 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const event = engine.chooseCampReward(run, choice, { rng, now: now(), mergeDuplicate });
       if (!event.accepted) return reject(event.reason);
       if (!event.pendingCamp) assignLayoutSeed(run);
+      const reveal = !event.pendingCamp && choice === 'weapon'
+        ? { items: structuredClone(event.effect.weapons), area: run.area } : null;
       publish({ run, fusion: event.requiresFusionChoice ? { ...event.fusionCandidate, source: 'camp' } : null,
-        screen: event.pendingCamp ? 'camp' : 'battle', aim: initialAim(), lastEvent: null });
+        screen: event.pendingCamp ? 'camp' : reveal ? 'camp-reward' : 'battle',
+        campRewardReveal: reveal, aim: initialAim(), lastEvent: null, enemyResponse: null });
       return event;
+    },
+    continueAfterCampReward() {
+      if (state.screen !== 'camp-reward' || !state.campRewardReveal) return reject('invalid-state');
+      publish({ screen: 'battle', campRewardReveal: null, notification: null });
+      return { accepted: true };
     },
     resolveFusion(mergeDuplicate) {
       const fusion = state.fusion;

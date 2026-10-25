@@ -7,10 +7,10 @@
 [P01 Physical Feedback](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/phase.md)
 
 ## Active Task
-[T02 Forest Layout and Playback](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/T02-layout-and-playback.md)
+[T03 Camp Reward Reveal](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/T03-camp-reward-reveal.md)
 
 ## Status
-in_progress — T01 done (`f3f946e`), T02 active. 자동으로 T04까지 순차 실행한다.
+in_progress — T01 done (`f3f946e`), T02 done (`e8a8354`), T03 active.
 
 ## Next Step
-T02 청사진을 읽고 적 근처 물리 명중 가능 배치와 동일 궤적 시각 재생을 구현한다.
+T03 청사진을 읽고 무작위 야영지 사탕의 획득 결과와 확인 후 지역 이동을 구현한다.

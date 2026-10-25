@@ -289,11 +289,13 @@
         const duplicate=fusionWeapon(state,item,item.grade);
         const result=grantWeapon(state,item,item.grade,{mergeDuplicate});
         if (!result.accepted) return {accepted:true,pendingCamp:true,requiresFusionChoice:true,fusionCandidate:result.fusionCandidate};
-        pending.grants.push({name:result.weapon.name,grade:result.weapon.grade,fused:result.fused});
+        pending.grants.push({weaponId:result.weapon.id,instanceId:result.weapon.instanceId,
+          name:result.weapon.name,grade:result.weapon.grade,effect:result.weapon.effect || item.effect,fused:result.fused});
         pending.index++;
         if (duplicate) mergeDuplicate=undefined;
       }
-      effect={weapons:pending.grants,grade:pending.grade};
+      effect={weapons:pending.grants.map(grant=>({...grant,
+        grade:state.weapons.find(weapon=>weapon.instanceId===grant.instanceId)?.grade || grant.grade})),grade:pending.grade};
     }
     else return {accepted:false,reason:'invalid-choice'};
     state.area=state.area==='forest'?'snow':'city';state.round=1;enterRound(state,config);

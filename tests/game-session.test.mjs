@@ -114,8 +114,35 @@ test('camp weapon queue survives multiple fusion prompts without rerolling or al
   assert.equal(session.getSnapshot().fusion.source, 'camp');
   assert.equal(rolls, rollsAtPrompt);
   session.actions.resolveFusion(true);
-  assert.equal(session.getSnapshot().screen, 'battle');
+  assert.equal(session.getSnapshot().screen, 'camp-reward');
   assert.equal(session.getSnapshot().run.area, 'snow');
+  const reveal = session.getSnapshot().campRewardReveal;
+  assert.equal(reveal.items.length, 2);
+  assert.ok(reveal.items.every(item => item.name && item.effect && item.weaponId && item.instanceId));
+  assert.equal(reveal.items[1].fused, true);
+  const beforeConfirm = structuredClone(session.getSnapshot().run), rollsBeforeConfirm = rolls;
+  assert.equal(session.actions.continueAfterCampReward().accepted, true);
+  assert.equal(session.getSnapshot().screen, 'battle');
+  assert.equal(session.getSnapshot().campRewardReveal, null);
+  assert.equal(session.actions.continueAfterCampReward().accepted, false);
+  assert.deepEqual(session.getSnapshot().run, beforeConfirm);
+  assert.equal(rolls, rollsBeforeConfirm);
+});
+
+test('single B-grade camp reward is revealed once before battle without regranting on confirm', () => {
+  const session = start({ engine: clearingEngine, rng: () => 0 });
+  for (let i = 0; i < 3; i++) { clear(session); rewards(session); }
+  session.actions.chooseCampReward('weapon');
+  while (session.getSnapshot().fusion) session.actions.resolveFusion(false);
+  const state = session.getSnapshot();
+  assert.equal(state.screen, 'camp-reward');
+  assert.equal(state.campRewardReveal.items.length, 1);
+  assert.equal(state.campRewardReveal.items[0].grade, 'B');
+  assert.equal(session.actions.chooseCampReward('weapon').accepted, false);
+  const before = structuredClone(state.run);
+  session.actions.continueAfterCampReward();
+  assert.deepEqual(session.getSnapshot().run, before);
+  assert.equal(session.getSnapshot().screen, 'battle');
 });
 
 test('9 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bonus rounds follow screen routing', () => {

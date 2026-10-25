@@ -1,6 +1,6 @@
 # Task: T03 Camp Reward Reveal
 
-## Status: pending
+## Status: done
 
 ## Goal
 야영지 무작위 사탕을 받은 사용자가 모든 획득/합성 결과를 확인한 뒤 다음 지역으로 이동한다.
@@ -37,8 +37,8 @@
 - Cover C pair, B single, duplicate fusion including repeated weapon identity, final grade/effect, no RNG/turn/seed change on confirm, and heal immediate transition. Confirm button enters the correct next area once and reload does not regrant.
 
 ## Acceptance Criteria
-- [ ] Random weapon path cannot enter the next battle until final acquisition results have been shown.
-- [ ] Every awarded/fused item is accurate and confirmation never grants it twice.
+- [x] Random weapon path cannot enter the next battle until final acquisition results have been shown.
+- [x] Every awarded/fused item is accurate and confirmation never grants it twice.
 
 ## Validation
 - `node --test tests/game-session.test.mjs tests/battle-engine.test.cjs` — pass
@@ -58,6 +58,6 @@ Task: T03-camp-reward-reveal
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과 — 42 unit tests, build and 11 browser flow tests; desktop/phone screenshots inspected.
 - commit: pending

@@ -63,4 +63,4 @@ Task: T02-layout-and-playback
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — 23 unit tests, build, and 31 browser tests passed on isolated port 4192.
-- commit: pending
+- commit: `e8a8354`

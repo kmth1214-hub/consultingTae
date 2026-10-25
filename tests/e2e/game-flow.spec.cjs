@@ -139,6 +139,34 @@ test('camp weapon rewards can finish two consecutive fusion decisions without sw
   await expect(page.getByRole('heading', { name: '같은 등급의 사탕을 발견했어요', exact: true })).toBeVisible();
   expect((await snapshot(page)).run.pendingCampReward.items).toEqual(pending.items);
   await page.getByRole('button', { name: /등급으로 합성/ }).click();
+  await expect(page.getByRole('heading', { name: '새로운 사탕을 얻었어요', exact: true })).toBeVisible();
+  await expect(page.locator('.camp-grant')).toHaveCount(2);
+  await expect(page.locator('.camp-grant').nth(1)).toContainText('합성 완료');
+  await page.screenshot({ path: 'tmp/camp-reward-pair.png' });
+  const granted = (await snapshot(page)).run.weapons;
+  await page.getByRole('button', { name: '다음 지역으로 →', exact: true }).click();
+  await phase(page, 'idle');
+  expect((await snapshot(page)).run.area).toBe('snow');
+  expect((await snapshot(page)).run.weapons).toEqual(granted);
+});
+
+test('single B-grade camp result fits a phone and waits for confirmation before the next region', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await installGame(page, { random: 0, initial: { area: 'forest', round: 3 }, allWeapons: true, fastCombat: true });
+  await start(page);
+  await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
+  await selectRewards(page);
+  await page.getByRole('button', { name: /새로운 마법사탕/ }).click();
+  if (await page.getByRole('heading', { name: '같은 등급의 사탕을 발견했어요', exact: true }).isVisible())
+    await page.getByRole('button', { name: '따로 보유', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '새로운 사탕을 얻었어요', exact: true })).toBeVisible();
+  await expect(page.locator('.camp-grant')).toHaveCount(1);
+  await expect(page.locator('.camp-grant')).toContainText('B 등급');
+  await expect(page.locator('.camp-grant strong')).not.toHaveText('');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: 'tmp/camp-reward-mobile.png' });
+  await page.getByRole('button', { name: '다음 지역으로 →', exact: true }).click();
   await phase(page, 'idle');
   expect((await snapshot(page)).run.area).toBe('snow');
 });
