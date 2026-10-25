@@ -60,4 +60,4 @@ Task: T03-camp-reward-reveal
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — 42 unit tests, build and 11 browser flow tests; desktop/phone screenshots inspected.
-- commit: pending
+- commit: `72b695a`

@@ -1,6 +1,6 @@
 # Task: T04 Accurate Candy Details
 
-## Status: pending
+## Status: done
 
 ## Goal
 장전된 사탕의 가능한 피해와 적용 능력을 오해 없이 읽고, 이미 정해진 다음 사탕을 확인한다.
@@ -35,8 +35,8 @@
 - Test all grades, zero cap, Fireball, deduplicated cross-weapon passives, queue wrap/unknown, not mutated, Wind used state, conditional counters. Browser checks names/ranges/current vs next, passive disclosure, buff changes after item use, hidden throughout flight and reappears afterward, mobile no overflow. Run all unit tests, build and complete browser suite once feature checks pass; inspect real screenshots of current/expanded cards and camp reveal.
 
 ## Acceptance Criteria
-- [ ] Current/next candy details match real engine state; no predicted exact roll or concealed aim numbers leak into HUD.
-- [ ] Full game flows, narrow screens, reduced motion and non-Forest regional effects pass validation.
+- [x] Current/next candy details match real engine state; no predicted exact roll or concealed aim numbers leak into HUD.
+- [x] Full game flows, narrow screens, reduced motion and non-Forest regional effects pass validation.
 
 ## Validation
 - `npm.cmd test` — pass
@@ -56,6 +56,6 @@ Task: T04-candy-details
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과 — 123 unit tests and build passed. Full browser run: 100/102 passed; two obsolete fixed-layout assertions were updated and both passed on targeted rerun. Current/expanded/phone HUD and camp reveal screenshots inspected.
 - commit: pending

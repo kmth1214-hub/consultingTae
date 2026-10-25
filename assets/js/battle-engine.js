@@ -215,6 +215,12 @@
     state.selectedRewards={weapon:null,consumable:consumables.length?null:'skip'};
     return state.rewardChoices;
   }
+
+  // Endpoints of the same monotone roll rule used by combat; no random source is consumed.
+  function getWeaponDamageRange(grade, zeroRollsThisRound) {
+    return { min: rollWeaponDamage(() => 0, grade, zeroRollsThisRound),
+      max: rollWeaponDamage(() => .999999999999, grade, zeroRollsThisRound) };
+  }
   function applyRewardChoice(state,category,choiceId,options) {
     if(!state||state.area==='chaos'||state.terminal!=='round-clear'||!state.rewardChoices)return {accepted:false,reason:'no-reward'};
     if(!['weapon','consumable'].includes(category)||state.selectedRewards[category])return {accepted:false,reason:'already-selected'};
@@ -662,6 +668,7 @@
     getRunSummary,
     skipConsumableReward,
     rollWeaponDamage,
+    getWeaponDamageRange,
     resolveProjectile,
     resolveEnemyTurn,
     getLivingEnemies,

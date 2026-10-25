@@ -7,10 +7,10 @@
 [P01 Physical Feedback](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/phase.md)
 
 ## Active Task
-[T03 Camp Reward Reveal](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/T03-camp-reward-reveal.md)
+[T04 Accurate Candy Details](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/T04-candy-details.md)
 
 ## Status
-in_progress — T01 done (`f3f946e`), T02 done (`e8a8354`), T03 active.
+in_progress — T01 done (`f3f946e`), T02 done (`e8a8354`), T03 done (`72b695a`), T04 active.
 
 ## Next Step
-T03 청사진을 읽고 무작위 야영지 사탕의 획득 결과와 확인 후 지역 이동을 구현한다.
+T04 청사진을 읽고 사탕 피해 범위·능력·강화·다음 사탕 HUD를 구현하고 전체 검증한다.

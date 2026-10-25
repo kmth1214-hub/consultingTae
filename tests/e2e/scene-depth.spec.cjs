@@ -58,7 +58,7 @@ test('minimap monsters stay readable at desktop and narrow viewport sizes', asyn
 });
 
 test('minimap aim guide grows with power but stops before every monster', async ({ page }) => {
-  await installGame(page, { initial: { area: 'forest', round: 2 } });
+  await installGame(page, { initial: { area: 'forest', round: 2 }, layoutSeed: 13 });
   await start(page);
   const minimap = page.locator('.battlefield-minimap');
   const guide = minimap.getByTestId('minimap-aim-guide');

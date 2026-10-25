@@ -49,7 +49,7 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .consumable-hud button { padding: 4px 7px; border: 1px solid #ddd3bd; border-radius: 7px; background: #fffdf7; font-size: .64rem; }
 .consumable-hud button:disabled { opacity: .4; }
 .item-lockout { font-size: .65rem; color: #537d99; padding: 6px 0; }
-.candy-hud { right: 20px; width: 240px; padding: 15px 18px; }
+.candy-hud { right: 20px; width: 270px; padding: 15px 18px; max-height: calc(100% - 40px); overflow-y: auto; overscroll-behavior: contain; }
 .candy-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .candy-card-top .candy-symbol { width: 30px; height: 30px; font-size: 1.25rem; }
 .grade { border-radius: 6px; background: #f0dc9b; color: #78521e; padding: 4px 7px; font-size: .64rem; font-weight: 850; }
@@ -59,6 +59,23 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .ammo-dots i { width: 11px; height: 11px; border-radius: 50%; background: #e18a43; border: 1px solid #c67735; }
 .ammo-dots .is-spent { background: #ede5d4; border-color: #d8cbb6; }
 .candy-hud .weapon-count { font-size: .62rem; color: #96846a; }
+.candy-label { font-size: .65rem; color: #806d56; margin-right: auto; margin-left: 8px; }
+.candy-damage strong { color: #314f42; font-size: 1rem; margin-left: 5px; }
+.candy-damage > span { display: block; color: #8a7b65; font-size: .6rem; }
+.candy-buffs { padding: 0; margin: 8px 0; list-style: none; display: grid; gap: 5px; }
+.candy-buffs li { padding: 5px 7px; background: #fae8bf; border-radius: 7px; color: #754e21; font-size: .65rem; line-height: 1.5; }
+.candy-status-chips { display: flex; flex-wrap: wrap; gap: 4px; list-style: none; padding: 0; margin: 7px 0; }
+.candy-status-chips li { background: #fae8bf; border-radius: 5px; padding: 3px 5px; font-size: .62rem; color: #754e21; }
+.candy-passives { margin-top: 10px; font-size: .68rem; color: #536b55; }
+.candy-passives summary { cursor: pointer; padding: 3px 0; font-weight: 750; }
+.candy-detail-body { max-height: 190px; overflow-y: auto; overscroll-behavior: contain; }
+.candy-passives .owned-passives { padding-left: 17px; margin: 6px 0; color: #6c5f4c; }
+.candy-passives li { margin-top: 6px; line-height: 1.6; }
+.candy-hud .passive-note { font-size: .6rem; margin-top: 4px; }
+.next-candy { display: flex; flex-wrap: wrap; gap: 3px 7px; border-top: 1px solid #e1d8c6; margin-top: 9px; padding-top: 8px; font-size: .65rem; line-height: 1.5; }
+.next-candy > span { color: #8d7b62; }
+.next-candy > strong { flex: 1; min-width: 0; font-weight: 650; }
+.next-candy small { color: #8e784a; }
 .monster-group { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
 .player-cookie { position: absolute; z-index: 7; pointer-events: none; }
 .player-cookie-body { position: absolute; inset: 0; display: grid; place-items: end center; transform-origin: 50% 92%; }
@@ -223,11 +240,19 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .consumable-hud img { width: 18px; height: 18px; }
   .consumable-hud button { font-size: 9px; padding: 3px 4px; }
   .consumable-hud kbd { width: 17px; height: 20px; font-size: 10px; }
-  .candy-hud { right: 7px; width: 144px; padding: 9px; }
+  .candy-hud { right: 7px; width: min(174px, calc(100% - 165px)); padding: 9px; }
   .candy-card-top { margin-bottom: 5px; }
   .candy-card-top .candy-symbol { width: 20px; height: 20px; font-size: .8rem; }
-  .candy-hud h2 { font-size: .65rem; }
-  .candy-hud p { font-size: .58rem; }
+  .candy-hud h2 { font-size: .7rem; }
+  .candy-hud p { font-size: .63rem; }
+  .candy-label { font-size: .58rem; margin-left: 4px; }
+  .candy-damage strong { font-size: .85rem; }
+  .candy-passives { font-size: .65rem; }
+  .candy-detail-body { max-height: 90px; }
+  .candy-damage > span { font-size: .56rem; }
+  .candy-hud:has(.candy-passives[open]) .next-candy,
+  .candy-hud:has(.candy-passives[open]) .ammo-dots,
+  .candy-hud:has(.candy-passives[open]) .candy-damage > span { display: none; }
   .candy-hud .weapon-count { display: none; }
   .ammo-dots { gap: 3px; margin-top: 8px; }
   .ammo-dots i { width: 8px; height: 8px; }

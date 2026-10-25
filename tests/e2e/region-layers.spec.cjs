@@ -167,19 +167,21 @@ for (const [width, height, area, reduced] of [[2007, 1037, 'forest', false], [25
   });
 }
 
-test('solid contact material effect is cosmetic, expires, and leaves the registered props unchanged', async ({ page }) => {
+test('contact spark expires while the physically moving stack keeps its registered identity', async ({ page }) => {
   await installGame(page); await start(page); await readyArt(page);
-  const before = await page.locator('.scene-scenery [data-obstacle-id] > polygon').evaluateAll(nodes => nodes.map(n => n.getAttribute('points')));
-  await dragPull(page, { angleDeg: 0, powerRatio: 1 }); await page.mouse.up();
-  const effect = page.getByTestId('contact-effect');
+  const before = await page.locator('.scene-scenery [data-obstacle-id]').evaluateAll(nodes => nodes.map(n => n.dataset.obstacleId));
+  const options = await require('./support.cjs').stackShot({ physical: false });
+  await dragPull(page, options); await page.mouse.up();
+  const id = options.shot.contacts[0].obstacleId;
+  const effect = page.locator(`[data-testid="contact-effect"][data-obstacle-impact="${id}"]`);
   // Default locator polling can skip an entire 420ms visual. Observe at frame
   // cadence from release, without extending the production effect for the test.
   await expect.poll(() => effect.isVisible(), { intervals: [16], timeout: 3000 }).toBe(true);
-  await expect(effect).toHaveAttribute('data-obstacle-impact', 'forest-1-obstacle-0');
+  await expect(effect).toHaveAttribute('data-obstacle-impact', id);
   await page.screenshot({ path: 'tmp/wide-t03-forest-obstacle-1440.jpg' });
   await expect(effect).toHaveCount(0);
   await phase(page, 'idle');
-  expect(await page.locator('.scene-scenery [data-obstacle-id] > polygon').evaluateAll(nodes => nodes.map(n => n.getAttribute('points')))).toEqual(before);
+  expect(await page.locator('.scene-scenery [data-obstacle-id]').evaluateAll(nodes => nodes.map(n => n.dataset.obstacleId))).toEqual(before);
   expect((await snapshot(page)).events.filter(e => e.name === 'resolveProjectile')).toHaveLength(1);
 });
 
