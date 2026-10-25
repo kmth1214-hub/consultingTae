@@ -179,6 +179,22 @@ test('a fast candy topples two distinct stacks then directly hits an enemy', () 
   assert.ok(noFirst.contacts.every(contact => contact.obstacleId !== 'first'));
 });
 
+test('Forest contacts attach the physical log result and extend playback until its settlement', () => {
+  const layout = empty();
+  layout.area = 'forest';
+  layout.obstacles = [{ ...box('physical', 400, 744, 80, 156),
+    id: 'physical', kind: 'log', x: 400, y: 744, width: 80, height: 156 }];
+  layout.enemies = [circle('target', { x: 610, y: 852 }, 38)];
+  const shot = planShot({ layout, pull: pullAt(0, 1), enemies: living(['target']) });
+  const contact = shot.contacts[0];
+  assert.ok(contact.logMotion.samples.length > 1);
+  assert.deepEqual(contact.logEndPose, contact.logMotion.endPose);
+  assert.deepEqual(contact.logHit, contact.logMotion.hit);
+  assert.equal(contact.logMotion.startTime, contact.time);
+  assert.ok(shot.simulationSeconds >= contact.time + contact.logMotion.durationSeconds);
+  assert.equal(shot.directHitTime, shot.path.durationSeconds);
+});
+
 test('weak contact drops the candy and preserves the total five-diameter roll cap', () => {
   const layout = empty();
   layout.obstacles = [{ ...box('weak', 320, 780, 35, 120), kind: 'log' }];

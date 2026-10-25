@@ -127,6 +127,14 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
           && Array.isArray(contact.obstacleTargetIds)
           && contact.obstacleTargetIds.every(id => typeof id === 'string')
           && new Set(contact.obstacleTargetIds).size === contact.obstacleTargetIds.length
+          && (state.run.area !== 'forest' || contact.obstacleKind !== 'log' || (
+            [contact.logEndPose?.x, contact.logEndPose?.y, contact.logEndPose?.angle].every(Number.isFinite)
+            && contact.logEndPose.x >= 0 && contact.logEndPose.x <= 3600
+            && contact.logEndPose.y >= -1200 && contact.logEndPose.y <= 900
+            && (contact.logHit === null || (typeof contact.logHit?.id === 'string'
+              && state.run.enemies.some(enemy => enemy.id === contact.logHit.id)
+              && Number.isFinite(contact.logHit.time) && contact.logHit.time >= contact.time))
+            && Number.isFinite(shotMeta.directHitTime) && shotMeta.directHitTime >= contact.time))
           && (!index || (contact.distance >= contacts[index - 1].distance
             && contact.time >= contacts[index - 1].time)))
         && new Set(contacts.map(contact => contact.obstacleId)).size === contacts.length);

@@ -89,13 +89,14 @@ test('clearing the final enemy ends the action before an enemy response', () => 
   assert.equal(event.enemyAttack, null);
 });
 
-test('Forest log damages the first living ordered candidate and adds scored hits to the event', () => {
+test('Forest log damages its actual physical target and adds scored hits to the event', () => {
   const state = engine.createRunState({ area: 'forest', round: 2, rng: () => 0 });
   const [dead, target] = state.enemies;
   dead.hp = 0; dead.alive = false;
   target.hp = 2;
   const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, weaponGrade: 'B', rng: () => 0,
-    shotMeta: { impactKind: 'obstacle', obstacleId: 'forest-log', obstacleKind: 'log', obstacleTargetIds: [dead.id, target.id], rolling: true, reverse: false } });
+    shotMeta: { impactKind: 'ground', directHitTime: 2, contacts: [{ obstacleId: 'forest-log', obstacleKind: 'log',
+      time: .5, logHit: { id: target.id, time: 1 }, logEndPose: { x: 1500, y: 860, angle: Math.PI / 2 } }] } });
   assert.equal(event.obstacleEffect.kind, 'log-strike');
   assert.deepEqual(event.obstacleEffect.hits, [{ id: target.id, kind: target.kind, damage: 2, remainingHp: 0, defeated: true, scoreDelta: 4 }]);
   assert.equal(event.hits.length, 1);
@@ -163,8 +164,8 @@ test('chained topples resolve once in path order before a direct hit and refresh
   first.hp = 12; first.maxHp = 12;
   second.hp = 12; second.maxHp = 12;
   const contacts = [
-    { obstacleId: 'stack-a', obstacleKind: 'log', obstacleTargetIds: [first.id, second.id] },
-    { obstacleId: 'stack-b', obstacleKind: 'log', obstacleTargetIds: [second.id, first.id] }
+    { obstacleId: 'stack-a', obstacleKind: 'log', time: .1, logHit: { id: first.id, time: .4 }, logEndPose: {x:1000,y:860,angle:1.57} },
+    { obstacleId: 'stack-b', obstacleKind: 'log', time: .2, logHit: { id: second.id, time: .5 }, logEndPose: {x:1500,y:860,angle:1.57} }
   ];
   const shotMeta = { impactKind: 'enemy', contacts, obstacleId: 'stack-a', obstacleKind: 'log',
     obstacleTargetIds: contacts[0].obstacleTargetIds, rolling: false, reverse: false };
@@ -183,6 +184,23 @@ test('chained topples resolve once in path order before a direct hit and refresh
   state.selectedRewards = { weapon: 'chosen', consumable: 'chosen' };
   assert.equal(engine.advanceRound(state, { rng: () => 0 }).accepted, true);
   assert.deepEqual(state.toppledObstacleIds, []);
+  assert.deepEqual(state.forestLogDebris, []);
+});
+
+test('Forest misses cannot use nearest targets, and physical hits after a killing candy never retarget', () => {
+  const state = engine.createRunState({ area: 'forest', round: 2, rng: () => 0 });
+  const [first, second] = state.enemies;
+  const miss = engine.resolveProjectile(state, { damage: 0, hitIds: [], rng: () => 0,
+    shotMeta: { impactKind: 'obstacle', obstacleId: 'remote', obstacleKind: 'log', obstacleTargetIds: [first.id] } });
+  assert.equal(miss.obstacleEffect.hits.length, 0);
+  assert.equal(first.hp, 4);
+  first.hp = 2;
+  const event = engine.resolveProjectile(state, { damage: 2, hitIds: [first.id], rng: () => 0,
+    shotMeta: { directHitTime: .5, contacts: [{ obstacleId: 'late', obstacleKind: 'log', time: .1,
+      logHit: { id: first.id, time: 1 }, obstacleTargetIds: [second.id] }] } });
+  assert.deepEqual(event.hits.map(hit => hit.id), [first.id]);
+  assert.equal(second.hp, 4);
+  assert.equal(event.obstacleEffect.hits.length, 0);
 });
 
 test('a new Chaos inversion from this topple remains armed after consuming the prior inversion', () => {

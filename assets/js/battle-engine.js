@@ -149,7 +149,7 @@
       fireballArmed: false,
       nextAttackDamageMultiplier: null,
       pendingAimInversion: false,
-      toppledObstacleIds: []
+      toppledObstacleIds: [], forestLogDebris: []
     };
     refillWeaponQueue(state,config.rng);
     return state;
@@ -246,7 +246,7 @@
     state.ammo=state.maxAmmo;state.zeroRollsThisRound=0;state.enemyTurnIndex=0;state.terminal=null;state.pendingCamp=false;
     state.roundStartedAt=timestamp(config.now);state.enemies=createRoundEnemies(state.area,state.round,{rng:config.rng});
     state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
-    state.toppledObstacleIds=[];
+    state.toppledObstacleIds=[];state.forestLogDebris=[];
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
     state.rewardChoices=null;state.selectedRewards={weapon:null,consumable:null};
     if(AREAS.indexOf(state.area)>AREAS.indexOf(state.furthestArea))state.furthestArea=state.area;
@@ -494,7 +494,8 @@
     const applyObstacle = contact => {
       const effectHits = [];
       const strike = () => {
-        const target = (contact.obstacleTargetIds || []).map(id => state.enemies.find(enemy =>
+        const targetIds = state.area === 'forest' ? (contact.logHit ? [contact.logHit.id] : []) : (contact.obstacleTargetIds || []);
+        const target = targetIds.map(id => state.enemies.find(enemy =>
           enemy.id === id && enemy.alive && enemy.hp > 0)).find(Boolean);
         if (target) {
           const removed = Math.min(target.hp, 3);
@@ -505,7 +506,7 @@
           effectHits.push({ id: target.id, kind: target.kind, damage: removed,
             remainingHp: target.hp, defeated: !target.alive, scoreDelta });
         }
-        return { kind: 'log-strike', hits: effectHits };
+        return { kind: 'log-strike', hits: effectHits, ...(state.area === 'forest' ? { physical: true } : {}) };
       };
       const guard = () => {
         state.nextAttackDamageMultiplier = .5;
@@ -538,15 +539,34 @@
     if (permanent && config.aimInversionApplied) state.pendingAimInversion = false;
     if (!hasContactStream) applyDirectHits();
     const obstacleEffects = [];
+    const timeline = [];
     if (permanent) for (const contact of contacts) {
-      if (!contact?.obstacleId || toppled.includes(contact.obstacleId)) continue;
-      toppled.push(contact.obstacleId);
-      const effect = applyObstacle(contact);
-      if (!effect) continue;
-      obstacleEffects.push({ ...effect, obstacleId: contact.obstacleId });
-      hits.push(...effect.hits);
+      let enabled = false, physicalEffect;
+      timeline.push({ time: contact.time || 0, order: 0, apply() {
+        if (!contact?.obstacleId || toppled.includes(contact.obstacleId)) return;
+        toppled.push(contact.obstacleId); enabled = true;
+        if (state.area === 'forest' && contact.obstacleKind === 'log') {
+          physicalEffect = { kind: 'log-strike', physical: true, hits: [], obstacleId: contact.obstacleId };
+          obstacleEffects.push(physicalEffect);
+          const pose = contact.logEndPose;
+          if (pose && [pose.x, pose.y, pose.angle].every(Number.isFinite)) {
+            (state.forestLogDebris || (state.forestLogDebris = [])).push({ obstacleId: contact.obstacleId, ...pose });
+          }
+        } else {
+          const effect = applyObstacle(contact);
+          if (effect) { obstacleEffects.push({ ...effect, obstacleId: contact.obstacleId }); hits.push(...effect.hits); }
+        }
+      } });
+      if (state.area === 'forest' && contact.obstacleKind === 'log' && contact.logHit
+        && Number.isFinite(contact.logHit.time)) timeline.push({ time: contact.logHit.time, order: 1, apply() {
+        if (!enabled || !physicalEffect) return;
+        const effect = applyObstacle(contact);
+        physicalEffect.hits.push(...effect.hits); hits.push(...effect.hits);
+      } });
     }
-    if (hasContactStream) applyDirectHits();
+    if (hasContactStream) timeline.push({ time: Number.isFinite(shotMeta.directHitTime) ? shotMeta.directHitTime : Infinity,
+      order: 2, apply: applyDirectHits });
+    timeline.sort((a, b) => a.time - b.time || a.order - b.order).forEach(action => action.apply());
     if (permanent && directHitCount) {
       state.effectCounters.permanentWeaponHits++;
       if (hasEffect(state, 'adventurer-candy') && state.effectCounters.permanentWeaponHits % 3 === 0) addScore(state, 10);

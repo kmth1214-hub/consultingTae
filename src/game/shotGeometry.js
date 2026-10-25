@@ -1,4 +1,5 @@
 import { BATTLEFIELD, getDragDraw } from './battlefieldModel.js';
+import { simulateForestLog } from './forestLogPhysics.js';
 
 const EPS = 1e-6;
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -333,14 +334,18 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
       const obstacleTargetIds = [...living]
         .sort((a, b) => distance(hitPoint, a.collider) - distance(hitPoint, b.collider))
         .map(item => item.id);
-      contacts.push({ obstacleId: obstacle.id, obstacleKind: obstacle.kind,
-        point: { x: hitPoint.x, y: hitPoint.y }, distance: traveled, time: elapsed,
-        rolling: isRolling, obstacleTargetIds });
-      ignored.add(obstacle.id);
       const impactVelocity = isRolling ? {
         x: Math.sign(velocity.x) * Math.sqrt(Math.max(0, velocity.x ** 2
           - 2 * BATTLEFIELD.groundRollDeceleration * (endDistance - localRollStart))), y: 0 }
         : { x: velocity.x, y: velocity.y + BATTLEFIELD.gravity * hitPoint.time };
+      const logMotion = layout.area === 'forest' && obstacle.kind === 'log'
+        ? simulateForestLog({ obstacle, point: hitPoint, velocity: impactVelocity,
+          startTime: elapsed, layout, enemies: living }) : null;
+      contacts.push({ obstacleId: obstacle.id, obstacleKind: obstacle.kind,
+        point: { x: hitPoint.x, y: hitPoint.y }, distance: traveled, time: elapsed,
+        rolling: isRolling, obstacleTargetIds, ...(logMotion ? {
+          logMotion, logHit: logMotion.hit, logEndPose: logMotion.endPose } : {}) });
+      ignored.add(obstacle.id);
       const speed = Math.hypot(impactVelocity.x, impactVelocity.y);
       if (isRolling) {
         rolling = true;
@@ -361,15 +366,17 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
   }
   const path = makePath('ballistic', samples, terminal);
   path.rollStartDistance = rollStartDistance;
-  const first = contacts[0], last = contacts.at(-1);
+  const first = contacts[0];
+  const simulationSeconds = Math.max(path.durationSeconds, ...contacts.map(c =>
+    c.logMotion ? c.logMotion.startTime + c.logMotion.durationSeconds : 0));
   return { path, hitIds: targetId ? [targetId] : [], selectedTargetId: null,
     impactKind: terminal, impactDistance: path.length,
     obstacleId: first?.obstacleId ?? null, obstacleKind: first?.obstacleKind ?? null,
     obstacleTargetIds: first?.obstacleTargetIds ?? [], contacts,
     rollStartDistance, rollDistance, blockerDistance: firstContactDistance,
     previewD: pathPrefixD(path, Math.min(.30 * path.length, firstContactDistance ?? Infinity)),
-    reverse: direction.x < 0,
-    durationMs: clamp(elapsed * 1000, 420, 3200) };
+    reverse: direction.x < 0, directHitTime: path.durationSeconds, simulationSeconds,
+    durationMs: clamp(simulationSeconds * 1000, 420, 4500) };
 }
 
 export function planShot({ layout, pull, enemies, windAvailable = false,

@@ -286,6 +286,25 @@ test('explicit null and reverse override a stale Wind target without consuming h
   assert.equal(session.getSnapshot().run.enemies[0].hp, 2);
 });
 
+test('Forest physical contact summaries require valid times and targets before spending a turn', () => {
+  const session = start({ rng: () => .5 });
+  const target = session.getSnapshot().run.enemies[0].id;
+  const contact = { obstacleId: 'log', obstacleKind: 'log', point: { x: 500, y: 800 },
+    distance: 300, time: .2, rolling: false, obstacleTargetIds: [target],
+    logHit: { id: target, time: .6 }, logEndPose: { x: 700, y: 860, angle: Math.PI / 2 } };
+  const meta = { impactKind: 'ground', obstacleId: 'log', obstacleKind: 'log', obstacleTargetIds: [target],
+    rolling: false, reverse: false, directHitTime: .8, contacts: [contact] };
+  for (const patch of [{ logHit: { id: 'missing', time: .6 } }, { logHit: { id: target, time: .1 } },
+    { logEndPose: { x: Infinity, y: 860, angle: 1 } }]) {
+    const before = structuredClone(session.getSnapshot().run);
+    assert.equal(session.actions.fireShot({ shotMeta: { ...meta, contacts: [{ ...contact, ...patch }] } }).accepted, false);
+    assert.deepEqual(session.getSnapshot().run, before);
+  }
+  assert.equal(session.actions.fireShot({ shotMeta: meta }).accepted, true);
+  assert.equal(session.getSnapshot().run.enemies[0].hp, 1);
+  assert.deepEqual(session.getSnapshot().run.forestLogDebris[0], { obstacleId: 'log', ...contact.logEndPose });
+});
+
 test('enemy response locks combat, advances monotonically and ignores stale/duplicate animation callbacks', () => {
   const session = start({ rng: () => .5 });
   const { actions } = session;
