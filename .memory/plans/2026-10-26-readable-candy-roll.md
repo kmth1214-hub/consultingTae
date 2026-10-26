@@ -6,4 +6,4 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | done | 굴림 표시 시간과 지면 효과 (`dc70e5c`) | [P01](../phases/2026-10-26-readable-candy-roll/P01-roll-playback/phase.md) |
+| P01 | done | 굴림 표시 및 결과 카메라2초 유지 (`53c2921`) | [P01](../phases/2026-10-26-readable-candy-roll/P01-roll-playback/phase.md) |

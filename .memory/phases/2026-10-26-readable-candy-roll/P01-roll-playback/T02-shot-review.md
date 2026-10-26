@@ -62,7 +62,7 @@ Task: T02-shot-review
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: 53c2921
 
 ## Validation Results
 - `npm.cmd test`:127/127 통과. `npm.cmd run build`:성공.
