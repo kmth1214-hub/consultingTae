@@ -99,7 +99,7 @@ Task: T01-overdraw-flight
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending — 기존 자동 승인 검토 사용량 제한 보류 기록 유지. 앞선 13건과 공유 파일 hunk를 섞지 않으며 제한을 우회하지 않는다.
+- commit: a1dc86e
 
 ## Validation Results (2026-10-26)
 - `npm.cmd test`: 203/203 통과 (`tmp/off-map-unit.log`). 신규 8개는 독립 포물선 식·상단 속도·카메라 경계·4개 지역의 실제 발사 예약/단일 확정을 검증한다.

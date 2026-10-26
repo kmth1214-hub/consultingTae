@@ -5,5 +5,10 @@
 | T01 | done | 기본 3종 보상과 눈 클리어 해금 | [T01](./T01-reward-unlock.md) |
 
 ## Progress
-- 구현/검증: 1/1 (단위154, 브라우저6, build 통과)
-- commit: pending (이전 작업의 자동 승인 검토 사용량 제한 유지)
+- done: 1/1 (active: 없음)
+- implementation/validation: 1/1
+- commit: 1/1
+
+## Commit Completion (2026-10-26)
+- 이전 자동 승인 검토 제한은 해소되었으며 아래 Task의 한국어 커밋을 완료했다. 앞선 보류 메모는 당시의 검증 기록이다.
+- 3045b39 — T01-reward-unlock

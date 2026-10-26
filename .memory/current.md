@@ -10,7 +10,7 @@
 [T01-overdraw-flight](./phases/2026-10-26-off-map-overdraw/P01-flight/T01-overdraw-flight.md)
 
 ## Status
-Task 커밋 13/14 완료. 나머지 구현·검증은 완료되어 있으며 Task별 커밋 진행 중.
+14개 Task 구현·검증·한국어 커밋 완료. 다음 구현 Task 없음.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -26,12 +26,20 @@ Task 커밋 13/14 완료. 나머지 구현·검증은 완료되어 있으며 Tas
 - 7fbc4c6 — [2026-10-26-candy-grade-damage-rebalance / T01-grade-damage](./phases/2026-10-26-candy-grade-damage-rebalance/P01-damage/T01-grade-damage.md)
 - b24653f — [2026-10-26-shot-resolution-integrity / T01-physical-hit-boundary](./phases/2026-10-26-shot-resolution-integrity/P01-resolution/T01-physical-hit-boundary.md)
 - f26fe79 — [2026-10-26-shot-resolution-integrity / T02-single-shot-commit](./phases/2026-10-26-shot-resolution-integrity/P01-resolution/T02-single-shot-commit.md)
+- a1dc86e — [2026-10-26-off-map-overdraw / T01-overdraw-flight](./phases/2026-10-26-off-map-overdraw/P01-flight/T01-overdraw-flight.md)
 
 ## Pending commits
-- [2026-10-26-off-map-overdraw / T01-overdraw-flight](./phases/2026-10-26-off-map-overdraw/P01-flight/T01-overdraw-flight.md): validated, commit pending
+없음. 임시 파일·캐시·기존 사용자 HTML 수정은 제외.
 
 ## Review URL
 http://127.0.0.1:4182/ (게임), http://127.0.0.1:4182/__dev/maps (관리자). 기존 개발 서버 유지.
 
 ## Next Step
-T01-overdraw-flight의 검증된 변경만 커밋한다. 공유 파일의 다음 Task 변경과 사용자 목업 수정을 섞지 않는다.
+추가 구현/대기 커밋 없음. 요청 시 배포 진행. 이번 요청은 로컬 커밋이며 원격 push는 실행하지 않음.
+
+## Commit Validation
+- 14개 Task를 청사진의 한국어 메시지와 Plan/Phase/Task 헤더로 각각 커밋했다.
+- 각 Task에 포함되는 파일만 별도 작업 복사본으로 구성해 단위 테스트와 빌드를 검증했다. 최종 단위 203/203 통과.
+- 최종 번들 App-SZs6Nq5m.js / index-DSxHee0E.js / App-BMA6-2ll.css는 기존 검토 화면의 빌드와 동일하다.
+- 커밋 경계의 융합 보스 일반 브라우저 6개도 추가 재검증 통과. 직전 일반26/관리자13 검증 기록과 함께 보관한다.
+- 실제 게임 소스와 테스트는 모두 커밋된 최종 상태와 일치한다. 기존 사용자 목업 HTML 수정 및 무관한 임시·캐시·사이트 파일은 제외했다.

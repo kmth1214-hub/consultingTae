@@ -9,6 +9,11 @@
 
 ## Progress
 - done: 3/3 (active: 없음)
-- implemented: 3/3
-- validated: 3/3 — 단위179, 일반 브라우저49, 관리자14, build 통과
-- commits: pending — 기존 자동 승인 검토 제한 보존
+- implementation/validation: 3/3
+- commit: 3/3
+
+## Commit Completion (2026-10-26)
+- 이전 자동 승인 검토 제한은 해소되었으며 아래 Task의 한국어 커밋을 완료했다. 앞선 보류 메모는 당시의 검증 기록이다.
+- 7962ac5 — T01-combat-transition
+- bcc1af0 — T02-boss-presentation
+- 02d2c53 — T03-integration-validation
