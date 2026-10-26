@@ -1,5 +1,7 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { sampleAtDistance, sampleAtTime } from '../game/shotGeometry.js';
+import { createProjectilePlayback } from '../game/projectilePlayback.js';
+import { BATTLEFIELD } from '../game/battlefieldModel.js';
 
 export default function ProjectileFlight({ flight, onProgress, onComplete, onFailure }) {
   const id = `candy-${useId().replace(/:/g, '')}`;
@@ -7,6 +9,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
   const candyRef = useRef(null);
   const trailRef = useRef(null), trailGlowRef = useRef(null), gradientRef = useRef(null);
   const rollDustRef = useRef(null);
+  const rollShadowRef = useRef(null), dustDirectionRef = useRef(null);
   const complete = useRef(onComplete);
   complete.current = { onComplete, onProgress, onFailure };
   useEffect(() => {
@@ -15,16 +18,17 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
     let done = false;
     const started = performance.now();
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration = reduced ? 80 : flight.durationMs;
+    const clock = createProjectilePlayback(flight, { reducedMotion: reduced });
+    const rollStart = Number.isFinite(flight.rollStartDistance) ? sampleAtDistance(flight.path, flight.rollStartDistance) : null;
     function tick(time) {
       if (canceled || done) return;
-      const progress = Math.min(1, (time - started) / duration);
+      const elapsed = time - started;
       if (!flight.path || !candyRef.current?.isConnected) {
         done = true; complete.current.onFailure?.(); return;
       }
       try {
         const candyTime = flight.directHitTime ?? sampleAtDistance(flight.path, flight.impactDistance).time;
-        const simulationTime = progress * (flight.simulationSeconds ?? candyTime);
+        const simulationTime = clock.sampleTime(elapsed);
         const point = sampleAtTime(flight.path, simulationTime);
         const distance = Math.min(flight.impactDistance, point.distance);
         const candyFinished = simulationTime > candyTime;
@@ -34,12 +38,18 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         if (trailRef.current) trailRef.current.style.visibility = candyFinished ? 'hidden' : '';
         if (trailGlowRef.current) trailGlowRef.current.style.visibility = candyFinished ? 'hidden' : '';
         candyRef.current.dataset.rolling = String(rolling);
-        const rollDistance = rolling ? distance - flight.rollStartDistance : 0;
-        const rotation = reduced ? 0 : rolling ? 600 + rollDistance * 3.4 : progress * 600;
+        const rotation = reduced ? 0 : rolling
+          ? rollStart.time * 480 + (point.x - rollStart.x) / BATTLEFIELD.candyRadius * 180 / Math.PI
+          : simulationTime * 480;
         candyRef.current.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${rotation})`);
         if (rollDustRef.current) {
           rollDustRef.current.style.display = !reduced && rolling && !candyFinished ? '' : 'none';
           rollDustRef.current.setAttribute('transform', `translate(${point.x} ${point.y + 13})`);
+          dustDirectionRef.current?.setAttribute('transform', `scale(${Math.sign(point.x - rollStart?.x) || 1} 1)`);
+        }
+        if (rollShadowRef.current) {
+          rollShadowRef.current.style.display = rolling && !candyFinished ? '' : 'none';
+          rollShadowRef.current.setAttribute('transform', `translate(${point.x} ${point.y + BATTLEFIELD.candyRadius})`);
         }
         if (!reduced) {
           // Decorative wake samples only the path already flown; never reveal the landing point.
@@ -52,7 +62,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
             gradientRef.current?.setAttribute(key, value);
         }
       } catch { done = true; complete.current.onFailure?.(); return; }
-      if (progress >= 1) {
+      if (elapsed >= clock.durationMs) {
         done = true;
         complete.current.onComplete(flight);
       } else frame = requestAnimationFrame(tick);
@@ -75,6 +85,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
     <g className={`projectile-trail ${flight.fireball ? 'is-fiery' : ''}`} fill="none" stroke={`url(#${id}-trail)`} strokeLinecap="round" strokeLinejoin="round">
       <path ref={trailGlowRef} strokeWidth="18" opacity=".18" /><path ref={trailRef} strokeWidth="6" opacity=".9" />
     </g>
+    <ellipse ref={rollShadowRef} data-testid="roll-shadow" rx="13" ry="3" fill="#664729" opacity=".3" style={{ display: 'none' }} />
     <g ref={candyRef} data-testid="projectile" className={flight.fireball ? 'projectile-candy is-fiery' : 'projectile-candy'}
     transform={`translate(${flight.path?.start.x || 0} ${flight.path?.start.y || 0})`}>
       <circle r="19" fill={flight.fireball ? '#ff9b3038' : '#fff6b526'} />
@@ -82,8 +93,10 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
       <path d="M-5-2Q0-8 5-2T-3 4" fill="none" stroke="#fff8d9" strokeWidth="3" strokeLinecap="round" />
       <circle cx="-3" cy="-4" r="2" fill="#fffce9" />
     </g>
-    <g ref={rollDustRef} className="roll-dust" aria-hidden="true" style={{ display: 'none' }}>
-      <circle cx="-12" cy="1" r="3" /><circle cx="-24" cy="5" r="2" /><circle cx="-36" cy="0" r="3.5" />
+    <g ref={rollDustRef} data-testid="roll-dust" aria-hidden="true" style={{ display: 'none' }}>
+      <g ref={dustDirectionRef}><g className="roll-dust">
+        <circle cx="-12" cy="1" r="3" /><circle cx="-24" cy="5" r="2" /><circle cx="-36" cy="0" r="3.5" />
+      </g></g>
     </g>
   </>;
 }
