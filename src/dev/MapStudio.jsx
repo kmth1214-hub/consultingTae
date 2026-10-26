@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import ArenaScenery from '../components/ArenaScenery.jsx';
 import BattlefieldBackdrop from '../components/BattlefieldBackdrop.jsx';
 import { buildBattlefield } from '../game/battlefieldModel.js';
 import { applyScenePose } from '../game/sceneParallax.js';
+import { CHARACTERS } from '../game/gameData.js';
 import { getStudioPose, panStudio, zoomStudioAt } from './mapStudioCamera.js';
 import './mapStudio.css';
 
@@ -10,6 +11,7 @@ const AREA_NAMES = { forest: '숲', snow: '눈', city: '도시', chaos: '혼돈'
 const LAYER_NAMES = { sky: '하늘', distant: '원경', midground: '중경', route: '길', foreground: '전경' };
 const LAYER_KEYS = Object.keys(LAYER_NAMES);
 const RESET_CAMERA = { zoom: 1, center: { x: 1800, y: 600 } };
+const StudioPlay = lazy(() => import('./StudioPlay.jsx'));
 
 function ErrorScreen() {
   return <main className="studio-error"><h1>지도 검토 화면을 열지 못했습니다</h1><a href="/__dev/maps">다시 불러오기</a><a href="/">게임으로 돌아가기</a></main>;
@@ -17,6 +19,9 @@ function ErrorScreen() {
 
 export default function MapStudio() {
   const [area, setArea] = useState('forest');
+  const [round, setRound] = useState(1), [characterId, setCharacterId] = useState('adventurer');
+  const [bossSpecial, setBossSpecial] = useState(false), [play, setPlay] = useState(null);
+  const playId = useRef(0);
   const [visibleLayers, setVisibleLayers] = useState(() => Object.fromEntries(LAYER_KEYS.map(key => [key, true])));
   const [motionPaused, setMotionPaused] = useState(false);
   const [camera, setCamera] = useState(RESET_CAMERA);
@@ -106,8 +111,17 @@ export default function MapStudio() {
   function changeArea(nextArea) {
     cancelDrag(); setCamera(RESET_CAMERA); setArea(nextArea);
   }
+  function launchPlay(config = { area, round, characterId, bossSpecial }, newLayout = true) {
+    cancelDrag();
+    if (config.area !== area) changeArea(config.area);
+    setRound(config.round); setCharacterId(config.characterId); setBossSpecial(config.bossSpecial);
+    const seed = !newLayout ? config.seed : globalThis.crypto?.getRandomValues
+      ? crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random() * 0x100000000);
+    setPlay({ area: config.area, round: config.round, characterId: config.characterId,
+      bossSpecial: config.bossSpecial && config.round === 3, seed, id: ++playId.current });
+  }
 
-  return <main className="map-studio" data-dev-tool="regional-map-studio-v1">
+  return <><main className="map-studio" hidden={Boolean(play)} data-dev-tool="regional-map-studio-v1">
     <header className="studio-header">
       <div><p className="studio-kicker">개발 검토 도구</p><h1>지역 지도 스튜디오</h1>
         <p>전투와 같은 배경·장애물 장면을 확인합니다. 이 화면은 개발 환경 전용입니다.</p></div>
@@ -139,6 +153,19 @@ export default function MapStudio() {
             onChange={event => setZoom(Number(event.target.value))} />
           <p>드래그로 이동 · 휠로 확대 · 방향키로 이동 · Home으로 초기화</p>
         </section>
+        <fieldset className="studio-play-settings"><legend>전투 테스트</legend>
+          <label className="studio-play-field">라운드<select aria-label="테스트 라운드" value={round}
+            onChange={event => { setRound(Number(event.target.value)); setBossSpecial(false); }}>
+            {[1, 2, 3].map(value => <option key={value} value={value}>{value}라운드{value === 3 ? ' · 보스' : ''}</option>)}
+          </select></label>
+          <label className="studio-play-field">쿠키<select aria-label="테스트 쿠키" value={characterId} onChange={event => setCharacterId(event.target.value)}>
+            {CHARACTERS.map(character => <option key={character.id} value={character.id}>{character.name}</option>)}
+          </select></label>
+          <label className="studio-check"><input type="checkbox" checked={bossSpecial} disabled={round !== 3}
+            onChange={event => setBossSpecial(event.target.checked)} />보스 특수 공격부터 확인</label>
+          <button type="button" className="studio-play-primary" onClick={() => launchPlay()}>테스트 플레이</button>
+          <p>선택한 지역에서 바로 시작 · 소모품 각 3개</p>
+        </fieldset>
       </aside>
       <section ref={viewportRef} className={`studio-viewport${dragging ? ' is-dragging' : ''}`} role="group"
         aria-label={`${AREA_NAMES[area]} 지역 지도 미리보기`} tabIndex={0} onPointerDown={onPointerDown}
@@ -146,12 +173,16 @@ export default function MapStudio() {
         onLostPointerCapture={() => cancelDrag(false)} onKeyDown={onKeyDown}>
         {!pose && <p className="studio-waiting" role="status">미리보기 크기를 확인하는 중…</p>}
         <div ref={worldRef} className="arena-world" style={{ width: layout.width, height: layout.height }}>
-          <BattlefieldBackdrop area={area} visibleLayers={visibleLayers} motionPaused={motionPaused || reducedMotion} />
+          <BattlefieldBackdrop area={area} visibleLayers={visibleLayers} motionPaused={motionPaused || reducedMotion || Boolean(play)} />
           <ArenaScenery layout={layout} />
         </div>
         <p className="studio-map-label">{AREA_NAMES[area]} 지역 · 장애물 {layout.obstacles.length}개</p>
       </section>
     </div>
-    <footer className="studio-footer">이 검토 화면은 로그인·게임 진행·프로필을 사용하지 않습니다.</footer>
-  </main>;
+    <footer className="studio-footer">개발 환경 전용 · 테스트 플레이는 일반 게임의 프로필·순위 기록을 변경하지 않습니다.</footer>
+  </main>
+    {play && <Suspense fallback={<main role="status">테스트 전투를 준비하는 중…</main>}>
+      <StudioPlay key={play.id} config={play} onRestart={launchPlay} onExit={() => setPlay(null)} />
+    </Suspense>}
+  </>;
 }

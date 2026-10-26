@@ -1,5 +1,11 @@
 const { test, expect } = require('../e2e/support.cjs');
 
+async function expectedObstacleCount(area = 'forest') {
+  const { buildBattlefield } = await import('../../src/game/battlefieldModel.js');
+  return buildBattlefield({ area, round: 1,
+    enemies: [{ id: 'studio-reference-target', kind: 'snake', isBoss: false }] }).obstacles.length;
+}
+
 async function readyArt(page) {
   await page.evaluate(async () => {
     const urls = [...new Set([...document.querySelectorAll('.studio-viewport svg image')].map(node => node.getAttribute('href')))];
@@ -15,7 +21,7 @@ test('development map studio is a separate, keyboard-accessible review screen wi
   await expect(page.locator('.monster')).toHaveCount(0);
   await expect(page.locator('.studio-viewport')).toHaveAttribute('role', 'group');
   await expect(page.locator('.studio-viewport [data-scene-layer]')).toHaveCount(5);
-  await expect(page.locator('.studio-viewport .scene-scenery [data-obstacle-id]')).toHaveCount(3);
+  await expect(page.locator('.studio-viewport .scene-scenery [data-obstacle-id]')).toHaveCount(await expectedObstacleCount());
   await expect(page.locator('.studio-viewport [data-painted-panel]')).toHaveCount(0);
   await expect(page.locator('.studio-viewport')).toHaveAttribute('aria-label', /숲 지역 지도 미리보기/);
   expect(await page.evaluate(() => ({ test: window.__gameTest, storage: localStorage.length })))
@@ -30,7 +36,7 @@ test('all four areas use their real painted layers and registered blocker placem
     const preview = page.locator('.studio-viewport');
     await expect(preview).toHaveAttribute('aria-label', new RegExp(label));
     await expect(preview.locator('[data-scene-area]')).toHaveCount(5);
-    await expect(preview.locator('.scene-scenery [data-obstacle-id]')).toHaveCount(3);
+    await expect(preview.locator('.scene-scenery [data-obstacle-id]')).toHaveCount(await expectedObstacleCount(area));
     if (area === 'forest') await expect(preview.locator('[data-painted-panel]')).toHaveCount(0);
     else await expect(preview.locator('[data-painted-panel]')).toHaveCount(8);
     if (area === 'city') {
