@@ -1,5 +1,6 @@
 const { test, expect, installGame, phase, ammo, hp, snapshot, start, grabMap, shoot, selectRewards } = require('./support.cjs');
 const inventory = { fireball: 1, spear: 1, defense: 1, heal: 2 };
+const { aimedShot } = require('./spear-support.cjs');
 
 test('Heal gives its full benefit without retaliation and the next shot reopens preparation; empty use changes nothing', async ({ page }) => {
   await installGame(page, { initial: { playerHp: 40, inventory } });
@@ -56,17 +57,23 @@ test('Defense blocks damage, Fireball arms/doubles the next shot, and both count
   await expect(page.locator('.hit-effect--fireball')).toHaveText('−4');
 });
 
-test('Spear hits three real Snow enemies and Alchemist receives item-use points', async ({ page }) => {
+test('Spear prepares safely, then only its actual Snow path targets take damage and Alchemist receives item-use points', async ({ page }) => {
   await installGame(page, { initial: { area: 'snow', playerHp: 60, inventory } });
   await start(page, '연금술사맛 쿠키');
+  const before = (await snapshot(page)).run.enemies;
   await page.keyboard.press('2');
+  expect((await snapshot(page)).run.enemies).toEqual(before);
+  expect((await snapshot(page)).run.score).toBe(10);
+  const aimed = await aimedShot({ area: 'snow' });
+  await shoot(page, aimed);
   const trace = await snapshot(page);
-  expect(trace.lastEvent.hits.map(hit => hit.damage)).toEqual([4, 3, 2]);
+  expect(trace.lastEvent.hits.map(hit => hit.id)).toEqual(aimed.shot.hitIds);
+  expect(trace.lastEvent.hits.map(hit => hit.damage)).toEqual(aimed.shot.hitIds.map((_, i) => 4 - i));
   expect(trace.run.inventory.spear).toBe(0);
-  expect(trace.run.score).toBe(19);
-  expect(trace.run.enemies.slice(0, 3).map(enemy => enemy.hp)).toEqual([0, 1, 2]);
+  expect(trace.run.score).toBe(10 + trace.lastEvent.hits.reduce((sum, hit) => sum + hit.damage, 0));
+  expect(trace.run.enemies.filter(enemy => !aimed.shot.hitIds.includes(enemy.id)).map(enemy => enemy.hp)).toEqual(before.filter(enemy => !aimed.shot.hitIds.includes(enemy.id)).map(enemy => enemy.hp));
   await expect(hp(page)).toHaveText(String(trace.run.playerHp));
-  await expect(page.locator('.hit-effect--spear')).toHaveCount(2);
+  await expect(page.locator('.hit-effect--spear')).toHaveCount(trace.lastEvent.hits.filter(hit => !hit.defeated).length);
 });
 
 test('frozen and aiming item lockout cannot spend an item or a turn', async ({ page }) => {

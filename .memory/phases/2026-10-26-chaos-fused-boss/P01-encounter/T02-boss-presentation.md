@@ -63,6 +63,6 @@ Task: T02-boss-presentation
 ## Progress
 - [x] 구현 완료 — 실제 아트 `assets/monsters/chaos-fused-boss.png`, 생성 프롬프트 sibling md
 - [x] 검증 통과 — 신규 전투/궤도11 및 build, 브라우저 육안은 T03
-- commit: pending
+- commit: bcc1af0
 - 준비된 메시지: `tmp/chaos-fused-t02-commit.txt`.
 - T03 실제 브라우저6 통과: full56 시작/414 아트, shield·phone ice·Milk·fatal 착지, hidden 중복방지. desktop/phone/flying/landing 스크린샷 육안 확인. PNG1254×1254 RGBA(alpha) 검증.
