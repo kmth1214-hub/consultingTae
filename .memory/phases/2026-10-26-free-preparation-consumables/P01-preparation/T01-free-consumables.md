@@ -74,7 +74,7 @@ Task: T01-free-consumables
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: 6730ae3
 
 ## Validation Results
 - 수정 전 새 엔진 규칙5개가 실패함을 확인했다. 구현 후 `npm.cmd test`:130/130 통과.

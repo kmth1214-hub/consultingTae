@@ -1,16 +1,16 @@
 # Current Context
 
 ## Active Plan
-[눈에 보이는 사탕 굴림](./plans/2026-10-26-readable-candy-roll.md)
+[소모품 발사 준비](./plans/2026-10-26-free-preparation-consumables.md)
 
 ## Active Phase
-[P01 굴림 표시](./phases/2026-10-26-readable-candy-roll/P01-roll-playback/phase.md)
+[P01 소모품 준비](./phases/2026-10-26-free-preparation-consumables/P01-preparation/phase.md)
 
 ## Active Task
-none — [T02 발사 결과 카메라2초 유지](./phases/2026-10-26-readable-candy-roll/P01-roll-playback/T02-shot-review.md) complete
+none — [T01 무반격 준비·발사 사이1개 제한](./phases/2026-10-26-free-preparation-consumables/P01-preparation/T01-free-consumables.md) complete
 
 ## Status
-complete — T01 (`dc70e5c`), T02 (`53c2921`) done. 단위127개·빌드 통과. E2E 상세 결과는 T02 참조.
+complete — T01 (`6730ae3`) done. 단위130개·빌드 통과. E2E115개 범위 분리 검증 및 최종 보호막3개 재검증 통과.
 
 ## Next Step
 계획 완료. 다음 활성 Task 없음.

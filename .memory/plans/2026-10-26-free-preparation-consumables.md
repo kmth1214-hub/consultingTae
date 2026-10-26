@@ -6,4 +6,4 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | in_progress | 엔진 규칙·HUD·기존 전투 회귀 갱신 | [P01](../phases/2026-10-26-free-preparation-consumables/P01-preparation/phase.md) |
+| P01 | done | 엔진 규칙·HUD·기존 전투 회귀 갱신 (`6730ae3`) | [P01](../phases/2026-10-26-free-preparation-consumables/P01-preparation/phase.md) |
