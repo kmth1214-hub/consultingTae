@@ -303,6 +303,30 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 }
 
 /* Decorative planes inherit the single canonical world camera pose. */
+.obstacle-frost { position: absolute; inset: 0; z-index: 7; overflow: hidden; pointer-events: none; border-radius: inherit; animation: obstacle-frost-life 1700ms ease-out both; }
+.obstacle-frost-glaze { position: absolute; inset: 0; background: radial-gradient(ellipse at center, #b4ecff0a 30%, #a3e5f752 75%, #e0faffb0); box-shadow: inset 0 0 40px 12px #d6faff70, inset 0 -45px 70px #b1eaff48; }
+.obstacle-frost-mist { position: absolute; inset: 30% -12% -12%; background: radial-gradient(ellipse at 15% 90%, #e7ffff8c, transparent 55%), radial-gradient(ellipse at 75% 100%, #d1f4ff9c, transparent 60%); filter: blur(12px); animation: obstacle-cold-spread 1500ms ease-out both; }
+.obstacle-frost-crystals { position: absolute; inset: 0; width: 100%; height: 100%; }
+.obstacle-frost-flake { opacity: .65; }
+@keyframes obstacle-frost-life { 0% { opacity: 0; } 16%, 53% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes obstacle-cold-spread { from { transform: translateY(18%) scale(.85); opacity: .2; } to { transform: translateY(-12%) scale(1.12); opacity: .85; } }
+.city-ground-chain { pointer-events: none; }
+.city-burst-shadow { animation: city-ground-scorch 900ms ease-out var(--burst-delay) both; }
+.city-burst-plume { transform-box: fill-box; transform-origin: center bottom; animation: city-ground-plume 740ms ease-out var(--burst-delay) both; }
+.city-burst-ring { transform-box: fill-box; transform-origin: center; animation: city-ground-ring 660ms ease-out var(--burst-delay) both; }
+.city-burst-embers { animation: city-ground-embers 750ms ease-out var(--burst-delay) both; }
+@keyframes city-ground-plume { 0% { opacity: 0; transform: scale(.2, .1); } 12% { opacity: 1; transform: scale(.85, .7); } 30% { opacity: .95; transform: scale(1, 1); } 100% { opacity: 0; transform: translateY(-22px) scale(1.28, 1.1); } }
+@keyframes city-ground-ring { 0% { opacity: 0; transform: scale(.3); } 12% { opacity: .9; } 100% { opacity: 0; transform: scale(1.7); } }
+@keyframes city-ground-embers { 0% { opacity: 0; transform: translateY(15px); } 20% { opacity: .9; } 100% { opacity: 0; transform: translateY(-30px); } }
+@keyframes city-ground-scorch { 0% { opacity: 0; } 20% { opacity: .25; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .obstacle-frost { animation: none; opacity: .6; }
+  .obstacle-frost-mist { animation: none; }
+  .obstacle-frost-flake, .city-burst-plume, .city-burst-embers { display: none; }
+  .city-burst-shadow { animation: none; opacity: .18; }
+  .city-burst-ring { animation: none; opacity: .55; }
+}
+
 .battlefield-layer [data-depth-plane="sky"] { transform: translate(var(--scene-sky-x, 0px), var(--scene-sky-y, 0px)); }
 .battlefield-layer [data-depth-plane="distant"] { transform: translate(var(--scene-distant-x, 0px), var(--scene-distant-y, 0px)); }
 .battlefield-layer [data-depth-plane="midground"] { transform: translate(var(--scene-midground-x, 0px), var(--scene-midground-y, 0px)); }

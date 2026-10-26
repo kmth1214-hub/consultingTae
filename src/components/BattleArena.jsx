@@ -3,6 +3,7 @@ import ConsumableTable from './ConsumableTable.jsx';
 import MagicCandyCard from './MagicCandyCard.jsx';
 import MonsterGroup from './MonsterGroup.jsx';
 import ArenaScenery, { ContactEffect } from './ArenaScenery.jsx';
+import { FrostField, CityGroundBursts } from './ObstacleRegionalEffects.jsx';
 import BattlefieldBackdrop from './BattlefieldBackdrop.jsx';
 import Slingshot from './Slingshot.jsx';
 import PlayerCookie from './PlayerCookie.jsx';
@@ -128,6 +129,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
           {visualContacts.map(contact => <ContactEffect key={contact.id} impact={{
             id: contact.id, point: contact.point, obstacleId: contact.obstacleId }}
             obstacles={layout.obstacles} />)}
+          {run.area === 'city' && visualContacts.map(contact =>
+            <CityGroundBursts key={contact.id} contact={contact} layout={layout} />)}
           {lastImpact && <ContactEffect key={lastImpact.id} impact={lastImpact} effect={lastEvent?.obstacleEffect} obstacles={layout.obstacles} />}
         </svg>
         <MonsterGroup groupRef={enemyGroupRef} enemies={run.enemies} placements={layout.enemies} layout={layout} travelMs={travelMs}
@@ -135,6 +138,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, onEnemyAdva
         {enemyResponse && <EnemyResponse response={enemyResponse} layout={layout} travelMs={travelMs}
           onAdvance={onEnemyAdvance} onComplete={onEnemyComplete} />}
       </div>
+      {run.area === 'snow' && visualContacts.map(contact => <FrostField key={contact.id} contact={contact} />)}
       {!run.terminal && <BattlefieldMinimap layout={layout} enemies={run.enemies} aim={state}
         toppledObstacleIds={[...(run.toppledObstacleIds || []), ...visualContacts.map(contact => contact.obstacleId)]} />}
       {enemyResponse && <EnemyResponseNotice response={enemyResponse} />}
