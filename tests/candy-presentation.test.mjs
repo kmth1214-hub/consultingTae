@@ -8,12 +8,12 @@ function run(grade = 'C') {
 }
 
 test('HUD ranges use the actual engine roll endpoints for every grade and zero protection', () => {
-  for (const [grade, expected] of [['C', [0, 4]], ['B', [1, 5]], ['A', [2, 6]]]) {
+  for (const [grade, expected] of [['C', [0, 4]], ['B', [1, 6]], ['A', [2, 10]]]) {
     const state = run(grade), details = getCandyDetails(state);
     assert.deepEqual([details.damage.min, details.damage.max], expected);
     state.zeroRollsThisRound = 2;
     const capped = getCandyDetails(state);
-    assert.equal(capped.damage.min, expected[0] + 1);
+    assert.equal(capped.damage.min, grade === 'C' ? 1 : expected[0]);
     assert.equal(capped.damage.min, BattleEngine.rollWeaponDamage(() => 0, grade, 2));
     assert.equal(capped.damage.max, BattleEngine.rollWeaponDamage(() => .999, grade, 2));
     state.fireballArmed = true;

@@ -9,6 +9,8 @@
   const MAIN_REGION_ROUND_COUNT = 3;
   const GRADE_MULTIPLIER = Object.freeze({ C: 1, B: 2, A: 4 });
   const DAMAGE_WEIGHTS = Object.freeze([0.02, 0.40, 0.40, 0.10, 0.08]);
+  const GRADE_DAMAGE = Object.freeze({ C: Object.freeze([0, 1, 2, 3, 4]),
+    B: Object.freeze([1, 2, 3, 5, 6]), A: Object.freeze([2, 4, 6, 8, 10]) });
   const AREA_BOSSES = Object.freeze({
     forest: { id: 'pointy-boar', kind: 'pointy-boar', hp: 10, special: 'boar-charge' },
     snow: { id: 'cowardly-snowman', kind: 'cowardly-snowman', hp: 12, special: 'frozen-breath' },
@@ -203,13 +205,13 @@
     if (!Object.prototype.hasOwnProperty.call(GRADE_MULTIPLIER, normalizedGrade)) throw new RangeError(`Unknown weapon grade: ${grade}`);
     const sample = Math.max(0, Math.min(0.999999999999, Number(rng())));
     let cumulative = 0;
-    let baseDamage = 4;
+    let bucket = 4;
     for (let index = 0; index < DAMAGE_WEIGHTS.length; index += 1) {
       cumulative += DAMAGE_WEIGHTS[index];
-      if (sample < cumulative) { baseDamage = index; break; }
+      if (sample < cumulative) { bucket = index; break; }
     }
-    if (baseDamage === 0 && zeroRollsThisRound >= 2) baseDamage = 1;
-    return baseDamage + (normalizedGrade === 'A' ? 2 : normalizedGrade === 'B' ? 1 : 0);
+    if (normalizedGrade === 'C' && bucket === 0 && zeroRollsThisRound >= 2) return 1;
+    return GRADE_DAMAGE[normalizedGrade][bucket];
   }
 
   function availableRewardWeapons(state) {

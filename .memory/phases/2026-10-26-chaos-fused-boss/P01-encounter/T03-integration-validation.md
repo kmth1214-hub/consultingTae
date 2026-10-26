@@ -53,7 +53,7 @@ Task: T03-integration-validation
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: 02d2c53
 - 준비된 메시지: `tmp/chaos-fused-t03-commit.txt`. 이전 자동 승인 검토의 사용량 제한을 우회하거나 Git 쓰기를 반복 시도하지 않았다. 기존7건과 신규3건을 각각 나눠 커밋해야 하므로 상태를 done으로 표시하지 않는다.
 
 ## Validation results (2026-10-26)
