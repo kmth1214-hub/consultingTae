@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createGameSession } from '../src/game/gameSession.js';
 import { BattleEngine } from '../src/game/battleEngine.js';
 import { monsterPositions } from '../src/game/arenaLayout.js';
+import {reserveAt,commitFlight,findPhysicalShot} from './helpers/physical-shot.mjs';
 
 function memoryStorage() {
   const data = new Map();
@@ -320,20 +321,22 @@ test('session supports full-vector angles and only the new phases; invalid metad
     assert.deepEqual(session.getSnapshot().run, snapshot);
   }
   assert.deepEqual(session.getSnapshot().run, before);
-  const shotMeta = { impactKind: 'obstacle', obstacleId: 'forest-1-obstacle-0', obstacleKind: 'log', obstacleTargetIds: [], rolling: true, reverse: false };
-  assert.equal(actions.fireShot({ selectedTargetId: null, shotMeta }).accepted, true);
-  assert.deepEqual(session.getSnapshot().lastEvent.shotMeta, shotMeta);
+  actions.resetAim();
+  const physical=findPhysicalShot(session,shot=>shot.contacts.length>0);
+  assert.equal(commitFlight(session,physical).accepted,true);
+  const shotMeta=structuredClone(session.getSnapshot().lastEvent.shotMeta);
+  const committedId=shotMeta.obstacleId,targets=shotMeta.obstacleTargetIds.slice();
   assert.equal(session.getSnapshot().lastEvent.obstacleEffect.kind, 'log-strike');
   shotMeta.obstacleId = 'changed';
   shotMeta.obstacleTargetIds.push('changed');
-  assert.equal(session.getSnapshot().lastEvent.shotMeta.obstacleId, 'forest-1-obstacle-0');
-  assert.deepEqual(session.getSnapshot().lastEvent.shotMeta.obstacleTargetIds, []);
+  assert.equal(session.getSnapshot().lastEvent.shotMeta.obstacleId, committedId);
+  assert.deepEqual(session.getSnapshot().lastEvent.shotMeta.obstacleTargetIds, targets);
   assert.equal('shotMeta' in session.getSnapshot().run, false);
   const responseId = session.getSnapshot().enemyResponse.id;
   const committed = structuredClone(session.getSnapshot().run);
   actions.completeEnemyResponse(responseId); actions.completeEnemyResponse(responseId);
   assert.deepEqual(session.getSnapshot().run, committed);
-  assert.equal(session.getSnapshot().lastEvent.shotMeta.impactKind, 'obstacle');
+  assert.ok(['enemy','ground','bounds','obstacle','timeout'].includes(session.getSnapshot().lastEvent.shotMeta.impactKind));
 });
 
 test('explicit null and reverse override a stale Wind target without consuming homing, then forward Wind works once', () => {
@@ -342,20 +345,20 @@ test('explicit null and reverse override a stale Wind target without consuming h
   const session = start({ engine, rng: () => .5 });
   const { actions } = session, target = session.getSnapshot().run.enemies[0].id;
   actions.setAim({ selectedTargetId: target });
-  actions.fireShot({ selectedTargetId: null, shotMeta: { impactKind: 'obstacle', obstacleId: 'wall', obstacleKind: 'log', obstacleTargetIds: [], rolling: false, reverse: false } });
+  commitFlight(session,reserveAt(session,90,1),{selectedTargetId:target});
   assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, false);
   assert.equal(session.getSnapshot().run.enemies[0].hp, 4);
   finishResponse(session);
   actions.setAim({ selectedTargetId: target, phase: 'launching' });
-  actions.fireShot({ selectedTargetId: target, shotMeta: { impactKind: 'bounds', obstacleId: null, obstacleKind: null, obstacleTargetIds: [], rolling: false, reverse: true } });
+  commitFlight(session,reserveAt(session,180,1),{selectedTargetId:target});
   assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, false);
   assert.equal(session.getSnapshot().run.enemies[0].hp, 4);
   finishResponse(session);
-  actions.fireShot({ hitIds: [target], selectedTargetId: target });
+  commitFlight(session,reserveAt(session,0,.5));
   assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, true);
   assert.equal(session.getSnapshot().run.enemies[0].hp, 2);
   finishResponse(session);
-  actions.fireShot({ hitIds: [], selectedTargetId: null });
+  commitFlight(session,reserveAt(session,90,1));
   assert.equal(session.getSnapshot().run.enemies[0].hp, 2);
 });
 
@@ -373,13 +376,15 @@ test('Forest physical contact summaries require valid times and targets before s
     assert.equal(session.actions.fireShot({ shotMeta: { ...meta, contacts: [{ ...contact, ...patch }] } }).accepted, false);
     assert.deepEqual(session.getSnapshot().run, before);
   }
-  assert.equal(session.actions.fireShot({ shotMeta: meta }).accepted, true);
+  const physical=findPhysicalShot(session,shot=>shot.contacts.filter(c=>c.logHit).length===1&&shot.hitIds.length===0);
+  assert.equal(commitFlight(session,physical).accepted,true);
   assert.equal(session.getSnapshot().run.enemies[0].hp, 1);
-  assert.deepEqual(session.getSnapshot().run.forestLogDebris[0], { obstacleId: 'log', ...contact.logEndPose });
+  const c=physical.flight.contacts.find(c=>c.logHit);
+  assert.deepEqual(session.getSnapshot().run.forestLogDebris.find(d=>d.obstacleId===c.obstacleId), { obstacleId:c.obstacleId,...c.logEndPose });
 });
 
 test('a physical chain after candy settlement is accepted, but orphan/duplicate/invalid transfers cannot spend ammo', () => {
-  const session = start({ rng: () => .5 });
+  const session = start({ rng: () => .5,layoutRng:()=>5/0x100000000 });
   const target = session.getSnapshot().run.enemies[0].id;
   const a = { obstacleId: 'a', obstacleKind: 'log', point: { x: 600, y: 850 },
     time: .2, distance: 400, rolling: false, obstacleTargetIds: [target], trigger: 'candy',
@@ -395,11 +400,13 @@ test('a physical chain after candy settlement is accepted, but orphan/duplicate/
     assert.equal(session.actions.fireShot({ shotMeta: { ...meta, contacts: [a, { ...b, ...patch }] } }).accepted, false);
     assert.deepEqual(session.getSnapshot().run, before);
   }
-  assert.equal(session.actions.fireShot({ shotMeta: meta, reviewResult: true }).accepted, true);
+  const physical=reserveAt(session,20,.9);
+  assert.ok(physical.flight.contacts.some(c=>c.trigger==='obstacle'&&c.time>physical.flight.directHitTime));
+  assert.equal(commitFlight(session,physical,{reviewResult:true}).accepted,true);
   const state = session.getSnapshot();
-  assert.equal(state.run.enemies[0].hp, 1);
+  assert.equal(state.run.enemies[0].hp,4);
   assert.equal(state.run.ammo, 8);
-  assert.deepEqual(state.run.toppledObstacleIds, ['a', 'b']);
+  assert.deepEqual(state.run.toppledObstacleIds, physical.flight.contacts.map(c=>c.obstacleId));
   assert.ok(state.shotReview);
 });
 

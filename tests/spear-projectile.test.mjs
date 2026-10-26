@@ -5,6 +5,7 @@ import { buildBattlefield, getDragDraw } from '../src/game/battlefieldModel.js';
 import { planShot, getBallisticPath, sampleAtTime } from '../src/game/shotGeometry.js';
 import { createGameSession } from '../src/game/gameSession.js';
 import { getCandyDetails } from '../src/game/candyPresentation.js';
+import {findPhysicalShot,commitFlight} from './helpers/physical-shot.mjs';
 
 test('selecting Spear only prepares the next candy, without damage, damage RNG or an enemy turn',()=>{
   const run=engine.createRunState({area:'snow',round:1,inventory:{spear:1},rng:()=>.5});
@@ -121,8 +122,9 @@ test('the session accepts actual planner contacts and rejects malformed or reord
     assert.equal(session.actions.fireShot({hitIds:shot.hitIds,shotMeta:meta}).accepted,false);
     assert.deepEqual(session.getSnapshot().run,before);
   }
-  const result=session.actions.fireShot({hitIds:shot.hitIds,shotMeta:shot});
+  const physical=findPhysicalShot(session,shot=>shot.hitIds.length>0&&shot.contacts.length===0);
+  const result=commitFlight(session,physical);
   assert.equal(result.accepted,true);
-  assert.deepEqual(result.hits.map(h=>h.id),shot.hitIds);
-  assert.deepEqual(result.hits.map(h=>h.damage),shot.hitIds.map((_,i)=>4-i));
+  assert.deepEqual(result.hits.map(h=>h.id),physical.flight.hitIds);
+  assert.deepEqual(result.hits.map(h=>h.damage),physical.flight.hitIds.map((_,i)=>4-i));
 });

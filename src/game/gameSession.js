@@ -1,12 +1,15 @@
 import { BattleEngine } from './battleEngine.js';
 import { CHARACTERS } from './gameData.js';
 import { loadProfile, markSnowCleared, saveProfile } from './profileStore.js';
+import { preparePhysicalFlight, flightResultPayload } from './shotResolution.js';
 
 const initialAim = () => ({ angle: 0, power: 0, phase: 'idle', selectedTargetId: null });
 const defaultLayoutRng = () => globalThis.crypto?.getRandomValues
   ? globalThis.crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000
   : Math.random();
 const REASONS = {
+  'flight-pending': '사탕이 날아가고 있어요. 발사가 끝나면 행동할 수 있어요.',
+  'stale-shot': '이미 끝났거나 취소된 발사예요. 다시 조준해 주세요.',
   splitting: '보스가 분리되고 있어요. 착지가 끝나면 행동할 수 있어요.',
   'item-used': '이번 발사 전에 소모품을 이미 사용했어요. 사탕을 발사하면 다시 사용할 수 있어요.',
   reviewing: '발사 결과를 확인하고 있어요. 잠시 후 다음 행동을 할 수 있어요.',
@@ -23,10 +26,13 @@ const REASONS = {
 // Keeping this controller outside React also makes full screen-flow tests deterministic.
 export function createGameSession({ rng = Math.random, layoutRng = defaultLayoutRng,
   now = Date.now, storage, engine = BattleEngine } = {}) {
+  let encounterSequence = 0, pendingShot = null;
   const assignLayoutSeed = run => {
     const draw = layoutRng();
     if (!Number.isFinite(draw) || draw < 0 || draw >= 1) throw new RangeError('Invalid layout RNG');
     run.layoutSeed = Math.floor(draw * 0x100000000);
+    run.encounterId = ++encounterSequence;
+    pendingShot = null;
   };
   let sequence = 0;
   let state = { screen: 'home', profile: loadProfile(storage), selectedCharacter: null, run: null,
@@ -83,6 +89,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
   }
   const actions = {
     startCharacterSelect() {
+      pendingShot = null;
       publish({ screen: 'characters', run: null, selectedCharacter: null, fusion: null, outcome: null,
         summary: null, lastEvent: null, enemyResponse: null, aim: initialAim(), notification: null, leaderboardReturnScreen: null,
         campRewardReveal: null, shotReview: null, bossTransition: null });
@@ -100,7 +107,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       return { accepted: true };
     },
     setAim(patch) {
-      if (state.screen !== 'battle' || state.run.terminal || state.enemyResponse || state.shotReview || state.bossTransition) return;
+      if (state.screen !== 'battle' || state.run.terminal || state.enemyResponse || state.shotReview || state.bossTransition || pendingShot) return;
       const aim = { ...state.aim };
       if (Number.isFinite(patch.angle)) aim.angle = ((patch.angle + 180) % 360 + 360) % 360 - 180;
       if (Number.isFinite(patch.power)) aim.power = Math.max(0, Math.min(100, patch.power));
@@ -109,7 +116,30 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         ? patch.selectedTargetId : null;
       publish({ aim });
     },
-    resetAim() { publish({ aim: initialAim() }); },
+    resetAim() { pendingShot = null; publish({ aim: initialAim() }); },
+    beginShot({ launchId, pull } = {}) {
+      if (state.screen !== 'battle' || state.run.terminal || state.run.ammo <= 0) return reject('combat-ended');
+      if (state.shotReview) return reject('reviewing');
+      if (state.enemyResponse) return reject('responding');
+      if (state.bossTransition) return reject('splitting');
+      if (pendingShot) return reject('flight-pending');
+      if (!Number.isSafeInteger(launchId) || launchId <= 0 || pull?.ready !== true
+        || ![pull.direction?.x,pull.direction?.y,pull.powerRatio].every(Number.isFinite)
+        || Math.hypot(pull.direction.x,pull.direction.y) < 1e-9 || pull.powerRatio < 0 || pull.powerRatio > 1) return reject('invalid-state');
+      let flight;
+      const shotId = ++sequence;
+      try { flight = preparePhysicalFlight(state.run, pull, launchId, shotId); }
+      catch { return reject('invalid-state'); }
+      if (!flight) return reject('invalid-state');
+      pendingShot = {shotId,encounterId:state.run.encounterId,flight};
+      publish({aim:{...state.aim,phase:'launching'},notification:null});
+      // Callers can animate their copy without modifying the committed collision result.
+      return {accepted:true,shotId,encounterId:state.run.encounterId,flight:structuredClone(flight)};
+    },
+    cancelShot(shotId) {
+      if (!pendingShot || pendingShot.shotId !== shotId) return;
+      pendingShot = null; publish({aim:initialAim()});
+    },
     advanceEnemyResponse(id, stage) {
       if (state.shotReview) return;
       const response = state.enemyResponse;
@@ -119,7 +149,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     },
     completeEnemyResponse(id) {
       if (state.shotReview) return;
-      if (state.enemyResponse?.id !== id) return;
+      if (!state.enemyResponse || state.enemyResponse.id !== id) return;
       publish(finishCombatRouting(state.run, { enemyResponse: null, notification: null }));
     },
     completeShotReview(id) {
@@ -135,8 +165,17 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       if (state.shotReview || !state.bossTransition || state.bossTransition.id !== id) return;
       publish(finishCombatRouting(state.run, { bossTransition: null, notification: null }));
     },
-    fireShot({ hitIds = [], selectedTargetId = state.aim.selectedTargetId, shotMeta, reviewResult = false } = {}) {
+    fireShot({ hitIds = [], selectedTargetId = state.aim.selectedTargetId, shotMeta, reviewResult = false,
+      shotId, encounterId } = {}) {
       if (state.screen !== 'battle') return reject('invalid-state');
+      // Physical UI commits use a reserved token. The metadata-free controller
+      // API cannot interleave with an in-flight physical action.
+      if (shotId !== undefined || encounterId !== undefined) {
+        if (!pendingShot || shotId !== pendingShot.shotId || encounterId !== pendingShot.encounterId
+          || encounterId !== state.run.encounterId) return reject('stale-shot');
+        ({hitIds,selectedTargetId,shotMeta}=flightResultPayload(pendingShot.flight));
+      } else if (pendingShot) return reject('flight-pending');
+      else if (shotMeta !== undefined) return reject('invalid-state');
       if (state.bossTransition) return reject('splitting');
       if (state.shotReview) return reject('reviewing');
       if (state.enemyResponse) return reject('responding');
@@ -204,11 +243,13 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const event = engine.resolveProjectile(run, { hitIds, selectedTargetId: shotMeta?.reverse ? null : selectedTargetId,
         shotMeta: shotMeta && structuredClone(shotMeta), aimInversionApplied: Boolean(run.pendingAimInversion), rng });
       if (!event.accepted) return reject(event.reason);
+      pendingShot = null;
       if (shotMeta) event.shotMeta = structuredClone(shotMeta);
       return routeCombat(run, event, reviewResult === true);
     },
     useConsumable(key) {
       if (state.screen !== 'battle') return reject('invalid-state');
+      if (pendingShot) return reject('flight-pending');
       if (state.bossTransition) return reject('splitting');
       if (state.shotReview) return reject('reviewing');
       if (state.enemyResponse) return reject('responding');

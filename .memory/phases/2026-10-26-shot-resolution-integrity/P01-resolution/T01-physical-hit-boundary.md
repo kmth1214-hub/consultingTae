@@ -57,5 +57,5 @@ Task: T01-physical-hit-boundary
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — 원본 CLI green, 영구 회귀 red2→green 및 geometry/spear 검증
-- commit: pending
+- commit: b24653f
 - 기존 geometry 단위 테스트가 첫 적에 멈추면서 뒤 적도 포함하는 잘못된 기대값을 갖고 있었다. 실제 종료 경계에 맞춰 기대값도 수정했다.

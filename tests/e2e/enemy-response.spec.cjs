@@ -3,8 +3,8 @@ const { test, expect, installGame, start, hp, ammo, phase, arena, snapshot, drag
 const inventory = { fireball: 1, spear: 1, defense: 1, heal: 3 };
 
 // Counterattacks now begin only after a real candy and its result review.
-async function launchResponse(page, { paused = false } = {}) {
-  if (paused) {
+async function launchResponse(page, { paused = false, clockInstalled = false } = {}) {
+  if (paused && !clockInstalled) {
     await page.clock.install({ time: new Date('2026-10-26T00:00:00Z') });
     await page.clock.pauseAt(new Date('2026-10-26T00:00:01Z'));
   }
@@ -17,12 +17,20 @@ async function launchResponse(page, { paused = false } = {}) {
   await expect(page.getByTestId('enemy-attack')).toBeVisible({ timeout: 10000 });
 }
 
+async function advanceToImpact(page) {
+  for(let i=0;i<200;i++) {
+    if(await page.getByTestId('enemy-attack').getAttribute('data-stage')==='impact') return;
+    await page.clock.runFor(16);
+  }
+  throw new Error('Enemy response did not reach impact');
+}
+
 test('shield intercepts a visible incoming attack from the actual enemy without losing HP', async ({ page }) => {
   await installGame(page, { initial: { inventory } });
   await start(page);
   await page.getByRole('button', { name: '방어 사용', exact: true }).click();
   await expect(page.getByTestId('enemy-attack')).toHaveCount(0);
-  await launchResponse(page);
+  await launchResponse(page,{paused:true});
   const trace = await snapshot(page);
   expect(trace.lastEvent.enemyAttack.blockedBy).toBe('defense');
   expect(trace.run.playerHp).toBe(100);
@@ -30,6 +38,7 @@ test('shield intercepts a visible incoming attack from the actual enemy without 
   await expect(attack).toBeVisible();
   await expect(attack).toHaveAttribute('data-attacker-id', trace.lastEvent.enemyAttack.enemyId);
   await expect(page.locator('.monster.is-attacking')).toHaveCount(1);
+  await advanceToImpact(page);
   await expect.poll(() => page.evaluate(() => ({
     stage: document.querySelector('[data-testid="enemy-attack"]')?.dataset.stage,
     characterId: document.querySelector('[data-testid="player-cookie"]')?.dataset.characterId,
@@ -43,19 +52,22 @@ test('shield intercepts a visible incoming attack from the actual enemy without 
   await expect(page.getByTestId('player-cookie').locator('img')).toHaveJSProperty('naturalWidth', 312);
   await expect(hp(page)).toHaveText('100');
   await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-blocked-1440.jpg' });
+  await page.clock.runFor(1000);
   await phase(page, 'idle');
   await expect(page.getByTestId('player-cookie')).not.toHaveClass(/player-cookie--blocked/);
   await expect(page.getByTestId('player-shield')).toHaveCount(0);
   await expect(attack).toHaveCount(0);
   // A consumed shield must not accidentally protect the following enemy turn.
   await page.keyboard.press('1');
-  await launchResponse(page);
+  await launchResponse(page,{paused:true,clockInstalled:true});
   const second = await snapshot(page);
+  await advanceToImpact(page);
   await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'impact');
   await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'hurt');
   await expect(page.getByTestId('player-impact')).toBeVisible();
   await expect(page.getByTestId('player-hit-feedback')).toBeVisible();
   await expect(hp(page)).toHaveText('95');
+  await page.clock.runFor(1000);
   await phase(page, 'idle');
   expect((await snapshot(page)).run.playerHp).toBe(95);
 });

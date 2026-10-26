@@ -26,6 +26,7 @@ const INSTRUCTIONS = {
 
 export default function BattleArena({ run, lastEvent, enemyResponse, shotReview, onReviewComplete, bossTransition,
   onBossImpact, onBossComplete,
+  onBeginShot, onCancelShot,
   onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef }) {
   const worldRef = useRef(null), launcherRef = useRef(null), enemyGroupRef = useRef(null), focusRef = useRef(null);
   const sceneryRef = useRef(null);
@@ -64,15 +65,16 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     toppledObstacleIds: run.toppledObstacleIds || [],
     windAvailable: run.weapons.some(w => w.id === 'wind-candy') && !run.roundEffects.windHomingUsed });
   function clearFlight() {
+    if (activeFlight.current) onCancelShot(activeFlight.current.shotId);
     activeFlight.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]);
     triggeredContacts.current.clear(); triggeredEnemies.current.clear();
   }
   function failLaunch() { controller.cancelAim(); setRetry('조준을 다시 잡고 당겨 주세요.'); }
   function startFlight(pull) {
-    const solution = makeSolution(pull);
-    if (!solution || !camera.valid) { failLaunch(); return; }
-    const shot = { ...solution, id: pull.launchId, fireball: run.fireballArmed,
-      projectileKind: run.spearArmed ? 'spear' : run.fireballArmed ? 'fireball' : 'normal' };
+    if (!camera.valid) { failLaunch(); return; }
+    const reservation = onBeginShot({launchId:pull.launchId,pull});
+    if (!reservation.accepted) { failLaunch(); return; }
+    const shot = reservation.flight;
     activeFlight.current = shot;
     triggeredContacts.current.clear();
     triggeredEnemies.current.clear(); setVisualEnemyContacts([]);
@@ -102,7 +104,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   const hudRun = beforeImpact ? { ...run, ammo: run.ammo + enemyResponse.attack.ammoLost,
     consumablesBlocked: enemyResponse.attack.consumablesBlocked ? false : run.consumablesBlocked } : run;
   function completeFlight(shot) {
-    if (activeFlight.current?.id !== shot.id) return;
+    if (activeFlight.current?.shotId !== shot.shotId) return;
     const lastMotion = shot.contacts?.map(contact => contact.obstacleMotion || contact.logMotion).filter(Boolean)
       .sort((a, b) => a.startTime + a.durationSeconds - b.startTime - b.durationSeconds).at(-1);
     const motionEnd = shot.simulationSeconds > shot.directHitTime ? lastMotion?.samples.at(-1) : null;
@@ -116,13 +118,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           rollStartDistance: shot.rollStartDistance, impactDistance: shot.impactDistance,
           rollDistance: shot.rollDistance,
           rolling: shot.rollStartDistance !== null && shot.impactDistance > shot.rollStartDistance });
-      onFire({ hitIds: shot.hitIds, selectedTargetId: shot.selectedTargetId, reviewResult: true,
-        shotMeta: { impactKind: shot.impactKind, obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind,
-          contacts: (shot.contacts || []).map(({ logMotion, obstacleMotion, ...contact }) => contact),
-          directHitTime: shot.directHitTime ?? shot.path.durationSeconds,
-          ...(shot.enemyContacts ? { enemyContacts: structuredClone(shot.enemyContacts) } : {}),
-          obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollStartDistance !== null
-            && shot.impactDistance > shot.rollStartDistance, reverse: shot.reverse } });
+      onFire({shotId:shot.shotId,encounterId:shot.encounterId,reviewResult:true});
     });
     // Keep a grounded candy at its settled position throughout the result review.
   }
