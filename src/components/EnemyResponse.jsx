@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { MONSTER_NAMES } from '../game/gameData.js';
+import { createEnemyProjectileArc, sampleEnemyProjectile, enemyTrailD } from '../game/enemyProjectileMotion.js';
+import EnemyProjectileArt from './EnemyProjectileArt.jsx';
 
 export function attackStyle(attack) {
   const special = attack.attemptedSpecial;
@@ -7,10 +9,10 @@ export function attackStyle(attack) {
   if (special === 'frozen-breath') return { label: '얼음 숨결', color: '#a2e9ff', breath: true };
   if (special === 'oven-overheat') return { label: '오븐 과열', color: '#ff9853', flame: true };
   if (attack.kind.includes('boar')) return { label: '몸통 박치기', color: '#d9a279', melee: true };
-  if (attack.kind === 'snake') return { label: '젤리 탄', color: '#a9df78' };
-  if (attack.kind === 'dry-ice') return { label: '얼음 파편', color: '#b6efff', ice: true };
-  if (attack.kind.includes('robot')) return { label: '에너지 탄', color: '#ffcd75' };
-  return { label: '눈덩이 던지기', color: '#efffff' };
+  if (attack.kind === 'snake') return { label: '젤리 탄', color: '#a9df78', thrown: true, ammo: 'jelly' };
+  if (attack.kind === 'dry-ice') return { label: '얼음 파편', color: '#b6efff', thrown: true, ammo: 'ice' };
+  if (attack.kind.includes('robot')) return { label: '에너지 탄', color: '#ffcd75', thrown: true, ammo: 'energy' };
+  return { label: '눈덩이 던지기', color: '#efffff', thrown: true, ammo: 'snow' };
 }
 
 function responseLabel({ attack, stage }) {
@@ -22,7 +24,7 @@ function responseLabel({ attack, stage }) {
 // Notices belong to the viewport, so cropping/zooming the world never hides them.
 export function EnemyResponseNotice({ response }) {
   const label = responseLabel(response);
-  return <div className={`enemy-warning ${response.attack.attemptedSpecial ? 'is-special' : ''}`}>
+  return <div className={`enemy-warning ${attackStyle(response.attack).thrown ? 'enemy-warning--throw' : ''} ${response.attack.attemptedSpecial ? 'is-special' : ''}`}>
     <span className="enemy-warning-long">{label}</span>
     <span className="enemy-warning-short">{response.stage === 'windup' ? `${attackStyle(response.attack).label} 준비!` : label}</span>
   </div>;
@@ -37,16 +39,17 @@ export function responseTravelMs(response, layout, reduced) {
 
 export default function EnemyResponse({ response, layout, travelMs, onAdvance, onComplete }) {
   const projectile = useRef(null);
+  const projectileArt = useRef(null), trail = useRef(null);
   const callbacks = useRef(null);
   callbacks.current = { onAdvance, onComplete };
   const { attack, stage, id } = response;
   const visual = attackStyle(attack);
   const attacker = layout.enemies.find(enemy => enemy.id === attack.enemyId);
-  const source = { x: attacker?.x ?? layout.player.impact.x,
-    y: attacker ? attacker.y - attacker.size * .55 : layout.player.impact.y };
+  const source = { x: attacker ? attacker.x - (visual.thrown ? attacker.size * .25 : 0) : layout.player.impact.x,
+    y: attacker ? attacker.y - attacker.size * (visual.thrown ? .65 : .55) : layout.player.impact.y };
   const target = layout.player.impact;
-  const middle = { x: (source.x + target.x) / 2, y: (source.y + target.y) / 2 };
-  const control = { x: middle.x, y: middle.y - (visual.breath ? 0 : 150) };
+  const arc = createEnemyProjectileArc({ source, target,
+    height: visual.thrown ? undefined : visual.breath ? 0 : 75 });
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const windup = reduced ? 150 : attack.attemptedSpecial ? 480 : 340;
@@ -73,9 +76,13 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
         previous = 'impact';
       }
       const p = reduced ? 1 : Math.max(0, Math.min(1, (elapsed - windup) / travel));
-      const x = source.x + (target.x - source.x) * p;
-      const y = source.y + (target.y - source.y) * p - Math.sin(p * Math.PI) * (visual.breath ? 0 : 75);
+      const { x, y, angle } = sampleEnemyProjectile(arc, p);
       projectile.current?.setAttribute('transform', `translate(${x} ${y})`);
+      if (projectile.current) projectile.current.dataset.progress = String(p);
+      if (visual.thrown) {
+        projectileArt.current?.setAttribute('transform', `rotate(${angle})`);
+        trail.current?.setAttribute('d', enemyTrailD(arc, p));
+      }
       if (elapsed >= windup + travel + impact) finish();
       else frame = requestAnimationFrame(tick);
     }
@@ -96,16 +103,18 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
     <svg viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true" style={{ '--attack-color': visual.color }}>
       {stage === 'windup' && <g className="attack-telegraph" transform={`translate(${source.x} ${source.y - 70})`}>
         <circle r="22" /><text y="9" textAnchor="middle">!</text></g>}
-      {!visual.melee && <path data-testid="enemy-projectile-trail" className="enemy-projectile-trail"
-        d={`M${source.x} ${source.y} Q${control.x} ${control.y} ${target.x} ${target.y}`}
+      {!visual.melee && <path ref={trail} data-testid="enemy-projectile-trail" className="enemy-projectile-trail"
+        data-trajectory={arc.d} data-arc-height={arc.height}
+        d={visual.thrown ? '' : arc.d}
         vectorEffect="non-scaling-stroke" />}
       {!visual.melee && <g ref={projectile} data-testid="enemy-projectile" className="enemy-projectile"
+        data-ammo={visual.ammo}
         transform={`translate(${source.x} ${source.y})`}>
-        {visual.breath ? <path d="M-55 0 50-34 27 0 50 34Z" />
-          : visual.ice ? <path d="M-30 0 10-22 33 0 10 22Z" />
+        {visual.thrown ? <g ref={projectileArt}><EnemyProjectileArt ammo={visual.ammo} /></g>
+          : visual.breath ? <path d="M-55 0 50-34 27 0 50 34Z" />
             : visual.flame ? <path d="M-38 0Q-9-38 16-21L8-42Q57-7 28 23Q-3 43-38 0Z" />
               : <><path d="M18-9 70-5M18 0H88M18 9 70 5" fill="none" /><circle r="19" /></>}
-        <circle r="6" fill="#fffbea" stroke="none" />
+        {!visual.thrown && <circle r="6" fill="#fffbea" stroke="none" />}
       </g>}
       {stage === 'impact' && <g transform={`translate(${target.x} ${target.y})`}>
         {attack.blocked ? <g className="shield-impact" data-testid="shield-impact">

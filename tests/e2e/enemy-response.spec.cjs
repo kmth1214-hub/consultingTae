@@ -96,11 +96,13 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
   await expect(projectile).toBeVisible();
   await expect(attack).toHaveAttribute('data-stage', 'travel');
   await expect(trail).toHaveCSS('visibility', 'visible');
-  const coordinates = (await trail.getAttribute('d')).match(/M(-?[\d.]+) (-?[\d.]+) Q(-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)/).slice(1).map(Number);
+  const coordinates = (await trail.getAttribute('data-trajectory')).match(/M(-?[\d.]+) (-?[\d.]+) Q(-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)/).slice(1).map(Number);
   const [sourceX, sourceY, controlX, controlY, targetX, targetY] = coordinates;
   expect(sourceX).toBeGreaterThan(targetX);
   expect(controlX).toBeCloseTo((sourceX + targetX) / 2, 5);
-  expect(controlY).toBeCloseTo((sourceY + targetY) / 2 - 150, 5);
+  const arcHeight = Math.max(200, Math.min(440, Math.abs(targetX - sourceX) * .12 + 150));
+  expect(controlY).toBeCloseTo((sourceY + targetY) / 2 - arcHeight * 2, 5);
+  expect(await trail.getAttribute('d')).not.toBe(await trail.getAttribute('data-trajectory'));
   await expect.poll(() => page.evaluate(() => window.__projectileMotion.changes)).toBeGreaterThan(2);
   const motion = await page.evaluate(() => window.__projectileMotion);
   expect(motion.last).not.toBe(motion.first);

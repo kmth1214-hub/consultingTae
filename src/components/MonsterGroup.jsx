@@ -3,6 +3,7 @@ import { ASSETS } from '../game/assetCatalog.js';
 import { MONSTER_NAMES } from '../game/gameData.js';
 import AssetImage from './AssetImage.jsx';
 import { attackStyle } from './EnemyResponse.jsx';
+import EnemyProjectileArt from './EnemyProjectileArt.jsx';
 
 function MonsterArt({ enemy }) {
   const art = enemy.kind === 'snake' ? ASSETS.monsters.jellySnake
@@ -41,10 +42,12 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
       if (!enemy.alive) return null;
       const hit = lastEvent?.hits?.find(item => item.id === enemy.id);
       const attacking = response?.attack.enemyId === enemy.id;
-      const melee = attacking && attackStyle(response.attack).melee;
+      const visual = attacking ? attackStyle(response.attack) : null;
+      const melee = visual?.melee;
       const hp = attacking && response.stage !== 'impact' ? enemy.hp - response.attack.healedEnemy : enemy.hp;
       return <div role="img" className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''} ${attacking ? 'is-attacking' : ''}`}
         data-attack-phase={attacking ? response.stage : undefined} data-melee={melee || undefined}
+        data-throwing={visual?.thrown || undefined}
         key={enemy.id} data-enemy-id={enemy.id}
         aria-label={`${MONSTER_NAMES[enemy.kind]}, 체력 ${hp}/${enemy.maxHp}${selectedTargetId === enemy.id ? ', 바람 유도 목표' : ''}`}
         style={{ left: enemy.x, top: enemy.y, width: enemy.size,
@@ -53,6 +56,19 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
           '--strike-y': `${(layout.player.contact.y - enemy.y) / enemy.size * 100}%` }}>
         <span className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} />
           <span className="monster-health">{enemy.isBoss ? 'BOSS ' : ''}{hp}<span className="sr-only"> / {enemy.maxHp}</span></span></span>
+        {visual?.thrown && response.stage === 'windup' && <svg className="monster-throw-rig" viewBox="0 0 100 100" aria-hidden="true"
+          style={{ '--ammo-color': visual.color }}>
+          <g className={enemy.kind === 'snake' || enemy.kind === 'dry-ice' ? 'monster-ammo-gather' : 'monster-throw-grip'}>
+            {enemy.kind !== 'snake' && enemy.kind !== 'dry-ice' && <g data-testid="monster-throw-arm" className="monster-throw-arm">
+              <path d="M66 64 48 50 25 35" fill="none" stroke={enemy.kind.includes('robot') ? '#657f89' : '#8fbbc9'} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="48" cy="50" r="5" fill="#c2dee1" stroke="#577786" strokeWidth="2" />
+              <circle cx="25" cy="35" r="7" fill={enemy.kind.includes('robot') ? '#a3bec2' : '#e9faff'} stroke="#577786" strokeWidth="2" />
+            </g>}
+            <g data-testid="monster-held-projectile" data-ammo={visual.ammo} transform={`translate(25 35) scale(${100 / enemy.size})`}>
+              <EnemyProjectileArt ammo={visual.ammo} />
+            </g>
+          </g>
+        </svg>}
         {hit && <span key={lastEvent.id} className={`hit-effect hit-effect--${lastEvent.visualKey}`}>−{hit.damage}</span>}
       </div>;
     })}
