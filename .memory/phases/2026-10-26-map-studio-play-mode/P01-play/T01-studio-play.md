@@ -60,7 +60,7 @@ Task: T01-studio-play
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending — 자동 승인 검토 사용량 제한, 우회/재시도 금지
+- commit: 242a740
 
 ## 구현 및 검증 결과
 - 구현·검증 완료, git commit pending. 자동 승인 검토 사용량 제한이 해소되기 전까지 승인 우회나 재시도를 하지 않는다.

@@ -65,3 +65,37 @@ export function CityGroundBursts({ contact, layout }) {
     })}
   </g>;
 }
+
+export function ChaosObstacleNotice({ cue }) {
+  const visible = useEffectLifetime(cue.id);
+  if (!visible) return null;
+  return <p className={`chaos-obstacle-notice chaos-obstacle-notice--${cue.kind}`} data-testid="chaos-obstacle-notice"
+    data-effect={cue.kind} data-obstacle-id={cue.contact.obstacleId} role="status">{cue.label}</p>;
+}
+
+export function ChaosMagicEffect({ cue, layout }) {
+  const visible = useEffectLifetime(cue.id);
+  if (!visible) return null;
+  if (cue.kind === 'aim-inversion') return <g className="chaos-inversion-effect" data-testid="chaos-magic-effect"
+    data-effect={cue.kind} transform={`translate(${cue.contact.point.x} ${Math.min(cue.contact.point.y, layout.groundY - 90)})`} aria-hidden="true">
+    <circle r="67" fill="#aa68e520" stroke="#dca5ff" strokeWidth="3" strokeDasharray="10 9" />
+    <path d="M-50 0H50M0-50V50m-50-8-9 8 9 8m100-16 9 8-9 8M-8-50l8-9 8 9M-8 50l8 9 8-9"
+      fill="none" stroke="#f3c9ff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+  </g>;
+  if (cue.kind !== 'log-strike') return null;
+  return <g className="chaos-strike-effect" data-testid="chaos-magic-effect" data-effect={cue.kind} aria-hidden="true">
+    {cue.hits.map(hit => {
+      const target = layout.enemies.find(enemy => enemy.id === hit.id)?.collider;
+      if (!target) return null;
+      const source = cue.contact.point;
+      return <g key={hit.id} data-hit-target={hit.id}>
+        <path className="chaos-strike-trail" d={`M${source.x} ${source.y} Q${(source.x + target.x) / 2} ${Math.min(source.y, target.y) - 140} ${target.x} ${target.y}`}
+          fill="none" stroke="#f5ce8d" strokeWidth="6" pathLength="1" />
+        <g className="chaos-strike-impact" transform={`translate(${target.x} ${target.y})`}>
+          <circle r="48" fill="#f4c78630" stroke="#ffecb9" strokeWidth="4" />
+          <path d="M-25 0H25M0-25V25m-18-18 36 36m-36 0 36-36" stroke="#ffe3a2" strokeWidth="4" />
+        </g>
+      </g>;
+    })}
+  </g>;
+}

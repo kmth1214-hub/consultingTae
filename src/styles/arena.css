@@ -324,6 +324,24 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .obstacle-frost-mist { position: absolute; inset: 30% -12% -12%; background: radial-gradient(ellipse at 15% 90%, #e7ffff8c, transparent 55%), radial-gradient(ellipse at 75% 100%, #d1f4ff9c, transparent 60%); filter: blur(12px); animation: obstacle-cold-spread 1500ms ease-out both; }
 .obstacle-frost-crystals { position: absolute; inset: 0; width: 100%; height: 100%; }
 .obstacle-frost-flake { opacity: .65; }
+.chaos-obstacle-notices { position: absolute; z-index: 9; top: 16px; left: 50%; transform: translateX(-50%); max-width: 44%; display: grid; gap: 5px; pointer-events: none; }
+.chaos-obstacle-notice { padding: 8px 14px; border: 1px solid #efceff; border-radius: 10px; background: #42314de8; color: #fbecff; font-size: clamp(11px, 1.15cqw, 16px); font-weight: 750; text-align: center; line-height: 1.5; }
+.chaos-obstacle-notice--ice-guard { border-color: #bfeaff; color: #ddf9ff; }
+.chaos-obstacle-notice--jar-burst, .chaos-obstacle-notice--log-strike { border-color: #f4cc8a; color: #ffebbf; }
+.chaos-strike-trail { stroke-dasharray: 1; animation: chaos-strike-travel 450ms ease-out both; }
+.chaos-strike-impact { opacity: 0; animation: chaos-strike-flash 650ms 200ms ease-out both; }
+.chaos-inversion-effect { animation: chaos-inversion-flash 1100ms ease-out both; filter: drop-shadow(0 0 7px #b071e4); }
+@keyframes chaos-strike-travel { from { stroke-dashoffset: 1; opacity: 1; } 60% { stroke-dashoffset: 0; opacity: 1; } to { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes chaos-strike-flash { 0% { opacity: 0; } 20%, 55% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes chaos-inversion-flash { 0% { opacity: 0; } 15%, 60% { opacity: 1; } 100% { opacity: 0; } }
+@container (max-width: 500px) {
+  .chaos-obstacle-notices { top: 8px; right: 8px; left: auto; transform: none; width: calc(100% - 140px); max-width: none; gap: 4px; }
+  .chaos-obstacle-notice { padding: 6px 8px; font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chaos-strike-trail { display: none; animation: none; }
+  .chaos-strike-impact, .chaos-inversion-effect { animation: none; opacity: .8; }
+}
 @keyframes obstacle-frost-life { 0% { opacity: 0; } 16%, 53% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes obstacle-cold-spread { from { transform: translateY(18%) scale(.85); opacity: .2; } to { transform: translateY(-12%) scale(1.12); opacity: .85; } }
 .city-ground-chain { pointer-events: none; }

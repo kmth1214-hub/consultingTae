@@ -1,15 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import { REGIONS } from '../game/gameData.js';
 import BattleArena from './BattleArena.jsx';
+import { getChaosEffectLabel } from '../game/chaosObstacleFeedback.js';
 
-function combatMessage(event) {
+function combatMessage(event, area) {
   if (!event) return '아이템은 숫자키 1–4 · 조준 취소는 Esc';
   const damage = event.hits?.reduce((total, hit) => total + hit.damage, 0) || 0;
   const effects = event.obstacleEffects || (event.obstacleEffect ? [event.obstacleEffect] : []);
   const obstacle = effects.at(-1);
   const effectDamage = effects.reduce((sum, effect) => sum
     + effect.hits.reduce((total, hit) => total + hit.damage, 0), 0);
-  const obstacleMessage = obstacle?.kind === 'log-strike' ? `통나무 충돌 · 적 피해 ${obstacle.hits.reduce((sum, hit) => sum + hit.damage, 0)}`
+  const obstacleMessage = area === 'chaos' ? getChaosEffectLabel(obstacle)
+    : obstacle?.kind === 'log-strike' ? `통나무 충돌 · 적 피해 ${obstacle.hits.reduce((sum, hit) => sum + hit.damage, 0)}`
     : obstacle?.kind === 'ice-guard' ? '얼음 파괴 · 다음 적 공격 피해 50% 감소'
       : obstacle?.kind === 'jar-burst' ? `항아리 폭발 · 전체 적 피해 ${obstacle.hits.reduce((sum, hit) => sum + hit.damage, 0)}`
         : obstacle?.kind === 'aim-inversion' ? '혼돈의 역풍 · 다음 한 발 조작 반전' : null;
@@ -58,7 +60,7 @@ export default function BattleScreen({ session }) {
       shotReview={session.shotReview} onReviewComplete={session.completeShotReview}
       onFire={session.fireShot} onConsumable={session.useConsumable} arenaRef={arenaRef} />
     <div className="battle-status" role="status" aria-live="polite">{session.shotReview
-      ? `결과 확인 중 · ${combatMessage({ ...session.lastEvent, enemyAttack: null })}` : enemyResponse && beforeImpact
-      ? '적의 반격! 공격이 끝나면 다음 행동을 할 수 있어요.' : combatMessage(session.lastEvent)}</div>
+      ? `결과 확인 중 · ${combatMessage({ ...session.lastEvent, enemyAttack: null }, run.area)}` : enemyResponse && beforeImpact
+      ? '적의 반격! 공격이 끝나면 다음 행동을 할 수 있어요.' : combatMessage(session.lastEvent, run.area)}</div>
   </section>;
 }

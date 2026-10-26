@@ -3,7 +3,7 @@ import ConsumableTable from './ConsumableTable.jsx';
 import MagicCandyCard from './MagicCandyCard.jsx';
 import MonsterGroup from './MonsterGroup.jsx';
 import ArenaScenery, { ContactEffect } from './ArenaScenery.jsx';
-import { FrostField, CityGroundBursts } from './ObstacleRegionalEffects.jsx';
+import { FrostField, CityGroundBursts, ChaosObstacleNotice, ChaosMagicEffect } from './ObstacleRegionalEffects.jsx';
 import BattlefieldBackdrop from './BattlefieldBackdrop.jsx';
 import Slingshot from './Slingshot.jsx';
 import PlayerCookie from './PlayerCookie.jsx';
@@ -15,6 +15,7 @@ import { buildPlayableBattlefield } from '../game/battlefieldPlacement.js';
 import { planShot, sampleAtDistance } from '../game/shotGeometry.js';
 import { useAimController } from '../game/useAimController.js';
 import { useBattlefieldCamera } from '../game/useBattlefieldCamera.js';
+import { getChaosObstacleCues } from '../game/chaosObstacleFeedback.js';
 
 const INSTRUCTIONS = {
   idle: '맵 어디든 누르고 뒤로 당긴 뒤 놓으세요. 당긴 반대 방향으로 발사됩니다.',
@@ -33,6 +34,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   [run.area, run.round, run.layoutSeed, slotKey]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const [visualContacts, setVisualContacts] = useState([]);
+  const chaosCues = useMemo(() => getChaosObstacleCues({ area: run.area, layout, event: lastEvent }), [run.area, layout, lastEvent]);
   const activeFlight = useRef(null), triggeredContacts = useRef(new Set());
   const reviewId = shotReview?.id;
   useEffect(() => {
@@ -150,6 +152,9 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
             obstacles={layout.obstacles} />)}
           {run.area === 'city' && visualContacts.map(contact =>
             <CityGroundBursts key={contact.id} contact={contact} layout={layout} />)}
+          {chaosCues.map(cue => cue.kind === 'jar-burst'
+            ? <CityGroundBursts key={cue.id} contact={cue.contact} layout={layout} />
+            : <ChaosMagicEffect key={cue.id} cue={cue} layout={layout} />)}
           {lastImpact && <ContactEffect key={lastImpact.id} impact={lastImpact} effect={lastEvent?.obstacleEffect} obstacles={layout.obstacles} />}
         </svg>
         <MonsterGroup groupRef={enemyGroupRef} enemies={visibleEnemies} placements={layout.enemies} layout={layout} travelMs={travelMs}
@@ -158,6 +163,10 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           onAdvance={onEnemyAdvance} onComplete={onEnemyComplete} />}
       </div>
       {run.area === 'snow' && visualContacts.map(contact => <FrostField key={contact.id} contact={contact} />)}
+      {chaosCues.filter(cue => cue.kind === 'ice-guard').map(cue => <FrostField key={cue.id} contact={cue.contact} />)}
+      {chaosCues.length > 0 && <div className="chaos-obstacle-notices">
+        {chaosCues.map(cue => <ChaosObstacleNotice key={cue.id} cue={cue} />)}
+      </div>}
       {!run.terminal && <BattlefieldMinimap layout={layout} enemies={run.enemies} aim={state}
         toppledObstacleIds={[...(run.toppledObstacleIds || []), ...visualContacts.map(contact => contact.obstacleId)]} />}
       {activeResponse && <EnemyResponseNotice response={activeResponse} />}
