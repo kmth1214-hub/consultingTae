@@ -48,7 +48,7 @@ Task: T02-throw-mistakes
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: 625b7b0
 
 ## Validation Results
 - 단위160/160, production build 통과. 1,000표본×6종류의 실수율/경계, 세 번째 special/근접 제외, 보호상태 유지와 후속소비 검증.

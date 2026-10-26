@@ -33,6 +33,8 @@
 @keyframes stack-debris-arrive { from { opacity: 0; transform: translateY(-18px); } to { opacity: 1; transform: translateY(0); } }
 .scene-foreground { z-index: 5; }
 .projectile-layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 6; pointer-events: none; }
+.spear-path-contact { fill: #c6ffff38; stroke: #bdfaff; stroke-width: 3; animation: spear-contact-flash 480ms ease-out both; pointer-events: none; }
+@keyframes spear-contact-flash { from { opacity: 1; } to { opacity: 0; } }
 .arena-hud { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
 .hud-surface { pointer-events: auto; position: absolute; top: 20px; background: #fffdf5f5; border: 1px solid #d8d0b9; box-shadow: 0 4px 0 #33482416; border-radius: 16px; }
 .consumable-hud { left: 20px; width: 215px; padding: 12px 14px 7px; }

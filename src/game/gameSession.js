@@ -70,7 +70,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
   function routeCombat(run, event, reviewResult = false) {
     const id = ++sequence;
     const patch = { run, lastEvent: { ...event, id,
-      visualKey: event.key || (state.run.fireballArmed ? 'fireball' : 'weapon') },
+      visualKey: event.modifier || event.key || (state.run.fireballArmed ? 'fireball' : 'weapon') },
       aim: { ...state.aim, phase: 'idle' }, notification: null, ...persistUnlock(run),
       enemyResponse: event.enemyAttack ? { id, stage: 'windup', attack: event.enemyAttack } : null,
       shotReview: reviewResult ? { id } : null };
@@ -132,6 +132,16 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       if (state.aim.phase === 'dragging') return reject('aiming');
       const obstacleKinds = ['log', 'ice', 'crate'];
       const contacts = shotMeta?.contacts;
+      const enemyContacts = shotMeta?.enemyContacts;
+      const validEnemyContacts = enemyContacts === undefined || (state.run.spearArmed === true
+        && Array.isArray(hitIds) && Array.isArray(enemyContacts) && enemyContacts.length <= 3
+        && enemyContacts.length === hitIds.length
+        && new Set(enemyContacts.map(hit => hit?.id)).size === enemyContacts.length
+        && enemyContacts.every((hit, index) => hit && hit.id === hitIds[index]
+          && state.run.enemies.some(enemy => enemy.id === hit.id && enemy.alive && enemy.hp > 0)
+          && [hit.point?.x, hit.point?.y, hit.time, hit.distance, shotMeta.directHitTime].every(Number.isFinite)
+          && hit.time >= 0 && hit.time <= shotMeta.directHitTime + 1e-6 && hit.distance >= 0
+          && (!index || (hit.time >= enemyContacts[index-1].time && hit.distance >= enemyContacts[index-1].distance))));
       const validContacts = contacts === undefined || (Array.isArray(contacts)
         && contacts.every((contact, index) => contact && typeof contact.obstacleId === 'string'
           && contact.obstacleId.length > 0 && obstacleKinds.includes(contact.obstacleKind)
@@ -168,7 +178,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         || typeof shotMeta.reverse !== 'boolean' || typeof shotMeta.rolling !== 'boolean'
         || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')
         || new Set(shotMeta.obstacleTargetIds).size !== shotMeta.obstacleTargetIds.length
-        || !validContacts
+        || !validContacts || !validEnemyContacts
         || (contacts !== undefined
           ? (contacts.length ? shotMeta.obstacleId !== contacts[0].obstacleId
               || shotMeta.obstacleKind !== contacts[0].obstacleKind

@@ -285,7 +285,7 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
   return findObstacleContact(path, obstacles, layout.candyRadius) ? null : path;
 }
 
-function planStackedShot({ layout, start, direction, powerRatio, living }) {
+function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false }) {
   const initialSpeed = BATTLEFIELD.minSpeed + (BATTLEFIELD.maxSpeed - BATTLEFIELD.minSpeed)
     * clamp(powerRatio, 0, 1);
   let velocity = { x: direction.x * initialSpeed, y: direction.y * initialSpeed };
@@ -295,6 +295,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
   let elapsed = 0, traveled = 0;
   let samples = [{ ...start, time: 0 }];
   const contacts = [], ignored = new Set(), pending = [];
+  const enemyContacts = [], pierced = new Set();
   let firstContactDistance = null, terminal = 'timeout', targetId = null;
 
   const activate = (obstacle, hitPoint, impactVelocity, time, isRolling, source = null) => {
@@ -350,10 +351,10 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
       segment = extended.path;
       if (extended.rollDistance > 0 && !rolling) localRollStart = extended.rollStartDistance;
     }
-    const enemyHits = living.map(enemy => ({ id: enemy.id,
+    const enemyHits = living.filter(enemy => !pierced.has(enemy.id)).map(enemy => ({ id: enemy.id,
       distance: circleContact(segment, enemy.collider, layout.candyRadius) }))
       .filter(hit => hit.distance !== null).sort((a, b) => a.distance - b.distance);
-    const enemy = enemyHits[0];
+    const enemy = piercing ? enemyHits[3 - enemyContacts.length - 1] : enemyHits[0];
     let remaining, barrier;
     // A neighbouring stack can fall before the candy reaches it. Recompute only
     // that collision, so the candy never loses energy against an empty location.
@@ -367,6 +368,14 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
     const obstacleFirst = barrier && (!enemy || barrier.distance <= enemy.distance + EPS);
     const endDistance = obstacleFirst ? barrier.distance : enemy ? enemy.distance : segment.length;
     const hitPoint = sampleUnchecked(segment, endDistance);
+    for (const hit of enemyHits) {
+      if (hit.distance > endDistance + EPS || (obstacleFirst && hit.distance >= endDistance - EPS)) break;
+      if (!piercing && !enemy) break;
+      const p = sampleUnchecked(segment, hit.distance);
+      enemyContacts.push({ id: hit.id, point: { x: p.x, y: p.y }, time: elapsed + p.time, distance: traveled + hit.distance });
+      pierced.add(hit.id);
+      if (!piercing || enemyContacts.length === 3) break;
+    }
     const isRolling = localRollStart !== null && endDistance > localRollStart + EPS;
     if (localRollStart !== null && endDistance > localRollStart) {
       if (rollStartDistance === null) rollStartDistance = traveled + localRollStart;
@@ -410,7 +419,8 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
   const first = contacts[0];
   const simulationSeconds = Math.max(path.durationSeconds, ...contacts.map(c =>
     c.obstacleMotion ? c.obstacleMotion.startTime + c.obstacleMotion.durationSeconds : 0));
-  return { path, hitIds: targetId ? [targetId] : [], selectedTargetId: null,
+  return { path, hitIds: piercing ? enemyContacts.map(hit => hit.id) : targetId ? [targetId] : [], selectedTargetId: null,
+    ...(piercing ? { enemyContacts } : {}),
     impactKind: terminal, impactDistance: path.length,
     obstacleId: first?.obstacleId ?? null, obstacleKind: first?.obstacleKind ?? null,
     obstacleTargetIds: first?.obstacleTargetIds ?? [], contacts,
@@ -421,7 +431,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
 }
 
 export function planShot({ layout, pull, enemies, windAvailable = false,
-  toppledObstacleIds = [] } = {}) {
+  toppledObstacleIds = [], piercing = false } = {}) {
   if (!validLayout(layout) || !validObstacles(layout.obstacles)
     || !Array.isArray(layout.enemies) || !layout.enemies.every(e => validCircle(e?.collider))
     || !point(layout.launcher) || !Array.isArray(enemies) || !pull?.ready
@@ -436,7 +446,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   const alive = new Set(enemies.filter(e => e && e.alive === true && Number.isFinite(e.hp) && e.hp > 0).map(e => e.id));
   const living = layout.enemies.filter(e => alive.has(e.id));
   let path = ballistic, target = null;
-  if (windAvailable && direction.x > 1e-4) {
+  if (windAvailable && !piercing && direction.x > 1e-4) {
     const candidates = living.filter(e => e.collider.x > start.x);
     // Stable sort preserves original slot order for equal endpoint distances.
     candidates.sort((a, b) => Math.abs(a.collider.x - ballistic.end.x) - Math.abs(b.collider.x - ballistic.end.x));
@@ -448,7 +458,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   }
   if (!target && activeLayout.obstacles.some(item => item.kind)) {
     return planStackedShot({ layout: activeLayout, start, direction,
-      powerRatio: pull.powerRatio, living });
+      powerRatio: pull.powerRatio, living, piercing });
   }
   const hitsFor = candidate => target ? [{ id: target.id, distance: candidate.length }]
     : living.map(e => ({ id: e.id, distance: circleContact(candidate, e.collider, layout.candyRadius) }))
@@ -461,7 +471,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   let rollStartDistance = null, rollDistance = 0;
 
   // Only an unobstructed ballistic landing may continue into a ground roll.
-  if (!target && path.kind === 'ballistic' && path.endKind === 'ground' && !barrier && !first) {
+  if (!target && path.kind === 'ballistic' && path.endKind === 'ground' && !barrier && (!first || piercing)) {
     const speed = BATTLEFIELD.minSpeed + (BATTLEFIELD.maxSpeed - BATTLEFIELD.minSpeed)
       * clamp(pull.powerRatio, 0, 1);
     const rolling = appendGroundRoll(path, direction.x * speed, layout);
@@ -474,15 +484,21 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     obstacleFirst = Boolean(barrier && (!first || barrier.distance <= first.distance + EPS));
   }
 
-  const impactDistance = obstacleFirst ? barrier.distance : first ? first.distance : path.length;
+  const finalEnemy = piercing ? hits[2] : first;
+  if (piercing) obstacleFirst = Boolean(barrier && (!finalEnemy || barrier.distance <= finalEnemy.distance + EPS));
+  const impactDistance = obstacleFirst ? barrier.distance : finalEnemy ? finalEnemy.distance : path.length;
   const obstacle = obstacleFirst ? activeLayout.obstacles.find(item => item.id === barrier.id) : null;
   const impactPoint = obstacleFirst ? sampleUnchecked(path, impactDistance) : null;
   const obstacleTargetIds = obstacleFirst ? [...living]
     .sort((a, b) => distance(impactPoint, a.collider) - distance(impactPoint, b.collider))
     .map(enemy => enemy.id) : [];
-  const resolvedHits = rollStartDistance === null ? hits : hits.slice(0, 1);
+  const resolvedHits = piercing ? hits.slice(0, 3) : rollStartDistance === null ? hits : hits.slice(0, 1);
   return { path, hitIds: [...new Set(resolvedHits.map(h => h.id))], selectedTargetId: target?.id ?? null,
-    impactKind: obstacleFirst ? 'obstacle' : first ? 'enemy' : path.endKind,
+    ...(piercing ? { enemyContacts: resolvedHits.map(hit => {
+      const p = sampleUnchecked(path, hit.distance);
+      return { id: hit.id, point: { x: p.x, y: p.y }, time: p.time, distance: hit.distance };
+    }) } : {}),
+    impactKind: obstacleFirst ? 'obstacle' : finalEnemy ? 'enemy' : path.endKind,
     impactDistance, obstacleId: obstacleFirst ? barrier.id : null,
     obstacleKind: obstacle?.kind ?? null, obstacleTargetIds, rollStartDistance, rollDistance,
     blockerDistance: barrier?.distance ?? null, contacts: [],

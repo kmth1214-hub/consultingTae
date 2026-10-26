@@ -1,4 +1,5 @@
 const { test, expect, installGame, start, phase, snapshot, hp, dragPull, shoot, selectRewards } = require('./support.cjs');
+const { aimedShot } = require('./spear-support.cjs');
 
 for (const mobile of [false, true]) test(`${mobile ? 'phone reduced motion' : 'desktop'} preparation is safe, shared across items, and survives cancelled aim`, async ({ page }) => {
   if (mobile) {
@@ -44,15 +45,17 @@ for (const mobile of [false, true]) test(`${mobile ? 'phone reduced motion' : 'd
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(mobile ? 390 : 1440);
 });
 
-test('a free Spear can clear the round and the next round starts with a new preparation slot', async ({ page }) => {
+test('a prepared Spear requires a real hit to clear the round and the next round starts with a new preparation slot', async ({ page }) => {
   await installGame(page, { initial: { inventory: { spear: 1, heal: 1 } } });
   await start(page);
   await page.keyboard.press('2');
+  expect((await snapshot(page)).run.enemies[0].hp).toBe(4);
+  await shoot(page, { ...await aimedShot(), finalHeading: '다음 한 발을 위한 선물' });
   await expect(page.getByRole('heading', { name: '다음 한 발을 위한 선물', exact: true })).toBeVisible();
   const cleared = await snapshot(page);
   expect(cleared.events.find(event => event.name === 'useConsumable').result.enemyAttack).toBeNull();
-  expect(cleared.run.consumableUsedSinceShot).toBe(true);
-  expect(cleared.run.turnNumber).toBe(0);
+  expect(cleared.run.consumableUsedSinceShot).toBe(false);
+  expect(cleared.run.turnNumber).toBe(1);
   await selectRewards(page);
   await phase(page, 'idle');
   expect((await snapshot(page)).run.consumableUsedSinceShot).toBe(false);

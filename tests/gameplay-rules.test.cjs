@@ -134,14 +134,18 @@ test('Spear gets Alchemist use points but no permanent collision, Wizard, Milk h
   state.enemies.forEach(e => { e.hp = e.maxHp = 10; });
   state.effectCounters.permanentWeaponHits = 2;
   state.effectCounters.projectileCollisions = 2;
-  const event = engine.useConsumable(state, 'spear', { rng: () => 0.5 });
+  const prepared = engine.useConsumable(state, 'spear', { rng: () => 0.5 });
+  assert.deepEqual(prepared.hits, []);
+  assert.equal(prepared.scoreDelta, 10);
+  assert.equal(state.playerHp, 50);
+  const event = engine.resolveProjectile(state, { hitIds: state.enemies.slice(0, 3).map(e => e.id), rng: () => 0.5 });
   assert.deepEqual(event.hits.map(e => e.damage), [4, 3, 2]);
-  assert.equal(event.scoreDelta, 19);
+  assert.equal(event.scoreDelta, 9);
   assert.equal(state.score, 19);
-  assert.equal(state.ammo, 9);
+  assert.equal(state.ammo, 8);
   assert.deepEqual(state.effectCounters, { permanentWeaponHits: 2, projectileCollisions: 2, consumablesUsed: 1 });
   assert.equal(state.roundEffects.windHomingUsed, false);
-  assert.equal(state.playerHp, 50);
+  assert.equal(event.healedPlayer, 0);
 });
 
 test('rejected consumable and missed projectile do not award Alchemist or Adventurer points', () => {
@@ -245,6 +249,7 @@ test('Chaos projectile and item damage use normal scoring in bonusScore only', (
   assert.equal(shot.scoreDelta, 6);
   assert.equal(state.bonusScore, 6);
   engine.useConsumable(state, 'spear', { rng: () => 0.5 });
+  engine.resolveProjectile(state, { hitIds: state.enemies.filter(e => e.alive).slice(0, 3).map(e => e.id), rng: () => 0.5 });
   assert.equal(state.bonusScore, 12); // remaining 1 HP, then 3 HP and 2 HP, at 1x
   assert.equal(state.score, 50);
 });
@@ -274,9 +279,8 @@ test('Snow boss clear emits an unlock flag for projectile and Spear, but Forest 
   for (const source of ['projectile', 'spear']) {
     const state = create([], { area: 'snow', round: 3, inventory: { spear: 1 } });
     state.enemies[0].hp = 1;
-    const result = source === 'spear'
-      ? engine.useConsumable(state, 'spear', { rng: () => 0 })
-      : engine.resolveProjectile(state, { hitIds: [state.enemies[0].id], damage: 1, rng: () => 0 });
+    if (source === 'spear') engine.useConsumable(state, 'spear', { rng: () => 0 });
+    const result = engine.resolveProjectile(state, { hitIds: [state.enemies[0].id], damage: 1, rng: () => 0 });
     assert.equal(state.snowAreaCleared, true);
     assert.equal(result.snowAreaCleared, true);
   }

@@ -5,7 +5,7 @@ export default function MagicCandyCard({ run, hidden }) {
   const details = getCandyDetails(run);
   if (!details || hidden) return null;
   const { current, damage, next, buffs, passives } = details;
-  const chips = [run.fireballArmed && '불공 ×2', run.pendingAimInversion && '조작 반전',
+  const chips = [run.spearArmed && '창 · 최대 3마리 관통', run.fireballArmed && '불공 ×2', run.pendingAimInversion && '조작 반전',
     run.defenseArmed && '보호막', run.nextAttackDamageMultiplier === .5 && '적 피해 50%↓'].filter(Boolean);
   return <aside className="candy-hud hud-surface" aria-label="장전된 마법사탕">
     <div className="candy-card-top"><span className="candy-symbol" aria-hidden="true">✦</span><span className="candy-label">이번 사탕</span><span className="grade">{current.grade} 등급</span></div>
@@ -19,7 +19,7 @@ export default function MagicCandyCard({ run, hidden }) {
     <details className="candy-passives"><summary>보유 능력 {passives.length}개{buffs.length ? ` · 강화 ${buffs.length}` : ''}</summary>
       <div className="candy-detail-body">
         {buffs.length > 0 && <ul className="candy-buffs" aria-label="적용 중인 강화와 상태">{buffs.map(text => <li key={text}>{text}</li>)}</ul>}
-        <p className="passive-note">보유한 사탕의 능력이 함께 적용돼요.</p>
+        <p className="passive-note">{run.spearArmed ? '이번 창 발사에는 영구 사탕의 명중 능력이 적용되지 않아요.' : '보유한 사탕의 능력이 함께 적용돼요.'}</p>
         <ul className="owned-passives">{passives.map(passive => <li key={passive.id}>{passive.text}</li>)}</ul>
       </div>
     </details>

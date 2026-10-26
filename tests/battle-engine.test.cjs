@@ -281,7 +281,7 @@ test('Defense stays armed until the next fired candy triggers the boss special',
   assert.equal(state.enemies[0].attackCount, 3);
 });
 
-test('all consumables preserve the ammo queue, enemy order, boss count and turn; only Spear draws damage RNG', () => {
+test('all consumables preserve the ammo queue, enemy order, boss count and turn without drawing damage RNG', () => {
   for (const key of ['heal', 'defense', 'fireball', 'spear']) {
     const state = engine.createRunState({ area: 'forest', round: 3, playerHp: 50,
       inventory: { heal: 2, defense: 2, fireball: 2, spear: 2 }, rng: () => .5 });
@@ -298,7 +298,7 @@ test('all consumables preserve the ammo queue, enemy order, boss count and turn;
     assert.deepEqual(state.weaponQueue, queue);
     assert.equal(state.currentWeaponId, current);
     assert.equal(state.effectCounters.consumablesUsed, 1);
-    assert.equal(draws, key === 'spear' ? 1 : 0);
+    assert.equal(draws, 0);
   }
 });
 
@@ -317,14 +317,15 @@ test('one preparation item is shared by all kinds until a successful shot, and r
   assert.equal(engine.useConsumable(state, 'defense', { rng: () => .5 }).accepted, true);
 });
 
-test('a Spear clear grants the next round a fresh preparation slot without retaliation', () => {
+test('a prepared Spear shot clears the round and grants the next round a fresh preparation slot without retaliation', () => {
   const state = engine.createRunState({ area: 'chaos', round: 1, inventory: { spear: 2 }, rng: () => .5 });
   state.enemies = state.enemies.slice(0, 1);
   state.enemies[0].hp = 1;
-  const event = engine.useConsumable(state, 'spear', { rng: () => .5 });
+  engine.useConsumable(state, 'spear', { rng: () => .5 });
+  const event = engine.resolveProjectile(state, { hitIds: [state.enemies[0].id], rng: () => .5 });
   assert.equal(event.roundCleared, true);
   assert.equal(event.enemyAttack, null);
-  assert.equal(state.consumableUsedSinceShot, true);
+  assert.equal(state.consumableUsedSinceShot, false);
   engine.advanceRound(state, { rng: () => .5 });
   assert.equal(state.round, 2);
   assert.equal(state.consumableUsedSinceShot, false);
@@ -344,7 +345,8 @@ test('Spear hits up to three enemies with falling damage, even when a target sur
   const state = engine.createRunState({ area: 'city', round: 2, inventory: { spear: 2 }, rng: () => 0.5 });
   state.enemies = state.enemies.slice(0, 3);
   state.enemies.forEach((enemy) => { enemy.hp = 10; enemy.maxHp = 10; });
-  const event = engine.useConsumable(state, 'spear', { rng: () => 0.5 }); // 4, 3, 2
+  engine.useConsumable(state, 'spear', { rng: () => 0.5 });
+  const event = engine.resolveProjectile(state, { hitIds: state.enemies.map(e => e.id), rng: () => 0.5 }); // 4, 3, 2
   assert.deepEqual(event.hits.map((hit) => hit.damage), [4, 3, 2]);
   assert.equal(state.score, 9);
   assert.equal(engine.getConsumableCount(state, 'spear'), 1);

@@ -10,9 +10,10 @@ export function getCandyDetails(run) {
   if (!weapon || !['C', 'B', 'A'].includes(weapon.grade)) return null;
   const queue = run.weaponQueue || [], next = run.weapons.find(item => item.instanceId === queue[1]);
   const multiplier = run.fireballArmed ? 2 : 1;
-  const range = BattleEngine.getWeaponDamageRange(weapon.grade, run.zeroRollsThisRound || 0);
+  const range = run.spearArmed ? { min: 2, max: 5 } : BattleEngine.getWeaponDamageRange(weapon.grade, run.zeroRollsThisRound || 0);
   const buffs = [];
   if (run.fireballArmed) buffs.push(`불공 · 이번 사탕 피해 ×2 (${range.min * 2}–${range.max * 2}, 조건부 추가 피해도 2배)`);
+  if (run.spearArmed) buffs.push('창 · 실제 닿은 적 최대 3마리 관통 · 관통마다 피해 1 감소 · 이번 발사는 창 피해만 적용');
   if (run.pendingAimInversion) buffs.push('혼돈의 역풍 · 다음 한 발 조작 반전');
   if (run.defenseArmed) buffs.push('보호막 · 다음 적 공격 차단');
   if (run.nextAttackDamageMultiplier === .5) buffs.push('얼음 보호 · 다음 적 공격 피해 50% 감소');

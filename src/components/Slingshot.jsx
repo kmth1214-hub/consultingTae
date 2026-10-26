@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useState } from 'react';
 import { getDragDraw } from '../game/battlefieldModel.js';
+import CandyProjectileArt from './CandyProjectileArt.jsx';
 
 export default function Slingshot({ aim, run, launcherRef, layout }) {
   const id = `sling-${useId().replace(/:/g, '')}`;
@@ -47,10 +48,6 @@ export default function Slingshot({ aim, run, launcherRef, layout }) {
           <linearGradient id={`${id}-leather`} x2="1" y2=".4">
             <stop stopColor="#5a3027" /><stop offset=".5" stopColor="#a25c40" /><stop offset="1" stopColor="#653523" />
           </linearGradient>
-          <radialGradient id={`${id}-candy`} cx=".3" cy=".25" r=".8">
-            <stop stopColor="#fffce4" /><stop offset=".35" stopColor={run.fireballArmed ? '#ffd06a' : '#f9d380'} />
-            <stop offset="1" stopColor={run.fireballArmed ? '#e74c29' : '#c47936'} />
-          </radialGradient>
           <radialGradient id={`${id}-aura`}>
             <stop stopColor={run.fireballArmed ? '#ffc576' : '#fff1b1'} stopOpacity=".65" />
             <stop offset="1" stopColor={run.fireballArmed ? '#ff6d36' : '#ffe5a0'} stopOpacity="0" />
@@ -95,10 +92,9 @@ export default function Slingshot({ aim, run, launcherRef, layout }) {
         <path d={`M${left.x} ${left.y + 1} L${pouch.x} ${pouch.y + 2}`} fill="none" stroke="#f3cf88" strokeWidth={3.5 - tension} strokeLinecap="round" />
         <g className="slingshot-pouch" transform={`translate(${pouch.x} ${pouch.y})`}>
           <ellipse rx="14" ry="11" fill={`url(#${id}-leather)`} stroke="#4e3026" strokeWidth="2" />
-          {!launching && <g className="sling-loaded-candy">
-            <circle r="9" fill={`url(#${id}-candy)`} stroke="#9c672e" strokeWidth="1.5" />
-            <path d="M-5-2Q0-8 5-2T-3 4" fill="none" stroke="#fff9dc" strokeWidth="2.5" strokeLinecap="round" />
-            <circle cx="-3" cy="-4" r="1.5" fill="#fff" />
+          {!launching && <g className="sling-loaded-candy" data-testid="loaded-candy"
+            transform={`rotate(${Math.atan2(aim.direction.y, aim.direction.x) * 180 / Math.PI})`}>
+            <CandyProjectileArt variant={run.spearArmed ? 'spear' : run.fireballArmed ? 'fireball' : 'normal'} />
           </g>}
           <path d="M-14 2Q0 10 14 2L12 11Q0 18-12 11Z" fill={`url(#${id}-leather)`} stroke="#4e3026" strokeWidth="1.5" />
           <path d="M-10 7Q0 14 10 7" fill="none" stroke="#e2ad76" strokeWidth="1" strokeDasharray="2 2" />

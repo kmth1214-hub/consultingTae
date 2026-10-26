@@ -28,7 +28,7 @@
   ]);
   const CONSUMABLE_CATALOG = Object.freeze([
     { id:'fireball',name:'불공',description:'다음 영구 무기 피해 2배' },
-    { id:'spear',name:'창',description:'최대 3마리 관통' },
+    { id:'spear',name:'창',description:'다음 사탕으로 실제 닿은 적 최대 3마리 관통' },
     { id:'defense',name:'방어',description:'다음 적 공격 차단' },
     { id:'heal',name:'회복',description:'체력 25 회복' }
   ]);
@@ -149,6 +149,7 @@
       pendingCampReward: null,
       defenseArmed: false,
       fireballArmed: false,
+      spearArmed: false,
       nextAttackDamageMultiplier: null,
       pendingAimInversion: false,
       toppledObstacleIds: [], forestLogDebris: [], obstacleDebris: []
@@ -262,6 +263,7 @@
     state.toppledObstacleIds=[];state.forestLogDebris=[];state.obstacleDebris=[];
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
     state.consumableUsedSinceShot=false;
+    state.spearArmed=false;
     state.rewardChoices=null;state.selectedRewards={weapon:null,consumable:null};
     if(AREAS.indexOf(state.area)>AREAS.indexOf(state.furthestArea))state.furthestArea=state.area;
     refillWeaponQueue(state,config.rng);
@@ -453,7 +455,8 @@
       return { accepted: false, reason: 'no-ammo', hits: [], enemyAttack: null, roundCleared: false, runDefeated: true };
     }
     const scoreBefore = activeScore(state);
-    const permanent = config.source !== 'spear';
+    const spear = state.spearArmed === true;
+    const permanent = config.source !== 'spear' && !spear;
     state.consumableUsedSinceShot = false;
     state.ammo = Math.max(0, state.ammo - 1);
     if(!state.weaponQueue.length)refillWeaponQueue(state,config.rng);
@@ -464,13 +467,16 @@
     if(!state.weaponQueue.length)refillWeaponQueue(state,config.rng);
     state.turnNumber += 1;
     const rolledDamage = config.damage === undefined
-      ? rollWeaponDamage(typeof config.rng === 'function' ? config.rng : Math.random, grade, state.zeroRollsThisRound)
+      ? spear ? randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 2, 5)
+        : rollWeaponDamage(typeof config.rng === 'function' ? config.rng : Math.random, grade, state.zeroRollsThisRound)
       : Math.max(0, Math.floor(Number(config.damage) || 0));
     // Explicit damage is a legacy/captured-roll override; its caller owns its zero-roll accounting.
-    if (config.damage === undefined && rolledDamage === 0) state.zeroRollsThisRound++;
-    const damageMultiplier = permanent && state.fireballArmed ? 2 : 1;
+    if (!spear && config.damage === undefined && rolledDamage === 0) state.zeroRollsThisRound++;
+    const fiery = state.fireballArmed === true;
+    const damageMultiplier = fiery ? 2 : 1;
     let damage = rolledDamage * damageMultiplier;
-    if (permanent) state.fireballArmed = false;
+    state.fireballArmed = false;
+    state.spearArmed = false;
     state.consumablesBlocked = false;
     state.consumablesBlockedTurns = 0;
     const hits = [];
@@ -494,7 +500,19 @@
           obstacleTargetIds: shotMeta.obstacleTargetIds || [] }] : [];
     const toppled = state.toppledObstacleIds || (state.toppledObstacleIds = []);
     let directHitCount = 0;
+    const applySpearHit = (id, index) => {
+      if (index >= 3 || seen.has(id)) return;
+      seen.add(id);
+      const enemy = state.enemies.find(candidate => candidate.id === id && candidate.alive && candidate.hp > 0);
+      if (!enemy) return;
+      const removed = Math.min(enemy.hp, Math.max(0, rolledDamage - index) * damageMultiplier);
+      enemy.hp -= removed; enemy.alive = enemy.hp > 0;
+      addScore(state, removed);
+      hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp, defeated: !enemy.alive, scoreDelta: removed });
+      directHitCount++;
+    };
     const applyDirectHits = () => {
+      if (spear) { [...new Set(hitIds)].slice(0, 3).forEach(applySpearHit); return; }
       for (const id of hitIds) {
         if (directHitCount > 0 && damage <= 0) break;
         if (seen.has(id)) continue;
@@ -576,7 +594,7 @@
     if (!hasContactStream) applyDirectHits();
     const obstacleEffects = [];
     const timeline = [];
-    if (permanent) for (const contact of contacts) {
+    if (config.source !== 'spear') for (const contact of contacts) {
       let enabled = false, physicalEffect;
       timeline.push({ time: contact.time || 0, order: 0, apply() {
         if (!contact?.obstacleId || toppled.includes(contact.obstacleId)) return;
@@ -604,8 +622,15 @@
         physicalEffect.hits.push(...effect.hits); hits.push(...effect.hits);
       } });
     }
-    if (hasContactStream) timeline.push({ time: Number.isFinite(shotMeta.directHitTime) ? shotMeta.directHitTime : Infinity,
-      order: 2, apply: applyDirectHits });
+    if (hasContactStream) {
+      if (spear && Array.isArray(shotMeta.enemyContacts)) {
+        const geometricIds = new Set(hitIds);
+        shotMeta.enemyContacts.slice(0, 3).forEach((contact, index) => {
+          if (geometricIds.has(contact.id)) timeline.push({ time: contact.time, order: 2, apply: () => applySpearHit(contact.id, index) });
+        });
+      } else timeline.push({ time: Number.isFinite(shotMeta.directHitTime) ? shotMeta.directHitTime : Infinity,
+        order: 2, apply: applyDirectHits });
+    }
     timeline.sort((a, b) => a.time - b.time || a.order - b.order).forEach(action => action.apply());
     if (permanent && directHitCount) {
       state.effectCounters.permanentWeaponHits++;
@@ -613,8 +638,9 @@
     }
     const event = {
       accepted: true, source: config.source || 'weapon', weaponId: usedWeaponId,
+      modifier: spear ? 'spear' : fiery ? 'fireball' : null,
       damage: rolledDamage * damageMultiplier, bonusDamage, healedPlayer,
-      homingTargetId: homingTarget && homingTarget.id, spillover: damage, hits,
+      homingTargetId: homingTarget && homingTarget.id, spillover: spear ? 0 : damage, hits,
       missed: hits.length === 0 && !obstacleEffects.some(effect =>
         ['ice-guard', 'aim-inversion'].includes(effect.kind)),
       scoreDelta: activeScore(state) - scoreBefore, enemyAttack: null,
@@ -664,17 +690,8 @@
       state.fireballArmed = true;
       event.effect = { armed: true };
     } else if (key === 'spear') {
-      const rng = typeof config.rng === 'function' ? config.rng : Math.random;
-      let damage = randomInt(rng, 2, 5);
-      for (const enemy of getLivingEnemies(state).slice(0, 3)) {
-        const removed = Math.min(enemy.hp, damage);
-        enemy.hp -= removed;
-        enemy.alive = enemy.hp > 0;
-        addScore(state, removed);
-        event.hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp, defeated: !enemy.alive, scoreDelta: removed });
-        damage = Math.max(0, damage - 1);
-      }
-      event.effect = { hits: event.hits };
+      state.spearArmed = true;
+      event.effect = { armed: true };
     }
 
     event.scoreDelta = activeScore(state) - scoreBefore;

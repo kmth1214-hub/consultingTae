@@ -2,10 +2,12 @@ import React, { useEffect, useId, useRef } from 'react';
 import { sampleAtDistance, sampleAtTime } from '../game/shotGeometry.js';
 import { createProjectilePlayback } from '../game/projectilePlayback.js';
 import { BATTLEFIELD } from '../game/battlefieldModel.js';
+import CandyProjectileArt from './CandyProjectileArt.jsx';
 
 export default function ProjectileFlight({ flight, onProgress, onComplete, onFailure }) {
   const id = `candy-${useId().replace(/:/g, '')}`;
-  const wake = flight.fireball ? ['#ff6c32', '#ff9f4d'] : flight.path?.kind === 'homing' ? ['#72d9c0', '#b7f8d4'] : ['#ffe5a2', '#ffe9af'];
+  const variant = flight.projectileKind || (flight.fireball ? 'fireball' : 'normal');
+  const wake = variant === 'spear' ? ['#3b91b2', '#b8faff'] : flight.fireball ? ['#ff6c32', '#ff9f4d'] : flight.path?.kind === 'homing' ? ['#72d9c0', '#b7f8d4'] : ['#ffe5a2', '#ffe9af'];
   const candyRef = useRef(null);
   const trailRef = useRef(null), trailGlowRef = useRef(null), gradientRef = useRef(null);
   const rollDustRef = useRef(null);
@@ -38,7 +40,9 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         if (trailRef.current) trailRef.current.style.visibility = candyFinished ? 'hidden' : '';
         if (trailGlowRef.current) trailGlowRef.current.style.visibility = candyFinished ? 'hidden' : '';
         candyRef.current.dataset.rolling = String(rolling);
-        const rotation = reduced ? 0 : rolling
+        const before = sampleAtDistance(flight.path, Math.max(0, distance - 2));
+        const after = sampleAtDistance(flight.path, Math.min(flight.path.length, distance + 2));
+        const rotation = !rolling && variant !== 'normal' ? Math.atan2(after.y-before.y, after.x-before.x) * 180 / Math.PI : reduced ? 0 : rolling
           ? rollStart.time * 480 + (point.x - rollStart.x) / BATTLEFIELD.candyRadius * 180 / Math.PI
           : simulationTime * 480;
         candyRef.current.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${rotation})`);
@@ -91,21 +95,15 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         <stop offset=".55" stopColor={wake[1]} stopOpacity=".5" />
         <stop offset="1" stopColor="#fff9df" />
       </linearGradient>
-      <radialGradient id={`${id}-shell`} cx=".3" cy=".25" r=".8">
-        <stop stopColor="#fffce7" /><stop offset=".4" stopColor={flight.fireball ? '#ffcb6b' : '#f8d485'} />
-        <stop offset="1" stopColor={flight.fireball ? '#eb502b' : '#c7833c'} />
-      </radialGradient>
     </defs>
     <g className={`projectile-trail ${flight.fireball ? 'is-fiery' : ''}`} fill="none" stroke={`url(#${id}-trail)`} strokeLinecap="round" strokeLinejoin="round">
       <path ref={trailGlowRef} strokeWidth="18" opacity=".18" /><path ref={trailRef} strokeWidth="6" opacity=".9" />
     </g>
     <ellipse ref={rollShadowRef} data-testid="roll-shadow" rx="13" ry="3" fill="#664729" opacity=".3" style={{ display: 'none' }} />
     <g ref={candyRef} data-testid="projectile" className={flight.fireball ? 'projectile-candy is-fiery' : 'projectile-candy'}
+    data-projectile-kind={variant}
     transform={`translate(${flight.path?.start.x || 0} ${flight.path?.start.y || 0})`}>
-      <circle r="19" fill={flight.fireball ? '#ff9b3038' : '#fff6b526'} />
-      <circle r="10" fill={`url(#${id}-shell)`} stroke={flight.fireball ? '#c85f30' : '#9b6936'} strokeWidth="1.5" />
-      <path d="M-5-2Q0-8 5-2T-3 4" fill="none" stroke="#fff8d9" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="-3" cy="-4" r="2" fill="#fffce9" />
+      <CandyProjectileArt variant={variant} />
     </g>
     <g ref={rollDustRef} data-testid="roll-dust" aria-hidden="true" style={{ display: 'none' }}>
       <g ref={dustDirectionRef}><g className="roll-dust">

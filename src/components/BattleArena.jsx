@@ -34,6 +34,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   [run.area, run.round, run.layoutSeed, slotKey]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const [visualContacts, setVisualContacts] = useState([]);
+  const [visualEnemyContacts, setVisualEnemyContacts] = useState([]);
+  const triggeredEnemies = useRef(new Set());
   const chaosCues = useMemo(() => getChaosObstacleCues({ area: run.area, layout, event: lastEvent }), [run.area, layout, lastEvent]);
   const activeFlight = useRef(null), triggeredContacts = useRef(new Set());
   const reviewId = shotReview?.id;
@@ -44,16 +46,18 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   }, [reviewId, onReviewComplete]);
   const activeResponse = shotReview ? null : enemyResponse;
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
+    piercing: run.spearArmed === true,
     toppledObstacleIds: run.toppledObstacleIds || [],
     windAvailable: run.weapons.some(w => w.id === 'wind-candy') && !run.roundEffects.windHomingUsed });
-  function clearFlight() { activeFlight.current = null; setFlight(null); setVisualContacts([]); triggeredContacts.current.clear(); }
+  function clearFlight() { activeFlight.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]); triggeredContacts.current.clear(); triggeredEnemies.current.clear(); }
   function failLaunch() { controller.cancelAim(); setRetry('조준을 다시 잡고 당겨 주세요.'); }
   function startFlight(pull) {
     const solution = makeSolution(pull);
     if (!solution || !camera.valid) { failLaunch(); return; }
-    const shot = { ...solution, id: pull.launchId, fireball: run.fireballArmed };
+    const shot = { ...solution, id: pull.launchId, fireball: run.fireballArmed, projectileKind: run.spearArmed ? 'spear' : run.fireballArmed ? 'fireball' : 'normal' };
     activeFlight.current = shot.id;
     triggeredContacts.current.clear();
+    triggeredEnemies.current.clear(); setVisualEnemyContacts([]);
     setVisualContacts([]);
     focusRef.current = shot.path.start;
     setFlight(shot);
@@ -96,6 +100,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
         shotMeta: { impactKind: shot.impactKind, obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind,
           contacts: (shot.contacts || []).map(({ logMotion, obstacleMotion, ...contact }) => contact),
           directHitTime: shot.directHitTime ?? shot.path.durationSeconds,
+          ...(shot.enemyContacts ? { enemyContacts: structuredClone(shot.enemyContacts) } : {}),
           obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollStartDistance !== null
             && shot.impactDistance > shot.rollStartDistance, reverse: shot.reverse } });
     });
@@ -147,7 +152,17 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
               const logFocus = sceneryRef.current?.advance(time);
               focusRef.current = time > flight.directHitTime && logFocus ? logFocus : point;
               showFlightContacts(flight, time);
+              const fresh = (flight.enemyContacts || []).filter(contact => contact.time <= time && !triggeredEnemies.current.has(contact.id));
+              if (fresh.length) {
+                fresh.forEach(contact => triggeredEnemies.current.add(contact.id));
+                setVisualEnemyContacts(current => [...current, ...fresh]);
+              }
             }} />}
+          {visualEnemyContacts.map(contact => <g key={contact.id} className="spear-path-contact"
+            data-testid="spear-path-contact" data-enemy-id={contact.id}
+            transform={`translate(${contact.point.x} ${contact.point.y})`}>
+            <circle r="23" /><path d="M-34 0H34M0-27V27M-22-20 22 20M-22 20 22-20" />
+          </g>)}
           {visualContacts.map(contact => <ContactEffect key={contact.id} impact={{
             id: contact.id, point: contact.point, obstacleId: contact.obstacleId }}
             obstacles={layout.obstacles} />)}
