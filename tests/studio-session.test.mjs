@@ -44,7 +44,7 @@ test('every cookie can be tested, even locked cookies, without reading or writin
 });
 
 test('boss special setup triggers the real third response; ordinary rounds and independent sessions stay fresh', () => {
-  for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breath'], ['city', 'oven-overheat'], ['chaos', 'boar-charge']]) {
+  for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breath'], ['city', 'oven-overheat'], ['chaos', 'frozen-breath']]) {
     const config = { area, round: 3, bossSpecial: true, seed: 0xffffffff }, before = structuredClone(config);
     const session = createStudioSession(config, options);
     assert.ok(session.getSnapshot().run.enemies.filter(e => e.isBoss).every(e => e.attackCount === 2));

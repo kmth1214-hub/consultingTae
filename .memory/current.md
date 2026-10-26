@@ -1,16 +1,16 @@
 # Current Context
 
 ## Active Plan
-[2026-10-26-aimed-spear-candy](./plans/2026-10-26-aimed-spear-candy.md)
+[2026-10-26-chaos-fused-boss](./plans/2026-10-26-chaos-fused-boss.md)
 
 ## Active Phase
-[P01-projectile](./phases/2026-10-26-aimed-spear-candy/P01-projectile/phase.md)
+[P01-encounter](./phases/2026-10-26-chaos-fused-boss/P01-encounter/phase.md)
 
 ## Active Task
-[T01-physical-piercing](./phases/2026-10-26-aimed-spear-candy/P01-projectile/T01-physical-piercing.md)
+[T01-combat-transition](./phases/2026-10-26-chaos-fused-boss/P01-encounter/T01-combat-transition.md)
 
 ## Status
-Task 커밋 6/14 완료. 나머지 구현·검증은 완료되어 있으며 Task별 커밋 진행 중.
+Task 커밋 7/14 완료. 나머지 구현·검증은 완료되어 있으며 Task별 커밋 진행 중.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -19,9 +19,9 @@ Task 커밋 6/14 완료. 나머지 구현·검증은 완료되어 있으며 Task
 - 3045b39 — [2026-10-26-snow-candy-reward-unlock / T01-reward-unlock](./phases/2026-10-26-snow-candy-reward-unlock/P01-rewards/T01-reward-unlock.md)
 - 4c89d87 — [2026-10-26-giant-bosses-and-throw-mistakes / T01-giant-bosses](./phases/2026-10-26-giant-bosses-and-throw-mistakes/P01-combat/T01-giant-bosses.md)
 - 625b7b0 — [2026-10-26-giant-bosses-and-throw-mistakes / T02-throw-mistakes](./phases/2026-10-26-giant-bosses-and-throw-mistakes/P01-combat/T02-throw-mistakes.md)
+- 3883b99 — [2026-10-26-aimed-spear-candy / T01-physical-piercing](./phases/2026-10-26-aimed-spear-candy/P01-projectile/T01-physical-piercing.md)
 
 ## Pending commits
-- [2026-10-26-aimed-spear-candy / T01-physical-piercing](./phases/2026-10-26-aimed-spear-candy/P01-projectile/T01-physical-piercing.md): validated, commit pending
 - [2026-10-26-chaos-fused-boss / T01-combat-transition](./phases/2026-10-26-chaos-fused-boss/P01-encounter/T01-combat-transition.md): validated, commit pending
 - [2026-10-26-chaos-fused-boss / T02-boss-presentation](./phases/2026-10-26-chaos-fused-boss/P01-encounter/T02-boss-presentation.md): validated, commit pending
 - [2026-10-26-chaos-fused-boss / T03-integration-validation](./phases/2026-10-26-chaos-fused-boss/P01-encounter/T03-integration-validation.md): validated, commit pending
@@ -34,4 +34,4 @@ Task 커밋 6/14 완료. 나머지 구현·검증은 완료되어 있으며 Task
 http://127.0.0.1:4182/ (게임), http://127.0.0.1:4182/__dev/maps (관리자). 기존 개발 서버 유지.
 
 ## Next Step
-T01-physical-piercing의 검증된 변경만 커밋한다. 공유 파일의 다음 Task 변경과 사용자 목업 수정을 섞지 않는다.
+T01-combat-transition의 검증된 변경만 커밋한다. 공유 파일의 다음 Task 변경과 사용자 목업 수정을 섞지 않는다.

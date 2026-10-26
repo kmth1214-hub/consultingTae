@@ -11,7 +11,7 @@ test('boss bodies and colliders use three times the regular baseline and leave c
     const layout = buildPlayableBattlefield({ area, round: 3, enemies, seed });
     assert.equal(isPlayableBattlefield(layout, enemies), true);
     for (const boss of layout.enemies) {
-      assert.equal(boss.size, 92 * 3);
+      assert.equal(boss.size, 92 * (boss.kind === 'chaos-fused-boss' ? 4.5 : 3));
       assert.equal(boss.collider.radius, boss.size * .42);
       assert.equal(boss.collider.y, layout.groundY - boss.size * .52);
       for (const prop of layout.obstacles) assert.ok(prop.x + prop.width < boss.x - boss.size / 2

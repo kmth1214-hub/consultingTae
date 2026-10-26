@@ -106,6 +106,8 @@ test('Defense takes priority over Milk boss protection; Milk cancels the next wh
 
 test('Wind guarantees the selected boss first once per round and carries its damage onward', () => {
   const state = create(['wind-candy'], { area: 'chaos', round: 3 });
+  engine.resolveProjectile(state, {hitIds:[state.enemies[0].id],damage:28,rng:()=>0});
+  const scoreBefore = state.bonusScore;
   const [boar, , robot] = state.enemies;
   robot.hp = 1;
   const hit = engine.resolveProjectile(state, { selectedTargetId: robot.id, hitIds: [boar.id, robot.id], damage: 3, rng: () => 0 });
@@ -114,7 +116,7 @@ test('Wind guarantees the selected boss first once per round and carries its dam
   assert.equal(state.roundEffects.windHomingUsed, true);
   const miss = engine.resolveProjectile(state, { selectedTargetId: boar.id, hitIds: [], damage: 3, rng: () => 0 });
   assert.equal(miss.missed, true);
-  assert.equal(state.bonusScore, 4);
+  assert.equal(state.bonusScore, scoreBefore + 4);
 });
 
 test('round transitions reset Wind and Milk flags but retain run effect counters', () => {
@@ -202,25 +204,29 @@ test('camp duplicate offers a stable fusion choice without rerolling or silently
   assert.deepEqual(result.effect.weapons.map(item => item.name), plannedNames);
 });
 
-test('Chaos waves use 9–13 regular monsters and round three has the three independent bosses', () => {
+test('Chaos waves use 9–13 regular monsters and round three starts with one fused boss', () => {
   assert.equal(engine.createRoundEnemies('chaos', 1, { rng: () => 0 }).length, 9);
   const many = engine.createRoundEnemies('chaos', 2, { rng: () => 0.999 });
   assert.equal(many.length, 13);
   assert.equal(many.every(e => e.kind === 'washing-robot' && e.hp === 4), true);
   const bosses = engine.createRoundEnemies('chaos', 3);
   assert.deepEqual(bosses.map(e => [e.kind, e.hp, e.maxHp, e.attackCount]), [
-    ['pointy-boar', 15, 15, 0], ['cowardly-snowman', 18, 18, 0], ['oven-robot', 23, 26, 0]
+    ['chaos-fused-boss', 56, 56, 0]
   ]);
   for (const round of [0, 4, NaN]) assert.throws(() => engine.createRoundEnemies('chaos', round), RangeError);
 });
 
 test('Chaos bosses use their own third-attack specials and Oven Robot heals only to 26', () => {
   const state = create(['adventurer-candy'], { area: 'chaos', round: 3 });
+  engine.resolveProjectile(state, {hitIds:[state.enemies[0].id],damage:28,rng:()=>0});
   const attacks = Array.from({ length: 9 }, () => engine.resolveEnemyTurn(state, () => 0));
   assert.deepEqual(attacks.slice(6).map(e => e.special), ['boar-charge', 'frozen-breath', 'oven-overheat']);
   assert.deepEqual(state.enemies.map(e => e.attackCount), [3, 3, 3]);
-  assert.equal(state.enemies[2].hp, 26);
-  assert.equal(state.ammo, 8);
+  assert.equal(state.enemies[2].hp, 14);
+  state.enemies[2].hp=25;state.enemies[2].attackCount=2;state.enemyTurnIndex=2;
+  engine.resolveEnemyTurn(state,()=>0);
+  assert.equal(state.enemies[2].hp,26);
+  assert.equal(state.ammo, 6);
   assert.equal(state.consumablesBlocked, true);
 });
 

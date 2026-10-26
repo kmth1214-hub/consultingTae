@@ -28,7 +28,7 @@ function subtract(intervals, low, high) {
     : [[a, Math.min(b, low)], [Math.max(a, high), b]].filter(([x, y]) => y > x));
 }
 
-export function buildBattlefield({ area, round, enemies, seed = 0 } = {}) {
+export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhase = null } = {}) {
   if (!['forest', 'snow', 'city', 'chaos'].includes(area) || !Number.isFinite(round)
     || !Array.isArray(enemies) || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) {
     throw new TypeError('Invalid battlefield configuration');
@@ -46,7 +46,7 @@ export function buildBattlefield({ area, round, enemies, seed = 0 } = {}) {
     const nominal = enemies.length === 1 ? 2438 : 1000 + i * 1860 / (enemies.length - 1);
     const jitter = enemies.length > 10 ? 24 : enemies.length > 6 ? 42 : 135;
     const x = Math.round(nominal + (random() * 2 - 1) * jitter);
-    const size = isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60;
+    const size = kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60;
     return { id, kind, isBoss, x, y: 900, size,
       collider: { id, x, y: 900 - size * .52, radius: size * .42 } };
   });
@@ -56,11 +56,14 @@ export function buildBattlefield({ area, round, enemies, seed = 0 } = {}) {
   let centers = free.map(([a, b]) => [a + STACK_WIDTH / 2 + 8, b - STACK_WIDTH / 2 - 8])
     .filter(([a, b]) => a <= b);
   const obstacles = [];
-  const count = placements.length ? 2 + Math.floor(random() * 3) : 0;
+  const split = area === 'chaos' && round === 3 && encounterPhase === 'split';
+  const count = placements.length ? split ? 3 : 2 + Math.floor(random() * 3) : 0;
   const regularSize = enemies.length <= 6 ? 92 : 60;
   const nearEnemy = area === 'forest' && placements.length ? placements[Math.floor(random() * placements.length)] : null;
   for (let slot = 0; slot < count; slot++) {
-    const nominal = slot === 0 && nearEnemy
+    const landingBoss = split ? placements[slot] : null;
+    const nominal = landingBoss ? landingBoss.x - landingBoss.size / 2 - STACK_WIDTH / 2 - 40
+      : slot === 0 && nearEnemy
       ? nearEnemy.x - nearEnemy.size / 2 - STACK_WIDTH / 2 - (24 + random() * 86)
       : [740, 1510, 2290, 3050][slot] + (random() * 2 - 1) * 190;
     const choices = centers.map(([a, b]) => Math.max(a, Math.min(b, nominal)));
@@ -69,12 +72,12 @@ export function buildBattlefield({ area, round, enemies, seed = 0 } = {}) {
     const center = Math.round(choices[0]);
     const kind = area === 'chaos' ? ['log', 'ice', 'crate'][slot % 3] : THEMES[area];
     const height = Math.round(regularSize * 1.7), x = center - STACK_WIDTH / 2, y = 900 - height;
-    obstacles.push({ id: `${area}-${round}-obstacle-${slot}`, kind, x, y,
+    obstacles.push({ id: `${area}-${round}-${split ? 'split-' : ''}obstacle-${slot}`, kind, x, y,
       width: STACK_WIDTH, height,
       polygon: SHAPES[kind].map(([u, v]) => ({ x: x + u * STACK_WIDTH, y: y + v * height })) });
     centers = subtract(centers, center - 145, center + 145);
   }
-  return { ...BATTLEFIELD, key: JSON.stringify([area, round, seed,
+  return { ...BATTLEFIELD, encounterPhase, key: JSON.stringify([area, round, seed, encounterPhase,
     enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss])]), area, round,
   // Presentation-only cookie bounds and canonical incoming-attack anchor.
   player: { x: 44, y: 748, width: 152, height: 152,

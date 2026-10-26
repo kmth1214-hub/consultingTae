@@ -7,6 +7,7 @@ const defaultLayoutRng = () => globalThis.crypto?.getRandomValues
   ? globalThis.crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000
   : Math.random();
 const REASONS = {
+  splitting: '보스가 분리되고 있어요. 착지가 끝나면 행동할 수 있어요.',
   'item-used': '이번 발사 전에 소모품을 이미 사용했어요. 사탕을 발사하면 다시 사용할 수 있어요.',
   reviewing: '발사 결과를 확인하고 있어요. 잠시 후 다음 행동을 할 수 있어요.',
   responding: '적이 공격하고 있어요. 반격이 끝나면 행동할 수 있어요.',
@@ -30,7 +31,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
   let sequence = 0;
   let state = { screen: 'home', profile: loadProfile(storage), selectedCharacter: null, run: null,
     aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null, enemyResponse: null,
-    leaderboardReturnScreen: null, campRewardReveal: null, shotReview: null };
+    leaderboardReturnScreen: null, campRewardReveal: null, shotReview: null, bossTransition: null };
   const listeners = new Set();
   const publish = patch => {
     state = { ...state, ...patch };
@@ -73,17 +74,18 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       visualKey: event.modifier || event.key || (state.run.fireballArmed ? 'fireball' : 'weapon') },
       aim: { ...state.aim, phase: 'idle' }, notification: null, ...persistUnlock(run),
       enemyResponse: event.enemyAttack ? { id, stage: 'windup', attack: event.enemyAttack } : null,
+      bossTransition: event.bossSplit ? { id, stage: 'flight', split: event.bossSplit } : null,
       shotReview: reviewResult ? { id } : null };
     // Damage resolves once in the engine. Playback only reveals that committed result.
     // Keep fatal hits on the arena until the player has seen what hit them.
-    publish(reviewResult || event.enemyAttack ? patch : finishCombatRouting(run, patch));
+    publish(reviewResult || event.enemyAttack || event.bossSplit ? patch : finishCombatRouting(run, patch));
     return event;
   }
   const actions = {
     startCharacterSelect() {
       publish({ screen: 'characters', run: null, selectedCharacter: null, fusion: null, outcome: null,
         summary: null, lastEvent: null, enemyResponse: null, aim: initialAim(), notification: null, leaderboardReturnScreen: null,
-        campRewardReveal: null, shotReview: null });
+        campRewardReveal: null, shotReview: null, bossTransition: null });
     },
     startRun(characterId) {
       if (state.screen !== 'characters') return reject('invalid-state');
@@ -94,11 +96,11 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         snowRewardsUnlocked: state.profile.snowAreaCleared });
       assignLayoutSeed(run);
       publish({ run, selectedCharacter: character, screen: 'battle', aim: initialAim(), notification: null, lastEvent: null,
-        campRewardReveal: null, shotReview: null });
+        campRewardReveal: null, shotReview: null, bossTransition: null });
       return { accepted: true };
     },
     setAim(patch) {
-      if (state.screen !== 'battle' || state.run.terminal || state.enemyResponse || state.shotReview) return;
+      if (state.screen !== 'battle' || state.run.terminal || state.enemyResponse || state.shotReview || state.bossTransition) return;
       const aim = { ...state.aim };
       if (Number.isFinite(patch.angle)) aim.angle = ((patch.angle + 180) % 360 + 360) % 360 - 180;
       if (Number.isFinite(patch.power)) aim.power = Math.max(0, Math.min(100, patch.power));
@@ -123,10 +125,19 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     completeShotReview(id) {
       if (!state.shotReview || state.shotReview.id !== id) return;
       const patch = { shotReview: null };
-      publish(state.enemyResponse ? patch : finishCombatRouting(state.run, patch));
+      publish(state.enemyResponse || state.bossTransition ? patch : finishCombatRouting(state.run, patch));
+    },
+    advanceBossTransition(id) {
+      if (state.shotReview || !state.bossTransition || state.bossTransition.id !== id || state.bossTransition.stage !== 'flight') return;
+      publish({ bossTransition: { ...state.bossTransition, stage: 'impact' } });
+    },
+    completeBossTransition(id) {
+      if (state.shotReview || !state.bossTransition || state.bossTransition.id !== id) return;
+      publish(finishCombatRouting(state.run, { bossTransition: null, notification: null }));
     },
     fireShot({ hitIds = [], selectedTargetId = state.aim.selectedTargetId, shotMeta, reviewResult = false } = {}) {
       if (state.screen !== 'battle') return reject('invalid-state');
+      if (state.bossTransition) return reject('splitting');
       if (state.shotReview) return reject('reviewing');
       if (state.enemyResponse) return reject('responding');
       if (state.aim.phase === 'dragging') return reject('aiming');
@@ -198,6 +209,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     },
     useConsumable(key) {
       if (state.screen !== 'battle') return reject('invalid-state');
+      if (state.bossTransition) return reject('splitting');
       if (state.shotReview) return reject('reviewing');
       if (state.enemyResponse) return reject('responding');
       const run = structuredClone(state.run);
@@ -259,7 +271,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const event = engine.startBonusRoute(run, { rng, now: now() });
       if (!event.accepted) return reject(event.reason);
       assignLayoutSeed(run);
-      publish({ run, screen: 'battle', outcome: null, summary: null, aim: initialAim(), lastEvent: null });
+      publish({ run, screen: 'battle', outcome: null, summary: null, aim: initialAim(), lastEvent: null, bossTransition: null });
       return event;
     },
     openLeaderboard() {

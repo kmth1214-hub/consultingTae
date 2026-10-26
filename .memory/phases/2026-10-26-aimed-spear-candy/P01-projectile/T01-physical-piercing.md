@@ -56,7 +56,7 @@ Task: T01-physical-piercing
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: 3883b99
 
 ## Diagnosis / Validation Results
 - Red: `node --test tests/spear-projectile.test.mjs` 선택 직후 enemies unchanged assertion 실패. 최소 engine 단독 재현에서도 snow HP [4,4,4,4,4]→[0,1,2,4,4].

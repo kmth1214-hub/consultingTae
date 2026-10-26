@@ -30,7 +30,7 @@ test('seeded round layouts stay stable, avoid overlaps and remain playable at de
             assert.equal('hp' in enemy, false);
             assert.equal('alive' in enemy, false);
             assert.equal(enemy.y, 900);
-            assert.equal(enemy.size, enemy.isBoss ? 276 : enemies.length <= 6 ? 92 : 60);
+            assert.equal(enemy.size, enemy.kind === 'chaos-fused-boss' ? 414 : enemy.isBoss ? 276 : enemies.length <= 6 ? 92 : 60);
           }
           for (const [i, prop] of layout.obstacles.entries()) {
             assert.equal(prop.kind, area === 'chaos' ? ['log', 'ice', 'crate'][i % 3]

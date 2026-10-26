@@ -81,7 +81,8 @@
     }
     const roundNumber = round;
     if (area === 'chaos' && roundNumber === 3) {
-      return Object.values(AREA_BOSSES).map(boss => createBoss(boss, area, true));
+      return [{ id: 'chaos-fused-boss', kind: 'chaos-fused-boss', hp: 56, maxHp: 56,
+        isBoss: true, attackCount: 0, normalAttackCount: 0, alive: true }];
     }
     if (roundNumber === MAIN_REGION_ROUND_COUNT && AREA_BOSSES[area]) {
       return [createBoss(AREA_BOSSES[area], area, false)];
@@ -139,6 +140,7 @@
       turnNumber: 0,
       terminal: null,
       enemies: createRoundEnemies(area, round, { rng: config.rng }),
+      chaosBossPhase: area === 'chaos' && round === 3 ? 'fused' : null,
       consumablesBlockedTurns: 0,
       consumablesBlocked: false,
       consumableUsedSinceShot: false,
@@ -259,6 +261,7 @@
     const config=options||{};
     state.ammo=state.maxAmmo;state.zeroRollsThisRound=0;state.enemyTurnIndex=0;state.terminal=null;state.pendingCamp=false;
     state.roundStartedAt=timestamp(config.now);state.enemies=createRoundEnemies(state.area,state.round,{rng:config.rng});
+    state.chaosBossPhase = state.area === 'chaos' && state.round === 3 ? 'fused' : null;
     state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
     state.toppledObstacleIds=[];state.forestLogDebris=[];state.obstacleDebris=[];
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
@@ -359,7 +362,29 @@
     } else if (state.ammo <= 0 || state.playerHp <= 0) {
       state.terminal = 'defeat';
     } else if (enemyResponds) {
-      event.enemyAttack = resolveEnemyTurn(state, rng);
+      const fused = state.enemies.find(enemy => enemy.kind === 'chaos-fused-boss' && enemy.alive && enemy.hp > 0);
+      if (state.area === 'chaos' && state.round === 3 && state.chaosBossPhase === 'fused'
+        && fused && fused.hp <= fused.maxHp / 2) {
+        const fromEnemy = { ...fused };
+        const bosses = Object.values(AREA_BOSSES).map(boss => createBoss(boss, 'chaos', true));
+        const weights = bosses.map(enemy => enemy.hp), total = weights.reduce((sum, hp) => sum + hp, 0);
+        const shares = weights.map((hp, index) => ({ index, exact: fused.hp * hp / total }));
+        for (const share of shares) bosses[share.index].hp = Math.floor(share.exact);
+        const remainder = fused.hp - bosses.reduce((sum, enemy) => sum + enemy.hp, 0);
+        shares.sort((a, b) => (b.exact % 1) - (a.exact % 1) || a.index - b.index);
+        for (let i = 0; i < remainder; i++) bosses[shares[i].index].hp++;
+        bosses.forEach(enemy => { enemy.alive = enemy.hp > 0; });
+        const previousScenery = { toppledObstacleIds: state.toppledObstacleIds.slice(),
+          forestLogDebris: state.forestLogDebris.slice(), obstacleDebris: state.obstacleDebris.slice() };
+        state.enemies = bosses;
+        state.chaosBossPhase = 'split';
+        state.enemyTurnIndex = 0;
+        state.toppledObstacleIds = []; state.forestLogDebris = []; state.obstacleDebris = [];
+        const shock = applyIncomingDamage(state, { enemyId: fused.id, kind: fused.kind,
+          special: null, attemptedSpecial: null, landing: true }, rng, 1, 3);
+        event.bossSplit = { fromEnemy, remainingHp: fused.hp, bosses: bosses.map(enemy => ({ ...enemy })), shock, previousScenery };
+        if (state.playerHp <= 0) state.terminal = 'defeat';
+      } else event.enemyAttack = resolveEnemyTurn(state, rng);
     }
     event.snowAreaCleared = state.snowAreaCleared;
     event.runDefeated = state.terminal === 'defeat';
@@ -386,8 +411,19 @@
     let maxDamage = enemy.isBoss ? 15 : 8;
     if (enemy.isBoss) {
       enemy.attackCount += 1;
-      const boss = Object.values(AREA_BOSSES).find(definition => definition.kind === enemy.kind);
-      if (boss && enemy.attackCount % 3 === 0) special = boss.special;
+      const definitions = Object.values(AREA_BOSSES);
+      if (enemy.kind === 'chaos-fused-boss') {
+        if (enemy.attackCount % 3 === 0) {
+          const boss = definitions[randomInt(sourceRng, 0, 2)];
+          special = boss.special; attackKind = boss.kind;
+        } else {
+          attackKind = definitions[(enemy.normalAttackCount || 0) % 3].kind;
+          enemy.normalAttackCount = (enemy.normalAttackCount || 0) + 1;
+        }
+      } else {
+        const boss = definitions.find(definition => definition.kind === enemy.kind);
+        if (boss && enemy.attackCount % 3 === 0) special = boss.special;
+      }
     }
     if (special === 'boar-charge') { minDamage = 8; maxDamage = 15; }
     const throwing = ['snake', 'dry-ice', 'snowball', 'washing-robot', 'cowardly-snowman', 'oven-robot'].includes(attackKind);

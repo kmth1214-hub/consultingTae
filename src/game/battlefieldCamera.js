@@ -8,6 +8,12 @@ export function getCameraPose({ mode, viewport, layout, focus, attackerId, reduc
     || ![layout.width, layout.groundY, layout.minY].every(Number.isFinite)
     || layout.width <= 0) return null;
   const { width, height } = viewport;
+  if (mode === 'split') {
+    // Fit the 276-unit landing bodies plus the 260-unit launch arc and nameplate.
+    const scale = Math.min(width / layout.width, height * .65 / 680);
+    return { scale, x: (width - layout.width * scale) / 2,
+      y: height * .80 - layout.groundY * scale };
+  }
   const bosses = layout.enemies?.filter(enemy => enemy.isBoss) || [];
   const overview = () => {
     const scale = Math.min(width / layout.width, bosses.length

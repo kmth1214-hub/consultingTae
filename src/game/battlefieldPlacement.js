@@ -63,17 +63,17 @@ export function isPlayableBattlefield(layout, enemies) {
 }
 
 /** All attempts derive from one round seed, so rerenders cannot shuffle the battlefield. */
-export function buildPlayableBattlefield({ area, round, enemies, seed = 0 } = {}) {
+export function buildPlayableBattlefield({ area, round, enemies, seed = 0, encounterPhase = null } = {}) {
   if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) {
     throw new TypeError('Invalid battlefield seed');
   }
   for (let attempt = 0; attempt < 32; attempt++) {
     const candidateSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
-    const layout = buildBattlefield({ area, round, enemies, seed: candidateSeed });
+    const layout = buildBattlefield({ area, round, enemies, seed: candidateSeed, encounterPhase });
     if (isPlayableBattlefield(layout, enemies)) return layout;
   }
   // A deliberately placed two-stack layout is still verified before use.
-  const fallback = buildBattlefield({ area, round, enemies, seed: 0 });
+  const fallback = buildBattlefield({ area, round, enemies, seed: 0, encounterPhase });
   if (isPlayableBattlefield(fallback, enemies)) return fallback;
   throw new Error('Could not place a playable battlefield');
 }
