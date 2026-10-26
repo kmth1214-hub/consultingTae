@@ -150,7 +150,7 @@
       fireballArmed: false,
       nextAttackDamageMultiplier: null,
       pendingAimInversion: false,
-      toppledObstacleIds: [], forestLogDebris: []
+      toppledObstacleIds: [], forestLogDebris: [], obstacleDebris: []
     };
     refillWeaponQueue(state,config.rng);
     return state;
@@ -253,7 +253,7 @@
     state.ammo=state.maxAmmo;state.zeroRollsThisRound=0;state.enemyTurnIndex=0;state.terminal=null;state.pendingCamp=false;
     state.roundStartedAt=timestamp(config.now);state.enemies=createRoundEnemies(state.area,state.round,{rng:config.rng});
     state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
-    state.toppledObstacleIds=[];state.forestLogDebris=[];
+    state.toppledObstacleIds=[];state.forestLogDebris=[];state.obstacleDebris=[];
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
     state.consumableUsedSinceShot=false;
     state.rewardChoices=null;state.selectedRewards={weapon:null,consumable:null};
@@ -564,6 +564,10 @@
             (state.forestLogDebris || (state.forestLogDebris = [])).push({ obstacleId: contact.obstacleId, ...pose });
           }
         } else {
+          const pose = contact.obstacleEndPose;
+          if (pose && [pose.x, pose.y, pose.angle].every(Number.isFinite)) {
+            (state.obstacleDebris || (state.obstacleDebris = [])).push({ obstacleId: contact.obstacleId, ...pose });
+          }
           const effect = applyObstacle(contact);
           if (effect) { obstacleEffects.push({ ...effect, obstacleId: contact.obstacleId }); hits.push(...effect.hits); }
         }

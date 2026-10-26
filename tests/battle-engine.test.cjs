@@ -187,6 +187,32 @@ test('chained topples resolve once in path order before a direct hit and refresh
   assert.deepEqual(state.forestLogDebris, []);
 });
 
+test('each new City chain prop bursts once, retains its pose, and Snow guards refresh without stacking', () => {
+  for (const area of ['city', 'snow']) {
+    const state = engine.createRunState({ area, round: 1, rng: () => .5 });
+    state.enemies.forEach(e => { e.hp = e.maxHp = 20; });
+    const kind = area === 'city' ? 'crate' : 'ice';
+    const contacts = ['a', 'b', 'b'].map((id, i) => ({ obstacleId: id, obstacleKind: kind,
+      time: .2 + i * .2, obstacleTargetIds: [], obstacleEndPose: { x: 900 + i * 150, y: 860, angle: 1.57 } }));
+    const options = { damage: 0, hitIds: [], rng: () => .5, shotMeta: { contacts, directHitTime: .3 } };
+    const event = engine.resolveProjectile(state, options);
+    assert.equal(event.obstacleEffects.length, 2);
+    assert.deepEqual(state.obstacleDebris.map(p => p.obstacleId), ['a', 'b']);
+    assert.deepEqual(state.toppledObstacleIds, ['a', 'b']);
+    if (area === 'city') {
+      assert.ok(state.enemies.every(e => e.hp === 16));
+      assert.equal(state.score, state.enemies.length * 4);
+    } else {
+      assert.equal(event.enemyAttack.damageReduction, .5);
+      assert.ok(state.enemies.every(e => e.hp === 20));
+    }
+    const score = state.score;
+    assert.deepEqual(engine.resolveProjectile(state, options).obstacleEffects, []);
+    assert.equal(state.score, score);
+    assert.equal(state.obstacleDebris.length, 2);
+  }
+});
+
 test('Forest misses cannot use nearest targets, and physical hits after a killing candy never retarget', () => {
   const state = engine.createRunState({ area: 'forest', round: 2, rng: () => 0 });
   const [first, second] = state.enemies;

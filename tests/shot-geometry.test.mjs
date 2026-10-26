@@ -13,6 +13,8 @@ const box = (id, x, y, w, h) => ({ id, polygon: [{ x, y }, { x: x + w, y },
   { x: x + w, y: y + h }, { x, y: y + h }] });
 const circle = (id, p, radius = 10) => ({ id, collider: { id, x: p.x, y: p.y, radius } });
 const living = ids => ids.map(id => ({ id, alive: true, hp: 4 }));
+const physicalStack = (id, x, kind = 'log') => ({ ...box(id, x, 744, 80, 156),
+  kind, x, y: 744, width: 80, height: 156 });
 function line(a, b) {
   const length = Math.hypot(b.x - a.x, b.y - a.y);
   return { length, samples: [{ ...a, time: 0, distance: 0 }, { ...b, time: 1, distance: length }] };
@@ -177,6 +179,60 @@ test('a fast candy topples two distinct stacks then directly hits an enemy', () 
   const noFirst = planShot({ layout, pull: pullAt(0, 1), enemies: living(['target']),
     toppledObstacleIds: ['first'] });
   assert.ok(noFirst.contacts.every(contact => contact.obstacleId !== 'first'));
+});
+
+test('a grounded candy can start a three-stack chain after its own motion ends, with physical Forest damage only', () => {
+  const layout = { ...empty(), obstacles: [physicalStack('a', 600), physicalStack('b', 745), physicalStack('c', 890)],
+    enemies: [circle('target', { x: 1100, y: 850 }, 38)] };
+  const options = { layout, pull: pullAt(-12.5, .85), enemies: living(['target']) };
+  const before = structuredClone(options), shot = planShot(options);
+  assert.deepEqual(shot.contacts.map(c => [c.obstacleId, c.trigger, c.sourceObstacleId, c.chainDepth]),
+    [['a', 'candy', null, 0], ['b', 'obstacle', 'a', 1], ['c', 'obstacle', 'b', 2]]);
+  assert.deepEqual(shot.hitIds, []);
+  assert.ok(shot.contacts[1].time > shot.directHitTime);
+  assert.ok(shot.contacts[2].time > shot.contacts[1].time);
+  assert.equal(shot.contacts[2].distance, shot.impactDistance);
+  assert.deepEqual(shot.contacts.map(c => c.logHit?.id ?? null), [null, null, 'target']);
+  assert.ok(shot.simulationSeconds > shot.contacts[2].time);
+  const state = BattleEngine.createRunState({ rng: () => .5 });
+  state.enemies = [{ id: 'target', kind: 'snake', hp: 20, maxHp: 20, alive: true, attackCount: 0 }];
+  const event = BattleEngine.resolveProjectile(state, { damage: 0, hitIds: [], rng: () => .5,
+    shotMeta: { contacts: shot.contacts, directHitTime: shot.directHitTime } });
+  assert.deepEqual(event.hits.map(h => [h.id, h.damage]), [['target', 3]]);
+  assert.equal(state.score, 3);
+  assert.equal(state.ammo, 8);
+  assert.deepEqual(state.toppledObstacleIds, ['a', 'b', 'c']);
+  assert.deepEqual(options, before);
+  assert.deepEqual(planShot(options), shot, 'planning is deterministic and consumes no randomness');
+});
+
+test('chains stop across empty gaps and spent props, and reverse impulses propagate to the left', () => {
+  const layout = { ...empty(), obstacles: [physicalStack('a', 600), physicalStack('b', 745), physicalStack('c', 2000)] };
+  const args = { layout, pull: pullAt(-12.5, .85), enemies: [] };
+  assert.deepEqual(planShot(args).contacts.map(c => c.obstacleId), ['a', 'b']);
+  assert.deepEqual(planShot({ ...args, toppledObstacleIds: ['b'] }).contacts.map(c => c.obstacleId), ['a']);
+  const reverse = { ...empty(), launcher: { ...empty().launcher, x: 1200 },
+    obstacles: [physicalStack('a', 1000), physicalStack('b', 855), physicalStack('c', 710)] };
+  const shot = planShot({ layout: reverse, pull: pullAt(192.5, .85), enemies: [] });
+  assert.equal(shot.reverse, true);
+  assert.deepEqual(shot.contacts.map(c => c.chainDepth), [0, 1, 2]);
+  assert.ok(shot.contacts.every(c => c.direction === -1));
+});
+
+test('direct candy and moving stacks compete chronologically without duplicate activation for every material', () => {
+  for (const [area, kind] of [['forest', 'log'], ['snow', 'ice'], ['city', 'crate'], ['chaos', 'crate']]) {
+    const layout = { ...empty(), area, obstacles: [physicalStack('a', 600, kind), physicalStack('b', 745, kind), physicalStack('c', 890, kind)] };
+    for (const angle of [-12.5, 0, 10]) {
+      const shot = planShot({ layout, pull: pullAt(angle, .85), enemies: [] });
+      assert.equal(new Set(shot.contacts.map(c => c.obstacleId)).size, shot.contacts.length);
+      assert.ok(shot.contacts.every((c, i) => c.obstacleMotion && (!i || c.time >= shot.contacts[i - 1].time)));
+      for (const c of shot.contacts.filter(c => c.trigger === 'obstacle')) {
+        const parent = shot.contacts.find(p => p.obstacleId === c.sourceObstacleId);
+        assert.ok(parent.time < c.time);
+        assert.ok(parent.obstacleMotion.obstacleHits.some(h => h.id === c.obstacleId));
+      }
+    }
+  }
 });
 
 test('Forest contacts attach the physical log result and extend playback until its settlement', () => {

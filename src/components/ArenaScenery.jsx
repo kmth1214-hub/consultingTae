@@ -66,10 +66,12 @@ function Debris({ kind }) {
 }
 
 const ArenaScenery = forwardRef(function ArenaScenery({ layout, area = layout.area,
-  toppledObstacleIds = [], visualContacts = [], flight, forestLogDebris = [] }, ref) {
+  toppledObstacleIds = [], visualContacts = [], flight, forestLogDebris = [], obstacleDebris = [] }, ref) {
   const nodes = useRef(new Map()), clock = useRef(0);
-  const motions = new Map((flight?.contacts || []).filter(c => c.logMotion).map(c => [c.obstacleId, c.logMotion]));
-  const debris = new Map(forestLogDebris.map(pose => [pose.obstacleId, pose]));
+  const contacts = new Map((flight?.contacts || []).map(c => [c.obstacleId, c]));
+  const motions = new Map((flight?.contacts || []).filter(c => c.obstacleMotion || c.logMotion)
+    .map(c => [c.obstacleId, c.obstacleMotion || c.logMotion]));
+  const debris = new Map([...forestLogDebris, ...obstacleDebris].map(pose => [pose.obstacleId, pose]));
   const advance = time => {
     clock.current = time;
     let focus = null;
@@ -93,13 +95,15 @@ const ArenaScenery = forwardRef(function ArenaScenery({ layout, area = layout.ar
     {layout.obstacles.map(prop => {
       const motion = motions.get(prop.id), finalPose = debris.get(prop.id);
       if (motion || finalPose) {
-        const pose = finalPose || motion.samples[0];
+        const pose = finalPose || motion.samples[0], contact = contacts.get(prop.id);
         return <g key={prop.id} ref={node => node ? nodes.current.set(prop.id, node) : nodes.current.delete(prop.id)}
           data-obstacle-id={prop.id} data-obstacle-kind={prop.kind} data-stack-state={finalPose ? 'toppled' : 'standing'}
           data-motion-phase={finalPose ? 'settled' : 'standing'} className="stack stack--physical"
+          data-contact-trigger={contact?.trigger} data-chain-depth={contact?.chainDepth}
+          data-contact-source={contact?.sourceObstacleId || undefined}
           transform={`translate(${pose.x} ${pose.y}) rotate(${pose.angle * 180 / Math.PI})`}>
           <g transform={`translate(${-prop.width / 2} ${-prop.height / 2}) scale(${prop.width / 80} ${prop.height / 160})`}>
-            <g className="stack-body"><LogStack /></g>
+            <g className="stack-body"><StackBody kind={prop.kind} chaos={area === 'chaos'} /></g>
           </g>
         </g>;
       }

@@ -378,6 +378,31 @@ test('Forest physical contact summaries require valid times and targets before s
   assert.deepEqual(session.getSnapshot().run.forestLogDebris[0], { obstacleId: 'log', ...contact.logEndPose });
 });
 
+test('a physical chain after candy settlement is accepted, but orphan/duplicate/invalid transfers cannot spend ammo', () => {
+  const session = start({ rng: () => .5 });
+  const target = session.getSnapshot().run.enemies[0].id;
+  const a = { obstacleId: 'a', obstacleKind: 'log', point: { x: 600, y: 850 },
+    time: .2, distance: 400, rolling: false, obstacleTargetIds: [target], trigger: 'candy',
+    sourceObstacleId: null, chainDepth: 0, direction: 1,
+    logHit: null, logEndPose: { x: 700, y: 860, angle: 1.57 } };
+  const b = { ...a, obstacleId: 'b', time: .6, distance: 450, trigger: 'obstacle', sourceObstacleId: 'a', chainDepth: 1,
+    logHit: { id: target, time: .8 }, logEndPose: { x: 950, y: 860, angle: 1.57 } };
+  const meta = { impactKind: 'ground', obstacleId: 'a', obstacleKind: 'log', obstacleTargetIds: [target],
+    reverse: false, rolling: true, contacts: [a, b], directHitTime: .3 };
+  for (const patch of [{ sourceObstacleId: 'missing' }, { chainDepth: 2 }, { trigger: 'bogus' },
+    { direction: NaN }, { obstacleId: 'a' }, { obstacleEndPose: { x: NaN, y: 860, angle: 0 } }]) {
+    const before = structuredClone(session.getSnapshot().run);
+    assert.equal(session.actions.fireShot({ shotMeta: { ...meta, contacts: [a, { ...b, ...patch }] } }).accepted, false);
+    assert.deepEqual(session.getSnapshot().run, before);
+  }
+  assert.equal(session.actions.fireShot({ shotMeta: meta, reviewResult: true }).accepted, true);
+  const state = session.getSnapshot();
+  assert.equal(state.run.enemies[0].hp, 1);
+  assert.equal(state.run.ammo, 8);
+  assert.deepEqual(state.run.toppledObstacleIds, ['a', 'b']);
+  assert.ok(state.shotReview);
+});
+
 test('enemy response locks combat, advances monotonically and ignores stale/duplicate animation callbacks', () => {
   const session = start({ rng: () => .5 });
   const { actions } = session;

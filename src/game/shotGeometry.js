@@ -1,5 +1,5 @@
 import { BATTLEFIELD, getDragDraw } from './battlefieldModel.js';
-import { simulateForestLog } from './forestLogPhysics.js';
+import { simulateObstacleMotion } from './forestLogPhysics.js';
 
 const EPS = 1e-6;
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -294,8 +294,37 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
   let rollDistance = 0, rollStartDistance = null;
   let elapsed = 0, traveled = 0;
   let samples = [{ ...start, time: 0 }];
-  const contacts = [], ignored = new Set();
+  const contacts = [], ignored = new Set(), pending = [];
   let firstContactDistance = null, terminal = 'timeout', targetId = null;
+
+  const activate = (obstacle, hitPoint, impactVelocity, time, isRolling, source = null) => {
+    if (ignored.has(obstacle.id)) return;
+    ignored.add(obstacle.id);
+    const forestLog = layout.area === 'forest' && obstacle.kind === 'log';
+    const motion = simulateObstacleMotion({ obstacle, point: hitPoint, velocity: impactVelocity,
+      startTime: time, layout, enemies: forestLog ? living : [],
+      obstacles: layout.obstacles.filter(item => !ignored.has(item.id)), transfer: Boolean(source) });
+    const contact = { obstacleId: obstacle.id, obstacleKind: obstacle.kind,
+      point: { x: hitPoint.x, y: hitPoint.y }, time, rolling: isRolling,
+      trigger: source ? 'obstacle' : 'candy', sourceObstacleId: source?.obstacleId ?? null,
+      chainDepth: source ? source.chainDepth + 1 : 0, direction: Math.sign(impactVelocity.x) || 1,
+      obstacleTargetIds: [...living].sort((a, b) => distance(hitPoint, a.collider)
+        - distance(hitPoint, b.collider)).map(item => item.id),
+      ...(motion ? { obstacleMotion: motion, obstacleEndPose: motion.endPose,
+        ...(forestLog ? { logMotion: motion, logHit: motion.hit, logEndPose: motion.endPose } : {}) } : {}) };
+    contacts.push(contact);
+    for (const hit of motion?.obstacleHits || []) pending.push({ ...hit, source: contact });
+  };
+  const advanceChains = until => {
+    pending.sort((a, b) => a.time - b.time);
+    while (pending.length && pending[0].time <= until + EPS) {
+      const hit = pending.shift();
+      if (ignored.has(hit.id)) continue;
+      const obstacle = layout.obstacles.find(item => item.id === hit.id);
+      activate(obstacle, hit.point, hit.velocity, Math.max(hit.time, hit.source.time + EPS), false, hit.source);
+      pending.sort((a, b) => a.time - b.time);
+    }
+  };
 
   const appendPrefix = (segment, endDistance) => {
     const prefix = [...segment.samples.filter(p => p.distance < endDistance - EPS),
@@ -321,12 +350,20 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
       segment = extended.path;
       if (extended.rollDistance > 0 && !rolling) localRollStart = extended.rollStartDistance;
     }
-    const remaining = layout.obstacles.filter(item => !ignored.has(item.id));
-    const barrier = findObstacleContact(segment, remaining, layout.candyRadius);
     const enemyHits = living.map(enemy => ({ id: enemy.id,
       distance: circleContact(segment, enemy.collider, layout.candyRadius) }))
       .filter(hit => hit.distance !== null).sort((a, b) => a.distance - b.distance);
     const enemy = enemyHits[0];
+    let remaining, barrier;
+    // A neighbouring stack can fall before the candy reaches it. Recompute only
+    // that collision, so the candy never loses energy against an empty location.
+    for (;;) {
+      remaining = layout.obstacles.filter(item => !ignored.has(item.id));
+      barrier = findObstacleContact(segment, remaining, layout.candyRadius);
+      const nextDistance = Math.min(barrier?.distance ?? segment.length, enemy?.distance ?? segment.length);
+      advanceChains(elapsed + sampleUnchecked(segment, nextDistance).time);
+      if (!barrier || !ignored.has(barrier.id)) break;
+    }
     const obstacleFirst = barrier && (!enemy || barrier.distance <= enemy.distance + EPS);
     const endDistance = obstacleFirst ? barrier.distance : enemy ? enemy.distance : segment.length;
     const hitPoint = sampleUnchecked(segment, endDistance);
@@ -342,21 +379,11 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
     if (obstacleFirst) {
       const obstacle = remaining.find(item => item.id === barrier.id);
       if (firstContactDistance === null) firstContactDistance = traveled;
-      const obstacleTargetIds = [...living]
-        .sort((a, b) => distance(hitPoint, a.collider) - distance(hitPoint, b.collider))
-        .map(item => item.id);
       const impactVelocity = isRolling ? {
         x: Math.sign(velocity.x) * Math.sqrt(Math.max(0, velocity.x ** 2
           - 2 * BATTLEFIELD.groundRollDeceleration * (endDistance - localRollStart))), y: 0 }
         : { x: velocity.x, y: velocity.y + BATTLEFIELD.gravity * hitPoint.time };
-      const logMotion = layout.area === 'forest' && obstacle.kind === 'log'
-        ? simulateForestLog({ obstacle, point: hitPoint, velocity: impactVelocity,
-          startTime: elapsed, layout, enemies: living }) : null;
-      contacts.push({ obstacleId: obstacle.id, obstacleKind: obstacle.kind,
-        point: { x: hitPoint.x, y: hitPoint.y }, distance: traveled, time: elapsed,
-        rolling: isRolling, obstacleTargetIds, ...(logMotion ? {
-          logMotion, logHit: logMotion.hit, logEndPose: logMotion.endPose } : {}) });
-      ignored.add(obstacle.id);
+      activate(obstacle, hitPoint, impactVelocity, elapsed, isRolling);
       const speed = Math.hypot(impactVelocity.x, impactVelocity.y);
       if (isRolling) {
         rolling = true;
@@ -377,9 +404,12 @@ function planStackedShot({ layout, start, direction, powerRatio, living }) {
   }
   const path = makePath('ballistic', samples, terminal);
   path.rollStartDistance = rollStartDistance;
+  advanceChains(Infinity);
+  contacts.sort((a, b) => a.time - b.time);
+  for (const contact of contacts) contact.distance = sampleAtTime(path, contact.time).distance;
   const first = contacts[0];
   const simulationSeconds = Math.max(path.durationSeconds, ...contacts.map(c =>
-    c.logMotion ? c.logMotion.startTime + c.logMotion.durationSeconds : 0));
+    c.obstacleMotion ? c.obstacleMotion.startTime + c.obstacleMotion.durationSeconds : 0));
   return { path, hitIds: targetId ? [targetId] : [], selectedTargetId: null,
     impactKind: terminal, impactDistance: path.length,
     obstacleId: first?.obstacleId ?? null, obstacleKind: first?.obstacleKind ?? null,

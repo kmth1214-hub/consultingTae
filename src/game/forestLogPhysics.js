@@ -88,6 +88,8 @@ export function simulateObstacleMotion({ obstacle, point, velocity, startTime = 
   const hx = obstacle.width / 2, hy = obstacle.height / 2;
   const initial = { x: obstacle.x + hx, y: obstacle.y + hy, angle: 0, time: 0, phase: 'airborne' };
   const height = clamp((initial.y - point.y) / hy, -1, 1);
+  if (obstacle.polygon !== undefined && (!Array.isArray(obstacle.polygon)
+    || obstacle.polygon.length < 3 || !obstacle.polygon.every(finitePoint))) return null;
   const local = (obstacle.polygon || [
     { x: obstacle.x, y: obstacle.y }, { x: obstacle.x + obstacle.width, y: obstacle.y },
     { x: obstacle.x + obstacle.width, y: obstacle.y + obstacle.height },

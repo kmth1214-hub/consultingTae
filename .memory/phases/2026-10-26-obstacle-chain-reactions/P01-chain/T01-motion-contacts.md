@@ -1,4 +1,4 @@
-﻿# Task: T01 물체 운동 접촉
+# Task: T01 물체 운동 접촉
 
 ## Status: done
 
@@ -45,4 +45,4 @@ Task: T01-motion-contacts
 - [x] 구현 완료
 - [x] 검증 통과
 - validation: 단위 6/6 및 production build 통과
-
+- commit: 03921dd

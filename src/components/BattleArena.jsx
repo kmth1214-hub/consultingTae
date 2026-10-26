@@ -77,9 +77,10 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     consumablesBlocked: enemyResponse.attack.consumablesBlocked ? false : run.consumablesBlocked } : run;
   function completeFlight(shot) {
     if (activeFlight.current !== shot.id) return;
-    const logEnd = shot.simulationSeconds > shot.directHitTime
-      ? shot.contacts?.filter(contact => contact.logMotion).at(-1)?.logMotion.samples.at(-1) : null;
-    focusRef.current = logEnd || sampleAtDistance(shot.path, shot.impactDistance);
+    const lastMotion = shot.contacts?.map(contact => contact.obstacleMotion || contact.logMotion).filter(Boolean)
+      .sort((a, b) => a.startTime + a.durationSeconds - b.startTime - b.durationSeconds).at(-1);
+    const motionEnd = shot.simulationSeconds > shot.directHitTime ? lastMotion?.samples.at(-1) : null;
+    focusRef.current = motionEnd || sampleAtDistance(shot.path, shot.impactDistance);
     activeFlight.current = null;
     controller.completeLaunch(shot.id, () => {
       setImpact(shot.contacts?.length && shot.impactKind !== 'enemy' ? null
@@ -91,7 +92,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           rolling: shot.rollStartDistance !== null && shot.impactDistance > shot.rollStartDistance });
       onFire({ hitIds: shot.hitIds, selectedTargetId: shot.selectedTargetId, reviewResult: true,
         shotMeta: { impactKind: shot.impactKind, obstacleId: shot.obstacleId, obstacleKind: shot.obstacleKind,
-          contacts: (shot.contacts || []).map(({ logMotion, ...contact }) => contact),
+          contacts: (shot.contacts || []).map(({ logMotion, obstacleMotion, ...contact }) => contact),
           directHitTime: shot.directHitTime ?? shot.path.durationSeconds,
           obstacleTargetIds: shot.obstacleTargetIds || [], rolling: shot.rollStartDistance !== null
             && shot.impactDistance > shot.rollStartDistance, reverse: shot.reverse } });
@@ -104,7 +105,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       if (contact.time > progressTime || triggeredContacts.current.has(contact.obstacleId)) continue;
       triggeredContacts.current.add(contact.obstacleId);
       const before = sampleAtDistance(shot.path, Math.max(0, contact.distance - 4));
-      fresh.push({ ...contact, direction: Math.sign(contact.point.x - before.x) || 1,
+      fresh.push({ ...contact, direction: contact.direction || Math.sign(contact.point.x - before.x) || 1,
         id: `${shot.id}-${contact.obstacleId}` });
     }
     if (fresh.length) setVisualContacts(current => [...current, ...fresh]);
@@ -127,7 +128,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       <div ref={worldRef} className="arena-world" style={{ width: layout.width, height: layout.height }}>
         <BattlefieldBackdrop area={run.area} layout={layout} motionPaused={Boolean(run.terminal)} />
         <ArenaScenery ref={sceneryRef} layout={layout} area={run.area} toppledObstacleIds={run.toppledObstacleIds || []}
-          visualContacts={visualContacts} flight={flight} forestLogDebris={run.forestLogDebris || []} />
+          visualContacts={visualContacts} flight={flight} forestLogDebris={run.forestLogDebris || []}
+          obstacleDebris={run.obstacleDebris || []} />
         <Slingshot aim={state} run={run} launcherRef={launcherRef} layout={layout} />
         <PlayerCookie characterId={run.characterId} placement={layout.player} aimPhase={state.phase}
           launchId={state.launchId} response={activeResponse} playerHp={beforeImpact

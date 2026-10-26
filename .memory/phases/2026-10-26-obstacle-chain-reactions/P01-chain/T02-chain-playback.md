@@ -1,6 +1,6 @@
 # Task: T02 시간순 연쇄와 전투 화면
 
-## Status: pending
+## Status: done
 
 ## Goal
 물체 접촉이 다음 물체의 운동·지역 효과로 이어지고 연쇄 전체가 화면에서 재생된다.
@@ -22,7 +22,7 @@
 - session 신규 메타데이터가 있으면 trigger/부모 선행/depth/유한 direction/endPose를 검증하고 과거 payload도 허용한다. `directHitTime>=contact.time`은 candy에만 적용(연쇄는 사탕 종료 후 가능).
 - 엔진 기존 활성화→물리 NPC타격→사탕타격 타임라인 유지. 중복 id 효과/점수/잔해 추가 금지. 숲 logHit만 피해3, 눈 .5배 갱신(중복 누적 금지), 도시 각 새 물체당 생존 전체1~2, 혼돈 기존 네 후보.
 ### I03. 표시
-- Related Files: `src/components/ArenaScenery.jsx` :: physical branch/advance; `src/components/BattleArena.jsx` :: completeFlight/showFlightContacts/onProgress; modify
+- Related Files: `src/components/ArenaScenery.jsx` :: physical branch/advance; `src/components/BattleArena.jsx` :: completeFlight/showFlightContacts/onProgress; `src/components/ProjectileFlight.jsx` :: tick 종료 처리; modify
 - obstacleMotion(과거 logMotion fallback)으로 모든 재질 재생. StackBody(kind,chaos)로 얼음/상자의 그림 유지. 두 debris 배열에서 최종 자세 복원.
 - source/depth data 속성, 방향은 contact.direction 우선. 샘플 대용량 배열은 전투 payload에서 제거.
 - 마지막 운동 물체를 추적하고 전체 종료 뒤 기존2초 확인 유지. frost/burst는 실제 contact.time에 맞춰 활성화.
@@ -32,8 +32,8 @@
 - support installGame과 검증한 seed/각도/power를 사용. 좁은 타이밍 검사는 page.clock을 pauseAt으로 고정.
 
 ## Acceptance Criteria
-- [ ] 실제 물체 간 접촉으로 후속 물체가 쓰러지는 모습이 재생된다.
-- [ ] 원거리/중복 반응 없이 지역 효과와 기존 발사 흐름을 유지한다.
+- [x] 실제 물체 간 접촉으로 후속 물체가 쓰러지는 모습이 재생된다.
+- [x] 원거리/중복 반응 없이 지역 효과와 기존 발사 흐름을 유지한다.
 
 ## Validation
 - `npm.cmd test`
@@ -55,6 +55,12 @@ Task: T02-chain-playback
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- validation: 단위 137/137, production build 통과. E2E 26개 범위 검증 통과(기존16 + 신규연쇄5 + 굴림/준비5).
+
+## 검증 메모
+- 신규 E2E 관찰 코드가 session의 나중 메타데이터 부착보다 먼저 이벤트를 복사하는 문제를 수정했다. 입력 메타데이터를 직접 관찰한다.
+- 도시 시나리오는 직접 사탕 명중 피해2도 발생하므로 연쇄 범위피해와 직접 피해를 분리해 검증한다. 적 수리 능력은 별도 기존 테스트에 두고 해당 시나리오의 적을 세탁 로봇으로 고정한다.
+- 연쇄가 사탕보다 오래 남는 경우 착지 사탕이 숨겨지던 재생 경계를 함께 수정해 2초 확인 중 정지 사탕을 표시한다.
+- 이미 쓰러진 물체 사이의 재충돌은 이번 범위에서 제외. 추가 발견 사항 없음.

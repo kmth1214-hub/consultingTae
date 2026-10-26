@@ -140,6 +140,16 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
           && Array.isArray(contact.obstacleTargetIds)
           && contact.obstacleTargetIds.every(id => typeof id === 'string')
           && new Set(contact.obstacleTargetIds).size === contact.obstacleTargetIds.length
+          && (contact.trigger === undefined || (
+            [-1, 1].includes(contact.direction) && Number.isInteger(contact.chainDepth)
+            && (contact.trigger === 'candy' ? contact.sourceObstacleId === null && contact.chainDepth === 0
+              : contact.trigger === 'obstacle' && contacts.slice(0, index).some(parent =>
+                parent.obstacleId === contact.sourceObstacleId && parent.time < contact.time
+                && parent.chainDepth + 1 === contact.chainDepth))))
+          && (contact.obstacleEndPose === undefined || (
+            [contact.obstacleEndPose.x, contact.obstacleEndPose.y, contact.obstacleEndPose.angle].every(Number.isFinite)
+            && contact.obstacleEndPose.x >= 0 && contact.obstacleEndPose.x <= 3600
+            && contact.obstacleEndPose.y >= -1200 && contact.obstacleEndPose.y <= 900))
           && (state.run.area !== 'forest' || contact.obstacleKind !== 'log' || (
             [contact.logEndPose?.x, contact.logEndPose?.y, contact.logEndPose?.angle].every(Number.isFinite)
             && contact.logEndPose.x >= 0 && contact.logEndPose.x <= 3600
@@ -147,7 +157,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
             && (contact.logHit === null || (typeof contact.logHit?.id === 'string'
               && state.run.enemies.some(enemy => enemy.id === contact.logHit.id)
               && Number.isFinite(contact.logHit.time) && contact.logHit.time >= contact.time))
-            && Number.isFinite(shotMeta.directHitTime) && shotMeta.directHitTime >= contact.time))
+            && Number.isFinite(shotMeta.directHitTime)
+            && (contact.trigger === 'obstacle' || shotMeta.directHitTime >= contact.time)))
           && (!index || (contact.distance >= contacts[index - 1].distance
             && contact.time >= contacts[index - 1].time)))
         && new Set(contacts.map(contact => contact.obstacleId)).size === contacts.length);

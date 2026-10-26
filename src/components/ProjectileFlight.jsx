@@ -66,6 +66,11 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         done = true;
         candyRef.current.dataset.rolling = 'false';
         candyRef.current.dataset.flightStage = 'settled';
+        if (flight.impactKind === 'ground') {
+          // A chain may outlive the candy; show its resting place during review.
+          candyRef.current.style.visibility = '';
+          if (rollShadowRef.current && Number.isFinite(flight.rollStartDistance)) rollShadowRef.current.style.display = '';
+        }
         if (flight.impactKind !== 'ground') {
           candyRef.current.style.visibility = 'hidden';
           if (rollShadowRef.current) rollShadowRef.current.style.display = 'none';
