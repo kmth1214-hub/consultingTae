@@ -7,6 +7,7 @@ const defaultLayoutRng = () => globalThis.crypto?.getRandomValues
   ? globalThis.crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000
   : Math.random();
 const REASONS = {
+  'item-used': '이번 발사 전에 소모품을 이미 사용했어요. 사탕을 발사하면 다시 사용할 수 있어요.',
   reviewing: '발사 결과를 확인하고 있어요. 잠시 후 다음 행동을 할 수 있어요.',
   responding: '적이 공격하고 있어요. 반격이 끝나면 행동할 수 있어요.',
   empty: '이 소모품을 모두 사용했어요.', blocked: '얼음 숨결 때문에 이번 턴에는 소모품을 쓸 수 없어요.',

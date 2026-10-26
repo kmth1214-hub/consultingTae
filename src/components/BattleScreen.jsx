@@ -16,7 +16,7 @@ function combatMessage(event) {
   const chainMessage = effects.length > 1 ? `연쇄 충돌 ${effects.length}회 · 추가 피해 ${effectDamage}` : obstacleMessage;
   const action = chainMessage ? `${chainMessage}${damage > effectDamage ? ` · 직접 명중 ${damage - effectDamage}` : ''}`
     : (event.key === 'heal' ? `체력 ${event.effect.healed} 회복`
-    : event.key === 'defense' ? '보호막 사용' : event.key === 'fireball' ? '다음 사탕 피해 2배'
+    : event.key === 'defense' ? '보호막 준비 · 다음 발사 후 반격 차단' : event.key === 'fireball' ? '다음 사탕 피해 2배'
       : event.missed ? event.shotMeta?.impactKind === 'obstacle' ? '장애물에 막혔어요'
         : event.shotMeta?.reverse ? '뒤로 날아갔어요' : '빗나갔어요' : `명중 · 피해 ${damage}`);
   const attack = event.enemyAttack;

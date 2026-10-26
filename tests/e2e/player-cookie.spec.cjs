@@ -24,15 +24,15 @@ test('the selected one of five cookies stands as a single correctly loaded playe
   }
 });
 
-test('a real heal item lights the selected cookie while the enemy attack is in flight', async ({ page }) => {
+test('a real heal item lights the selected cookie during safe preparation', async ({ page }) => {
   await installGame(page, { initial: { inventory: { fireball: 0, spear: 0, defense: 0, heal: 1 }, playerHp: 70 } });
   await start(page);
   await page.keyboard.press('4');
-  await expect(page.getByTestId('enemy-attack')).toBeVisible();
+  await expect(page.getByTestId('enemy-attack')).toHaveCount(0);
   await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'healing');
   await expect(page.getByTestId('player-cookie')).toContainText('✦ ＋ ✦');
   await expect(page.locator('.launcher')).not.toHaveClass(/is-healing|is-hit|has-shield/);
   await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-healing-1440.jpg' });
   await phase(page, 'idle');
-  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', /hurt|idle/);
+  await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'idle');
 });

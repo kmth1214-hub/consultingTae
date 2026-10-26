@@ -49,6 +49,7 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .consumable-hud button { padding: 4px 7px; border: 1px solid #ddd3bd; border-radius: 7px; background: #fffdf7; font-size: .64rem; }
 .consumable-hud button:disabled { opacity: .4; }
 .item-lockout { font-size: .65rem; color: #537d99; padding: 6px 0; }
+.preparation-caption { display: none; }
 .candy-hud { right: 20px; width: 270px; padding: 15px 18px; max-height: calc(100% - 40px); overflow-y: auto; overscroll-behavior: contain; }
 .candy-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .candy-card-top .candy-symbol { width: 30px; height: 30px; font-size: 1.25rem; }
@@ -236,6 +237,8 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .hud-surface { top: 7px; border-radius: 9px; }
   .consumable-hud { left: 7px; width: 143px; padding: 7px; }
   .consumable-hud caption span { display: none; }
+  .consumable-hud .preparation-caption { display: inline; float: right; padding-top: 1px; color: #537d99; font-size: .56rem; font-weight: 500; }
+  .consumable-hud .item-lockout { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
   .consumable-hud tbody th { gap: 3px; }
   .consumable-hud img { width: 18px; height: 18px; }
   .consumable-hud button { font-size: 9px; padding: 3px 4px; }

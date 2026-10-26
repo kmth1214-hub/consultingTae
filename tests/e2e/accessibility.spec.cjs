@@ -35,7 +35,8 @@ for (const viewport of [{ width: 2007, height: 1037 }, { width: 2560, height: 10
     }
     await page.screenshot({ path: `tmp/react-t08-wide-${viewport.width}.jpg` });
     await page.keyboard.press('3');
-    await expect(page.locator('.enemy-warning')).toBeVisible();
+    await dragPull(page, { powerRatio: .08, angleDeg: -5 }); await page.mouse.up();
+    await expect(page.locator('.enemy-warning')).toBeVisible({ timeout: 10000 });
     const warning = await page.locator('.enemy-warning').boundingBox();
     expect(warning.y).toBeGreaterThan(bounds.y);
     expect(warning.y + warning.height).toBeLessThan(bounds.y + bounds.height);

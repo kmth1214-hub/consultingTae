@@ -227,24 +227,80 @@ test('boss special attack replaces the normal attack on its third attack', () =>
   assert.equal(event.damage, 8);
 });
 
-test('Heal spends one item, restores 25 up to max HP, and resolves one enemy attack', () => {
+test('Heal spends one item and restores 25 without advancing combat or inviting a counterattack', () => {
   const state = engine.createRunState({ playerHp: 60, inventory: { heal: 1 }, rng: () => 0.5 });
   const event = engine.useConsumable(state, 'heal', { rng: () => 0.5 });
   assert.equal(event.accepted, true);
   assert.equal(event.effect.healed, 25);
-  assert.equal(state.playerHp, 80); // healing to 85, then a 5-point enemy attack
+  assert.equal(state.playerHp, 85);
   assert.equal(engine.getConsumableCount(state, 'heal'), 0);
-  assert.equal(state.turnNumber, 2); // one player action and one enemy attack
+  assert.equal(state.turnNumber, 0);
+  assert.equal(event.enemyAttack, null);
+  assert.equal(state.consumableUsedSinceShot, true);
 });
 
-test('Defense consumes its turn and cancels a boss special completely', () => {
+test('Defense stays armed until the next fired candy triggers the boss special', () => {
   const state = engine.createRunState({ area: 'forest', round: 3, inventory: { defense: 1 }, rng: () => 0.99 });
   state.enemies[0].attackCount = 2;
   const event = engine.useConsumable(state, 'defense', { rng: () => 0.99 });
-  assert.equal(event.enemyAttack.blocked, true);
-  assert.equal(event.enemyAttack.special, null);
+  assert.equal(event.enemyAttack, null);
+  assert.equal(state.defenseArmed, true);
+  assert.equal(state.enemies[0].attackCount, 2);
+  const shot = engine.resolveProjectile(state, { damage: 0, hitIds: [], rng: () => .99 });
+  assert.equal(shot.enemyAttack.blocked, true);
+  assert.equal(shot.enemyAttack.special, null);
+  assert.equal(state.defenseArmed, false);
   assert.equal(state.playerHp, 100);
   assert.equal(state.enemies[0].attackCount, 3);
+});
+
+test('all consumables preserve the ammo queue, enemy order, boss count and turn; only Spear draws damage RNG', () => {
+  for (const key of ['heal', 'defense', 'fireball', 'spear']) {
+    const state = engine.createRunState({ area: 'forest', round: 3, playerHp: 50,
+      inventory: { heal: 2, defense: 2, fireball: 2, spear: 2 }, rng: () => .5 });
+    const queue = state.weaponQueue.slice(), current = state.currentWeaponId;
+    let draws = 0;
+    const result = engine.useConsumable(state, key, { rng: () => { draws++; return .5; } });
+    assert.equal(result.accepted, true);
+    assert.equal(result.enemyAttack, null);
+    assert.equal(state.playerHp, key === 'heal' ? 75 : 50);
+    assert.equal(state.turnNumber, 0);
+    assert.equal(state.ammo, 9);
+    assert.equal(state.enemyTurnIndex, 0);
+    assert.equal(state.enemies[0].attackCount, 0);
+    assert.deepEqual(state.weaponQueue, queue);
+    assert.equal(state.currentWeaponId, current);
+    assert.equal(state.effectCounters.consumablesUsed, 1);
+    assert.equal(draws, key === 'spear' ? 1 : 0);
+  }
+});
+
+test('one preparation item is shared by all kinds until a successful shot, and rejected uses mutate nothing', () => {
+  const state = engine.createRunState({ inventory: { heal: 2, defense: 2 }, rng: () => .5 });
+  engine.useConsumable(state, 'heal', { rng: () => .5 });
+  const before = structuredClone(state);
+  for (const key of ['heal', 'defense']) {
+    assert.equal(engine.useConsumable(state, key, { rng: () => { throw new Error('unexpected RNG'); } }).reason, 'item-used');
+    assert.deepEqual(state, before);
+  }
+  assert.equal(engine.useConsumable(state, 'defense', { isAiming: true }).reason, 'aiming');
+  assert.deepEqual(state, before);
+  engine.resolveProjectile(state, { hitIds: [], damage: 0, rng: () => .5 });
+  assert.equal(state.consumableUsedSinceShot, false);
+  assert.equal(engine.useConsumable(state, 'defense', { rng: () => .5 }).accepted, true);
+});
+
+test('a Spear clear grants the next round a fresh preparation slot without retaliation', () => {
+  const state = engine.createRunState({ area: 'chaos', round: 1, inventory: { spear: 2 }, rng: () => .5 });
+  state.enemies = state.enemies.slice(0, 1);
+  state.enemies[0].hp = 1;
+  const event = engine.useConsumable(state, 'spear', { rng: () => .5 });
+  assert.equal(event.roundCleared, true);
+  assert.equal(event.enemyAttack, null);
+  assert.equal(state.consumableUsedSinceShot, true);
+  engine.advanceRound(state, { rng: () => .5 });
+  assert.equal(state.round, 2);
+  assert.equal(state.consumableUsedSinceShot, false);
 });
 
 test('Fireball doubles only the next permanent projectile and preserves a zero roll', () => {

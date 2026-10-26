@@ -131,7 +131,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
         <Slingshot aim={state} run={run} launcherRef={launcherRef} layout={layout} />
         <PlayerCookie characterId={run.characterId} placement={layout.player} aimPhase={state.phase}
           launchId={state.launchId} response={activeResponse} playerHp={beforeImpact
-            ? enemyResponse.attack.playerHpBefore : run.playerHp} defenseArmed={run.defenseArmed} lastEvent={lastEvent} />
+            ? enemyResponse.attack.playerHpBefore : run.playerHp} defenseArmed={run.defenseArmed
+              || Boolean(shotReview && enemyResponse?.attack.blockedBy === 'defense')} lastEvent={lastEvent} />
         <svg className="projectile-layer" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
           <TrajectoryPreview path={solution?.path || flight?.path} previewD={solution?.previewD}
             visible={state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />

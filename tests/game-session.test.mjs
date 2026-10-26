@@ -382,6 +382,9 @@ test('enemy response locks combat, advances monotonically and ignores stale/dupl
   const session = start({ rng: () => .5 });
   const { actions } = session;
   actions.useConsumable('defense');
+  assert.equal(session.getSnapshot().enemyResponse, null);
+  assert.equal(session.getSnapshot().run.defenseArmed, true);
+  actions.fireShot();
   let state = session.getSnapshot();
   const { id, attack } = state.enemyResponse;
   assert.equal(attack.blockedBy, 'defense');

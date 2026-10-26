@@ -140,6 +140,7 @@
       enemies: createRoundEnemies(area, round, { rng: config.rng }),
       consumablesBlockedTurns: 0,
       consumablesBlocked: false,
+      consumableUsedSinceShot: false,
       inventory: createInventory(config.inventory, rng),
       weapons: initialWeapons.map((weapon,index)=>Object.assign({instanceId:'weapon-'+(index+1),ammoType:'magic-candy'},weapon)),
       weaponQueue: [], currentWeaponId:null, rewardChoices:null, selectedRewards:{weapon:null,consumable:null},
@@ -254,6 +255,7 @@
     state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
     state.toppledObstacleIds=[];state.forestLogDebris=[];
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
+    state.consumableUsedSinceShot=false;
     state.rewardChoices=null;state.selectedRewards={weapon:null,consumable:null};
     if(AREAS.indexOf(state.area)>AREAS.indexOf(state.furthestArea))state.furthestArea=state.area;
     refillWeaponQueue(state,config.rng);
@@ -340,14 +342,14 @@
     state.terminal = state.area === 'chaos' && state.round === 3 ? 'bonus-clear' : 'round-clear';
   }
 
-  function finishAction(state, event, rng) {
+  function finishAction(state, event, rng, enemyResponds = true) {
     if (!getLivingEnemies(state).length) {
       markRoundClear(state);
       event.roundCleared = true;
       event.bonusCleared = state.terminal === 'bonus-clear';
     } else if (state.ammo <= 0 || state.playerHp <= 0) {
       state.terminal = 'defeat';
-    } else {
+    } else if (enemyResponds) {
       event.enemyAttack = resolveEnemyTurn(state, rng);
     }
     event.snowAreaCleared = state.snowAreaCleared;
@@ -427,6 +429,7 @@
     }
     const scoreBefore = activeScore(state);
     const permanent = config.source !== 'spear';
+    state.consumableUsedSinceShot = false;
     state.ammo = Math.max(0, state.ammo - 1);
     if(!state.weaponQueue.length)refillWeaponQueue(state,config.rng);
     const usedWeaponId=state.weaponQueue.shift();
@@ -613,10 +616,11 @@
     if (config.isAiming) { event.reason = 'aiming'; return event; }
     if (state.consumablesBlocked || state.consumablesBlockedTurns > 0) { event.reason = 'blocked'; return event; }
     if (getConsumableCount(state, key) <= 0) { event.reason = 'empty'; return event; }
+    if (state.consumableUsedSinceShot) { event.reason = 'item-used'; return event; }
 
     const scoreBefore = activeScore(state);
     state.inventory[key] -= 1;
-    state.turnNumber += 1;
+    state.consumableUsedSinceShot = true;
     state.effectCounters.consumablesUsed++;
     if (hasEffect(state, 'alchemist-candy')) addScore(state, 10);
     event.accepted = true;
@@ -645,9 +649,7 @@
     }
 
     event.scoreDelta = activeScore(state) - scoreBefore;
-    state.consumablesBlocked = false;
-    state.consumablesBlockedTurns = 0;
-    return finishAction(state, event, config.rng);
+    return finishAction(state, event, config.rng, false);
   }
 
   return Object.freeze({

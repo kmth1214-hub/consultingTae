@@ -90,7 +90,9 @@ test('Milk heals at the third collision, caps HP, and keeps counters across area
 test('Defense takes priority over Milk boss protection; Milk cancels the next whole attack once', () => {
   const state = create(['milk-candy', 'milk-candy'], { area: 'city', round: 3, inventory: { defense: 1 } });
   state.enemies[0].attackCount = 2;
-  const defense = engine.useConsumable(state, 'defense', { rng: () => 0 });
+  const prepared = engine.useConsumable(state, 'defense', { rng: () => 0 });
+  assert.equal(prepared.enemyAttack, null);
+  const defense = engine.resolveProjectile(state, { hitIds: [], damage: 0, rng: () => 0 });
   assert.equal(defense.enemyAttack.blockedBy, 'defense');
   assert.equal(state.roundEffects.milkBossBlockUsed, false);
   state.enemies[0].attackCount = 5;
@@ -139,7 +141,7 @@ test('Spear gets Alchemist use points but no permanent collision, Wizard, Milk h
   assert.equal(state.ammo, 9);
   assert.deepEqual(state.effectCounters, { permanentWeaponHits: 2, projectileCollisions: 2, consumablesUsed: 1 });
   assert.equal(state.roundEffects.windHomingUsed, false);
-  assert.equal(state.playerHp, 45);
+  assert.equal(state.playerHp, 50);
 });
 
 test('rejected consumable and missed projectile do not award Alchemist or Adventurer points', () => {
@@ -300,11 +302,12 @@ test('invalid target does not spend the Wind charge and duplicate Wind copies ca
   assert.equal(engine.resolveProjectile(state, { selectedTargetId: target.id, hitIds: [], damage: 1, rng: () => 0 }).missed, true);
 });
 
-test('Fireball waits through Spear and doubles the next permanent shot only', () => {
+test('Fireball rejects a second preparation item and doubles the next permanent shot only', () => {
   const state = create(['adventurer-candy'], { area: 'city', round: 2, inventory: { fireball: 1, spear: 1 } });
   state.enemies.forEach(e => { e.hp = e.maxHp = 20; });
   engine.useConsumable(state, 'fireball', { rng: () => 0 });
-  engine.useConsumable(state, 'spear', { rng: () => 0 });
+  assert.equal(engine.useConsumable(state, 'spear', { rng: () => 0 }).reason, 'item-used');
+  assert.equal(state.inventory.spear, 1);
   assert.equal(state.fireballArmed, true);
   const shot = engine.resolveProjectile(state, { hitIds: [state.enemies[0].id], damage: 3, rng: () => 0 });
   assert.equal(shot.hits[0].damage, 6);

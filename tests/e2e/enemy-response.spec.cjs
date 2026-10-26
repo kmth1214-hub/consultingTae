@@ -1,11 +1,28 @@
-const { test, expect, installGame, start, hp, ammo, phase, arena, snapshot } = require('./support.cjs');
+const { test, expect, installGame, start, hp, ammo, phase, arena, snapshot, dragPull, shoot } = require('./support.cjs');
 
 const inventory = { fireball: 1, spear: 1, defense: 1, heal: 3 };
+
+// Counterattacks now begin only after a real candy and its result review.
+async function launchResponse(page, { paused = false } = {}) {
+  if (paused) {
+    await page.clock.install({ time: new Date('2026-10-26T00:00:00Z') });
+    await page.clock.pauseAt(new Date('2026-10-26T00:00:01Z'));
+  }
+  await dragPull(page, { angleDeg: -5, powerRatio: .08 });
+  await page.mouse.up();
+  if (paused) for (let frame = 0; frame < 300; frame++) {
+    await page.clock.runFor(16);
+    if (await page.getByTestId('enemy-attack').count()) break;
+  }
+  await expect(page.getByTestId('enemy-attack')).toBeVisible({ timeout: 10000 });
+}
 
 test('shield intercepts a visible incoming attack from the actual enemy without losing HP', async ({ page }) => {
   await installGame(page, { initial: { inventory } });
   await start(page);
   await page.getByRole('button', { name: '방어 사용', exact: true }).click();
+  await expect(page.getByTestId('enemy-attack')).toHaveCount(0);
+  await launchResponse(page);
   const trace = await snapshot(page);
   expect(trace.lastEvent.enemyAttack.blockedBy).toBe('defense');
   expect(trace.run.playerHp).toBe(100);
@@ -32,6 +49,7 @@ test('shield intercepts a visible incoming attack from the actual enemy without 
   await expect(attack).toHaveCount(0);
   // A consumed shield must not accidentally protect the following enemy turn.
   await page.keyboard.press('1');
+  await launchResponse(page);
   const second = await snapshot(page);
   await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'impact');
   await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'hurt');
@@ -59,6 +77,7 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
     }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['transform'] });
   });
   await page.keyboard.press('1');
+  await launchResponse(page, { paused: true });
   const before = await snapshot(page);
   const attack = page.getByTestId('enemy-attack');
   const projectile = page.getByTestId('enemy-projectile');
@@ -73,6 +92,7 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
   await page.keyboard.press('3');
   const box = await arena(page).boundingBox();
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.clock.runFor(400);
   await expect(projectile).toBeVisible();
   await expect(attack).toHaveAttribute('data-stage', 'travel');
   await expect(trail).toHaveCSS('visibility', 'visible');
@@ -84,7 +104,9 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
   await expect.poll(() => page.evaluate(() => window.__projectileMotion.changes)).toBeGreaterThan(2);
   const motion = await page.evaluate(() => window.__projectileMotion);
   expect(motion.last).not.toBe(motion.first);
+  await page.clock.runFor(1200);
   await expect(hp(page)).toHaveText('95');
+  await page.clock.runFor(1000);
   await phase(page, 'idle');
   const after = await snapshot(page);
   expect(after.run).toEqual(before.run);
@@ -99,10 +121,12 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
       await start(page);
       for (let turn = 0; turn < 2; turn++) {
         await page.keyboard.press('4');
-        await phase(page, 'idle');
+        await shoot(page, { short: true });
         expect((await snapshot(page)).lastEvent.enemyAttack.attemptedSpecial).toBe(null);
       }
+      const bossStartX = area === 'forest' ? (await page.locator('.monster-body').boundingBox()).x : null;
       await page.keyboard.press(blocked ? '3' : '4');
+      await launchResponse(page);
       const trace = await snapshot(page);
       const event = trace.lastEvent.enemyAttack;
       expect(event.attemptedSpecial).toBe(special);
@@ -121,8 +145,7 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
       if (area === 'forest') {
         const body = page.locator('.monster.is-attacking .monster-body');
         await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'travel');
-        const startX = (await body.boundingBox()).x;
-        await expect.poll(async () => (await body.boundingBox()).x, { intervals: [16] }).toBeLessThan(startX - 40);
+        await expect.poll(async () => (await body.boundingBox()).x, { intervals: [16] }).toBeLessThan(bossStartX - 40);
       }
       await expect(page.getByTestId(blocked ? 'shield-impact' : 'player-impact')).toBeVisible();
       await expect(hp(page)).toHaveText(String(event.playerHpAfter));
@@ -132,7 +155,7 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
       if (special === 'frozen-breath') expect(trace.run.consumablesBlocked).toBe(!blocked);
       if (special === 'oven-overheat') {
         expect(event.ammoLost).toBe(blocked ? 0 : 1);
-        await expect(ammo(page)).toHaveText(blocked ? '9' : '8');
+        await expect(ammo(page)).toHaveText(blocked ? '6' : '5');
       }
     });
   }
@@ -142,6 +165,7 @@ test('a lethal enemy hit is shown before defeat, then retry has no stale respons
   await installGame(page, { initial: { playerHp: 1, inventory } });
   await start(page);
   await page.keyboard.press('1');
+  await launchResponse(page);
   await expect(hp(page)).toHaveText('1');
   await expect(page.getByRole('heading', { name: '다음엔 조금 더 멀리', exact: true })).toHaveCount(0);
   await expect(page.getByTestId('player-impact')).toBeVisible();
@@ -159,6 +183,7 @@ test('Milk first-boss protection uses the same visible interception without spen
   await installGame(page, { initial: { area: 'forest', round: 3, inventory }, allWeapons: true });
   await start(page);
   await page.keyboard.press('4');
+  await launchResponse(page);
   await expect(page.getByTestId('shield-impact')).toContainText('우유 보호막');
   await expect(hp(page)).toHaveText('100');
   let trace = await snapshot(page);
@@ -166,6 +191,7 @@ test('Milk first-boss protection uses the same visible interception without spen
   expect(trace.run.inventory.defense).toBe(1);
   await phase(page, 'idle');
   await page.keyboard.press('4');
+  await launchResponse(page);
   await expect(page.getByTestId('player-impact')).toBeVisible();
   await expect(hp(page)).toHaveText('91');
   trace = await snapshot(page);
@@ -178,11 +204,13 @@ test('reduced-motion narrow screen shows the shield result and hidden-tab settli
   await installGame(page, { initial: { inventory } });
   await start(page);
   await page.keyboard.press('3');
+  await launchResponse(page);
   await expect(page.getByTestId('shield-impact')).toBeVisible();
   await expect(page.locator('.monster.is-attacking .monster-body')).toHaveCSS('animation-name', 'none');
   await page.screenshot({ path: 'tmp/react-t06-shield-narrow.jpg' });
   await phase(page, 'idle');
   await page.keyboard.press('1');
+  await launchResponse(page);
   const before = await snapshot(page);
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true });

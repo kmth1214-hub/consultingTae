@@ -1,28 +1,32 @@
 const { test, expect, installGame, phase, ammo, hp, snapshot, start, grabMap, shoot, selectRewards } = require('./support.cjs');
 const inventory = { fireball: 1, spear: 1, defense: 1, heal: 2 };
 
-test('Heal button and key spend real inventory, restore HP and resolve an enemy turn; empty use changes nothing', async ({ page }) => {
+test('Heal gives its full benefit without retaliation and the next shot reopens preparation; empty use changes nothing', async ({ page }) => {
   await installGame(page, { initial: { playerHp: 40, inventory } });
   await start(page);
   await page.getByRole('button', { name: '회복 사용', exact: true }).click();
-  await expect(hp(page)).toHaveText('60');
+  await expect(hp(page)).toHaveText('65');
   let trace = await snapshot(page);
   expect(trace.run.inventory.heal).toBe(1);
   expect(trace.lastEvent.effect.healed).toBe(25);
-  expect(trace.lastEvent.enemyAttack.damage).toBe(5);
-  expect(trace.run.playerHp).toBe(60);
+  expect(trace.lastEvent.enemyAttack).toBeNull();
+  expect(trace.run.playerHp).toBe(65);
+  expect(trace.run.turnNumber).toBe(0);
+  await expect(page.getByTestId('enemy-attack')).toHaveCount(0);
   await phase(page, 'idle');
+  await shoot(page, { short: true });
+  await expect(hp(page)).toHaveText('60');
   await page.keyboard.press('4');
-  await expect(hp(page)).toHaveText('80');
+  await expect(hp(page)).toHaveText('85');
   trace = await snapshot(page);
   expect(trace.run.inventory.heal).toBe(0);
-  expect(trace.run.turnNumber).toBe(4);
+  expect(trace.run.turnNumber).toBe(2);
   await phase(page, 'idle');
   await expect(page.getByRole('button', { name: '회복 사용', exact: true })).toBeDisabled();
   await page.keyboard.press('4');
   await expect(page.getByText('이 소모품을 모두 사용했어요.', { exact: true })).toBeVisible();
   expect((await snapshot(page)).run).toEqual(trace.run);
-  await expect(ammo(page)).toHaveText('9');
+  await expect(ammo(page)).toHaveText('8');
 });
 
 test('Defense blocks damage, Fireball arms/doubles the next shot, and both counts/visual effects follow the engine', async ({ page }) => {
@@ -31,15 +35,20 @@ test('Defense blocks damage, Fireball arms/doubles the next shot, and both count
   await page.keyboard.press('3');
   await expect(hp(page)).toHaveText('40');
   let trace = await snapshot(page);
-  expect(trace.lastEvent.enemyAttack.blocked).toBe(true);
+  expect(trace.lastEvent.enemyAttack).toBeNull();
+  expect(trace.run.defenseArmed).toBe(true);
   expect(trace.run.inventory.defense).toBe(0);
   await expect(page.getByTestId('player-shield')).toBeVisible();
+  await expect(page.getByRole('button', { name: '불공 사용', exact: true })).toBeDisabled();
+  await shoot(page, { short: true });
+  expect((await snapshot(page)).lastEvent.enemyAttack.blocked).toBe(true);
   await page.getByRole('button', { name: '불공 사용', exact: true }).click();
-  await expect(hp(page)).toHaveText('35');
+  await expect(hp(page)).toHaveText('40');
   trace = await snapshot(page);
   expect(trace.run.fireballArmed).toBe(true);
   expect(trace.run.inventory.fireball).toBe(0);
   await shoot(page);
+  await expect(hp(page)).toHaveText('35');
   trace = await snapshot(page);
   expect(trace.lastEvent.damage).toBe(4);
   expect(trace.run.enemies[0].hp).toBe(16);
