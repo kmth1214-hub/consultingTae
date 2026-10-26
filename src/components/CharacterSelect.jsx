@@ -16,6 +16,7 @@ export default function CharacterSelect({ session }) {
         <span className="card-action">{locked ? '눈 지역 클리어 후 해금' : '이 쿠키로 출발 →'}</span>
       </button>;
     })}</div>
+    {!session.profile.snowAreaCleared && <p className="muted">눈 지역을 클리어하면 우유맛·바람궁수 쿠키와 두 마법사탕이 함께 해금돼요. 해금 전 보상은 기본 3종 사탕에서 나와요.</p>}
     <p className="muted footnote">해금 기록은 현재 브라우저에 저장됩니다. 진행 중인 전투는 새로고침하면 초기화돼요.</p>
   </section>;
 }

@@ -1,23 +1,23 @@
 # Current Context
 
 ## Active Plan
-[2026-10-26-chaos-obstacle-effect-feedback](./plans/2026-10-26-chaos-obstacle-effect-feedback.md)
+[2026-10-26-snow-candy-reward-unlock](./plans/2026-10-26-snow-candy-reward-unlock.md)
 
 ## Active Phase
-[P01-feedback](./phases/2026-10-26-chaos-obstacle-effect-feedback/P01-feedback/phase.md)
+[P01-rewards](./phases/2026-10-26-snow-candy-reward-unlock/P01-rewards/phase.md)
 
 ## Active Task
-[T01-chaos-effects](./phases/2026-10-26-chaos-obstacle-effect-feedback/P01-feedback/T01-chaos-effects.md)
+[T01-reward-unlock](./phases/2026-10-26-snow-candy-reward-unlock/P01-rewards/T01-reward-unlock.md)
 
 ## Status
-Task 커밋 2/14 완료. 나머지 구현·검증은 완료되어 있으며 Task별 커밋 진행 중.
+Task 커밋 3/14 완료. 나머지 구현·검증은 완료되어 있으며 Task별 커밋 진행 중.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
 - 242a740 — [2026-10-26-map-studio-play-mode / T01-studio-play](./phases/2026-10-26-map-studio-play-mode/P01-play/T01-studio-play.md)
+- d4264f4 — [2026-10-26-chaos-obstacle-effect-feedback / T01-chaos-effects](./phases/2026-10-26-chaos-obstacle-effect-feedback/P01-feedback/T01-chaos-effects.md)
 
 ## Pending commits
-- [2026-10-26-chaos-obstacle-effect-feedback / T01-chaos-effects](./phases/2026-10-26-chaos-obstacle-effect-feedback/P01-feedback/T01-chaos-effects.md): validated, commit pending
 - [2026-10-26-snow-candy-reward-unlock / T01-reward-unlock](./phases/2026-10-26-snow-candy-reward-unlock/P01-rewards/T01-reward-unlock.md): validated, commit pending
 - [2026-10-26-giant-bosses-and-throw-mistakes / T01-giant-bosses](./phases/2026-10-26-giant-bosses-and-throw-mistakes/P01-combat/T01-giant-bosses.md): validated, commit pending
 - [2026-10-26-giant-bosses-and-throw-mistakes / T02-throw-mistakes](./phases/2026-10-26-giant-bosses-and-throw-mistakes/P01-combat/T02-throw-mistakes.md): validated, commit pending
@@ -34,4 +34,4 @@ Task 커밋 2/14 완료. 나머지 구현·검증은 완료되어 있으며 Task
 http://127.0.0.1:4182/ (게임), http://127.0.0.1:4182/__dev/maps (관리자). 기존 개발 서버 유지.
 
 ## Next Step
-T01-chaos-effects의 검증된 변경만 커밋한다. 공유 파일의 다음 Task 변경과 사용자 목업 수정을 섞지 않는다.
+T01-reward-unlock의 검증된 변경만 커밋한다. 공유 파일의 다음 Task 변경과 사용자 목업 수정을 섞지 않는다.

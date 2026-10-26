@@ -14,7 +14,8 @@ const REASONS = {
   aiming: '조준을 마친 뒤 소모품을 사용하세요.', 'combat-ended': '이미 전투가 끝났어요.',
   'inventory-full': '이 소모품은 최대 3개까지 보유할 수 있어요.', 'already-selected': '이미 선택한 보상이에요.',
   'rewards-incomplete': '무기와 소모품을 하나씩 선택하세요.', 'camp-choice-locked': '시작한 무기 보상을 먼저 마무리하세요.',
-  locked: '눈 지역을 클리어하면 이 쿠키가 해금돼요.', 'invalid-state': '지금은 이 동작을 할 수 없어요.'
+  locked: '눈 지역을 클리어하면 이 쿠키가 해금돼요.', 'invalid-state': '지금은 이 동작을 할 수 없어요.',
+  'candy-locked': '눈 지역을 클리어하면 이 마법사탕이 해금돼요.'
 };
 
 // Engine actions mutate a private draft. Subscribers only receive completed snapshots.
@@ -44,8 +45,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     const profile = markSnowCleared();
     const saved = saveProfile(profile, storage);
     return { profile, notification: { id: ++sequence, kind: 'success', message: saved
-      ? '눈 지역 클리어! 우유맛 · 바람궁수 쿠키가 해금됐어요.'
-      : '쿠키가 해금됐어요. 브라우저 저장을 사용할 수 없어 새로고침하면 초기화돼요.' } };
+      ? '눈 지역 클리어! 우유맛 · 바람궁수 쿠키와 마법사탕이 해금됐어요.'
+      : '쿠키와 마법사탕이 해금됐어요. 브라우저 저장을 사용할 수 없어 새로고침하면 초기화돼요.' } };
   }
   function finishCombatRouting(run, patch) {
     if (run.terminal === 'defeat') Object.assign(patch, {
@@ -89,7 +90,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const character = CHARACTERS.find(item => item.id === characterId);
       if (!character) return reject('invalid-state');
       if (character.locked && !state.profile.snowAreaCleared) return reject('locked');
-      const run = engine.createRunState({ characterId, area: 'forest', round: 1, rng, now: now() });
+      const run = engine.createRunState({ characterId, area: 'forest', round: 1, rng, now: now(),
+        snowRewardsUnlocked: state.profile.snowAreaCleared });
       assignLayoutSeed(run);
       publish({ run, selectedCharacter: character, screen: 'battle', aim: initialAim(), notification: null, lastEvent: null,
         campRewardReveal: null, shotReview: null });

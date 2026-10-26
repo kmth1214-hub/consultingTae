@@ -10,6 +10,9 @@ export default function RewardScreen({ session }) {
   return <section className="screen-shell reward-screen" aria-labelledby="reward-title">
     <p className="eyebrow">{REGIONS[run.area].name} · {run.round} / 3 클리어</p>
     <h1 id="reward-title">다음 한 발을 위한 선물</h1><p className="screen-intro">무기와 소모품을 하나씩 선택하세요.</p>
+    <p className="muted">{run.snowRewardsUnlocked || run.snowAreaCleared
+      ? '우유맛·바람궁수 사탕도 보상 후보에 포함돼요.'
+      : '기본 3종 사탕 중에서 선택하세요. 우유맛·바람궁수 사탕은 눈 지역 클리어 후 해금돼요.'}</p>
     <FusionChoice fusion={fusion} onChoose={session.resolveFusion} />
     <fieldset disabled={Boolean(fusion)} className="reward-section"><legend>마법사탕 <span>C 등급 · 1개 선택</span></legend>
       <div className="reward-grid">{run.rewardChoices.weapons.map(choice => <button key={choice.choiceId}

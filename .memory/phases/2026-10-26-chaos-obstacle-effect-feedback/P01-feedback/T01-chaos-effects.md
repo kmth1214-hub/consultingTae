@@ -56,7 +56,7 @@ Task: T01-chaos-effects
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending — 승인 검토 사용량 제한
+- commit: d4264f4
 
 ## 결과 및 원인 기록
 - 구현/검증 완료. 커밋은 기존 자동 승인 검토 사용량 제한으로 대기 중이며 우회/재시도하지 않았다.

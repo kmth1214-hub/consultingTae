@@ -23,8 +23,8 @@
     { id:'adventurer-candy',name:'모험가의 마법사탕',grade:'C',effect:'세 번째 영구 무기 명중마다 점수 +10' },
     { id:'alchemist-candy',name:'연금술사의 마법사탕',grade:'C',effect:'소모품 사용마다 점수 +10' },
     { id:'wizard-orb',name:'마력 구슬',grade:'C',effect:'세 번째 명중 피해 +1' },
-    { id:'milk-candy',name:'우유맛 마법사탕',grade:'C',effect:'세 번째 명중마다 체력 회복' },
-    { id:'wind-candy',name:'바람궁수 마법사탕',grade:'C',effect:'라운드당 유도 사격' }
+    { id:'milk-candy',name:'우유맛 마법사탕',grade:'C',effect:'세 번째 명중마다 체력 회복',requiresSnowClear:true },
+    { id:'wind-candy',name:'바람궁수 마법사탕',grade:'C',effect:'라운드당 유도 사격',requiresSnowClear:true }
   ]);
   const CONSUMABLE_CATALOG = Object.freeze([
     { id:'fireball',name:'불공',description:'다음 영구 무기 피해 2배' },
@@ -131,6 +131,7 @@
       bonusMode: area === 'chaos',
       mainRunSummary: null,
       snowAreaCleared: false,
+      snowRewardsUnlocked: config.snowRewardsUnlocked === true,
       effectCounters: { permanentWeaponHits: 0, projectileCollisions: 0, consumablesUsed: 0 },
       roundEffects: { windHomingUsed: false, milkBossBlockUsed: false },
       zeroRollsThisRound: 0,
@@ -170,6 +171,7 @@
     return grade === 'A' ? null : state.weapons.find(item => item.id === source.id && item.grade === grade);
   }
   function grantWeapon(state, source, grade, options) {
+    if (!availableRewardWeapons(state).some(weapon => weapon.id === source.id)) return { accepted: false, reason: 'candy-locked' };
     const requestedGrade = grade || source.grade || 'C';
     if (!Object.prototype.hasOwnProperty.call(GRADE_MULTIPLIER, requestedGrade)) throw new RangeError(`Unknown weapon grade: ${requestedGrade}`);
     const match = fusionWeapon(state, source, requestedGrade);
@@ -207,10 +209,14 @@
     return baseDamage + (normalizedGrade === 'A' ? 2 : normalizedGrade === 'B' ? 1 : 0);
   }
 
+  function availableRewardWeapons(state) {
+    return WEAPON_CATALOG.filter(weapon => !weapon.requiresSnowClear
+      || state.snowRewardsUnlocked === true || state.snowAreaCleared === true);
+  }
   function drawRewardChoices(state,rng) {
     if(!state||state.terminal!=='round-clear'||state.area==='chaos')return null;
     const sourceRng=typeof rng==='function'?rng:Math.random;
-    const weapons=shuffle(WEAPON_CATALOG,sourceRng).slice(0,3).map(item=>Object.assign({},item,{choiceId:'weapon:'+item.id}));
+    const weapons=shuffle(availableRewardWeapons(state),sourceRng).slice(0,3).map(item=>Object.assign({},item,{choiceId:'weapon:'+item.id}));
     const consumables=shuffle(CONSUMABLE_CATALOG.filter(item=>getConsumableCount(state,item.id)<3),sourceRng).slice(0,3).map(item=>Object.assign({},item,{choiceId:'consumable:'+item.id}));
     state.rewardChoices={weapons,consumables};
     state.selectedRewards={weapon:null,consumable:consumables.length?null:'skip'};
@@ -288,7 +294,7 @@
       const rng=typeof config.rng==='function'?config.rng:Math.random;
       if (!state.pendingCampReward) {
         const grade=randomInt(rng,0,9)===0?'B':'C',count=grade==='B'?1:2;
-        state.pendingCampReward={grade,items:Array.from({length:count},()=>({...shuffle(WEAPON_CATALOG,rng)[0],grade})),index:0,grants:[]};
+        state.pendingCampReward={grade,items:Array.from({length:count},()=>({...shuffle(availableRewardWeapons(state),rng)[0],grade})),index:0,grants:[]};
       }
       const pending=state.pendingCampReward;
       let mergeDuplicate=config.mergeDuplicate;
@@ -296,6 +302,7 @@
         const item=pending.items[pending.index];
         const duplicate=fusionWeapon(state,item,item.grade);
         const result=grantWeapon(state,item,item.grade,{mergeDuplicate});
+        if (!result.accepted && result.reason !== 'fusion-decision-required') return result;
         if (!result.accepted) return {accepted:true,pendingCamp:true,requiresFusionChoice:true,fusionCandidate:result.fusionCandidate};
         pending.grants.push({weaponId:result.weapon.id,instanceId:result.weapon.instanceId,
           name:result.weapon.name,grade:result.weapon.grade,effect:result.weapon.effect || item.effect,fused:result.fused});
