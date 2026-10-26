@@ -32,7 +32,7 @@ test('the three Chaos bosses and nameplates fit on a reduced-motion phone', asyn
   await expect(bosses).toHaveCount(3); await expect(bars).toHaveCount(3);
   for (const boss of await bosses.all()) await expect(boss).toHaveCSS('width','276px');
   const boxes=[];
-  await expect(bars).toBeInViewport(); boxes.push(await bars.boundingBox());
+  for (const bar of await bars.all()) { await expect(bar).toBeInViewport(); boxes.push(await bar.boundingBox()); }
   const candy = await page.locator('.candy-hud').boundingBox();
   for(const box of boxes) expect(box.y).toBeGreaterThan(candy.y+candy.height);
   await page.screenshot({path:'tmp/giant-boss-chaos-phone.png'});

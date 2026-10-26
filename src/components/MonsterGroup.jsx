@@ -73,6 +73,7 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
       return <div role="img" className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''} ${attacking ? 'is-attacking' : ''}`}
         data-attack-phase={attacking ? response.stage : undefined} data-melee={melee || undefined}
         data-throwing={visual?.thrown || undefined}
+        data-miss-style={attacking ? response.attack.missStyle || undefined : undefined}
         key={enemy.id} data-enemy-id={enemy.id}
         aria-label={`${MONSTER_NAMES[enemy.kind]}, 체력 ${hp}/${enemy.maxHp}${selectedTargetId === enemy.id ? ', 바람 유도 목표' : ''}`}
         style={{ left: enemy.x, top: enemy.y, width: enemy.size,
@@ -81,6 +82,7 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
           '--strike-y': `${(layout.player.contact.y - enemy.y) / enemy.size * 100}%` }}>
         <span className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} />
           {enemy.isBoss && <BossArmor kind={enemy.kind} />}
+          {attacking && response.attack.missed && response.stage === 'windup' && <span className="monster-mistake" aria-hidden="true">?!</span>}
         </span>
         {enemy.isBoss ? <span className="boss-health" data-testid="boss-health" aria-hidden="true">
           <strong>◆ {MONSTER_NAMES[enemy.kind]}</strong>

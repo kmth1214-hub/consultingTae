@@ -156,6 +156,13 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .monster--boss[data-throwing="true"][data-attack-phase="travel"] .monster-body { animation: boss-heavy-release 480ms ease-out both; }
 @keyframes boss-heavy-load { 0% { transform: none; } 65% { transform: translateY(3%) rotate(5deg) scale(1.04, .94); } 100% { transform: translateX(-3%) rotate(-5deg); } }
 @keyframes boss-heavy-release { from { transform: translateX(-3%) rotate(-5deg); } 35% { transform: translateX(-8%) rotate(-9deg); } to { transform: none; } }
+.monster[data-miss-style="slip"][data-attack-phase="windup"] .monster-body { animation: enemy-slip 340ms ease-in both; }
+.monster[data-miss-style="overshoot"][data-attack-phase="windup"] .monster-body { animation: enemy-overthrow 340ms ease-in both; }
+.monster-mistake { position: absolute; top: 15%; right: 0; color: #fff9bf; font-size: 28px; font-weight: 900; text-shadow: 1px 2px 2px #49384a; }
+.enemy-miss-impact { fill: #f5db9d66; stroke: #f5e8b9; stroke-width: 3; }
+.enemy-miss-impact text { fill: #fff6d1; stroke: #594838; stroke-width: 1; paint-order: stroke; font-size: 30px; font-weight: 850; }
+@keyframes enemy-slip { 30% { transform: translateX(-4%) rotate(-8deg); } to { transform: translate(-8%, 8%) rotate(22deg) scale(1.04, .92); } }
+@keyframes enemy-overthrow { 60% { transform: translateX(10%) rotate(22deg); } to { transform: translateX(-12%) rotate(-24deg); } }
 .monster.is-targeted::after { content: ''; position: absolute; bottom: -7%; left: 5%; width: 90%; height: 16%; border: 2px solid #e07739; border-radius: 50%; }
 .hit-effect { position: absolute; inset: 0; display: grid; place-items: center; color: #fff6d3; text-shadow: 0 2px 3px #602f26; font-size: clamp(15px, 3cqw, 32px); font-weight: 900; animation: hit-rise 850ms ease-out both; pointer-events: none; }
 .hit-effect--spear { color: #e0f2ff; }

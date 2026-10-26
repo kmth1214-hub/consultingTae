@@ -107,7 +107,8 @@ test('Forest log damages its actual physical target and adds scored hits to the 
 
 test('Snow ice halves the next attack once and a blocked attack consumes the guard', () => {
   const state = engine.createRunState({ area: 'snow', round: 1, rng: () => 0 });
-  const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, rng: () => .999,
+  let attackDraw = 0;
+  const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, rng: () => attackDraw++ === 0 ? .5 : .999,
     shotMeta: { impactKind: 'obstacle', obstacleId: 'ice-1', obstacleKind: 'ice', obstacleTargetIds: [], rolling: false, reverse: false } });
   assert.equal(event.obstacleEffect.damageReduction, .5);
   assert.equal(event.enemyAttack.damage, 4);
@@ -116,7 +117,7 @@ test('Snow ice halves the next attack once and a blocked attack consumes the gua
 
   state.nextAttackDamageMultiplier = .5;
   state.defenseArmed = true;
-  const blocked = engine.resolveEnemyTurn(state, () => .999);
+  const blocked = engine.resolveEnemyTurn(state, () => .5);
   assert.equal(blocked.blocked, true);
   assert.equal(blocked.damage, 0);
   assert.equal(state.nextAttackDamageMultiplier, null);
@@ -139,7 +140,7 @@ test('Chaos chooses each obstacle effect from injected RNG, routes score to bonu
   for (let choice = 0; choice < 4; choice++) {
     const state = engine.createRunState({ area: 'chaos', round: 1, rng: () => 0 });
     state.enemies = [{ id: 'target', kind: 'snake', hp: 10, maxHp: 10, isBoss: false, attackCount: 0, alive: true }];
-    const values = [choice / 4, .999, .999, .999];
+    const values = [choice / 4, ...(choice === 2 ? [.999] : []), .5, .999];
     let index = 0;
     const rng = () => values[Math.min(index++, values.length - 1)];
     const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, rng,

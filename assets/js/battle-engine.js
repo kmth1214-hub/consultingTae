@@ -378,7 +378,8 @@
     state.enemyTurnIndex = (index + 1) % size;
     state.turnNumber += 1;
 
-    let special = null;
+    const sourceRng = typeof rng === 'function' ? rng : Math.random;
+    let special = null, attackKind = enemy.kind;
     let minDamage = enemy.isBoss ? 3 : 1;
     let maxDamage = enemy.isBoss ? 15 : 8;
     if (enemy.isBoss) {
@@ -387,30 +388,24 @@
       if (boss && enemy.attackCount % 3 === 0) special = boss.special;
     }
     if (special === 'boar-charge') { minDamage = 8; maxDamage = 15; }
-    const sourceRng = typeof rng === 'function' ? rng : Math.random;
-    let blockedBy = state.defenseArmed ? 'defense' : null;
-    if (!blockedBy && enemy.isBoss && hasEffect(state, 'milk-candy') && !state.roundEffects.milkBossBlockUsed) {
-      blockedBy = 'milk';
-      state.roundEffects.milkBossBlockUsed = true;
+    const throwing = ['snake', 'dry-ice', 'snowball', 'washing-robot', 'cowardly-snowman', 'oven-robot'].includes(attackKind);
+    if (!special && throwing) {
+      const sample = Math.max(0, Math.min(.999999999999, Number(sourceRng())));
+      const threshold = enemy.isBoss ? .95 : .9;
+      if (sample >= threshold) return {
+        enemyId: enemy.id, kind: enemy.kind, attackKind, damage: 0, special: null, attemptedSpecial: null,
+        playerHpBefore: state.playerHp, playerHpAfter: state.playerHp, blocked: false, blockedBy: null,
+        healedEnemy: 0, ammoLost: 0, consumablesBlocked: false, missed: true,
+        missStyle: sample < (enemy.isBoss ? .975 : .95) ? 'slip' : 'overshoot'
+      };
     }
-    const blocked = blockedBy !== null;
-    state.defenseArmed = false;
-    const damageMultiplier = state.nextAttackDamageMultiplier === null ? 1 : state.nextAttackDamageMultiplier;
-    state.nextAttackDamageMultiplier = null;
-    const rawDamage = blocked ? 0 : randomInt(sourceRng, minDamage, maxDamage);
-    const damage = blocked ? 0 : Math.floor(rawDamage * damageMultiplier);
-    const playerHpBefore = state.playerHp;
-    state.playerHp = Math.max(0, state.playerHp - damage);
-    const event = { enemyId: enemy.id, kind: enemy.kind, damage, special: blocked ? null : special,
-      attemptedSpecial: special, playerHpBefore, playerHpAfter: state.playerHp,
-      blocked, blockedBy, healedEnemy: 0, ammoLost: 0, consumablesBlocked: false };
-    if (damageMultiplier < 1) event.damageReduction = 1 - damageMultiplier;
-
-    if (!blocked && special === 'frozen-breath') {
+    const event = applyIncomingDamage(state, { enemyId: enemy.id, kind: enemy.kind, attackKind,
+      special, attemptedSpecial: special }, sourceRng, minDamage, maxDamage, enemy.isBoss);
+    if (!event.blocked && special === 'frozen-breath') {
       state.consumablesBlockedTurns = 1;
       state.consumablesBlocked = true;
       event.consumablesBlocked = true;
-    } else if (!blocked && special === 'oven-overheat') {
+    } else if (!event.blocked && special === 'oven-overheat') {
       const previousAmmo = state.ammo;
       state.ammo = Math.max(0, state.ammo - 1);
       event.ammoLost = previousAmmo - state.ammo;
@@ -419,6 +414,29 @@
       event.healedEnemy = enemy.hp - previousHp;
     }
     if (state.playerHp <= 0 || (state.ammo <= 0 && getLivingEnemies(state).length > 0)) state.terminal = 'defeat';
+    return event;
+  }
+
+  // Both counterattacks and the single landing shock consume the same protection.
+  function applyIncomingDamage(state, attack, rng, minDamage, maxDamage, isBoss = true) {
+    let blockedBy = state.defenseArmed ? 'defense' : null;
+    if (!blockedBy && isBoss && hasEffect(state, 'milk-candy') && !state.roundEffects.milkBossBlockUsed) {
+      blockedBy = 'milk';
+      state.roundEffects.milkBossBlockUsed = true;
+    }
+    const blocked = blockedBy !== null;
+    state.defenseArmed = false;
+    const damageMultiplier = state.nextAttackDamageMultiplier === null ? 1 : state.nextAttackDamageMultiplier;
+    state.nextAttackDamageMultiplier = null;
+    const rawDamage = blocked ? 0 : randomInt(typeof rng === 'function' ? rng : Math.random, minDamage, maxDamage);
+    const damage = blocked ? 0 : Math.floor(rawDamage * damageMultiplier);
+    const playerHpBefore = state.playerHp;
+    state.playerHp = Math.max(0, state.playerHp - damage);
+    const event = { ...attack, damage, special: blocked ? null : attack.special,
+      playerHpBefore, playerHpAfter: state.playerHp,
+      blocked, blockedBy, healedEnemy: 0, ammoLost: 0, consumablesBlocked: false, missed: false, missStyle: null };
+    if (damageMultiplier < 1) event.damageReduction = 1 - damageMultiplier;
+
     return event;
   }
 

@@ -46,7 +46,7 @@ Task: T01-giant-bosses
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: 4c89d87
 
 ## Validation Results
 - 단위156, production build, 세 지역+혼돈 reduced phone 브라우저4 통과.

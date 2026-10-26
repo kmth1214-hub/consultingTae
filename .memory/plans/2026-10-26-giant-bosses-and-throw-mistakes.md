@@ -5,6 +5,6 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | in_progress | 전투/화면 연결 | [P01](../phases/2026-10-26-giant-bosses-and-throw-mistakes/P01-combat/phase.md) |
+| P01 | done | 전투/화면 연결 | [P01](../phases/2026-10-26-giant-bosses-and-throw-mistakes/P01-combat/phase.md) |
 
 T01은 보스의 공간·외형, T02는 적 공격 결과·재생으로 나눈다. 둘 다 실제 게임과 관리자 공통 전투 화면을 사용한다.

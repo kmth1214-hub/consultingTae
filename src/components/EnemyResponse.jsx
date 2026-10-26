@@ -2,21 +2,26 @@ import React, { useEffect, useRef } from 'react';
 import { MONSTER_NAMES } from '../game/gameData.js';
 import { createEnemyProjectileArc, sampleEnemyProjectile, enemyTrailD } from '../game/enemyProjectileMotion.js';
 import EnemyProjectileArt from './EnemyProjectileArt.jsx';
+import { getEnemyAttackTarget } from '../game/enemyAttackPresentation.js';
 
 export function attackStyle(attack) {
+  const kind = attack.kind;
   const special = attack.attemptedSpecial;
   if (special === 'boar-charge') return { label: '가시 돌진', color: '#ef8950', melee: true };
   if (special === 'frozen-breath') return { label: '얼음 숨결', color: '#a2e9ff', breath: true };
   if (special === 'oven-overheat') return { label: '오븐 과열', color: '#ff9853', flame: true };
-  if (attack.kind.includes('boar')) return { label: '몸통 박치기', color: '#d9a279', melee: true };
-  if (attack.kind === 'snake') return { label: '젤리 탄', color: '#a9df78', thrown: true, ammo: 'jelly' };
-  if (attack.kind === 'dry-ice') return { label: '얼음 파편', color: '#b6efff', thrown: true, ammo: 'ice' };
-  if (attack.kind.includes('robot')) return { label: '에너지 탄', color: '#ffcd75', thrown: true, ammo: 'energy' };
+  if (kind.includes('boar')) return { label: '몸통 박치기', color: '#d9a279', melee: true };
+  if (kind === 'snake') return { label: '젤리 탄', color: '#a9df78', thrown: true, ammo: 'jelly' };
+  if (kind === 'dry-ice') return { label: '얼음 파편', color: '#b6efff', thrown: true, ammo: 'ice' };
+  if (kind.includes('robot')) return { label: '에너지 탄', color: '#ffcd75', thrown: true, ammo: 'energy' };
   return { label: '눈덩이 던지기', color: '#efffff', thrown: true, ammo: 'snow' };
 }
 
 function responseLabel({ attack, stage }) {
   const visual = attackStyle(attack);
+  if (attack.missed) return stage === 'windup' ? `${MONSTER_NAMES[attack.kind]} · 어, 어?!`
+    : stage === 'travel' ? attack.missStyle === 'slip' ? '미끄러져서 짧게 던졌어요!' : '너무 높게 던졌어요!'
+      : '적 투척이 빗나갔어요 · 피해 없음';
   return stage === 'windup' ? `${MONSTER_NAMES[attack.kind]} · ${visual.label} 준비!`
     : stage === 'travel' ? `${visual.label}!` : attack.blocked ? '공격을 막았어요!' : `체력 −${attack.damage}`;
 }
@@ -26,7 +31,7 @@ export function EnemyResponseNotice({ response }) {
   const label = responseLabel(response);
   return <div className={`enemy-warning ${attackStyle(response.attack).thrown ? 'enemy-warning--throw' : ''} ${response.attack.attemptedSpecial ? 'is-special' : ''}`}>
     <span className="enemy-warning-long">{label}</span>
-    <span className="enemy-warning-short">{response.stage === 'windup' ? `${attackStyle(response.attack).label} 준비!` : label}</span>
+    <span className="enemy-warning-short">{response.stage === 'windup' && !response.attack.missed ? `${attackStyle(response.attack).label} 준비!` : label}</span>
   </div>;
 }
 
@@ -47,7 +52,7 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
   const attacker = layout.enemies.find(enemy => enemy.id === attack.enemyId);
   const source = { x: attacker ? attacker.x - (visual.thrown ? attacker.size * .25 : 0) : layout.player.impact.x,
     y: attacker ? attacker.y - attacker.size * (visual.thrown ? .65 : .55) : layout.player.impact.y };
-  const target = layout.player.impact;
+  const target = getEnemyAttackTarget(attack, layout);
   const arc = createEnemyProjectileArc({ source, target,
     height: visual.thrown ? undefined : visual.breath ? 0 : 75 });
   useEffect(() => {
@@ -99,10 +104,11 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
   const label = responseLabel(response);
   return <div className={`enemy-response enemy-response--${stage} ${attack.attemptedSpecial ? 'is-special' : ''}`}
     data-testid="enemy-attack" data-attacker-id={attack.enemyId} data-stage={stage}
+    data-missed={attack.missed ? 'true' : undefined} data-miss-style={attack.missStyle || undefined}
     data-special={attack.attemptedSpecial || ''} role="img" aria-label={label}>
     <svg viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true" style={{ '--attack-color': visual.color }}>
       {stage === 'windup' && <g className="attack-telegraph" transform={`translate(${source.x} ${source.y - 70})`}>
-        <circle r="22" /><text y="9" textAnchor="middle">!</text></g>}
+        <circle r="22" /><text y="9" textAnchor="middle">{attack.missed ? '?' : '!'}</text></g>}
       {!visual.melee && <path ref={trail} data-testid="enemy-projectile-trail" className="enemy-projectile-trail"
         data-trajectory={arc.d} data-arc-height={arc.height}
         d={visual.thrown ? '' : arc.d}
@@ -117,7 +123,10 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
         {!visual.thrown && <circle r="6" fill="#fffbea" stroke="none" />}
       </g>}
       {stage === 'impact' && <g transform={`translate(${target.x} ${target.y})`}>
-        {attack.blocked ? <g className="shield-impact" data-testid="shield-impact">
+        {attack.missed ? <g className="enemy-miss-impact" data-testid="enemy-miss-impact">
+          <ellipse rx="45" ry="12" /><path d="M-20-4-35-23M0-9V-34M20-4 35-23" />
+          <text y="-57" textAnchor={attack.missStyle === 'overshoot' ? 'start' : 'middle'}>{attack.missStyle === 'slip' ? '툭! 빗나감' : '휘익! 빗나감'}</text>
+        </g> : attack.blocked ? <g className="shield-impact" data-testid="shield-impact">
           <path d="M-31-26 0-38 31-26V4Q30 28 0 43Q-30 28-31 4Z" />
           <text y="-122" textAnchor="middle">{attack.blockedBy === 'milk' ? '우유 보호막 · 차단!' : '쉴드 · 차단!'}</text>
           <text y="134" textAnchor="middle">피해 0</text>

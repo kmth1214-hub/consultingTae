@@ -22,7 +22,8 @@ function combatMessage(event, area) {
       : event.missed ? event.shotMeta?.impactKind === 'obstacle' ? '장애물에 막혔어요'
         : event.shotMeta?.reverse ? '뒤로 날아갔어요' : '빗나갔어요' : `명중 · 피해 ${damage}`);
   const attack = event.enemyAttack;
-  return `${action}${attack ? attack.blocked ? ' · 적 공격 차단!' : ` · 적 반격 −${attack.damage}` : ''}`;
+  return `${action}${attack ? attack.missed ? ' · 적 투척 빗나감 · 피해 없음'
+    : attack.blocked ? ' · 적 공격 차단!' : ` · 적 반격 −${attack.damage}` : ''}`;
 }
 
 export default function BattleScreen({ session }) {
