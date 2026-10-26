@@ -46,7 +46,7 @@ export function buildBattlefield({ area, round, enemies, seed = 0 } = {}) {
     const nominal = enemies.length === 1 ? 2438 : 1000 + i * 1860 / (enemies.length - 1);
     const jitter = enemies.length > 10 ? 24 : enemies.length > 6 ? 42 : 135;
     const x = Math.round(nominal + (random() * 2 - 1) * jitter);
-    const size = isBoss ? 130 : enemies.length <= 6 ? 92 : 60;
+    const size = isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60;
     return { id, kind, isBoss, x, y: 900, size,
       collider: { id, x, y: 900 - size * .52, radius: size * .42 } };
   });

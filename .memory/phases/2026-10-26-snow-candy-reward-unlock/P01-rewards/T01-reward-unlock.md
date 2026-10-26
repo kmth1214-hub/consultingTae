@@ -51,7 +51,7 @@ Task: T01-reward-unlock
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: 3045b39
 
 ## Validation Results
 - 전체 단위 154/154 통과. 신규 5개는 100개 seed와 C/B 야영지, 합성 재진입, 잠긴 후보의 변경 없는 거부, 프로필 분리, 실제 눈 보스 클리어/저장, 관리자 격리를 검증.

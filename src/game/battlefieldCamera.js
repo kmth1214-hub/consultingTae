@@ -8,8 +8,13 @@ export function getCameraPose({ mode, viewport, layout, focus, attackerId, reduc
     || ![layout.width, layout.groundY, layout.minY].every(Number.isFinite)
     || layout.width <= 0) return null;
   const { width, height } = viewport;
-  const overview = () => ({ scale: width / layout.width, x: 0,
-    y: .78 * height - layout.groundY * width / layout.width });
+  const bosses = layout.enemies?.filter(enemy => enemy.isBoss) || [];
+  const overview = () => {
+    const scale = Math.min(width / layout.width, bosses.length
+      ? height * .66 / (Math.max(...bosses.map(enemy => enemy.size)) + 100) : Infinity);
+    return { scale, x: (width - layout.width * scale) / 2,
+      y: .78 * height - layout.groundY * scale };
+  };
   if (reducedMotion || mode === 'overview') return overview();
   let scale, left = 0;
   if (mode === 'aim') scale = Math.min(width / 1120, height / 640);
@@ -26,7 +31,8 @@ export function getCameraPose({ mode, viewport, layout, focus, attackerId, reduc
     const low = Math.min(layout.player.x, layout.launcher.x, attacker.x - attacker.size / 2) - 120;
     const high = Math.max(layout.player.x + layout.player.width, layout.launcher.x + layout.launcher.width,
       attacker.x + attacker.size / 2) + 120;
-    scale = Math.min(width / (high - low), height / 640);
+    scale = Math.min(width / (high - low), height / 640,
+      attacker.isBoss ? height * .66 / (attacker.size + 100) : Infinity);
     left = clamp(low, 0, Math.max(0, layout.width - width / scale));
   } else return overview();
   return { scale, x: -left * scale, y: .78 * height - layout.groundY * scale };

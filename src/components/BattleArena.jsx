@@ -115,6 +115,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   return <>
     <div ref={arenaRef} className={`battle-arena battle-arena--${run.area}`} tabIndex={0} role="group" aria-label="전투 맵"
       data-camera-mode={camera.reducedMotion ? 'overview' : mode}
+      data-boss-battle={run.enemies.some(enemy => enemy.isBoss) ? 'true' : undefined}
       data-shot-review={shotReview ? 'true' : undefined}
       data-aim-phase={shotReview ? 'reviewing' : enemyResponse ? 'responding' : state.phase} data-enemy-phase={activeResponse?.stage || 'idle'}
       data-impact-kind={flight?.impactKind || lastImpact?.kind || lastEvent?.shotMeta?.impactKind}

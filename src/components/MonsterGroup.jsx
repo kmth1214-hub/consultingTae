@@ -5,6 +5,31 @@ import AssetImage from './AssetImage.jsx';
 import { attackStyle } from './EnemyResponse.jsx';
 import EnemyProjectileArt from './EnemyProjectileArt.jsx';
 
+function BossArmor({ kind }) {
+  return <svg className="boss-armor" viewBox="0 0 100 100" aria-hidden="true" data-testid="boss-armor" data-kind={kind}>
+    {kind === 'pointy-boar' ? <g stroke="#63412f" strokeWidth="1.4" strokeLinejoin="round">
+      <path d="m27 40 4-18 9 12 8-19 8 18 11-14 4 23-20 12Z" fill="#715a49" />
+      <path d="m29 28 2-16 9 22m9-5 2-22 8 24m7 0 7-18 1 27" fill="#f7e4b1" />
+      <path d="M18 62Q4 55 12 40Q7 67 29 64M67 63Q85 69 91 48Q93 77 67 72" fill="#fff2c9" />
+      <path d="m39 42 12-7 13 6-3 16-12 5-12-7Z" fill="#b88a51" /><circle cx="50" cy="47" r="4" fill="#f6c76c" />
+    </g> : kind === 'cowardly-snowman' ? <g stroke="#4c88ac" strokeWidth="1.3" strokeLinejoin="round">
+      <path d="m26 24-4-17 15 8 12-14 13 14 16-8-5 20Z" fill="#a6e4fa" />
+      <path d="m49 4 1 19m-22-12 8 13m35-13-8 13" stroke="#f4ffff" />
+      <path d="m12 58 9-18 15 14-6 19-19 8Zm55-5 15-13 10 21-2 20-18-9Z" fill="#8acde8" />
+      <path d="m26 72 23 10 25-10-9 22H35Z" fill="#bdedfa" /><path d="m49 82 1 10m-30-35-6 17m66-17 7 17" stroke="#fff" />
+      <path d="m42 25 8-8 8 8-8 9Z" fill="#edfaff" />
+    </g> : <g stroke="#69494c" strokeWidth="1.5" strokeLinejoin="round">
+      <path d="M16 30V8H29V30M71 30V4H84V31" fill="#82626c" />
+      <path d="M13 8H32V15H13ZM68 4H87V11H68Z" fill="#cba484" />
+      <path d="M22 8Q13-3 23-9M78 4Q91-8 78-14" fill="none" stroke="#ded1bd" strokeWidth="4" />
+      <rect x="20" y="58" width="60" height="31" rx="9" fill="#503331" />
+      <path d="M30 84Q23 74 38 65L37 77 48 61 56 77 64 67Q81 81 66 85Z" fill="#ffb346" stroke="#e1763f" />
+      <path d="M28 69H73M28 78H73M38 61V86M51 61V86M64 61V86" stroke="#65423a" strokeWidth="3" />
+      <path d="M15 42 5 54 16 63M84 42 95 54 84 63" fill="#b98b65" />
+    </g>}
+  </svg>;
+}
+
 function MonsterArt({ enemy }) {
   const art = enemy.kind === 'snake' ? ASSETS.monsters.jellySnake
     : ['boar', 'pointy-boar'].includes(enemy.kind) ? ASSETS.monsters.chocolateBoar : null;
@@ -55,7 +80,13 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
           '--strike-x': `${(layout.player.contact.x - enemy.x) / enemy.size * 100}%`,
           '--strike-y': `${(layout.player.contact.y - enemy.y) / enemy.size * 100}%` }}>
         <span className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} />
-          <span className="monster-health">{enemy.isBoss ? 'BOSS ' : ''}{hp}<span className="sr-only"> / {enemy.maxHp}</span></span></span>
+          {enemy.isBoss && <BossArmor kind={enemy.kind} />}
+        </span>
+        {enemy.isBoss ? <span className="boss-health" data-testid="boss-health" aria-hidden="true">
+          <strong>◆ {MONSTER_NAMES[enemy.kind]}</strong>
+          <span className="boss-health-track"><span style={{ width: `${Math.max(0, Math.min(100, hp / enemy.maxHp * 100))}%` }} /></span>
+          <small>{hp} / {enemy.maxHp}</small>
+        </span> : <span className="monster-health">{hp}<span className="sr-only"> / {enemy.maxHp}</span></span>}
         {visual?.thrown && response.stage === 'windup' && <svg className="monster-throw-rig" viewBox="0 0 100 100" aria-hidden="true"
           style={{ '--ammo-color': visual.color }}>
           <g className={enemy.kind === 'snake' || enemy.kind === 'dry-ice' ? 'monster-ammo-gather' : 'monster-throw-grip'}>
