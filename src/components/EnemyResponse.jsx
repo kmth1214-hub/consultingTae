@@ -5,7 +5,7 @@ import EnemyProjectileArt from './EnemyProjectileArt.jsx';
 import { getEnemyAttackTarget } from '../game/enemyAttackPresentation.js';
 
 export function attackStyle(attack) {
-  const kind = attack.kind;
+  const kind = attack.attackKind || attack.kind;
   const special = attack.attemptedSpecial;
   if (special === 'boar-charge') return { label: '가시 돌진', color: '#ef8950', melee: true };
   if (special === 'frozen-breath') return { label: '얼음 숨결', color: '#a2e9ff', breath: true };

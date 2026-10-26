@@ -99,6 +99,16 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 @keyframes cookie-hurt { 20% { transform: translateX(-7px) rotate(-7deg); filter: brightness(1.7); } 55% { transform: translateX(4px) rotate(4deg); } }
 .monster { position: absolute; transform: translate(-50%, -100%); aspect-ratio: 1; border: 0; background: none; padding: 0; pointer-events: none; }
 .monster-art { width: 100%; height: 100%; object-fit: contain; position: relative; }
+.monster-art--fused { filter: drop-shadow(0 7px 7px #1e14294d); }
+.boss-split-transition { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
+.boss-split-body { position: absolute; inset: 0; will-change: transform; }
+.boss-landing-effects { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.boss-landing-ring { color: #ffe2a4; }
+.boss-landing-ring ellipse { fill: #f8d8a44d; stroke: #fff0bc; stroke-width: 6; animation: boss-land-pulse 650ms ease-out both; transform-box: fill-box; transform-origin: center; }
+.boss-landing-ring path { fill: none; stroke: #e1b27b; stroke-width: 13; stroke-linecap: round; }
+.boss-split-notice { position: absolute; z-index: 24; top: 32%; left: 50%; transform: translateX(-50%); width: max-content; max-width: 86%; border: 1px solid #e4bb80; border-radius: 14px; padding: 12px 22px; background: #35273ded; color: #fff3ca; text-align: center; font-size: clamp(13px, 1.4vw, 20px); font-weight: 800; box-shadow: 0 6px 28px #31233655; pointer-events: none; }
+@keyframes boss-land-pulse { from { opacity: 1; transform: scale(.45); } to { opacity: 0; transform: scale(2.1); } }
+@media (prefers-reduced-motion: reduce) { .boss-landing-ring ellipse { animation: none; } .boss-split-body { will-change: auto; } }
 .monster-body { position: absolute; inset: 0; display: block; transform-origin: 50% 90%; }
 .monster.is-attacking { z-index: 1; }
 .monster[data-attack-phase="windup"] .monster-body { animation: enemy-windup 340ms ease-out both; }

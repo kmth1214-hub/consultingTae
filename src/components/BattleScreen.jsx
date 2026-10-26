@@ -23,14 +23,16 @@ function combatMessage(event, area) {
       : event.missed ? event.shotMeta?.impactKind === 'obstacle' ? '장애물에 막혔어요'
         : event.shotMeta?.reverse ? '뒤로 날아갔어요' : '빗나갔어요' : `명중 · 피해 ${damage}`);
   const attack = event.enemyAttack;
+  if (event.bossSplit) return `${action} · 보스 분리${event.bossSplit.shock.blocked ? ' · 착지 충격 차단!' : ` · 착지 충격 −${event.bossSplit.shock.damage}`}`;
   return `${action}${attack ? attack.missed ? ' · 적 투척 빗나감 · 피해 없음'
     : attack.blocked ? ' · 적 공격 차단!' : ` · 적 반격 −${attack.damage}` : ''}`;
 }
 
 export default function BattleScreen({ session }) {
-  const { run, aim, enemyResponse } = session;
+  const { run, aim, enemyResponse, bossTransition } = session;
   const beforeImpact = enemyResponse && enemyResponse.stage !== 'impact';
-  const visibleHp = beforeImpact ? enemyResponse.attack.playerHpBefore : run.playerHp;
+  const visibleHp = bossTransition && bossTransition.stage !== 'impact' ? bossTransition.split.shock.playerHpBefore
+    : beforeImpact ? enemyResponse.attack.playerHpBefore : run.playerHp;
   const visibleAmmo = run.ammo + (beforeImpact ? enemyResponse.attack.ammoLost : 0);
   const arenaRef = useRef(null);
   useEffect(() => {
@@ -60,9 +62,11 @@ export default function BattleScreen({ session }) {
     <BattleArena key={`${run.area}-${run.round}`} run={run} aim={aim} lastEvent={session.lastEvent} setAim={session.setAim}
       enemyResponse={enemyResponse} onEnemyAdvance={session.advanceEnemyResponse} onEnemyComplete={session.completeEnemyResponse}
       shotReview={session.shotReview} onReviewComplete={session.completeShotReview}
+      bossTransition={bossTransition} onBossImpact={session.advanceBossTransition} onBossComplete={session.completeBossTransition}
       onFire={session.fireShot} onConsumable={session.useConsumable} arenaRef={arenaRef} />
     <div className="battle-status" role="status" aria-live="polite">{session.shotReview
-      ? `결과 확인 중 · ${combatMessage({ ...session.lastEvent, enemyAttack: null }, run.area)}` : enemyResponse && beforeImpact
+      ? `결과 확인 중 · ${combatMessage({ ...session.lastEvent, enemyAttack: null, bossSplit: null }, run.area)}` : bossTransition
+      ? bossTransition.stage === 'flight' ? '융합체가 세 보스로 분리됩니다!' : combatMessage(session.lastEvent, run.area) : enemyResponse && beforeImpact
       ? '적의 반격! 공격이 끝나면 다음 행동을 할 수 있어요.' : combatMessage(session.lastEvent, run.area)}</div>
   </section>;
 }

@@ -16,5 +16,5 @@ export const REGIONS = Object.freeze({
 export const MONSTER_NAMES = Object.freeze({
   snake: '젤리 뱀', boar: '초콜릿 멧돼지', 'dry-ice': '드라이아이스', snowball: '눈덩이',
   'washing-robot': '세탁 로봇', 'pointy-boar': '뾰족 멧돼지',
-  'cowardly-snowman': '겁쟁이 눈사람', 'oven-robot': '오븐 로봇'
+  'cowardly-snowman': '겁쟁이 눈사람', 'oven-robot': '오븐 로봇', 'chaos-fused-boss': '혼돈의 융합 군주'
 });

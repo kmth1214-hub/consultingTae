@@ -13,7 +13,7 @@ export default function StudioPlay({ config, onRestart, onExit }) {
   const [draft, setDraft] = useState(config);
   const select = patch => setDraft(current => ({ ...current, ...patch }));
   const finished = snapshot.screen !== 'battle'
-    || Boolean(snapshot.run.terminal && !snapshot.shotReview && !snapshot.enemyResponse);
+    || Boolean(snapshot.run.terminal && !snapshot.shotReview && !snapshot.enemyResponse && !snapshot.bossTransition);
   return <main className="studio-play" data-dev-tool="studio-battle-play" data-layout-seed={config.seed}>
     <header className="studio-play-toolbar">
       <div className="studio-play-heading"><div><strong>관리자 테스트 플레이</strong>

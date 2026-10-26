@@ -31,6 +31,7 @@ function BossArmor({ kind }) {
 }
 
 function MonsterArt({ enemy }) {
+  if (enemy.kind === 'chaos-fused-boss') return <AssetImage src={ASSETS.monsters.chaosFusedBoss} className="monster-art monster-art--fused" />;
   const art = enemy.kind === 'snake' ? ASSETS.monsters.jellySnake
     : ['boar', 'pointy-boar'].includes(enemy.kind) ? ASSETS.monsters.chocolateBoar : null;
   if (art) return <AssetImage src={art} className="monster-art" />;
@@ -81,7 +82,7 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
           '--strike-x': `${(layout.player.contact.x - enemy.x) / enemy.size * 100}%`,
           '--strike-y': `${(layout.player.contact.y - enemy.y) / enemy.size * 100}%` }}>
         <span className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} />
-          {enemy.isBoss && <BossArmor kind={enemy.kind} />}
+          {enemy.isBoss && enemy.kind !== 'chaos-fused-boss' && <BossArmor kind={enemy.kind} />}
           {attacking && response.attack.missed && response.stage === 'windup' && <span className="monster-mistake" aria-hidden="true">?!</span>}
         </span>
         {enemy.isBoss ? <span className="boss-health" data-testid="boss-health" aria-hidden="true">

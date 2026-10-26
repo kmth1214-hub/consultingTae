@@ -77,7 +77,7 @@ Task: T01-combat-transition
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — 신규 단위10/build 통과
-- commit: pending
+- commit: 7962ac5
 - 자동 승인 검토 사용량 제한으로 Git 쓰기를 재시도하거나 우회하지 않음. 사용자 연속 실행 요청에 따라 T02 구현 진행.
 - 준비된 메시지: `tmp/chaos-fused-t01-commit.txt`. 기존 미커밋 engine/session 변경과 혼합 스테이징 금지.
 - 추가 경계 검증: 마지막 탄약으로 비치명타면 기존 탄약소진 패배가 우선, 마지막 탄약으로 처치하면 승리 우선. 전투11 + 궤도1 테스트 통과.
