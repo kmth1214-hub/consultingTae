@@ -56,7 +56,7 @@ Task: T01-readable-roll
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: dc70e5c
 
 ## Validation Results
 - 수정 전 `npx.cmd playwright test tests/e2e/candy-roll-visibility.spec.cjs --config tmp/roll-vfx-playwright.config.cjs`: 고정 시계6프레임으로 실패. 표시90.32ms를 실제 궤적 계산으로 재현했다.
