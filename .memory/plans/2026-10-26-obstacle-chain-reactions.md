@@ -6,4 +6,4 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | in_progress | 물체 충돌과 전투·화면 연결 | [P01](../phases/2026-10-26-obstacle-chain-reactions/P01-chain/phase.md) |
+| P01 | done | 물체 충돌과 전투·화면 연결 | [P01](../phases/2026-10-26-obstacle-chain-reactions/P01-chain/phase.md) |
