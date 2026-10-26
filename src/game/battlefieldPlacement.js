@@ -1,4 +1,4 @@
-import { buildBattlefield } from './battlefieldModel.js';
+import { buildBattlefield, getLaunchSpeed } from './battlefieldModel.js';
 import { planShot } from './shotGeometry.js';
 
 const ANGLES = [45, 55, 35, 65, 25, 70, 15, 75];
@@ -16,7 +16,7 @@ function witnessAt(layout, enemies, x, y, matches) {
       const stretch = 12 + 60 * power;
       const x0 = 284 - pull.direction.x * stretch;
       const y0 = 812 - pull.direction.y * stretch;
-      const speed = 240 + 1720 * power;
+      const speed = getLaunchSpeed(power);
       const time = (x - x0) / (pull.direction.x * speed);
       return y0 + pull.direction.y * speed * time + 600 * time * time - y;
     };

@@ -1,8 +1,8 @@
 const { test, expect, installGame, start, dragPull, arena, phase, snapshot } = require('./support.cjs');
 
 const cases = [
-  { area: 'forest', seed: 5, angleDeg: 20, powerRatio: .9 },
-  { area: 'snow', seed: 36, angleDeg: 25, powerRatio: .95 },
+  { area: 'forest', seed: 5, angleDeg: 20, powerRatio: .863 },
+  { area: 'snow', seed: 36, angleDeg: 25, powerRatio: .88 },
   { area: 'city', seed: 34, angleDeg: 5, powerRatio: .95 },
   { area: 'chaos', seed: 14, angleDeg: 5, powerRatio: .95 },
 ];

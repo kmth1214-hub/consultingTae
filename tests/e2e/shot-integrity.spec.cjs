@@ -23,7 +23,7 @@ test('after all stacks fall, a visible first impact cannot remotely kill the las
  await installGame(page,{initial:{area:'snow',weapons:[{...BattleEngine.WEAPON_CATALOG[0],grade:'A'}]},
   stateOverride:{enemies,toppledObstacleIds:layout.obstacles.map(o=>o.id)}});
  await start(page);await pause(page);
- await shootReview(page,{angleDeg:7.5,powerRatio:.95});
+ await shootReview(page,{angleDeg:7.5,powerRatio:.88});
  const trace=await snapshot(page);
  expect(trace.lastEvent.hits.map(h=>h.id)).toEqual([enemies[0].id]);
  expect(trace.run.enemies[1].hp).toBe(1);expect(trace.lastEvent.roundCleared).toBe(false);

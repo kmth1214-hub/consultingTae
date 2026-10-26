@@ -78,7 +78,7 @@ Task: T02-single-shot-commit
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: f26fe79
 - 이전 자동 승인 검토 제한 보존. 메시지 `tmp/T02-single-shot-commit-commit.txt` 준비. 이전12건과 혼합 스테이징 금지.
 
 ## Final results (2026-10-26)

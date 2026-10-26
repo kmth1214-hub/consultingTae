@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useState } from 'react';
-import { getDragDraw } from '../game/battlefieldModel.js';
+import { BATTLEFIELD, getDragDraw } from '../game/battlefieldModel.js';
 import CandyProjectileArt from './CandyProjectileArt.jsx';
 
 export default function Slingshot({ aim, run, launcherRef, layout }) {
@@ -31,8 +31,9 @@ export default function Slingshot({ aim, run, launcherRef, layout }) {
   const bow = active ? { x: -aim.direction.x * tension * 3, y: -aim.direction.y * tension * 2 } : { x: 0, y: 0 };
   const frame = `M44 127 Q${49 + bow.x} 103 ${61 + bow.x} ${65 + bow.y} Q${65 + bow.x} ${55 + bow.y} 48 41 L${left.x} ${left.y} M${61 + bow.x} ${65 + bow.y} Q${74 + bow.x} 43 ${right.x} ${right.y}`;
   const bands = `M${left.x} ${left.y} L${pouch.x} ${pouch.y} L${right.x} ${right.y}`;
-  const strength = tension < .35 ? '약하게 당김' : tension < .7 ? '보통으로 당김' : '강하게 당김';
-  return <div className={`launcher ${active ? 'is-aiming' : ''} ${active && tension >= .68 ? 'is-primed' : ''} ${run.fireballArmed ? 'is-fireball' : ''}`}
+  const overdraw = tension > BATTLEFIELD.powerBoostStart;
+  const strength = overdraw ? '한계까지 당김' : tension < .35 ? '약하게 당김' : tension < .7 ? '보통으로 당김' : '강하게 당김';
+  return <div className={`launcher ${active ? 'is-aiming' : ''} ${active && tension >= .68 ? 'is-primed' : ''} ${active && overdraw ? 'is-overdrawn' : ''} ${run.fireballArmed ? 'is-fireball' : ''}`}
     style={{ left: layout.launcher.x, top: layout.launcher.y, width: layout.launcher.width, height: layout.launcher.height,
       '--sling-tension': tension, '--sling-color': run.fireballArmed ? '#ff9c53' : '#ffe5a0' }}>
     <button ref={launcherRef} className={`launcher-button ${active ? 'is-drawn' : ''} ${launching ? 'is-releasing' : ''}`}
@@ -107,7 +108,9 @@ export default function Slingshot({ aim, run, launcherRef, layout }) {
       </svg>
       <span>{aim.phase === 'launching' ? '발사!' : active ? '당기는 중' : '잡아당기기'}</span>
     </button>
-    <div className="power-meter" role="img" aria-label={`새총의 힘: ${strength}`}>
+    <div className="power-meter" role="img" aria-label={`새총의 힘: ${strength}`}
+      style={{ '--boost-zone': `${(1 - BATTLEFIELD.powerBoostStart) * 100}%` }}>
+      <span className="power-meter-boost" />
       <span className="power-meter-fill" style={{ height: `${aim.powerRatio * 100}%` }} />
       <span className="power-meter-mark" />
     </div>

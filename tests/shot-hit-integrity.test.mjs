@@ -10,7 +10,7 @@ function fixture(piercing=false) {
  run.toppledObstacleIds=layout.obstacles.map(o=>o.id);
  const rad=7.5*Math.PI/180;
  const shot=planShot({layout,enemies:run.enemies,toppledObstacleIds:run.toppledObstacleIds,piercing,
-  pull:{ready:true,powerRatio:.95,direction:{x:Math.cos(rad),y:-Math.sin(rad)}}});
+  pull:{ready:true,powerRatio:.88,direction:{x:Math.cos(rad),y:-Math.sin(rad)}}});
  return {run,layout,shot};
 }
 const meta=shot=>({contacts:[],directHitTime:shot.directHitTime,...(shot.enemyContacts?{enemyContacts:shot.enemyContacts}:{})});

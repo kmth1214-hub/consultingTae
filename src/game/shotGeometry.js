@@ -1,4 +1,4 @@
-import { BATTLEFIELD, getDragDraw } from './battlefieldModel.js';
+import { BATTLEFIELD, getDragDraw, getLaunchSpeed } from './battlefieldModel.js';
 import { simulateObstacleMotion } from './forestLogPhysics.js';
 
 const EPS = 1e-6;
@@ -42,16 +42,14 @@ function makePath(kind, points, endKind, targetId = null) {
 export function getBallisticPath({ start, direction, powerRatio, layout } = {}) {
   const u = unit(direction);
   if (!point(start) || !u || !Number.isFinite(powerRatio) || !validLayout(layout)) return null;
-  const speed = BATTLEFIELD.minSpeed + (BATTLEFIELD.maxSpeed - BATTLEFIELD.minSpeed)
-    * clamp(powerRatio, 0, 1);
+  const speed = getLaunchSpeed(powerRatio);
   return ballisticFromVelocity(start, { x: u.x * speed, y: u.y * speed }, layout);
 }
 
 function ballisticFromVelocity(start, velocity, layout) {
   if (!point(start) || !point(velocity) || !validLayout(layout)) return null;
   const ground = layout.groundY - layout.candyRadius;
-  if (start.y > ground + EPS || start.y < layout.minY || start.x < -layout.candyRadius
-    || start.x > layout.width + layout.candyRadius) return null;
+  if (start.y > ground + EPS) return null;
   const vx = velocity.x, vy = velocity.y, g = BATTLEFIELD.gravity;
   let endTime = BATTLEFIELD.maxSeconds, endKind = 'timeout';
   const consider = (time, kind) => {
@@ -61,17 +59,16 @@ function ballisticFromVelocity(start, velocity, layout) {
   };
   // Positive root is the descending ground crossing, including immediate downward contact.
   consider((-vy + Math.sqrt(vy * vy + 2 * g * (ground - start.y))) / g, 'ground');
-  if (vx > 0) consider((layout.width + layout.candyRadius - start.x) / vx, 'bounds');
-  if (vx < 0) consider((-layout.candyRadius - start.x) / vx, 'bounds');
-  const ceilingDiscriminant = vy * vy + 2 * g * (layout.minY - start.y);
-  if (vy < 0 && ceilingDiscriminant >= 0) {
-    consider((-vy - Math.sqrt(ceilingDiscriminant)) / g, 'bounds');
-  }
+  // Camera bounds describe the artwork, not invisible walls for a flying candy.
   const at = time => ({ x: start.x + vx * time,
     y: start.y + vy * time + .5 * g * time * time, time });
   const points = [at(0)];
   for (let i = 1; i * BATTLEFIELD.sampleStep < endTime; i++) points.push(at(i * BATTLEFIELD.sampleStep));
   if (endTime > 0) points.push(at(endTime));
+  const end = points.at(-1);
+  if (endKind === 'ground' && (end.x < -layout.candyRadius || end.x > layout.width + layout.candyRadius)) {
+    endKind = 'bounds'; // No floor or ground roll beyond the authored battlefield.
+  }
   return makePath('ballistic', points, endKind);
 }
 
@@ -286,8 +283,7 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
 }
 
 function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false }) {
-  const initialSpeed = BATTLEFIELD.minSpeed + (BATTLEFIELD.maxSpeed - BATTLEFIELD.minSpeed)
-    * clamp(powerRatio, 0, 1);
+  const initialSpeed = getLaunchSpeed(powerRatio);
   let velocity = { x: direction.x * initialSpeed, y: direction.y * initialSpeed };
   let position = start, rolling = false;
   let rollBudget = layout.candyRadius * 2 * BATTLEFIELD.maxRollDiameters;
@@ -472,8 +468,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
 
   // Only an unobstructed ballistic landing may continue into a ground roll.
   if (!target && path.kind === 'ballistic' && path.endKind === 'ground' && !barrier && (!first || piercing)) {
-    const speed = BATTLEFIELD.minSpeed + (BATTLEFIELD.maxSpeed - BATTLEFIELD.minSpeed)
-      * clamp(pull.powerRatio, 0, 1);
+    const speed = getLaunchSpeed(pull.powerRatio);
     const rolling = appendGroundRoll(path, direction.x * speed, layout);
     path = rolling.path;
     rollDistance = rolling.rollDistance;

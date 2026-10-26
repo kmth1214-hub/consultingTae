@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BattleEngine } from '../src/game/battleEngine.js';
-import { BATTLEFIELD, buildBattlefield, getDragDraw } from '../src/game/battlefieldModel.js';
+import { BATTLEFIELD, buildBattlefield, getDragDraw, getLaunchSpeed } from '../src/game/battlefieldModel.js';
 import { getPull, getBallisticPath, getHomingPath, sampleAtDistance, pathPrefixD,
   appendGroundRoll, findObstacleContact, planShot } from '../src/game/shotGeometry.js';
 
@@ -57,13 +57,14 @@ test('sampled ballistics match independent equations, refine physical bounds and
   const weaker = getBallisticPath({ start, direction, powerRatio: .5, layout });
   assert.ok(path.end.x > weaker.end.x);
   const reverse = getBallisticPath({ start, direction: { x: -1, y: -.2 }, powerRatio: 1, layout });
-  assert.equal(reverse.endKind, 'bounds'); close(reverse.end.x, -10);
+  assert.equal(reverse.endKind, 'bounds'); assert.ok(reverse.end.x < -10);
   assert.ok(reverse.samples.every((p, i) => !i || p.x < reverse.samples[i - 1].x));
   const down = getBallisticPath({ start, direction: { x: 0, y: 1 }, powerRatio: 1, layout });
   assert.ok(down.durationSeconds < .1); close(down.end.y, 890);
   const ceiling = getBallisticPath({ start, direction: { x: 0, y: -1 }, powerRatio: 1,
     layout: { ...layout, minY: 0 } });
-  assert.equal(ceiling.endKind, 'bounds'); close(ceiling.end.y, 0);
+  assert.equal(ceiling.endKind, 'ground'); close(ceiling.end.y, 890);
+  assert.ok(ceiling.samples.some(p => p.y < 0));
   const timeout = getBallisticPath({ start, direction: { x: 0, y: -1 }, powerRatio: 0,
     layout: { ...layout, groundY: 1e9, minY: -1e9 } });
   assert.equal(timeout.endKind, 'timeout'); close(timeout.durationSeconds, 8);
@@ -184,7 +185,7 @@ test('a fast candy topples two distinct stacks then directly hits an enemy', () 
 test('a grounded candy can start a three-stack chain after its own motion ends, with physical Forest damage only', () => {
   const layout = { ...empty(), obstacles: [physicalStack('a', 600), physicalStack('b', 745), physicalStack('c', 890)],
     enemies: [circle('target', { x: 1100, y: 850 }, 38)] };
-  const options = { layout, pull: pullAt(-12.5, .85), enemies: living(['target']) };
+  const options = { layout, pull: pullAt(-12.5, .84), enemies: living(['target']) };
   const before = structuredClone(options), shot = planShot(options);
   assert.deepEqual(shot.contacts.map(c => [c.obstacleId, c.trigger, c.sourceObstacleId, c.chainDepth]),
     [['a', 'candy', null, 0], ['b', 'obstacle', 'a', 1], ['c', 'obstacle', 'b', 2]]);
@@ -294,7 +295,7 @@ test('swept polygon contacts catch thin walls, tangency, interior starts and avo
   assert.equal(findObstacleContact(line({ x: 70, y: -5 }, { x: 85, y: -5 }), [triangle], 3), null);
 });
 
-test('ordinary contacts sort unique live ids before the wall and preview/duration stop correctly', () => {
+test('ordinary contacts stop at the first unique live id before the wall and preview/duration stop correctly', () => {
   const layout = empty(), pull = pullAt(0, 1);
   const base = planShot({ layout, pull, enemies: [] });
   const near = sampleAtDistance(base.path, 120), middle = sampleAtDistance(base.path, 240);
@@ -384,7 +385,7 @@ test('all real rounds and density extremes have an ordinary first-contact shot f
             // Independent analytic y at target x, accounting for power-dependent pouch position.
             const error = p => {
               const stretch = 12 + 60 * p, x0 = 284 - ux * stretch, y0 = 812 - uy * stretch;
-              const speed = 240 + 1720 * p, t = (enemy.collider.x - x0) / (ux * speed);
+              const speed = getLaunchSpeed(p), t = (enemy.collider.x - x0) / (ux * speed);
               return y0 + uy * speed * t + 600 * t * t - enemy.collider.y;
             };
             if (error(0) * error(1) > 0) continue;

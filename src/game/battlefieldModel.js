@@ -1,9 +1,19 @@
 /** Canonical world units. UI pixels and camera zoom never enter game geometry. */
 export const BATTLEFIELD = Object.freeze({
   width: 3600, height: 1200, groundY: 900, minY: -1200, candyRadius: 10,
-  gravity: 1200, minSpeed: 240, maxSpeed: 1960, sampleStep: 1 / 120, maxSeconds: 8,
+  gravity: 1200, minSpeed: 240, standardMaxSpeed: 1960, maxSpeed: 2600,
+  powerBoostStart: .8, sampleStep: 1 / 120, maxSeconds: 8,
   maxRollDiameters: 5, groundRollDeceleration: 16000,
 });
+
+/** Keep ordinary pulls familiar; the last part of the draw adds extra launch energy. */
+export function getLaunchSpeed(powerRatio) {
+  if (!Number.isFinite(powerRatio)) return null;
+  const power = Math.max(0, Math.min(1, powerRatio));
+  const boost = Math.max(0, (power - BATTLEFIELD.powerBoostStart) / (1 - BATTLEFIELD.powerBoostStart));
+  return BATTLEFIELD.minSpeed + (BATTLEFIELD.standardMaxSpeed - BATTLEFIELD.minSpeed) * power
+    + (BATTLEFIELD.maxSpeed - BATTLEFIELD.standardMaxSpeed) * boost * boost;
+}
 
 const SHAPES = {
   log: [[0, .30], [.85, .18], [1, .30], [.96, .88], [.15, 1], [0, .9]],

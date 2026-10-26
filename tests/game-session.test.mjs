@@ -400,7 +400,7 @@ test('a physical chain after candy settlement is accepted, but orphan/duplicate/
     assert.equal(session.actions.fireShot({ shotMeta: { ...meta, contacts: [a, { ...b, ...patch }] } }).accepted, false);
     assert.deepEqual(session.getSnapshot().run, before);
   }
-  const physical=reserveAt(session,20,.9);
+  const physical=reserveAt(session,27.5,.8);
   assert.ok(physical.flight.contacts.some(c=>c.trigger==='obstacle'&&c.time>physical.flight.directHitTime));
   assert.equal(commitFlight(session,physical,{reviewResult:true}).accepted,true);
   const state = session.getSnapshot();
