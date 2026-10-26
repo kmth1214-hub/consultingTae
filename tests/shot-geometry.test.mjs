@@ -304,7 +304,7 @@ test('ordinary contacts sort unique live ids before the wall and preview/duratio
   layout.obstacles = [box('wall', 540, 600, 2, 300)];
   const enemies = [...living(['far', 'near', 'middle']), { id: 'dead', alive: false, hp: 0 }];
   const shot = planShot({ layout, pull, enemies });
-  assert.deepEqual(shot.hitIds, ['near', 'middle']);
+  assert.deepEqual(shot.hitIds, ['near']);
   assert.equal(shot.selectedTargetId, null); assert.equal(shot.impactKind, 'enemy');
   assert.equal(shot.obstacleId, null); assert.ok(shot.blockerDistance > shot.impactDistance);
   assert.ok(shot.durationMs >= 420 && shot.durationMs <= 3200);

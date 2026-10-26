@@ -492,7 +492,8 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   const obstacleTargetIds = obstacleFirst ? [...living]
     .sort((a, b) => distance(impactPoint, a.collider) - distance(impactPoint, b.collider))
     .map(enemy => enemy.id) : [];
-  const resolvedHits = piercing ? hits.slice(0, 3) : rollStartDistance === null ? hits : hits.slice(0, 1);
+  // The visible flight ends at impactDistance. Only Spear travels through a hit.
+  const resolvedHits = hits.filter(h => h.distance <= impactDistance + EPS).slice(0, piercing ? 3 : 1);
   return { path, hitIds: [...new Set(resolvedHits.map(h => h.id))], selectedTargetId: target?.id ?? null,
     ...(piercing ? { enemyContacts: resolvedHits.map(hit => {
       const p = sampleUnchecked(path, hit.distance);

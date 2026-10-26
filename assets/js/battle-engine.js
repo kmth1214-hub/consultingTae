@@ -529,6 +529,8 @@
       }
     }
     let healedPlayer = 0;
+    // Apply the physical limit after Wind has selected its actual target too.
+    if (config.shotMeta && !spear) hitIds.splice(1);
     let bonusDamage = 0;
     const shotMeta = config.shotMeta;
     const hasContactStream = Array.isArray(shotMeta?.contacts);

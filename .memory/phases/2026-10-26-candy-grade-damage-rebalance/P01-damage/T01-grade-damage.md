@@ -62,6 +62,6 @@ Task: T01-grade-damage
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — 단위183/build 통과, 로그 tmp/grade-damage-unit.log 및 tmp/grade-damage-build.log
-- commit: pending
+- commit: 7fbc4c6
 - 이전 자동 승인 검토 제한 보존. 사용자 요청에 따라 다음 버그 진단으로 진행.
 - 메시지 `tmp/T01-grade-damage-commit.txt`. 최종 통합 unit195 및 실제 B/A HUD·불공 피해 브라우저2개 통과. Grade 점수 배율 유지 확인.

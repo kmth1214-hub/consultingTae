@@ -39,7 +39,8 @@ async function installGame(page, fixture = {}) {
       for (const name of ['resolveProjectile', 'useConsumable', 'drawRewardChoices', 'applyRewardChoice', 'advanceRound', 'chooseCampReward', 'startBonusRoute']) {
         api[name] = (...args) => {
           if (name === 'resolveProjectile' && config.fastCombat) args[1] = { ...args[1], damage: 1000,
-            hitIds: real.getLivingEnemies(args[0]).map(enemy => enemy.id) };
+            // Explicit abstract fixture for screen progression, not a physical shot.
+            shotMeta: undefined, hitIds: real.getLivingEnemies(args[0]).map(enemy => enemy.id) };
           const result = real[name](...args);
           trace.run = structuredClone(args[0]);
           trace.lastAction = name;
