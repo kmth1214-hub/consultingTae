@@ -89,7 +89,8 @@ const test = base.extend({
 });
 
 const arena = page => page.getByRole('group', { name: '전투 맵', exact: true });
-const phase = (page, value) => expect(arena(page)).toHaveAttribute('data-aim-phase', value);
+// Flight, the 2s result review, and the enemy response all precede the next idle turn.
+const phase = (page, value) => expect(arena(page)).toHaveAttribute('data-aim-phase', value, { timeout: value === 'idle' ? 10000 : 5000 });
 const ammo = page => page.locator('.battle-stats > span').nth(1).locator('strong');
 const hp = page => page.locator('.battle-stats > span').nth(0).locator('strong');
 const snapshot = page => page.evaluate(() => structuredClone(window.__gameTest));

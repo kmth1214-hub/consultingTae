@@ -55,8 +55,10 @@ export default function BattleScreen({ session }) {
     </header>
     <BattleArena key={`${run.area}-${run.round}`} run={run} aim={aim} lastEvent={session.lastEvent} setAim={session.setAim}
       enemyResponse={enemyResponse} onEnemyAdvance={session.advanceEnemyResponse} onEnemyComplete={session.completeEnemyResponse}
+      shotReview={session.shotReview} onReviewComplete={session.completeShotReview}
       onFire={session.fireShot} onConsumable={session.useConsumable} arenaRef={arenaRef} />
-    <div className="battle-status" role="status" aria-live="polite">{enemyResponse && beforeImpact
+    <div className="battle-status" role="status" aria-live="polite">{session.shotReview
+      ? `결과 확인 중 · ${combatMessage({ ...session.lastEvent, enemyAttack: null })}` : enemyResponse && beforeImpact
       ? '적의 반격! 공격이 끝나면 다음 행동을 할 수 있어요.' : combatMessage(session.lastEvent)}</div>
   </section>;
 }

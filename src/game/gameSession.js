@@ -7,6 +7,7 @@ const defaultLayoutRng = () => globalThis.crypto?.getRandomValues
   ? globalThis.crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000
   : Math.random();
 const REASONS = {
+  reviewing: '발사 결과를 확인하고 있어요. 잠시 후 다음 행동을 할 수 있어요.',
   responding: '적이 공격하고 있어요. 반격이 끝나면 행동할 수 있어요.',
   empty: '이 소모품을 모두 사용했어요.', blocked: '얼음 숨결 때문에 이번 턴에는 소모품을 쓸 수 없어요.',
   aiming: '조준을 마친 뒤 소모품을 사용하세요.', 'combat-ended': '이미 전투가 끝났어요.',
@@ -27,7 +28,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
   let sequence = 0;
   let state = { screen: 'home', profile: loadProfile(storage), selectedCharacter: null, run: null,
     aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null, enemyResponse: null,
-    leaderboardReturnScreen: null, campRewardReveal: null };
+    leaderboardReturnScreen: null, campRewardReveal: null, shotReview: null };
   const listeners = new Set();
   const publish = patch => {
     state = { ...state, ...patch };
@@ -64,22 +65,23 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     }
     return patch;
   }
-  function routeCombat(run, event) {
+  function routeCombat(run, event, reviewResult = false) {
     const id = ++sequence;
     const patch = { run, lastEvent: { ...event, id,
       visualKey: event.key || (state.run.fireballArmed ? 'fireball' : 'weapon') },
       aim: { ...state.aim, phase: 'idle' }, notification: null, ...persistUnlock(run),
-      enemyResponse: event.enemyAttack ? { id, stage: 'windup', attack: event.enemyAttack } : null };
+      enemyResponse: event.enemyAttack ? { id, stage: 'windup', attack: event.enemyAttack } : null,
+      shotReview: reviewResult ? { id } : null };
     // Damage resolves once in the engine. Playback only reveals that committed result.
     // Keep fatal hits on the arena until the player has seen what hit them.
-    publish(event.enemyAttack ? patch : finishCombatRouting(run, patch));
+    publish(reviewResult || event.enemyAttack ? patch : finishCombatRouting(run, patch));
     return event;
   }
   const actions = {
     startCharacterSelect() {
       publish({ screen: 'characters', run: null, selectedCharacter: null, fusion: null, outcome: null,
         summary: null, lastEvent: null, enemyResponse: null, aim: initialAim(), notification: null, leaderboardReturnScreen: null,
-        campRewardReveal: null });
+        campRewardReveal: null, shotReview: null });
     },
     startRun(characterId) {
       if (state.screen !== 'characters') return reject('invalid-state');
@@ -89,11 +91,11 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const run = engine.createRunState({ characterId, area: 'forest', round: 1, rng, now: now() });
       assignLayoutSeed(run);
       publish({ run, selectedCharacter: character, screen: 'battle', aim: initialAim(), notification: null, lastEvent: null,
-        campRewardReveal: null });
+        campRewardReveal: null, shotReview: null });
       return { accepted: true };
     },
     setAim(patch) {
-      if (state.screen !== 'battle' || state.run.terminal || state.enemyResponse) return;
+      if (state.screen !== 'battle' || state.run.terminal || state.enemyResponse || state.shotReview) return;
       const aim = { ...state.aim };
       if (Number.isFinite(patch.angle)) aim.angle = ((patch.angle + 180) % 360 + 360) % 360 - 180;
       if (Number.isFinite(patch.power)) aim.power = Math.max(0, Math.min(100, patch.power));
@@ -104,17 +106,25 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     },
     resetAim() { publish({ aim: initialAim() }); },
     advanceEnemyResponse(id, stage) {
+      if (state.shotReview) return;
       const response = state.enemyResponse;
       const stages = ['windup', 'travel', 'impact'];
       if (!response || response.id !== id || stages.indexOf(stage) !== stages.indexOf(response.stage) + 1) return;
       publish({ enemyResponse: { ...response, stage } });
     },
     completeEnemyResponse(id) {
+      if (state.shotReview) return;
       if (state.enemyResponse?.id !== id) return;
       publish(finishCombatRouting(state.run, { enemyResponse: null, notification: null }));
     },
-    fireShot({ hitIds = [], selectedTargetId = state.aim.selectedTargetId, shotMeta } = {}) {
+    completeShotReview(id) {
+      if (!state.shotReview || state.shotReview.id !== id) return;
+      const patch = { shotReview: null };
+      publish(state.enemyResponse ? patch : finishCombatRouting(state.run, patch));
+    },
+    fireShot({ hitIds = [], selectedTargetId = state.aim.selectedTargetId, shotMeta, reviewResult = false } = {}) {
       if (state.screen !== 'battle') return reject('invalid-state');
+      if (state.shotReview) return reject('reviewing');
       if (state.enemyResponse) return reject('responding');
       if (state.aim.phase === 'dragging') return reject('aiming');
       const obstacleKinds = ['log', 'ice', 'crate'];
@@ -160,10 +170,11 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         shotMeta: shotMeta && structuredClone(shotMeta), aimInversionApplied: Boolean(run.pendingAimInversion), rng });
       if (!event.accepted) return reject(event.reason);
       if (shotMeta) event.shotMeta = structuredClone(shotMeta);
-      return routeCombat(run, event);
+      return routeCombat(run, event, reviewResult === true);
     },
     useConsumable(key) {
       if (state.screen !== 'battle') return reject('invalid-state');
+      if (state.shotReview) return reject('reviewing');
       if (state.enemyResponse) return reject('responding');
       const run = structuredClone(state.run);
       const event = engine.useConsumable(run, key, { rng, isAiming: state.aim.phase !== 'idle' });

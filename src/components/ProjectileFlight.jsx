@@ -64,6 +64,15 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
       } catch { done = true; complete.current.onFailure?.(); return; }
       if (elapsed >= clock.durationMs) {
         done = true;
+        candyRef.current.dataset.rolling = 'false';
+        candyRef.current.dataset.flightStage = 'settled';
+        if (flight.impactKind !== 'ground') {
+          candyRef.current.style.visibility = 'hidden';
+          if (rollShadowRef.current) rollShadowRef.current.style.display = 'none';
+        }
+        if (rollDustRef.current) rollDustRef.current.style.display = 'none';
+        if (trailRef.current) trailRef.current.style.visibility = 'hidden';
+        if (trailGlowRef.current) trailGlowRef.current.style.visibility = 'hidden';
         complete.current.onComplete(flight);
       } else frame = requestAnimationFrame(tick);
     }

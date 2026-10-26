@@ -35,6 +35,52 @@ function rewards(session, merge = false) {
   assert.equal(actions.continueAfterReward().accepted, true);
 }
 
+test('shot review commits one result immediately and blocks inputs and enemy playback until explicitly released', () => {
+  const session = start();
+  session.actions.fireShot({ reviewResult: true });
+  const held = session.getSnapshot(), id = held.shotReview.id;
+  assert.equal(held.run.ammo, 8);
+  assert.equal(held.screen, 'battle');
+  assert.equal(held.enemyResponse.stage, 'windup');
+  assert.equal(session.actions.fireShot().reason, 'reviewing');
+  assert.equal(session.actions.useConsumable('defense').reason, 'reviewing');
+  session.actions.setAim({ phase: 'dragging' });
+  assert.equal(session.getSnapshot().aim.phase, 'idle');
+  session.actions.advanceEnemyResponse(id, 'travel');
+  session.actions.completeEnemyResponse(id);
+  assert.equal(session.getSnapshot().enemyResponse.stage, 'windup');
+  session.actions.completeShotReview(id + 1);
+  assert.equal(session.getSnapshot().shotReview.id, id);
+  session.actions.completeShotReview(id);
+  assert.equal(session.getSnapshot().shotReview, null);
+  assert.deepEqual(session.getSnapshot().run, held.run);
+  const released = session.getSnapshot();
+  session.actions.completeShotReview(id);
+  assert.equal(session.getSnapshot(), released);
+  session.actions.advanceEnemyResponse(id, 'travel');
+  assert.equal(session.getSnapshot().enemyResponse.stage, 'travel');
+});
+
+test('a clearing shot remains on the battle result until review ends and old review ids cannot advance a new run', () => {
+  const session = start({ engine: clearingEngine });
+  const ids = session.getSnapshot().run.enemies.map(enemy => enemy.id);
+  session.actions.fireShot({ hitIds: ids, reviewResult: true });
+  const held = session.getSnapshot();
+  assert.equal(held.screen, 'battle');
+  assert.equal(held.run.terminal, 'round-clear');
+  assert.equal(held.enemyResponse, null);
+  assert.equal(held.run.enemies.some(enemy => enemy.alive), false);
+  session.actions.completeShotReview(held.shotReview.id);
+  assert.equal(session.getSnapshot().screen, 'reward');
+  session.actions.startCharacterSelect();
+  session.actions.startRun('adventurer');
+  assert.equal(session.getSnapshot().shotReview, null);
+  const fresh = session.getSnapshot();
+  session.actions.completeShotReview(held.shotReview.id);
+  session.actions.completeShotReview();
+  assert.equal(session.getSnapshot(), fresh);
+});
+
 test('layout seed is drawn once at each round entry, independently of combat rolls', () => {
   const draws = [.125, .625];
   let layoutCalls = 0, combatCalls = 0;
