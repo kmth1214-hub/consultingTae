@@ -1,16 +1,16 @@
 # Current Context
 
 ## Active Plan
-[Forest Log Physics and Reward Clarity](./plans/2026-10-26-forest-log-physics-and-reward-clarity.md)
+[지역 장애물 충돌 연출](./plans/2026-10-26-regional-obstacle-effects.md)
 
 ## Active Phase
-[P01 Physical Feedback](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/phase.md)
+[P01 지역 접촉 연출](./phases/2026-10-26-regional-obstacle-effects/P01-contact-vfx/phase.md)
 
 ## Active Task
-none — [T04 Accurate Candy Details](./phases/2026-10-26-forest-log-physics-and-reward-clarity/P01-physical-feedback/T04-candy-details.md) complete
+none — [T01 지역 접촉 연출](./phases/2026-10-26-regional-obstacle-effects/P01-contact-vfx/T01-regional-contact-vfx.md) complete
 
 ## Status
-complete — T01 (`f3f946e`), T02 (`e8a8354`), T03 (`72b695a`), T04 (`88bfa47`) done.
+complete — T01 (`dd514cd`) done. 단위 123개, E2E 11개, 빌드 통과.
 
 ## Next Step
-계획 완료. 다음 활성 Task 없음. Azure 배포는 별도 작업이다.
+계획 완료. 다음 활성 Task 없음.

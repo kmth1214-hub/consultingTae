@@ -6,4 +6,4 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | in_progress | 접촉 연출과 브라우저 검증 | [P01](../phases/2026-10-26-regional-obstacle-effects/P01-contact-vfx/phase.md) |
+| P01 | done | 접촉 연출과 브라우저 검증 (`dd514cd`) | [P01](../phases/2026-10-26-regional-obstacle-effects/P01-contact-vfx/phase.md) |

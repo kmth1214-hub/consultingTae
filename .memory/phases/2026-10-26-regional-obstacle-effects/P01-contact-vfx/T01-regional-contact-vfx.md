@@ -59,7 +59,7 @@ Task: T01-regional-contact-vfx
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: dd514cd
 
 ## Validation Results
 - 단위 테스트 123/123, production build 통과.
