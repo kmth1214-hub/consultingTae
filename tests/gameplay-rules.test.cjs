@@ -144,7 +144,7 @@ test('Spear gets Alchemist use points but no permanent collision, Wizard, Milk h
   assert.deepEqual(event.hits.map(e => e.damage), [4, 3, 2]);
   assert.equal(event.scoreDelta, 9);
   assert.equal(state.score, 19);
-  assert.equal(state.ammo, 8);
+  assert.equal(state.ammo, state.maxAmmo - 1);
   assert.deepEqual(state.effectCounters, { permanentWeaponHits: 2, projectileCollisions: 2, consumablesUsed: 1 });
   assert.equal(state.roundEffects.windHomingUsed, false);
   assert.equal(event.healedPlayer, 0);
@@ -184,6 +184,31 @@ test('fusion prompts have no side effects; declining keeps copies; C cannot merg
   const added = engine.grantWeapon(other, weapon('adventurer-candy', 'C'));
   assert.equal(added.fused, false);
   assert.deepEqual(other.weapons.map(w => w.grade), ['B', 'C']);
+});
+
+test('separately owned candy adds one shot starting next round, while fusion keeps the shot count', () => {
+  const separate = create();
+  assert.deepEqual([separate.ammo, separate.maxAmmo], [9, 9]);
+  for (const [index, id] of ['wizard-orb', 'alchemist-candy'].entries()) {
+    separate.terminal = 'round-clear';
+    separate.rewardChoices = { weapons: [{ ...weapon(id), choiceId: `weapon:${id}` }], consumables: [] };
+    separate.selectedRewards = { weapon: null, consumable: 'skip' };
+    assert.equal(engine.applyRewardChoice(separate, 'weapon', `weapon:${id}`).accepted, true);
+    assert.deepEqual([separate.ammo, separate.maxAmmo], [9 + index, 9 + index]);
+    assert.equal(engine.advanceRound(separate, { rng: () => 0 }).accepted, true);
+    assert.deepEqual([separate.ammo, separate.maxAmmo], [10 + index, 10 + index]);
+  }
+  const target = sturdyEnemy(separate);
+  engine.resolveProjectile(separate, { hitIds: [target], damage: 1, rng: () => 0 });
+  assert.equal(separate.ammo, 10);
+
+  const fused = create();
+  fused.terminal = 'round-clear';
+  fused.rewardChoices = { weapons: [{ ...weapon('adventurer-candy'), choiceId: 'weapon:adventurer-candy' }], consumables: [] };
+  fused.selectedRewards.consumable = 'skip';
+  assert.equal(engine.applyRewardChoice(fused, 'weapon', 'weapon:adventurer-candy', { mergeDuplicate: true }).choice.fused, true);
+  assert.equal(engine.advanceRound(fused, { rng: () => 0 }).accepted, true);
+  assert.deepEqual([fused.ammo, fused.maxAmmo], [9, 9]);
 });
 
 test('camp duplicate offers a stable fusion choice without rerolling or silently upgrading', () => {
@@ -240,7 +265,7 @@ test('bonus entry rejects invalid/repeated calls and freezes main final score be
   const inventory = { ...state.inventory };
   state.ammo = 2;
   assert.deepEqual(engine.startBonusRoute(state, { rng: () => 0, now: 2000 }), { accepted: true, area: 'chaos', round: 1 });
-  assert.equal(state.ammo, 9);
+  assert.equal(state.ammo, state.maxAmmo);
   assert.deepEqual(state.inventory, inventory);
   assert.equal(engine.startBonusRoute(state).accepted, false);
   const item = Object.keys(state.inventory).find(key => state.inventory[key] > 0);

@@ -117,7 +117,10 @@ for (const merge of [false, true]) {
     await page.locator('.continue-button').click();
     await phase(page, 'idle');
     await expect(page.getByRole('heading', { name: '숲 지역 2 / 3', exact: true })).toBeVisible();
-    await expect(ammo(page)).toHaveText('9');
+    trace = await snapshot(page);
+    expect(trace.run.maxAmmo).toBe(before.maxAmmo + (merge ? 0 : 1));
+    expect(trace.run.ammo).toBe(trace.run.maxAmmo);
+    await expect(ammo(page)).toHaveText(String(trace.run.maxAmmo));
   });
 }
 
@@ -136,7 +139,9 @@ test('Forest boss rewards lead to camp; healing continues to Snow with refreshed
   expect(run.round).toBe(1);
   expect(run.playerHp).toBe(90);
   await expect(hp(page)).toHaveText('90');
-  await expect(ammo(page)).toHaveText('9');
+  expect(run.maxAmmo).toBe(9 + Math.max(0, run.weapons.length - 1));
+  expect(run.ammo).toBe(run.maxAmmo);
+  await expect(ammo(page)).toHaveText(String(run.maxAmmo));
 });
 
 test('camp weapon rewards can finish two consecutive fusion decisions without switching rewards', async ({ page }) => {
@@ -164,6 +169,9 @@ test('camp weapon rewards can finish two consecutive fusion decisions without sw
   await phase(page, 'idle');
   expect((await snapshot(page)).run.area).toBe('snow');
   expect((await snapshot(page)).run.weapons).toEqual(granted);
+  const { run } = await snapshot(page);
+  expect(run.maxAmmo).toBe(9 + Math.max(0, granted.length - 1));
+  await expect(ammo(page)).toHaveText(String(run.maxAmmo));
 });
 
 test('single B-grade camp result fits a phone and waits for confirmation before the next region', async ({ page }) => {

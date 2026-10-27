@@ -54,6 +54,10 @@
     }
     return inventory;
   }
+
+  function roundAmmoCapacity(weapons) {
+    return 9 + Math.max(0, weapons.length - 1);
+  }
   function createBoss(boss, area, bonus) {
     const hp = bonus ? Math.ceil(boss.hp * 1.5) : boss.hp;
     return {
@@ -121,14 +125,15 @@
     if (!Object.prototype.hasOwnProperty.call(CHARACTER_WEAPONS, characterId)) throw new RangeError(`Unknown character: ${characterId}`);
     const starter = WEAPON_CATALOG.find(weapon => weapon.id === CHARACTER_WEAPONS[characterId]);
     const initialWeapons = config.weapons || [starter];
+    const maxAmmo = roundAmmoCapacity(initialWeapons);
     const state = {
       area,
       round,
       characterId,
       playerHp: Math.max(0, Math.min(100, Number.isFinite(config.playerHp) ? config.playerHp : 100)),
       maxPlayerHp: 100,
-      ammo: Math.max(0, Math.min(9, Number.isFinite(config.ammo) ? config.ammo : 9)),
-      maxAmmo: 9,
+      ammo: Math.max(0, Math.min(maxAmmo, Number.isFinite(config.ammo) ? config.ammo : maxAmmo)),
+      maxAmmo,
       score: Math.max(0, Number(config.score) || 0),
       bonusScore: 0,
       bonusMode: area === 'chaos',
@@ -261,7 +266,7 @@
   }
   function enterRound(state,options) {
     const config=options||{};
-    state.ammo=state.maxAmmo;state.zeroRollsThisRound=0;state.enemyTurnIndex=0;state.terminal=null;state.pendingCamp=false;
+    state.maxAmmo=roundAmmoCapacity(state.weapons);state.ammo=state.maxAmmo;state.zeroRollsThisRound=0;state.enemyTurnIndex=0;state.terminal=null;state.pendingCamp=false;
     state.roundStartedAt=timestamp(config.now);state.enemies=createRoundEnemies(state.area,state.round,{rng:config.rng});
     state.chaosBossPhase = state.area === 'chaos' && state.round === 3 ? 'fused' : null;
     state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};

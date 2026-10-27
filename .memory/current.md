@@ -1,16 +1,16 @@
 # Current Context
 
 ## Active Plan
-[2026-10-27-azure-production-deployment](./plans/2026-10-27-azure-production-deployment.md)
+없음. [2026-10-27-reward-candy-ammo-growth](./plans/2026-10-27-reward-candy-ammo-growth.md) 완료.
 
 ## Active Phase
-[P01-release](./phases/2026-10-27-azure-production-deployment/P01-release/phase.md)
+없음. [P01-ammo](./phases/2026-10-27-reward-candy-ammo-growth/P01-ammo/phase.md) 완료.
 
 ## Active Task
-없음 — Azure 실배포 계획 완료
+없음. [T01-round-ammo-scaling](./phases/2026-10-27-reward-candy-ammo-growth/P01-ammo/T01-round-ammo-scaling.md) 완료.
 
 ## Status
-기존 게임 14개 Task와 Azure T01~T04 완료. 원격 verify/deploy, 익명 접근 차단, 회사 로그인과 인증된 리더보드 조회를 확인했다. 실제 플레이 기록 저장과 다른 테넌트 계정 거부 실험은 아직 수행하지 않았다.
+보상으로 사탕을 추가 보유해도 다음 라운드의 탄약이 9개에 고정되는 문제를 수정했다. 새 사탕을 별도로 획득할 때마다 다음 라운드부터 1발씩 늘고 합성은 탄약을 늘리지 않는다. 단위 테스트 205개, 게임 진행 화면 시나리오 11개, Azure 빌드를 확인했다.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -38,7 +38,7 @@
 https://calm-flower-0764f6d00.3.azurestaticapps.net/ (회사 로그인 게임). 개발 화면은 기존 `http://127.0.0.1:4182/` 서버에서 유지.
 
 ## Next Step
-Azure 사이트에서 실제 플레이 기록을 만든 뒤 리더보드의 저장·재조회와 다른 테넌트 접근 차단을 추가로 확인한다. 현재 회사 계정의 빈 리더보드 조회는 정상이며 API는 노출되지 않은 key2로 연결되어 있다.
+후속 작업 포인터 없음. 새 기능은 인터뷰와 계획부터 시작한다.
 
 ## Commit Validation
 - 14개 Task를 청사진의 한국어 메시지와 Plan/Phase/Task 헤더로 각각 커밋했다.
