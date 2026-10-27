@@ -10,7 +10,7 @@
 [T02-azure-live-deployment](./phases/2026-10-27-azure-production-deployment/P01-release/T02-azure-live-deployment.md)
 
 ## Status
-기존 게임 14개 Task 및 Azure T01/T03 완료. T03 영향 검사 25/25 통과. Azure/Entra/GitHub 연결 설정을 완료했으며 T02에서 전체 원격 검증과 실배포를 확인한다.
+기존 게임 14개 Task 및 Azure T01/T03/T04 완료. 원격 verify/deploy와 회사 로그인은 성공했다. T04에서 실제 회사 계정 리더보드 401의 표시 이름 claim 원인을 수정하고 로컬 204개 테스트와 Azure 빌드를 통과했다. T02에서 재배포와 인증된 리더보드를 최종 검증한다.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -35,7 +35,7 @@
 http://127.0.0.1:4182/ (게임), http://127.0.0.1:4182/__dev/maps (관리자). 기존 개발 서버 유지.
 
 ## Next Step
-T03 커밋을 main에 push하고 전체 Actions 검증 및 배포·인증·리더보드 동작을 확인한다. 스토리지 key1 교체는 요청한 사용자 승인 후 진행한다. API는 노출되지 않은 key2로 연결했다.
+T04 커밋을 main에 push하고 전체 Actions와 인증된 리더보드 조회를 재확인한다. API는 노출되지 않은 key2로 연결되어 있으며 기존 key1은 교체했다.
 
 ## Commit Validation
 - 14개 Task를 청사진의 한국어 메시지와 Plan/Phase/Task 헤더로 각각 커밋했다.

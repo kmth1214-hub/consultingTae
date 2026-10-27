@@ -18,6 +18,7 @@ if (template.split(marker).length !== 2) {
 const rendered = template.replace(marker, tenantId);
 const config = JSON.parse(rendered);
 if (config.platform?.apiRuntime !== 'node:22'
+  || config.auth?.identityProviders?.azureActiveDirectory?.userDetailsClaim !== 'name'
   || config.routes?.[0]?.route !== '/api/*'
   || !config.routes[0].allowedRoles?.includes('authenticated')
   || !config.routes?.[1]?.allowedRoles?.includes('authenticated')
