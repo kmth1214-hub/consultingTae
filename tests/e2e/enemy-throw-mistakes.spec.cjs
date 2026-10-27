@@ -2,7 +2,12 @@ const { test, expect, installGame, start, dragPull, phase, hp, snapshot } = requ
 
 async function launch(page) {
   await dragPull(page,{angleDeg:-5,powerRatio:.08}); await page.mouse.up();
-  for(let i=0;i<420;i++) { await page.clock.runFor(16); if(await page.getByTestId('enemy-attack').count()) break; }
+  // Keep the 6720ms virtual-flight budget, with fewer browser round trips.
+  // A 64ms step still observes even the shortest 150ms windup before impact.
+  for(let elapsed=0;elapsed<6720;elapsed+=64) {
+    await page.clock.runFor(64);
+    if(await page.getByTestId('enemy-attack').count()) break;
+  }
   await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage','windup');
 }
 async function setup(page,{boss=false,random=.92,shield=false,reduced=false}={}) {

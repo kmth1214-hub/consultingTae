@@ -65,6 +65,15 @@ jobs:
           path: dist/
           if-no-files-found: error
 
+      - name: Keep browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure-${{ github.run_attempt }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 1
+
   deploy:
     name: Deploy to Azure Static Web Apps
     needs: verify
