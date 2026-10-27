@@ -75,7 +75,7 @@ test('a cancelled hidden flight cannot revive when a fresh round starts after a 
  await shootReview(page,pull);await page.clock.runFor(2100);
  await expect(page.getByRole('heading',{name:'다음 한 발을 위한 선물',exact:true})).toBeVisible();
  await selectRewards(page);await phase(page,'idle');
- const next=await snapshot(page);expect(next.run.round).toBe(2);expect(next.run.ammo).toBe(9);
+ const next=await snapshot(page);expect(next.run.round).toBe(2);expect(next.run.maxAmmo).toBe(10);expect(next.run.ammo).toBe(next.run.maxAmmo);
  await page.clock.runFor(8000);
  expect((await snapshot(page)).run).toEqual(next.run);
  expect((await snapshot(page)).events.filter(e=>e.name==='resolveProjectile')).toHaveLength(1);

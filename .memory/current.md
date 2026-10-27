@@ -7,10 +7,10 @@
 없음. [P01-ammo](./phases/2026-10-27-reward-candy-ammo-growth/P01-ammo/phase.md) 완료.
 
 ## Active Task
-없음. [T01-round-ammo-scaling](./phases/2026-10-27-reward-candy-ammo-growth/P01-ammo/T01-round-ammo-scaling.md) 완료.
+없음. [T02-ci-shot-integrity-ammo](./phases/2026-10-27-reward-candy-ammo-growth/P01-ammo/T02-ci-shot-integrity-ammo.md) 완료.
 
 ## Status
-보상으로 사탕을 추가 보유해도 다음 라운드의 탄약이 9개에 고정되는 문제를 수정했다. 새 사탕을 별도로 획득할 때마다 다음 라운드부터 1발씩 늘고 합성은 탄약을 늘리지 않는다. 단위 테스트 205개, 게임 진행 화면 시나리오 11개, Azure 빌드를 확인했다.
+보상으로 사탕을 추가 보유해도 다음 라운드의 탄약이 9개에 고정되는 문제를 수정했다. 새 사탕을 별도로 획득할 때마다 다음 라운드부터 1발씩 늘고 합성은 탄약을 늘리지 않는다. 첫 원격 브라우저 검증 164개 중 남은 고정 9발 기대값 1개를 T02에서 고쳤고, 로컬 해당 시나리오와 단위·API 테스트 205개를 통과했다. 원격 재검증은 배포 파이프라인에서 확인한다.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -38,7 +38,7 @@
 https://calm-flower-0764f6d00.3.azurestaticapps.net/ (회사 로그인 게임). 개발 화면은 기존 `http://127.0.0.1:4182/` 서버에서 유지.
 
 ## Next Step
-후속 작업 포인터 없음. 새 기능은 인터뷰와 계획부터 시작한다.
+후속 작업 포인터 없음. GitHub Actions 전체 검증과 Azure 업로드 결과를 확인한다.
 
 ## Commit Validation
 - 14개 Task를 청사진의 한국어 메시지와 Plan/Phase/Task 헤더로 각각 커밋했다.

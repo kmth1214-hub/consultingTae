@@ -8,7 +8,7 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `done` | 전투 엔진의 탄약 재계산, 화면 문구, 보상 경로 검증 | [P01](../phases/2026-10-27-reward-candy-ammo-growth/P01-ammo/phase.md) |
+| P01 | `done` | 전투 엔진의 탄약 재계산, 화면 문구, 보상 경로 검증 및 CI 잔여 시나리오 수정 | [P01](../phases/2026-10-27-reward-candy-ammo-growth/P01-ammo/phase.md) |
 
 ## Decision
 
