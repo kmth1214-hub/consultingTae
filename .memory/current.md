@@ -1,16 +1,16 @@
 # Current Context
 
 ## Active Plan
-[2026-10-26-off-map-overdraw](./plans/2026-10-26-off-map-overdraw.md)
+[2026-10-27-azure-production-deployment](./plans/2026-10-27-azure-production-deployment.md)
 
 ## Active Phase
-[P01-flight](./phases/2026-10-26-off-map-overdraw/P01-flight/phase.md)
+[P01-release](./phases/2026-10-27-azure-production-deployment/P01-release/phase.md)
 
 ## Active Task
-[T01-overdraw-flight](./phases/2026-10-26-off-map-overdraw/P01-flight/T01-overdraw-flight.md)
+[T02-azure-live-deployment](./phases/2026-10-27-azure-production-deployment/P01-release/T02-azure-live-deployment.md)
 
 ## Status
-14개 Task 구현·검증·한국어 커밋 완료. 다음 구현 Task 없음.
+기존 게임 14개 Task 완료. Azure T01 workflow 통합·검증 완료, T02 실제 설정 연결·배포 검증 진행.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -35,7 +35,7 @@
 http://127.0.0.1:4182/ (게임), http://127.0.0.1:4182/__dev/maps (관리자). 기존 개발 서버 유지.
 
 ## Next Step
-추가 구현/대기 커밋 없음. 요청 시 배포 진행. 이번 요청은 로컬 커밋이며 원격 push는 실행하지 않음.
+T02에서 Azure/GitHub 연결 설정과 스토리지 키 교체 승인을 마무리한 뒤 main을 push하고 실제 배포·인증·리더보드 동작을 확인한다.
 
 ## Commit Validation
 - 14개 Task를 청사진의 한국어 메시지와 Plan/Phase/Task 헤더로 각각 커밋했다.

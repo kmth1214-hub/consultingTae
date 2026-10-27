@@ -82,17 +82,17 @@ jobs:
 
       - name: Require deployment token without printing it
         env:
-          SWA_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          SWA_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN || secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_CALM_FLOWER_0764F6D00 }}
         run: |
           if [ -z "$SWA_TOKEN" ]; then
-            echo 'Set the AZURE_STATIC_WEB_APPS_API_TOKEN repository secret before enabling Azure deployment.'
+            echo 'Set AZURE_STATIC_WEB_APPS_API_TOKEN or the existing Azure portal deployment secret before enabling Azure deployment.'
             exit 1
           fi
 
       - name: Deploy static site and managed API
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN || secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_CALM_FLOWER_0764F6D00 }}
           action: upload
           app_location: dist
           api_location: api
