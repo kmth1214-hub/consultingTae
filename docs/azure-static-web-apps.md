@@ -4,9 +4,9 @@
 
 ## 리소스 생성 대상
 
-기존 리소스 그룹 **`grill-me-edu`**를 사용합니다. 아래 이름은 생성 시 사용할 제안이며, 실제 Azure 리소스가 생성된 상태를 뜻하지 않습니다.
+기존 리소스 그룹 **`grill-me-edu`**를 사용합니다. 아래 구성은 2026-10-27에 생성 상태를 확인했습니다. 이후 재구축할 때도 같은 구성을 기준으로 합니다.
 
-| 항목 | 제안 이름 | 생성 위치 및 설정 |
+| 항목 | 확인된 이름 | 생성 위치 및 설정 |
 | --- | --- | --- |
 | Static Web App | `swa-cookie-expedition` | 리소스 그룹 `grill-me-edu`, Standard 플랜 |
 | Storage Account | `stcookieexpedition26` | 리소스 그룹 `grill-me-edu`, 일반용 v2·Standard·LRS |
@@ -38,8 +38,17 @@ Storage Account 이름은 전역에서 고유해야 하므로 이미 사용 중�
 - 스토리지 및 테이블: `stcookieexpedition26` / `LeaderboardRecords` 존재 확인.
 - 로그인 앱: `cookie-expedition-login`, 단일 테넌트, 실제 사이트의 Web callback 등록 확인.
 - 로그인용 클라이언트 비밀 만료일: **2027-04-25**. 만료 전에 Entra에서 새 값을 생성하고 Azure의 `ENTRA_CLIENT_SECRET`을 갱신합니다.
+- API는 key2 연결 문자열을 사용합니다. 확인 중 출력된 기존 key1은 사용자 승인 후 2026-10-27에 교체해 무효화했습니다.
 - Azure 포털에서 자동으로 생성한 별도 workflow는 기존 검증 workflow로 통합합니다. 배포 확인은 저장소의 `Azure Static Web Apps` Actions 실행을 기준으로 합니다.
-- 위 리소스 생성 확인과 실제 배포·인증·리더보드 검증 완료는 별개입니다. 최종 배포 결과는 실배포 Task에 기록합니다.
+- 인증 설정은 Entra `name` claim을 사용자 표시 이름으로 선택합니다. 기존 세션에는 이전 표시 이름이 남을 수 있어 설정 변경 후 다시 로그인해야 합니다. 리더보드에는 이메일 주소를 표시하지 않습니다.
+- 2026-10-27의 [배포 실행](https://github.com/kmth1214-hub/consultingTae/actions/runs/40446570436)에서 단위·API, 본편·관리자 브라우저 검증과 Azure 업로드가 성공했습니다. 새 배포에서 익명 게임·API·정적 파일 요청은 회사 로그인으로 이동하는 것을 확인했습니다. 실제 회사 계정의 재로그인 후 비이메일 표시 이름과 리더보드 API의 정상 빈 결과를 확인했고, 게임 화면도 빈 순위표를 표시했습니다. 실제 플레이 기록 저장과 다른 테넌트 계정의 거부는 아직 검증하지 않았습니다.
+
+## 운영 시 갱신할 설정
+
+- GitHub `main`에 push하면 단위·API, 게임 브라우저, 맵 스튜디오 검증을 통과한 산출물을 배포합니다. 실제 사이트는 위의 Azure 주소를 사용합니다.
+- `ENTRA_CLIENT_SECRET` 만료 전(2027-04-25)에 새 비밀을 생성해 SWA production 환경 변수에 갱신합니다. GitHub나 React 환경 변수에는 넣지 않습니다.
+- Storage 키를 교체할 때 현재 API가 쓰는 키와 다른 키부터 교체하고, 새 연결 문자열을 저장한 뒤 실제 리더보드 조회를 확인합니다.
+- 맵 스튜디오 `/__dev/maps`는 개발 서버 전용입니다. Azure 배포에는 사용자 게임과 리더보드가 포함됩니다.
 
 ## 접근 제어 확인
 
