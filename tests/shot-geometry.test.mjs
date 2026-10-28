@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BattleEngine } from '../src/game/battleEngine.js';
 import { BATTLEFIELD, buildBattlefield, getDragDraw, getLaunchSpeed } from '../src/game/battlefieldModel.js';
+import { buildPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
 import { getPull, getBallisticPath, getHomingPath, sampleAtDistance, pathPrefixD,
   appendGroundRoll, findObstacleContact, planShot } from '../src/game/shotGeometry.js';
 
@@ -13,6 +14,21 @@ const box = (id, x, y, w, h) => ({ id, polygon: [{ x, y }, { x: x + w, y },
   { x: x + w, y: y + h }, { x, y: y + h }] });
 const circle = (id, p, radius = 10) => ({ id, collider: { id, x: p.x, y: p.y, radius } });
 const living = ids => ids.map(id => ({ id, alive: true, hp: 4 }));
+
+test('elevated launcher pulls start at its actual pouch and the supported target remains hittable', () => {
+  const enemies = BattleEngine.createRoundEnemies('forest', 2, { rng: () => .5 });
+  const layout = buildPlayableBattlefield({ area: 'forest', round: 2, enemies,
+    seed: 0, prototype: 'forest-elevated-v1' });
+  assert.ok(layout.launcherPlatform);
+  const pull = pullAt(45, .5), draw = getDragDraw(pull);
+  const shot = planShot({ layout, pull, enemies });
+  assert.ok(shot);
+  assert.equal(shot.path.start.x, layout.launcher.x + draw.pouch.x);
+  assert.equal(shot.path.start.y, layout.launcher.y + draw.pouch.y);
+  const rider = layout.enemies.find(slot => slot.supportObstacleId);
+  assert.ok(rider.collider.y < layout.groundY - rider.size * .52);
+  assert.ok(layout.obstacles.some(prop => prop.id === rider.supportObstacleId));
+});
 const physicalStack = (id, x, kind = 'log') => ({ ...box(id, x, 744, 80, 156),
   kind, x, y: 744, width: 80, height: 156 });
 function line(a, b) {

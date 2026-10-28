@@ -17,11 +17,14 @@ export function getLaunchSpeed(powerRatio) {
 
 const SHAPES = {
   log: [[0, .30], [.85, .18], [1, .30], [.96, .88], [.15, 1], [0, .9]],
+  supportedLog: [[0, .08], [.08, 0], [.92, 0], [1, .08], [.96, .88], [.14, 1], [.02, .9]],
   ice: [[0, 1], [.18, .25], [.62, 0], [1, 1]],
   crate: [[0, .15], [.45, 0], [1, .18], [1, .85], [.52, 1], [0, .82]],
 };
 const THEMES = { forest: 'log', snow: 'ice', city: 'crate' };
 const STACK_WIDTH = 80;
+const FOREST_PROTOTYPE = 'forest-elevated-v1';
+const SUPPORT_HEIGHTS = { low: 132, medium: 184, high: 236 };
 
 function randomFromSeed(seed) {
   let value = seed >>> 0;
@@ -38,9 +41,11 @@ function subtract(intervals, low, high) {
     : [[a, Math.min(b, low)], [Math.max(a, high), b]].filter(([x, y]) => y > x));
 }
 
-export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhase = null } = {}) {
+export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhase = null, prototype = null } = {}) {
   if (!['forest', 'snow', 'city', 'chaos'].includes(area) || !Number.isFinite(round)
-    || !Array.isArray(enemies) || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) {
+    || !Array.isArray(enemies) || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff
+    || (prototype !== null && (prototype !== FOREST_PROTOTYPE || area !== 'forest'
+      || !Number.isInteger(round) || round < 1 || round > 3))) {
     throw new TypeError('Invalid battlefield configuration');
   }
   const ids = new Set();
@@ -50,6 +55,10 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
       throw new TypeError('Enemy slots need unique ids, kinds and boss flags');
     }
     ids.add(enemy.id);
+  }
+  if (prototype === FOREST_PROTOTYPE && round === 2
+    && (enemies.length !== 2 || enemies.some(enemy => enemy.isBoss))) {
+    throw new TypeError('Elevated forest round needs two regular enemies');
   }
   const random = randomFromSeed(seed);
   const placements = enemies.map(({ id, kind, isBoss }, i) => {
@@ -87,14 +96,41 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
       polygon: SHAPES[kind].map(([u, v]) => ({ x: x + u * STACK_WIDTH, y: y + v * height })) });
     centers = subtract(centers, center - 145, center + 145);
   }
+  let launcherPlatform = null;
+  let lift = 0;
+  if (prototype === FOREST_PROTOTYPE) {
+    if (round === 2) {
+      const rider = placements[Math.floor(random() * 2)];
+      const elevation = ['low', 'medium', 'high'][Math.floor(random() * 3)];
+      const width = 128, height = SUPPORT_HEIGHTS[elevation];
+      const x = rider.x - width / 2, y = BATTLEFIELD.groundY - height;
+      const support = { id: 'forest-2-support-0', kind: 'log', x, y, width, height,
+        supportsEnemyId: rider.id, elevation,
+        polygon: SHAPES.supportedLog.map(([u, v]) => ({ x: x + u * width, y: y + v * height })) };
+      // Existing free intervals already keep ordinary stacks away from both enemies.
+      // Reserve the support's full footprint without moving the ground enemy.
+      const retained = obstacles.filter(item => item.x + item.width + 28 < x || item.x > x + width + 28);
+      obstacles.splice(0, obstacles.length, support, ...retained.slice(0, 3));
+      rider.y = y;
+      rider.groundY = BATTLEFIELD.groundY;
+      rider.supportObstacleId = support.id;
+      rider.elevation = elevation;
+      rider.collider = { ...rider.collider, y: y - rider.size * .52 };
+    }
+    if (round >= 2 && random() < .5) {
+      lift = 80;
+      launcherPlatform = { x: 28, y: BATTLEFIELD.groundY - lift, width: 330, height: lift };
+    }
+  }
   return { ...BATTLEFIELD, encounterPhase, key: JSON.stringify([area, round, seed, encounterPhase,
-    enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss])]), area, round,
+    enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss]), ...(prototype ? [prototype] : [])]), area, round,
+  ...(prototype ? { prototype, launcherPlatform } : {}),
   // Presentation-only cookie bounds and canonical incoming-attack anchor.
-  player: { x: 44, y: 748, width: 152, height: 152,
-    impact: { x: 120, y: 824 }, contact: { x: 170, y: 900 } },
+  player: { x: 44, y: 748 - lift, width: 152, height: 152,
+    impact: { x: 120, y: 824 - lift }, contact: { x: 170, y: 900 - lift } },
   // restPouch is LOCAL to the sprite; impact/contact are WORLD coordinates.
-  launcher: { x: 220, y: 758, width: 124, height: 142, restPouch: { x: 64, y: 54 },
-    impact: { x: 284, y: 823 }, contact: { x: 319, y: 900 } },
+  launcher: { x: 220, y: 758 - lift, width: 124, height: 142, restPouch: { x: 64, y: 54 },
+    impact: { x: 284, y: 823 - lift }, contact: { x: 319, y: 900 - lift } },
   enemies: placements, obstacles };
 }
 

@@ -1,16 +1,26 @@
-# Current Context
+﻿# Current Context
 
 ## Active Plan
-없음. [2026-10-27-reward-candy-ammo-growth](./plans/2026-10-27-reward-candy-ammo-growth.md) 완료.
+
+[숲 고저차 몬스터와 기본 사탕 능력 관리자 시범판](./plans/2026-10-28-forest-elevated-enemies-candy-abilities.md)
 
 ## Active Phase
-없음. [P01-ammo](./phases/2026-10-27-reward-candy-ammo-growth/P01-ammo/phase.md) 완료.
+
+[P01 전투 시뮬레이션](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/phase.md)
 
 ## Active Task
-없음. [T02-ci-shot-integrity-ammo](./phases/2026-10-27-reward-candy-ammo-growth/P01-ammo/T02-ci-shot-integrity-ammo.md) 완료.
+
+[T02 받침 위 몬스터 낙하와 실충돌](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/T02-rider-fall-physics.md)
 
 ## Status
-보상으로 사탕을 추가 보유해도 다음 라운드의 탄약이 9개에 고정되는 문제를 수정했다. 새 사탕을 별도로 획득할 때마다 다음 라운드부터 1발씩 늘고 합성은 탄약을 늘리지 않는다. 첫 원격 브라우저 검증 164개 중 남은 고정 9발 기대값 1개를 T02에서 고쳤고, 로컬 해당 시나리오와 단위·API 테스트 205개를 통과했다. 원격 재검증은 배포 파이프라인에서 확인한다.
+
+- P01-T01 구현과 배치·궤적 25개, 관리자 세션 6개 테스트 및 Vite 빌드 완료.
+- 개발 전용 관리자 숲 시범판. 사용자 게임과 Azure 배포는 이번 계획 범위 밖.
+- 순서: P01-T01 → P01-T02 → P01-T03 → P01-T04 → P02-T01.
+
+## Next Step
+
+T02 청사진을 읽고 통나무 받침 위 몬스터의 낙하 경로, 움직이는 충돌 판정, 착지 피해와 점수 정산을 구현한다.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -31,18 +41,13 @@
 - 6f840fd — [2026-10-27-azure-production-deployment / T03-ci-regression-stability](./phases/2026-10-27-azure-production-deployment/P01-release/T03-ci-regression-stability.md)
 - 71729df — [2026-10-27-azure-production-deployment / T04-entra-display-name-claim](./phases/2026-10-27-azure-production-deployment/P01-release/T04-entra-display-name-claim.md)
 
+
 ## Pending commits
-없음. 임시 파일·캐시·기존 사용자 HTML 수정은 제외.
 
-## Review URL
-https://calm-flower-0764f6d00.3.azurestaticapps.net/ (회사 로그인 게임). 개발 화면은 기존 `http://127.0.0.1:4182/` 서버에서 유지.
+- 이 계획의 5개 Task는 아직 구현·커밋 전이다.
+- 기존 사용자 HTML 수정·캐시·사이트 임시 파일은 이번 계획 범위 밖이다.
 
-## Next Step
-후속 작업 포인터 없음. GitHub Actions 전체 검증과 Azure 업로드 결과를 확인한다.
+## Local review
 
-## Commit Validation
-- 14개 Task를 청사진의 한국어 메시지와 Plan/Phase/Task 헤더로 각각 커밋했다.
-- 각 Task에 포함되는 파일만 별도 작업 복사본으로 구성해 단위 테스트와 빌드를 검증했다. Azure T04 포함 최종 단위·API 204/204 통과.
-- 최종 번들 App-SZs6Nq5m.js / index-DSxHee0E.js / App-BMA6-2ll.css는 기존 검토 화면의 빌드와 동일하다.
-- 커밋 경계의 융합 보스 일반 브라우저 6개도 추가 재검증 통과. 직전 일반26/관리자13 검증 기록과 함께 보관한다.
-- 실제 게임 소스와 테스트는 모두 커밋된 최종 상태와 일치한다. 기존 사용자 목업 HTML 수정 및 무관한 임시·캐시·사이트 파일은 제외했다.
+- 개발 서버 전용: http://127.0.0.1:5173/__dev/maps
+- 관리자 시범판 검토 후 사용자 게임·Azure 승격은 별도 작업.

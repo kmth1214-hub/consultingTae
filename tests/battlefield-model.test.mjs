@@ -65,6 +65,63 @@ test('distinct round seeds change positions without changing enemy identity', ()
   assert.notEqual(first.key, second.key);
 });
 
+test('studio-only Forest elevation keeps one rider on a reachable support and moves both launch anchors together', () => {
+  const heights = new Set(), launchHeights = new Set();
+  for (const round of [1, 2, 3]) for (const seed of [0, 1, 3, 4, 15, 4927]) {
+    const enemies = BattleEngine.createRoundEnemies('forest', round, { rng: () => .5 });
+    const input = { area: 'forest', round, enemies, seed };
+    const baseline = buildPlayableBattlefield(input);
+    assert.equal('prototype' in baseline, false);
+    assert.equal('launcherPlatform' in baseline, false);
+    const copy = structuredClone(enemies);
+    const layout = buildPlayableBattlefield({ ...input, prototype: 'forest-elevated-v1' });
+    assert.deepEqual(enemies, copy);
+    assert.deepEqual(buildPlayableBattlefield({ ...input, prototype: 'forest-elevated-v1' }), layout);
+    assert.deepEqual(buildPlayableBattlefield(input), baseline);
+    assert.notEqual(layout.key, baseline.key);
+    assert.ok(isPlayableBattlefield(layout, enemies));
+    const riders = layout.enemies.filter(enemy => enemy.supportObstacleId);
+    const supports = layout.obstacles.filter(obstacle => obstacle.supportsEnemyId);
+    assert.equal(riders.length, round === 2 ? 1 : 0);
+    assert.equal(supports.length, round === 2 ? 1 : 0);
+    if (round === 2) {
+      const rider = riders[0], support = supports[0];
+      heights.add(support.elevation);
+      assert.equal(support.supportsEnemyId, rider.id);
+      assert.equal(rider.supportObstacleId, support.id);
+      assert.equal(rider.y, support.y);
+      assert.equal(rider.groundY, BATTLEFIELD.groundY);
+      assert.equal(rider.collider.y, rider.y - rider.size * .52);
+      assert.ok(support.width >= rider.size);
+      assert.equal(layout.enemies.find(enemy => enemy.id !== rider.id).y, 900);
+      assert.ok(!layout.obstacles.some(obstacle => obstacle.id === support.id && obstacle.kind !== 'log'));
+    } else assert.ok(layout.enemies.every(enemy => enemy.y === 900));
+    if (round === 1) assert.equal(layout.launcherPlatform, null);
+    const lift = layout.launcherPlatform?.height ?? 0;
+    launchHeights.add(lift);
+    assert.equal(layout.player.y, baseline.player.y - lift);
+    assert.equal(layout.launcher.y, baseline.launcher.y - lift);
+    assert.equal(layout.player.impact.y, baseline.player.impact.y - lift);
+    assert.equal(layout.launcher.impact.y, baseline.launcher.impact.y - lift);
+    assert.equal(layout.player.contact.y, baseline.player.contact.y - lift);
+    assert.equal(layout.launcher.contact.y, baseline.launcher.contact.y - lift);
+    assert.deepEqual(layout.launcher.restPouch, baseline.launcher.restPouch);
+    assert.equal(layout.obstacles.includes(layout.launcherPlatform), false);
+  }
+  assert.deepEqual([...heights].sort(), ['high', 'low', 'medium']);
+  assert.deepEqual([...launchHeights].sort((a, b) => a - b), [0, 80]);
+});
+
+test('elevated Forest configuration rejects other regions, invalid flags, and an incomplete rider roster', () => {
+  const enemies = BattleEngine.createRoundEnemies('forest', 2);
+  for (const invalid of [
+    { area: 'snow', round: 2, enemies, prototype: 'forest-elevated-v1' },
+    { area: 'forest', round: 2, enemies, prototype: 'invalid' },
+    { area: 'forest', round: 2, enemies: enemies.slice(0, 1), prototype: 'forest-elevated-v1' },
+    { area: 'forest', round: 2, enemies: enemies.map(enemy => ({ ...enemy, isBoss: true })), prototype: 'forest-elevated-v1' },
+  ]) assert.throws(() => buildBattlefield(invalid), TypeError);
+});
+
 test('each Forest seed has a real non-overlapping log hit opportunity, stable across rerenders', () => {
   for (const round of [1, 2, 3]) for (const seed of [0, 1, 13, 4927, 999999]) {
     const enemies = BattleEngine.createRoundEnemies('forest', round);
