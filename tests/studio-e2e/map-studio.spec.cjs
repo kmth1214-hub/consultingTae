@@ -57,6 +57,31 @@ test('all four studio regions preview the enlarged bodies and reuse them in play
   }
 });
 
+test('narrow studio opens near the launcher with readable enemies and offers a true full-map reset', async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 700 });
+  await page.goto('/__dev/maps');
+  await page.getByLabel('지역 선택').selectOption('city');
+  await page.getByLabel('테스트 라운드').selectOption('2');
+  await expect(page.getByLabel('확대 비율')).toHaveValue('2');
+  const viewport = page.locator('.studio-viewport');
+  const sizes = await viewport.evaluate(node => {
+    const view = node.getBoundingClientRect();
+    const enemy = node.querySelector('.monster');
+    const cookie = node.querySelector('.player-cookie').getBoundingClientRect();
+    return { monsterWidth: enemy.getBoundingClientRect().width,
+      healthVisibility: getComputedStyle(enemy.querySelector('.monster-health')).visibility,
+      cookieVisible: cookie.right > view.left && cookie.left < view.right };
+  });
+  expect(sizes.monsterWidth).toBeGreaterThanOrEqual(30);
+  expect(sizes.healthVisibility).toBe('hidden');
+  expect(sizes.cookieVisible).toBe(true);
+  await page.getByRole('button', { name: '전체 영역 보기' }).click();
+  await expect(page.getByLabel('확대 비율')).toHaveValue('1');
+  await viewport.focus();
+  await page.keyboard.press('Home');
+  await expect(page.getByLabel('확대 비율')).toHaveValue('2');
+});
+
 test('Snow and City studio preview and play use the same detailed monster art', async ({ page }) => {
   await page.goto('/__dev/maps');
   for (const [area, regular, boss] of [
@@ -162,13 +187,13 @@ test('pan, wheel zoom, cursor anchor, reset and keyboard navigation use one stud
   const anchoredBefore = await worldPoint();
   await page.mouse.move(bounds.x + point.x, bounds.y + point.y);
   await page.mouse.wheel(0, -450);
-  await expect.poll(() => page.getByLabel('확대 비율').inputValue()).not.toBe('1');
+  await expect.poll(() => page.getByLabel('확대 비율').inputValue()).not.toBe('2');
   const anchoredAfter = await worldPoint();
   expect(Math.abs(anchoredAfter.x - anchoredBefore.x)).toBeLessThan(2);
   expect(Math.abs(anchoredAfter.y - anchoredBefore.y)).toBeLessThan(2);
 
   await page.keyboard.press('Home');
-  await expect(page.getByLabel('확대 비율')).toHaveValue('1');
+  await expect(page.getByLabel('확대 비율')).toHaveValue('2');
   const reset = await world.evaluate(node => node.style.transform);
   await page.keyboard.press('ArrowRight');
   await expect.poll(() => world.evaluate(node => node.style.transform)).not.toBe(reset);
@@ -183,13 +208,13 @@ test('region changes preserve review preferences, reset the camera, cancel captu
   const pause = page.locator('.studio-pause');
   await pause.click();
   await page.locator('.studio-zoom-buttons button').first().click();
-  await expect(page.locator('input[type="range"]')).toHaveValue('1.3');
+  await expect(page.locator('input[type="range"]')).toHaveValue('2.3');
   const bounds = await preview.boundingBox();
   await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
   await page.mouse.down();
   await expect.poll(() => preview.evaluate(node => node.hasPointerCapture(1))).toBe(true);
   await page.locator('.studio-field select').selectOption('snow');
-  await expect(page.locator('input[type="range"]')).toHaveValue('1');
+  await expect(page.locator('input[type="range"]')).toHaveValue('2');
   await expect(preview.locator('[data-scene-layer="route"]')).toBeHidden();
   await expect(pause).toHaveAttribute('aria-pressed', 'true');
   expect(await preview.evaluate(node => node.hasPointerCapture(1))).toBe(false);

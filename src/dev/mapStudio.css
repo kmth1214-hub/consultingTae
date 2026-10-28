@@ -57,6 +57,7 @@
 .studio-viewport .scene-scenery { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; }
 .studio-preview-actors { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
 .studio-preview-actors * { pointer-events: none !important; }
+.studio-preview-actors .monster-health, .studio-preview-actors .boss-health { visibility: hidden; }
 .studio-seed { display: block; color: #4f6b53; font-size: .7rem; font-variant-numeric: tabular-nums; }
 .studio-controls button:disabled { opacity: .45; cursor: not-allowed; }
 .studio-map-label { position: absolute; z-index: 8; right: 10px; bottom: 9px; padding: 5px 9px; border: 1px solid #fff7db; border-radius: 8px; background: #fffdf2e8; color: #5b4d3a; font-size: .7rem; font-weight: 750; pointer-events: none; }

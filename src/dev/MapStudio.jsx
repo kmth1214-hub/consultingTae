@@ -14,7 +14,8 @@ import '../styles/arena.css';
 const AREA_NAMES = { forest: '숲', snow: '눈', city: '도시', chaos: '혼돈' };
 const LAYER_NAMES = { sky: '하늘', distant: '원경', midground: '중경', route: '길', foreground: '전경' };
 const LAYER_KEYS = Object.keys(LAYER_NAMES);
-const RESET_CAMERA = { zoom: 1, center: { x: 1800, y: 600 } };
+const RESET_CAMERA = { zoom: 2, center: { x: 900, y: 600 } };
+const FULL_CAMERA = { zoom: 1, center: { x: 1800, y: 600 } };
 const StudioPlay = lazy(() => import('./StudioPlay.jsx'));
 const randomSeed = previous => {
   const next = globalThis.crypto?.getRandomValues
@@ -159,7 +160,7 @@ export default function MapStudio() {
           <div className="studio-zoom-buttons">
             <button type="button" aria-label="확대" onClick={() => setZoom(camera.zoom + .25)}>＋</button>
             <button type="button" aria-label="축소" onClick={() => setZoom(camera.zoom - .25)}>−</button>
-            <button type="button" aria-label="전체 영역 보기" onClick={() => { cancelDrag(); setCamera(RESET_CAMERA); }}>전체 보기</button>
+            <button type="button" aria-label="전체 영역 보기" onClick={() => { cancelDrag(); setCamera(FULL_CAMERA); }}>전체 보기</button>
           </div>
           <label className="sr-only" htmlFor="studio-zoom-range">확대 비율</label>
           <input id="studio-zoom-range" type="range" min="1" max="6" step="0.1" value={camera.zoom}
