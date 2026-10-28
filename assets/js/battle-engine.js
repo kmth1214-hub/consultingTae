@@ -27,6 +27,9 @@
     'oven-snow-boar': Object.freeze(['boar', 'snowball']),
     'jelly-cloud-robot': Object.freeze(['washing-robot', 'snowball'])
   });
+  const CHAOS_FUSION_DISRUPTIONS = Object.freeze({
+    'frost-gear-snake': 'pull', 'oven-snow-boar': 'preview', 'jelly-cloud-robot': 'roll'
+  });
   const WEAPON_CATALOG = Object.freeze([
     { id:'adventurer-candy',name:'모험가의 마법사탕',grade:'C',effect:'세 번째 영구 무기 명중마다 점수 +10' },
     { id:'alchemist-candy',name:'연금술사의 마법사탕',grade:'C',effect:'소모품 사용마다 점수 +10' },
@@ -175,6 +178,8 @@
       spearArmed: false,
       nextAttackDamageMultiplier: null,
       pendingAimInversion: false,
+      ...(config.studioMonsterPrototype === 'regional-monsters-v1'
+        ? { pendingAimDisruption: null } : {}),
       toppledObstacleIds: [], forestLogDebris: [], obstacleDebris: []
     };
     refillWeaponQueue(state,config.rng);
@@ -289,6 +294,7 @@
     if (state.studioPrototype === 'forest-elevated-v1') state.enemyLandingPositions = {};
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
     state.consumableUsedSinceShot=false;
+    if (state.studioMonsterPrototype === 'regional-monsters-v1') state.pendingAimDisruption = null;
     state.spearArmed=false;
     state.rewardChoices=null;state.selectedRewards={weapon:null,consumable:null};
     if(AREAS.indexOf(state.area)>AREAS.indexOf(state.furthestArea))state.furthestArea=state.area;
@@ -471,6 +477,10 @@
     }
     const event = applyIncomingDamage(state, { enemyId: enemy.id, kind: enemy.kind, attackKind, fusionAttack,
       special, attemptedSpecial: special }, sourceRng, minDamage, maxDamage, enemy.isBoss);
+    if (studioFusion && fusionAttack === 'disrupt' && !event.blocked && event.damage > 0) {
+      event.aimDisruption = CHAOS_FUSION_DISRUPTIONS[enemy.kind];
+      state.pendingAimDisruption = event.aimDisruption;
+    }
     if (!event.blocked && special === 'frozen-breath') {
       state.consumablesBlockedTurns = 1;
       state.consumablesBlocked = true;
@@ -669,6 +679,8 @@
     };
     // Consume a previously armed inversion before contacts; a new Chaos topple may arm the next shot.
     if (permanent && config.aimInversionApplied) state.pendingAimInversion = false;
+    if (state.studioMonsterPrototype === 'regional-monsters-v1'
+      && state.area === 'chaos' && state.round < 3) state.pendingAimDisruption = null;
     if (!hasContactStream) applyDirectHits();
     const obstacleEffects = [];
     const timeline = [];

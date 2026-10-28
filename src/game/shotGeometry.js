@@ -324,11 +324,12 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
   return findObstacleContact(path, obstacles, layout.candyRadius) ? null : path;
 }
 
-function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false, abilityKind = null }) {
+function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false,
+  abilityKind = null, previewFraction = .30, maxRollDiameters = BATTLEFIELD.maxRollDiameters }) {
   const initialSpeed = getLaunchSpeed(powerRatio);
   let velocity = { x: direction.x * initialSpeed, y: direction.y * initialSpeed };
   let position = start, rolling = false;
-  let rollBudget = layout.candyRadius * 2 * BATTLEFIELD.maxRollDiameters;
+  let rollBudget = layout.candyRadius * 2 * maxRollDiameters;
   let rollDistance = 0, rollStartDistance = null;
   let elapsed = 0, traveled = 0;
   let samples = [{ ...start, time: 0 }];
@@ -513,7 +514,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     obstacleId: first?.obstacleId ?? null, obstacleKind: first?.obstacleKind ?? null,
     obstacleTargetIds: first?.obstacleTargetIds ?? [], contacts,
     rollStartDistance, rollDistance, blockerDistance: firstContactDistance,
-    previewD: pathPrefixD(path, Math.min(.30 * path.length, firstContactDistance ?? Infinity)),
+    previewD: pathPrefixD(path, Math.min(previewFraction * path.length, firstContactDistance ?? Infinity)),
     reverse: direction.x < 0, directHitTime: path.durationSeconds, simulationSeconds,
     ...(abilityKind ? { abilityKind, ...(bounce ? { bounce } : {}),
       ...(abilityContacts.length ? { abilityContacts } : {}) } : {}),
@@ -572,13 +573,27 @@ function withWizardSplit(solution, { layout, start, direction, powerRatio, livin
     simulationSeconds, durationMs: clamp(simulationSeconds * 1000, 420, 4500) };
 }
 
+export function shotDisruptionOptions(run) {
+  const active = run?.studioMonsterPrototype === 'regional-monsters-v1'
+    && run.area === 'chaos' && run.round < 3 ? run.pendingAimDisruption : null;
+  return { maxPowerRatio: active === 'pull' ? .85 : 1,
+    previewFraction: active === 'preview' ? .15 : .30,
+    maxRollDiameters: active === 'roll' ? 3 : BATTLEFIELD.maxRollDiameters };
+}
+
 export function planShot({ layout, pull, enemies, windAvailable = false,
-  toppledObstacleIds = [], piercing = false, loadedCandyId = null, prototype = null } = {}) {
+  toppledObstacleIds = [], piercing = false, loadedCandyId = null, prototype = null,
+  maxPowerRatio = 1, previewFraction = .30,
+  maxRollDiameters = BATTLEFIELD.maxRollDiameters } = {}) {
   if (!validLayout(layout) || !validObstacles(layout.obstacles)
     || !Array.isArray(layout.enemies) || !layout.enemies.every(e => validCircle(e?.collider))
     || !point(layout.launcher) || !Array.isArray(enemies) || !pull?.ready
     || !unit(pull.direction) || !Number.isFinite(pull.powerRatio)
+    || !Number.isFinite(maxPowerRatio) || maxPowerRatio <= 0 || maxPowerRatio > 1
+    || !Number.isFinite(previewFraction) || previewFraction < 0 || previewFraction > 1
+    || !Number.isFinite(maxRollDiameters) || maxRollDiameters < 0
     || !Array.isArray(toppledObstacleIds)) return null;
+  pull = { ...pull, powerRatio: Math.min(pull.powerRatio, maxPowerRatio) };
   const activeLayout = { ...layout, obstacles: layout.obstacles.filter(item =>
     !toppledObstacleIds.includes(item.id)) };
   const abilityKind = prototype === 'forest-elevated-v1' && layout.area === 'forest' && !piercing
@@ -602,7 +617,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   }
   if (!target && (activeLayout.obstacles.some(item => item.kind) || abilityKind)) {
     const solution = planStackedShot({ layout: activeLayout, start, direction,
-      powerRatio: pull.powerRatio, living, piercing, abilityKind });
+      powerRatio: pull.powerRatio, living, piercing, abilityKind, previewFraction, maxRollDiameters });
     return abilityKind === 'split' ? withWizardSplit(solution, { layout: activeLayout, start,
       direction, powerRatio: pull.powerRatio, living }) : solution;
   }
@@ -619,7 +634,8 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   // Only an unobstructed ballistic landing may continue into a ground roll.
   if (!target && path.kind === 'ballistic' && path.endKind === 'ground' && !barrier && (!first || piercing)) {
     const speed = getLaunchSpeed(pull.powerRatio);
-    const rolling = appendGroundRoll(path, direction.x * speed, layout);
+    const rolling = appendGroundRoll(path, direction.x * speed, layout,
+      layout.candyRadius * 2 * maxRollDiameters);
     path = rolling.path;
     rollDistance = rolling.rollDistance;
     rollStartDistance = rollDistance > 0 ? rolling.rollStartDistance : null;
@@ -648,7 +664,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     impactDistance, obstacleId: obstacleFirst ? barrier.id : null,
     obstacleKind: obstacle?.kind ?? null, obstacleTargetIds, rollStartDistance, rollDistance,
     blockerDistance: barrier?.distance ?? null, contacts: [],
-    previewD: pathPrefixD(path, Math.min(.30 * path.length, barrier?.distance ?? Infinity)),
+    previewD: pathPrefixD(path, Math.min(previewFraction * path.length, barrier?.distance ?? Infinity)),
     reverse: direction.x < 0,
     directHitTime: sampleUnchecked(path, impactDistance).time,
     simulationSeconds: sampleUnchecked(path, impactDistance).time,

@@ -63,3 +63,47 @@ test('user Chaos roster and fused boss retain their existing identities', () => 
   assert.equal(boss.enemies[0].kind, 'chaos-fused-boss');
   assert.equal(E.resolveEnemyTurn(boss, () => 0).fusionAttack, null);
 });
+
+test('a landed second fusion attack applies only its one-shot, non-stacking disruption', () => {
+  for (const [kind, disruption] of [
+    ['frost-gear-snake', 'pull'], ['oven-snow-boar', 'preview'], ['jelly-cloud-robot', 'roll']
+  ]) {
+    const state = E.createRunState({ area: 'chaos', round: 1, rng: () => 0,
+      inventory: { fireball: 1 }, studioMonsterPrototype: 'regional-monsters-v1' });
+    state.enemies = [state.enemies.find(enemy => enemy.kind === kind)];
+    const base = E.resolveEnemyTurn(state, () => 0);
+    assert.equal(base.aimDisruption, undefined);
+    assert.equal(state.pendingAimDisruption, null);
+    const disrupted = E.resolveEnemyTurn(state, () => 0);
+    assert.equal(disrupted.aimDisruption, disruption);
+    assert.equal(state.pendingAimDisruption, disruption);
+    const item = E.useConsumable(state, 'fireball', { rng: () => 0 });
+    assert.equal(item.accepted, true);
+    assert.equal(state.pendingAimDisruption, disruption);
+    const rejected = E.resolveProjectile({ ...state, terminal: 'defeat' }, { hitIds: [], damage: 1 });
+    assert.equal(rejected.accepted, false);
+    assert.equal(state.pendingAimDisruption, disruption);
+    state.enemies[0].attackCount = 0;
+    const fired = E.resolveProjectile(state, { hitIds: [], damage: 1, rng: () => 0 });
+    assert.equal(fired.accepted, true);
+    assert.equal(state.pendingAimDisruption, null);
+  }
+});
+
+test('misses, defense and zero damage never create disruption or replace an existing one', () => {
+  for (const mode of ['miss', 'defense', 'zero']) {
+    const state = E.createRunState({ area: 'chaos', round: 1, rng: () => 0,
+      inventory: {}, studioMonsterPrototype: 'regional-monsters-v1' });
+    state.enemies = [state.enemies.find(enemy => enemy.kind === 'frost-gear-snake')];
+    state.enemies[0].attackCount = 1;
+    state.pendingAimDisruption = 'roll';
+    if (mode === 'defense') state.defenseArmed = true;
+    if (mode === 'zero') state.nextAttackDamageMultiplier = .5;
+    const attack = E.resolveEnemyTurn(state, () => mode === 'miss' ? .99 : 0);
+    assert.equal(attack.aimDisruption, undefined);
+    assert.equal(state.pendingAimDisruption, 'roll');
+    assert.equal(attack.missed, mode === 'miss');
+    assert.equal(attack.blocked, mode === 'defense');
+    if (mode === 'zero') assert.equal(attack.damage, 0);
+  }
+});

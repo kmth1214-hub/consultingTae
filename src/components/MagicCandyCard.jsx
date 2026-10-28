@@ -1,11 +1,13 @@
 import React from 'react';
 import { getCandyDetails } from '../game/candyPresentation.js';
+import { AIM_DISRUPTION_LABELS } from '../game/gameData.js';
 
 export default function MagicCandyCard({ run, hidden }) {
   const details = getCandyDetails(run);
   if (!details || hidden) return null;
   const { current, currentAbility, damage, next, buffs, passives } = details;
   const chips = [run.spearArmed && '창 · 최대 3마리 관통', run.fireballArmed && '불공 ×2', run.pendingAimInversion && '조작 반전',
+    run.studioMonsterPrototype === 'regional-monsters-v1' && AIM_DISRUPTION_LABELS[run.pendingAimDisruption],
     run.defenseArmed && '보호막', run.nextAttackDamageMultiplier === .5 && '적 피해 50%↓'].filter(Boolean);
   return <aside className="candy-hud hud-surface" aria-label="장전된 마법사탕">
     <div className="candy-card-top"><span className="candy-symbol" aria-hidden="true">✦</span><span className="candy-label">이번 사탕</span><span className="grade">{current.grade} 등급</span></div>

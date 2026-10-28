@@ -20,3 +20,9 @@ export const MONSTER_NAMES = Object.freeze({
   'frost-gear-snake': '서리 기어 뱀', 'oven-snow-boar': '화덕 눈멧돼지',
   'jelly-cloud-robot': '젤리 눈구름 로봇'
 });
+
+export const AIM_DISRUPTION_LABELS = Object.freeze({
+  pull: '다음 한 발 · 최대 당김 15% 감소',
+  preview: '다음 한 발 · 궤적 안내 30%→15%',
+  roll: '다음 한 발 · 굴림 최대 5→3배'
+});

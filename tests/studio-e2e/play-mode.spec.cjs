@@ -59,6 +59,50 @@ test('Chaos studio preview and play share the three painted fusion enemies', asy
   }
 });
 
+for (const [kind, disruption, label] of [
+  ['frost-gear-snake', 'pull', '최대 당김 15% 감소'],
+  ['oven-snow-boar', 'preview', '궤적 안내 30%→15%'],
+  ['jelly-cloud-robot', 'roll', '굴림 최대 5→3배']
+]) test(`${kind} landed disruption is shown for the next shot only`, async ({ page }) => {
+  const { createStudioScenario } = await import('../../src/dev/createStudioSession.js');
+  const enemy = createStudioScenario({ area: 'chaos', round: 1, seed: 0 })
+    .enemies.find(item => item.kind === kind);
+  await installGame(page, { stateOverride: { enemies: [{ ...enemy, attackCount: 1 }] } });
+  await enter(page, { area: 'chaos', round: 1 });
+  await dragPull(page, { angleDeg: -5, powerRatio: .08 }); await page.mouse.up();
+  await expect(page.getByTestId('enemy-attack')).toBeVisible({ timeout: 10000 });
+  const attack = (await snapshot(page)).lastEvent.enemyAttack;
+  expect(attack.fusionAttack).toBe('disrupt');
+  expect(attack.aimDisruption).toBe(disruption);
+  await phase(page, 'idle');
+  await expect(arena(page)).toHaveAttribute('data-aim-disruption', disruption);
+  await expect(page.locator('.battle-arena .candy-status-chips')).toContainText(label);
+  await page.screenshot({ path: `tmp/studio-chaos-${disruption}-hud.png` });
+  await dragPull(page, { angleDeg: 20, powerRatio: 1 });
+  if (disruption === 'pull') await expect(page.locator('.power-meter-fill')).toHaveAttribute('style', /height: 85%/);
+  await page.keyboard.press('Escape');
+  await phase(page, 'idle');
+  await expect(arena(page)).toHaveAttribute('data-aim-disruption', disruption);
+  await dragPull(page, { angleDeg: -5, powerRatio: .08 }); await page.mouse.up();
+  await phase(page, 'idle');
+  await expect(arena(page)).not.toHaveAttribute('data-aim-disruption');
+});
+
+test('defended fusion disruption leaves no aiming penalty', async ({ page }) => {
+  const { createStudioScenario } = await import('../../src/dev/createStudioSession.js');
+  const enemy = createStudioScenario({ area: 'chaos', round: 1, seed: 0 })
+    .enemies.find(item => item.kind === 'frost-gear-snake');
+  await installGame(page, { stateOverride: { enemies: [{ ...enemy, attackCount: 1 }], defenseArmed: true } });
+  await enter(page, { area: 'chaos', round: 1 });
+  await dragPull(page, { angleDeg: -5, powerRatio: .08 }); await page.mouse.up();
+  await expect(page.getByTestId('enemy-attack')).toBeVisible({ timeout: 10000 });
+  const attack = (await snapshot(page)).lastEvent.enemyAttack;
+  expect(attack.blocked).toBe(true);
+  expect(attack.aimDisruption).toBeUndefined();
+  await phase(page, 'idle');
+  await expect(arena(page)).not.toHaveAttribute('data-aim-disruption');
+});
+
 test('Forest studio shows the final candy impact before removing a defeated monster', async ({ page }) => {
   const target = await directForestShot(1);
   await installGame(page, { stateOverride: { enemies: target.enemies } });

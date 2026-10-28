@@ -12,7 +12,8 @@ import ProjectileFlight from './ProjectileFlight.jsx';
 import EnemyResponse, { EnemyResponseNotice, responseTravelMs } from './EnemyResponse.jsx';
 import BattlefieldMinimap from './BattlefieldMinimap.jsx';
 import { buildPlayableBattlefield } from '../game/battlefieldPlacement.js';
-import { planShot, sampleAtDistance } from '../game/shotGeometry.js';
+import { planShot, sampleAtDistance, shotDisruptionOptions } from '../game/shotGeometry.js';
+import { AIM_DISRUPTION_LABELS } from '../game/gameData.js';
 import { useAimController } from '../game/useAimController.js';
 import { useBattlefieldCamera } from '../game/useBattlefieldCamera.js';
 import { getChaosObstacleCues } from '../game/chaosObstacleFeedback.js';
@@ -66,6 +67,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     clearFlight(); setImpact(null);
   }, [activeSplit?.id]);
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
+    ...shotDisruptionOptions(run),
     prototype: run.studioPrototype ?? null,
     loadedCandyId: run.weapons.find(weapon => weapon.instanceId ===
       (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id ?? null,
@@ -93,6 +95,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     setFlight(shot);
   }
   const controller = useAimController({ arenaRef, ammo: run.ammo, invertDirection: run.pendingAimInversion,
+    maxPowerRatio: shotDisruptionOptions(run).maxPowerRatio,
     disabled: Boolean(run.terminal || enemyResponse || shotReview || bossTransition), onLaunch: startFlight, onCancel: clearFlight,
     onAimChange: state => {
       if (state.phase === 'dragging') { setImpact(null); setRetry(''); setVisualContacts([]); }
@@ -191,6 +194,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       data-roll-distance={flight?.rollDistance ?? lastImpact?.rollDistance ?? undefined}
       data-shot-rolling={flight ? undefined : lastImpact ? (lastImpact.rolling ? 'true' : 'false') : undefined}
       data-aim-inverted={run.pendingAimInversion ? 'true' : undefined}
+      data-aim-disruption={run.pendingAimDisruption || undefined}
       data-obstacle-effect={lastEvent?.obstacleEffect?.kind || undefined} aria-describedby="aim-instructions"
       onPointerDown={controller.onPointerDown} onPointerMove={controller.onPointerMove} onPointerUp={controller.onPointerUp}
       onPointerCancel={controller.onPointerCancel} onLostPointerCapture={controller.onLostPointerCapture}
@@ -273,12 +277,14 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           ? '착지 충격을 막았어요!' : `착지 충격 · 체력 −${activeSplit.split.shock.damage}${activeSplit.split.shock.damageReduction ? ' · 얼음 보호 50% 감소' : ''}`}</div>}
       <div className="arena-hud">
         <ConsumableTable run={hudRun} disabled={aiming || Boolean(enemyResponse || shotReview || bossTransition)} onConsumable={onConsumable} />
-        <MagicCandyCard run={hudRun} hidden={state.phase === 'launching' || Boolean(shotReview || bossTransition)} />
+        <MagicCandyCard run={hudRun} hidden={state.phase === 'launching' || Boolean(shotReview || bossTransition
+          || (run.studioMonsterPrototype === 'regional-monsters-v1' && enemyResponse))} />
       </div>
     </div>
     <p id="aim-instructions" className="aim-instructions" role="status" aria-live="polite">{shotReview
       ? '발사 결과 확인 중 · 잠시 후 다음 턴으로 이어집니다.' : activeSplit ? '보스 분리 중 · 착지가 끝나면 다시 조준할 수 있어요.' : enemyResponse
-      ? '적의 반격 중 · 쉴드는 적의 공격과 특수 효과를 막아줍니다.' : retry || (run.pendingAimInversion
+      ? '적의 반격 중 · 쉴드는 적의 공격과 특수 효과를 막아줍니다.' : retry || (run.pendingAimDisruption
+        ? `${AIM_DISRUPTION_LABELS[run.pendingAimDisruption]} · ${INSTRUCTIONS[state.phase]}` : run.pendingAimInversion
         ? state.phase === 'dragging' ? '혼돈의 역풍 · 드래그 방향이 양 축 모두 반대로 적용 중 · 놓으면 발사' : '혼돈의 역풍 · 다음 한 발 조작 반전'
         : INSTRUCTIONS[state.phase])}</p>
   </>;

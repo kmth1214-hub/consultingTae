@@ -9,12 +9,12 @@
 | Task | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
 | T01 | `done` | 눈·도시 일반/보스 5종 그림 생성과 관리자 전용 렌더링 | [T01](./T01-regional-art.md) |
-| T02 | `pending` | 혼돈 융합체 3종 그림·시드 명단·교대 공격 | [T02](./T02-chaos-fusions.md) |
-| T03 | `pending` | 방어 가능한 한 발 조준 교란·실제 탄도·HUD·통합 검증 | [T03](./T03-aim-disruptions.md) |
+| T02 | `done` | 혼돈 융합체 3종 그림·시드 명단·교대 공격 | [T02](./T02-chaos-fusions.md) |
+| T03 | `done` | 방어 가능한 한 발 조준 교란·실제 탄도·HUD·통합 검증 | [T03](./T03-aim-disruptions.md) |
 
 ## Progress
 
-- done: 1/3 (active: T02)
+- done: 3/3 (complete)
 
 ## Phase exit
 

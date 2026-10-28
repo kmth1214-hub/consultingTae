@@ -12,7 +12,7 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 지역 그림, 혼돈 적 명단·공격, 조준 교란 및 관리자 검증 | [P01](../phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/phase.md) |
+| P01 | `done` | 지역 그림, 혼돈 적 명단·공격, 조준 교란 및 관리자 검증 | [P01](../phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/phase.md) |
 
 ## Execution order
 

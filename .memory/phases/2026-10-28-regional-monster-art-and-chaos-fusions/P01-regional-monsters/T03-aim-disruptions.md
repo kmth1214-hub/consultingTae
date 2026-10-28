@@ -1,6 +1,6 @@
 # Task: T03 융합 공격의 한 발 조준 교란
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -90,9 +90,9 @@ function useAimController(input: ExistingAimInput & { maxPowerRatio?: number }):
 
 ## Acceptance Criteria
 
-- [ ] 한 번 맞은 두 번째 융합 공격만 정해진 교란을 표시하고, 막거나 빗나간 공격은 표시하지 않는다.
-- [ ] 취소 후에는 남고 실제 발사 한 번 뒤 사라진다. 조준 표시와 명중/굴림 결과가 같은 교란을 따른다.
-- [ ] 일반 사용자 게임과 혼돈 보스·숲 시범판은 원래 전투 규칙을 유지한다.
+- [x] 한 번 맞은 두 번째 융합 공격만 정해진 교란을 표시하고, 막거나 빗나간 공격은 표시하지 않는다.
+- [x] 취소 후에는 남고 실제 발사 한 번 뒤 사라진다. 조준 표시와 명중/굴림 결과가 같은 교란을 따른다.
+- [x] 일반 사용자 게임과 혼돈 보스·숲 시범판은 원래 전투 규칙을 유지한다.
 
 ## Validation
 
@@ -117,6 +117,6 @@ Task: T03-aim-disruptions
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과: 단위 235/235, 관리자 E2E 32/32, 사용자 E2E 14/14, 빌드
 - commit: pending

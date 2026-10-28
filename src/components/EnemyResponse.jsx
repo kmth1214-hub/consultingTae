@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { MONSTER_NAMES } from '../game/gameData.js';
+import { MONSTER_NAMES, AIM_DISRUPTION_LABELS } from '../game/gameData.js';
 import { createEnemyProjectileArc, sampleEnemyProjectile, enemyTrailD } from '../game/enemyProjectileMotion.js';
 import EnemyProjectileArt from './EnemyProjectileArt.jsx';
 import { getEnemyAttackTarget } from '../game/enemyAttackPresentation.js';
@@ -34,7 +34,8 @@ function responseLabel({ attack, stage }) {
     : stage === 'travel' ? attack.missStyle === 'slip' ? '미끄러져서 짧게 던졌어요!' : '너무 높게 던졌어요!'
       : '적 투척이 빗나갔어요 · 피해 없음';
   return stage === 'windup' ? `${MONSTER_NAMES[attack.kind]} · ${visual.label} 준비!`
-    : stage === 'travel' ? `${visual.label}!` : attack.blocked ? '공격을 막았어요!' : `체력 −${attack.damage}`;
+    : stage === 'travel' ? `${visual.label}!` : attack.blocked ? '공격을 막았어요!'
+      : `체력 −${attack.damage}${attack.aimDisruption ? ` · ${AIM_DISRUPTION_LABELS[attack.aimDisruption]}` : ''}`;
 }
 
 // Notices belong to the viewport, so cropping/zooming the world never hides them.

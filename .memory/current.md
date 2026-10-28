@@ -10,19 +10,20 @@
 
 ## Active Task
 
-[P01-T02 혼돈 융합체 명단과 교대 공격](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/T02-chaos-fusions.md)
+[P01-T03 방어 가능한 한 발 조준 교란](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/T03-aim-disruptions.md)
 
 ## Status
 
-- P01-T01 눈·도시 일러스트 구현·검증·커밋 완료. P01-T02 구현 중.
+- P01-T01~T02 구현·검증·커밋 완료. P01-T03 구현 중.
 - 범위: 로컬 관리자 눈·도시·혼돈 시범판. 사용자 게임과 Azure 배포는 제외.
 - 순서: T01 그림 → T02 융합체 → T03 한 발 교란.
 
 ## Next Step
 
-P01-T02 청사진에 따라 혼돈 융합체 3종 그림·명단·교대 공격을 관리자 지도와 테스트 플레이에 구현한다.
+P01-T03 청사진에 따라 방어 가능한 다음 한 발의 조준 교란을 구현하고 관리자 HUD·실제 탄도까지 검증한다.
 
 ## Completed commits
+- f4f2e25 — [지역 몬스터 P01-T02](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/T02-chaos-fusions.md)
 - 44fc2ff — [지역 몬스터 P01-T01](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/T01-regional-art.md)
 - 0b641af — [피격 반응 P01-T01](./phases/2026-10-28-hit-reaction-effects/P01-hit-visuals/T01-hit-reactions.md)
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -51,7 +52,7 @@ P01-T02 청사진에 따라 혼돈 융합체 3종 그림·명단·교대 공격�
 
 ## Pending commits
 
-- 지역 몬스터 계획 T02~T03이 남았다.
+- 지역 몬스터 계획 T03이 남았다.
 - 기존 사용자 HTML 수정·캐시·사이트 임시 파일은 이번 계획 범위 밖이다.
 
 ## Local review

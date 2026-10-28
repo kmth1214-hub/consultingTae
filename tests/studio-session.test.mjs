@@ -34,7 +34,7 @@ test('all twelve regional rounds enter the real battle immediately with a fresh 
     assert.deepEqual(run.inventory, { fireball: 3, spear: 3, defense: 3, heal: 3 });
     if (area === 'chaos' && round < 3) {
       assert.ok(run.enemies.length >= 9 && run.enemies.length <= 13);
-      assert.ok(run.enemies.every(e => ['snake', 'boar', 'dry-ice', 'snowball', 'washing-robot'].includes(e.kind)
+      assert.ok(run.enemies.every(e => ['frost-gear-snake', 'oven-snow-boar', 'jelly-cloud-robot'].includes(e.kind)
         && !e.isBoss && e.hp === 4));
     } else assert.deepEqual(run.enemies.map(e => [e.kind, e.isBoss, e.hp]),
       BattleEngine.createRoundEnemies(area, round, { rng: options.rng }).map(e => [e.kind, e.isBoss, e.hp]));
