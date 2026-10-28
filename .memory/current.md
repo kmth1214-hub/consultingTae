@@ -10,17 +10,17 @@
 
 ## Active Task
 
-[P02-T01 관리자 미리보기·재생·HUD](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P02-studio-presentation/T01-studio-preview-playback.md)
+없음 (현재 계획 완료)
 
 ## Status
 
-- P01-T01~T04 구현과 분기·바운스·파동·낙하 검증 82개 테스트 및 Vite 빌드 완료.
+- P01-T01~T04와 P02-T01 구현 완료. 전체 단위/API 227개, 관리자 E2E 24개, 일반 게임·배포 격리 E2E 7개 및 Vite 빌드 통과.
 - 개발 전용 관리자 숲 시범판. 사용자 게임과 Azure 배포는 이번 계획 범위 밖.
 - 순서: P01-T01 → P01-T02 → P01-T03 → P01-T04 → P02-T01.
 
 ## Next Step
 
-P02-T01 청사진을 읽고 관리자 지도 미리보기와 테스트 플레이를 동일 배치로 연결하며 낙하·파동·분기 화면을 표시한다.
+로컬 관리자 시범판에서 숲 1~3라운드를 검토한다. 사용자 게임·Azure 승격은 검토 후 별도 계획으로 진행한다.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -40,11 +40,16 @@ P02-T01 청사진을 읽고 관리자 지도 미리보기와 테스트 플레이
 - 62725d1 — [2026-10-27-azure-production-deployment / T01-workflow-integration](./phases/2026-10-27-azure-production-deployment/P01-release/T01-workflow-integration.md)
 - 6f840fd — [2026-10-27-azure-production-deployment / T03-ci-regression-stability](./phases/2026-10-27-azure-production-deployment/P01-release/T03-ci-regression-stability.md)
 - 71729df — [2026-10-27-azure-production-deployment / T04-entra-display-name-claim](./phases/2026-10-27-azure-production-deployment/P01-release/T04-entra-display-name-claim.md)
+- 7273e25 — [숲 시범판 P01-T01](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/T01-elevated-layout.md)
+- 58d9de8 — [숲 시범판 P01-T02](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/T02-rider-fall-physics.md)
+- a9f2592 — [숲 시범판 P01-T03](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/T03-bounce-and-splash.md)
+- 1bf30d8 — [숲 시범판 P01-T04](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/T04-wizard-split-orbs.md)
+- b016504 — [숲 시범판 P02-T01](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P02-studio-presentation/T01-studio-preview-playback.md)
 
 
 ## Pending commits
 
-- 이 계획의 P02-T01이 남았다.
+- 이 계획의 남은 Task 없음.
 - 기존 사용자 HTML 수정·캐시·사이트 임시 파일은 이번 계획 범위 밖이다.
 
 ## Local review

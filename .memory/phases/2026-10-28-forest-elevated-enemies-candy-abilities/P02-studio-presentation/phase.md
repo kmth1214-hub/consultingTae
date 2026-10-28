@@ -8,11 +8,11 @@
 
 | Task | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| T01 | `pending` | 동일 seed 지도 미리보기, 비행 시각화, HUD, E2E·프로덕션 회귀 | [T01](./T01-studio-preview-playback.md) |
+| T01 | `done ✅` | 동일 seed 지도 미리보기, 비행 시각화, HUD, E2E·프로덕션 회귀 | [T01](./T01-studio-preview-playback.md) |
 
 ## Progress
 
-- done: 0/1 (active: P01-T01 완료 후 전진)
+- done: 1/1 (complete)
 
 ## Phase exit
 
