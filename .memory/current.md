@@ -1,17 +1,17 @@
 # Current Context
 
 ## Active Plan
-[관리자 전장 크기 확대](./plans/2026-10-28-studio-battlefield-scale.md)
+[지역별 전투 BGM](./plans/2026-10-28-regional-battle-bgm.md)
 
 ## Active Phase
-[P01 관리자 전장 배율](./phases/2026-10-28-studio-battlefield-scale/P01-studio-scale/phase.md)
+[P01 지역별 전투 BGM](./phases/2026-10-28-regional-battle-bgm/P01-regional-bgm/phase.md)
 
 ## Active Task
-없음 — 관리자 전장 크기 확대 계획 완료
+[T01 지역 원곡과 재생 엔진](./phases/2026-10-28-regional-battle-bgm/P01-regional-bgm/T01-scores-and-player.md)
 
 ## Status
-- T01 완료 (`f93dd61`), T02 완료 (`91ad60c`). 활성 Task 없음.
-- 이전 지역 몬스터 시범판 완료, 관리자 검토 후 사용자 게임 승격 예정
+- T01 구현 시작 준비 완료
+- 이전 지역 몬스터 시범판 완료, 사용자 게임의 배치 개선은 BGM 이후 별도 진행
 
 ## Next Step (IMPORTANT)
-로컬 관리자 `/__dev/maps`에서 네 지역 확대 배치를 검토한다. 사용자 게임·Azure 적용은 별도 결정 후 진행한다.
+T01 청사진을 읽고 `src/game/bgmScore.js`, `src/game/bgmSynth.js`, `src/game/bgmPlayer.js`를 구현한다.
