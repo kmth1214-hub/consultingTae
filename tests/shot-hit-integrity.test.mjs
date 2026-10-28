@@ -72,3 +72,33 @@ test('a reserved studio shot topples the support, scores only actual rider fall 
  assert.equal(next.enemies.find(e=>e.id===fallHit.id).collider.x,after.enemyLandingPositions[fallHit.id].x);
  assert.ok(after.toppledObstacleIds.includes(support.id));
 });
+
+test('only a reserved Alchemist impact can supply splash contacts; Spear replaces that ability', () => {
+ const session=createStudioSession({area:'forest',round:2,characterId:'alchemist',seed:0},{rng:()=>.5,now:()=>1000});
+ const run=session.getSnapshot().run;
+ const layout=buildPlayableBattlefield({area:'forest',round:2,enemies:run.enemies,seed:0,
+  prototype:run.studioPrototype});
+ let chosen;
+ for (let angle=5;angle<=65&&!chosen;angle+=5) for (let power=.35;power<=1&&!chosen;power+=.15) {
+  const rad=angle*Math.PI/180,pull={ready:true,powerRatio:Math.min(power,1),
+   direction:{x:Math.cos(rad),y:-Math.sin(rad)}};
+  const shot=planShot({layout,pull,enemies:run.enemies,prototype:run.studioPrototype,
+   loadedCandyId:'alchemist-candy'});
+  if (shot?.abilityContacts?.length) chosen=pull;
+ }
+ assert.ok(chosen);
+ assert.equal(session.actions.fireShot({shotMeta:{abilityContacts:[{targetIds:run.enemies.map(e=>e.id)}]}}).accepted,false);
+ const reserved=session.actions.beginShot({launchId:1,pull:chosen});
+ assert.equal(reserved.accepted,true);
+ assert.ok(reserved.flight.abilityContacts.length);
+ const event=session.actions.fireShot({shotId:reserved.shotId,encounterId:reserved.encounterId,
+  shotMeta:{abilityContacts:[{targetIds:run.enemies.map(e=>e.id),radius:999}]}});
+ assert.equal(event.accepted,true);
+ assert.ok(event.shotMeta.abilityContacts.length);
+ assert.equal(event.shotMeta.abilityContacts.every(c=>c.radius===180),true);
+ const spearSession=createStudioSession({area:'forest',round:2,characterId:'alchemist',seed:0},{rng:()=>.5});
+ assert.equal(spearSession.actions.useConsumable('spear').accepted,true);
+ const spear=spearSession.actions.beginShot({launchId:2,pull:chosen});
+ assert.equal(spear.accepted,true);
+ assert.equal(spear.flight.abilityContacts,undefined);
+});

@@ -1,6 +1,6 @@
 # Task: T03 모험가 바운스와 연금술사 파동
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -92,6 +92,6 @@ Task: T03-bounce-and-splash
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: T03 작업 커밋

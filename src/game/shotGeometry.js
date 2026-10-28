@@ -324,7 +324,7 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
   return findObstacleContact(path, obstacles, layout.candyRadius) ? null : path;
 }
 
-function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false }) {
+function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false, abilityKind = null }) {
   const initialSpeed = getLaunchSpeed(powerRatio);
   let velocity = { x: direction.x * initialSpeed, y: direction.y * initialSpeed };
   let position = start, rolling = false;
@@ -335,6 +335,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
   const contacts = [], ignored = new Set(), pending = [];
   const enemyContacts = [], pierced = new Set();
   let firstContactDistance = null, terminal = 'timeout', targetId = null;
+  let bounce = null, bounced = false, obstacleTouched = false;
 
   const activate = (obstacle, hitPoint, impactVelocity, time, isRolling, source = null) => {
     if (ignored.has(obstacle.id)) return;
@@ -387,13 +388,14 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     position = { x: samples.at(-1).x, y: samples.at(-1).y };
   };
 
-  for (let iteration = 0; iteration <= layout.obstacles.length; iteration++) {
+  for (let iteration = 0; iteration <= layout.obstacles.length + 2; iteration++) {
     let segment = rolling
       ? makePath('ballistic', [{ ...position, time: 0 }], 'ground')
       : ballisticFromVelocity(position, velocity, layout);
     if (!segment) return null;
+    const landingTime = segment.endKind === 'ground' ? elapsed + segment.durationSeconds : null;
     let localRollStart = rolling ? 0 : null;
-    if (segment.endKind === 'ground' && rollBudget > 0) {
+    if (segment.endKind === 'ground' && rollBudget > 0 && (abilityKind !== 'bounce' || bounced)) {
       const extended = appendGroundRoll(segment, velocity.x, layout, rollBudget);
       segment = extended.path;
       if (extended.rollDistance > 0 && !rolling) localRollStart = extended.rollStartDistance;
@@ -436,6 +438,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     appendPrefix(segment, endDistance);
 
     if (obstacleFirst) {
+      obstacleTouched = true;
       const obstacle = remaining.find(item => item.id === barrier.id);
       if (firstContactDistance === null) firstContactDistance = traveled;
       const impactVelocity = isRolling ? {
@@ -457,6 +460,28 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
       }
       continue;
     }
+    if (!enemy && !obstacleTouched && segment.endKind === 'ground' && abilityKind === 'bounce' && !bounced
+      && Math.abs(velocity.x) >= 30 && elapsed < BATTLEFIELD.maxSeconds - .5
+      && position.x > -layout.candyRadius && position.x < layout.width + layout.candyRadius) {
+      const impactVy = velocity.y + BATTLEFIELD.gravity * hitPoint.time;
+      const reboundVy = -clamp(Math.abs(impactVy) * .42, 280, 660);
+      if (elapsed + (-2 * reboundVy / BATTLEFIELD.gravity) <= BATTLEFIELD.maxSeconds) {
+        bounce = { firstLandingTime: elapsed, firstLanding: { ...position }, secondLandingTime: null };
+        bounced = true;
+        rolling = false;
+        velocity = { x: velocity.x * .78, y: reboundVy };
+        continue;
+      }
+    }
+    if (bounce && bounce.secondLandingTime === null && landingTime !== null && !enemy)
+      bounce.secondLandingTime = landingTime;
+    if (!enemy && segment.endKind === 'ground' && abilityKind === 'bounce' && !bounced
+      && rollBudget > 0) {
+      bounced = true;
+      rolling = true;
+      velocity = { x: velocity.x, y: 0 };
+      continue;
+    }
     terminal = enemy ? 'enemy' : segment.endKind;
     targetId = enemy?.id ?? null;
     break;
@@ -467,6 +492,18 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
   contacts.sort((a, b) => a.time - b.time);
   for (const contact of contacts) contact.distance = sampleAtTime(path, contact.time).distance;
   const first = contacts[0];
+  const abilityContacts = abilityKind === 'splash' ? [
+    ...contacts.filter(contact => contact.trigger === 'candy').map(contact => ({
+      kind: 'splash', time: contact.time, point: contact.point,
+      trigger: 'obstacle', sourceId: contact.obstacleId, radius: 180 })),
+    ...(targetId ? [{ kind: 'splash', time: path.durationSeconds, point: path.end,
+      trigger: 'enemy', sourceId: targetId, radius: 180 }] : [])
+  ].sort((a, b) => a.time - b.time).map(contact => ({ ...contact, targetIds: living.filter(item => {
+    const motion = contacts.find(hit => hit.riderMotion?.enemyId === item.id)?.riderMotion;
+    const location = motion && contact.time >= motion.startTime
+      ? sampleRiderMotion(motion, contact.time) : item.collider;
+    return distance(location, contact.point) <= 180 + item.collider.radius;
+  }).map(item => item.id) })) : [];
   const simulationSeconds = Math.max(path.durationSeconds, ...contacts.map(c => Math.max(
     c.obstacleMotion ? c.obstacleMotion.startTime + c.obstacleMotion.durationSeconds : 0,
     c.riderMotion ? c.riderMotion.startTime + c.riderMotion.durationSeconds : 0)));
@@ -478,11 +515,13 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     rollStartDistance, rollDistance, blockerDistance: firstContactDistance,
     previewD: pathPrefixD(path, Math.min(.30 * path.length, firstContactDistance ?? Infinity)),
     reverse: direction.x < 0, directHitTime: path.durationSeconds, simulationSeconds,
+    ...(abilityKind ? { abilityKind, ...(bounce ? { bounce } : {}),
+      ...(abilityContacts.length ? { abilityContacts } : {}) } : {}),
     durationMs: clamp(simulationSeconds * 1000, 420, 4500) };
 }
 
 export function planShot({ layout, pull, enemies, windAvailable = false,
-  toppledObstacleIds = [], piercing = false } = {}) {
+  toppledObstacleIds = [], piercing = false, loadedCandyId = null, prototype = null } = {}) {
   if (!validLayout(layout) || !validObstacles(layout.obstacles)
     || !Array.isArray(layout.enemies) || !layout.enemies.every(e => validCircle(e?.collider))
     || !point(layout.launcher) || !Array.isArray(enemies) || !pull?.ready
@@ -490,6 +529,8 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     || !Array.isArray(toppledObstacleIds)) return null;
   const activeLayout = { ...layout, obstacles: layout.obstacles.filter(item =>
     !toppledObstacleIds.includes(item.id)) };
+  const abilityKind = prototype === 'forest-elevated-v1' && layout.area === 'forest' && !piercing
+    ? ({ 'adventurer-candy': 'bounce', 'alchemist-candy': 'splash' })[loadedCandyId] || null : null;
   const direction = unit(pull.direction), draw = getDragDraw({ ...pull, direction });
   const start = { x: layout.launcher.x + draw.pouch.x, y: layout.launcher.y + draw.pouch.y };
   const ballistic = getBallisticPath({ start, direction, powerRatio: pull.powerRatio, layout: activeLayout });
@@ -507,9 +548,9 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
       if (!path) return null;
     }
   }
-  if (!target && activeLayout.obstacles.some(item => item.kind)) {
+  if (!target && (activeLayout.obstacles.some(item => item.kind) || abilityKind)) {
     return planStackedShot({ layout: activeLayout, start, direction,
-      powerRatio: pull.powerRatio, living, piercing });
+      powerRatio: pull.powerRatio, living, piercing, abilityKind });
   }
   const hitsFor = candidate => target ? [{ id: target.id, distance: candidate.length }]
     : living.map(e => ({ id: e.id, distance: circleContact(candidate, e.collider, layout.candyRadius) }))

@@ -185,6 +185,27 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const contacts = shotMeta?.contacts;
       const enemyContacts = shotMeta?.enemyContacts;
       const riderFalls = shotMeta?.riderFalls;
+      const abilityContacts = shotMeta?.abilityContacts;
+      const loadedCandy = state.run.weapons.find(item => item.instanceId ===
+        (state.run.weaponQueue?.[0] ?? state.run.currentWeaponId));
+      const validAbilityContacts = abilityContacts === undefined || (
+        state.run.studioPrototype === 'forest-elevated-v1' && state.run.area === 'forest'
+        && !state.run.spearArmed && loadedCandy?.id === 'alchemist-candy'
+        && Array.isArray(abilityContacts)
+        && new Set(abilityContacts.map(contact => `${contact?.trigger}:${contact?.sourceId}`)).size === abilityContacts.length
+        && abilityContacts.every((contact, index) => contact?.kind === 'splash'
+          && contact.radius === 180 && ['enemy', 'obstacle'].includes(contact.trigger)
+          && typeof contact.sourceId === 'string'
+          && [contact.time, contact.point?.x, contact.point?.y].every(Number.isFinite)
+          && contact.time >= 0 && Array.isArray(contact.targetIds)
+          && contact.targetIds.every(id => state.run.enemies.some(enemy => enemy.id === id))
+          && new Set(contact.targetIds).size === contact.targetIds.length
+          && (contact.trigger === 'obstacle'
+            ? contacts?.some(hit => hit.trigger === 'candy' && hit.obstacleId === contact.sourceId
+              && Math.abs(hit.time - contact.time) < 1e-6)
+            : hitIds.includes(contact.sourceId)
+              && Math.abs(shotMeta.directHitTime - contact.time) < 1e-6)
+          && (!index || abilityContacts[index - 1].time <= contact.time)));
       const validRiderFalls = riderFalls === undefined || (state.run.studioPrototype === 'forest-elevated-v1'
         && Array.isArray(riderFalls) && Array.isArray(contacts)
         && new Set(riderFalls.map(fall => fall?.enemyId)).size === riderFalls.length
@@ -242,7 +263,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         || typeof shotMeta.reverse !== 'boolean' || typeof shotMeta.rolling !== 'boolean'
         || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')
         || new Set(shotMeta.obstacleTargetIds).size !== shotMeta.obstacleTargetIds.length
-        || !validContacts || !validEnemyContacts || !validRiderFalls
+        || !validContacts || !validEnemyContacts || !validRiderFalls || !validAbilityContacts
         || (contacts !== undefined
           ? (contacts.length ? shotMeta.obstacleId !== contacts[0].obstacleId
               || shotMeta.obstacleKind !== contacts[0].obstacleKind

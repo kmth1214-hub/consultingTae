@@ -7,6 +7,18 @@ function run(grade = 'C') {
   return BattleEngine.createRunState({ rng: () => .5, weapons: [{ ...BattleEngine.WEAPON_CATALOG[0], grade }] });
 }
 
+test('studio candy HUD explains only the loaded prototype ability and Spear replacement', () => {
+  const state = run();
+  state.area = 'forest';
+  state.studioPrototype = 'forest-elevated-v1';
+  assert.ok(getCandyDetails(state).buffs.some(text => text.includes('한 번 튀고')));
+  state.spearArmed = true;
+  assert.ok(getCandyDetails(state).buffs.some(text => text.includes('대신합니다')));
+  assert.equal(getCandyDetails(state).buffs.some(text => text.includes('한 번 튀고')), false);
+  state.studioPrototype = null;
+  assert.equal(getCandyDetails(state).buffs.some(text => text.includes('대신합니다')), false);
+});
+
 test('HUD ranges use the actual engine roll endpoints for every grade and zero protection', () => {
   for (const [grade, expected] of [['C', [0, 4]], ['B', [1, 6]], ['A', [2, 10]]]) {
     const state = run(grade), details = getCandyDetails(state);

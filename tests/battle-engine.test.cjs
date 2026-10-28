@@ -139,6 +139,35 @@ test('a rider killed by an earlier direct candy hit cannot take fall damage or s
   assert.deepEqual(state.enemyLandingPositions || {}, {});
 });
 
+test('Alchemist splash follows direct damage, scores surviving nearby enemies once, and ignores Fireball multiplier', () => {
+  const state = engine.createRunState({ characterId: 'alchemist', area: 'forest', round: 2, rng: () => 0 });
+  state.studioPrototype = 'forest-elevated-v1';
+  state.enemies.forEach(enemy => { enemy.hp = enemy.maxHp = 10; });
+  const [direct, nearby] = state.enemies;
+  state.fireballArmed = true;
+  const event = engine.resolveProjectile(state, { hitIds: [direct.id], damage: 2,
+    rng: () => 0, shotMeta: { contacts: [], directHitTime: .5,
+      abilityContacts: [{ kind: 'splash', time: .5, point: { x: 1000, y: 800 },
+        trigger: 'enemy', sourceId: direct.id, radius: 180, targetIds: [direct.id, nearby.id] }] } });
+  assert.deepEqual(event.hits.map(hit => [hit.id, hit.damage, hit.source]),
+    [[direct.id, 4, undefined], [direct.id, 1, 'alchemist-splash'], [nearby.id, 1, 'alchemist-splash']]);
+  assert.equal(state.score, 6);
+  assert.equal(state.effectCounters.projectileCollisions, 1);
+  assert.equal(state.effectCounters.permanentWeaponHits, 1);
+});
+
+test('Alchemist splash does not damage an enemy already killed by the direct hit', () => {
+  const state = engine.createRunState({ characterId: 'alchemist', area: 'forest', round: 2, rng: () => 0 });
+  state.studioPrototype = 'forest-elevated-v1';
+  const direct = state.enemies[0];
+  const event = engine.resolveProjectile(state, { hitIds: [direct.id], damage: direct.hp,
+    rng: () => 0, shotMeta: { contacts: [], directHitTime: .5,
+      abilityContacts: [{ kind: 'splash', time: .5, point: { x: 1000, y: 800 },
+        trigger: 'enemy', sourceId: direct.id, radius: 180, targetIds: [direct.id] }] } });
+  assert.deepEqual(event.hits.map(hit => hit.id), [direct.id]);
+  assert.equal(state.score, direct.maxHp);
+});
+
 test('Snow ice halves the next attack once and a blocked attack consumes the guard', () => {
   const state = engine.createRunState({ area: 'snow', round: 1, rng: () => 0 });
   let attackDraw = 0;

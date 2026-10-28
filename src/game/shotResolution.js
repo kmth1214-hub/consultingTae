@@ -6,7 +6,9 @@ export function preparePhysicalFlight(run, pull, launchId, shotId) {
   const layout=buildPlayableBattlefield({area:run.area,round:run.round,enemies:run.enemies,
     seed:run.layoutSeed??0,encounterPhase:run.chaosBossPhase==='split'?'split':null,
     prototype:run.studioPrototype??null,enemyLandingPositions:run.enemyLandingPositions??null});
+  const loaded=run.weapons.find(weapon=>weapon.instanceId===(run.weaponQueue?.[0]??run.currentWeaponId));
   const solution=planShot({layout,pull,enemies:run.enemies,piercing:run.spearArmed===true,
+    loadedCandyId:loaded?.id??null,prototype:run.studioPrototype??null,
     toppledObstacleIds:run.toppledObstacleIds||[],
     windAvailable:run.weapons.some(w=>w.id==='wind-candy')&&!run.roundEffects.windHomingUsed});
   return solution ? {...solution,id:launchId,shotId,encounterId:run.encounterId,
@@ -25,6 +27,7 @@ export function flightResultPayload(flight) {
           elevation:contact.riderMotion.elevation}))}:{}),
       directHitTime:flight.directHitTime??flight.path.durationSeconds,
       ...(flight.enemyContacts?{enemyContacts:structuredClone(flight.enemyContacts)}:{}),
+      ...(flight.abilityContacts?.length?{abilityContacts:structuredClone(flight.abilityContacts)}:{}),
       obstacleTargetIds:flight.obstacleTargetIds||[],rolling:flight.rollStartDistance!==null
         &&flight.impactDistance>flight.rollStartDistance,reverse:flight.reverse}};
 }

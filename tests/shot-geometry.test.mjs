@@ -17,6 +17,37 @@ const box = (id, x, y, w, h) => ({ id, polygon: [{ x, y }, { x: x + w, y },
 const circle = (id, p, radius = 10) => ({ id, collider: { id, x: p.x, y: p.y, radius } });
 const living = ids => ids.map(id => ({ id, alive: true, hp: 4 }));
 
+test('prototype Adventurer candy bounces once before rolling; ordinary and Spear shots do not', () => {
+  const layout = empty(), pull = pullAt(24, .6);
+  const input = { layout, pull, enemies: [], prototype: 'forest-elevated-v1',
+    loadedCandyId: 'adventurer-candy' };
+  const bounced = planShot(input);
+  assert.equal(bounced.abilityKind, 'bounce');
+  assert.ok(bounced.bounce?.firstLandingTime > 0);
+  assert.ok(bounced.bounce.secondLandingTime > bounced.bounce.firstLandingTime);
+  assert.ok(bounced.path.samples.some(sample => sample.time > bounced.bounce.firstLandingTime
+    && sample.time < bounced.bounce.secondLandingTime && sample.y < bounced.bounce.firstLanding.y));
+  assert.ok(bounced.rollStartDistance > 0);
+  assert.ok(bounced.rollDistance <= layout.candyRadius * 10);
+  assert.equal(planShot({ ...input, prototype: null }).bounce, undefined);
+  assert.equal(planShot({ ...input, piercing: true }).bounce, undefined);
+});
+
+test('prototype Alchemist splash is anchored to the first real candy collision', () => {
+  const layout = empty(), pull = pullAt(30, .55);
+  const baseline = planShot({ layout, pull, enemies: [] });
+  const contact = sampleAtDistance(baseline.path, baseline.path.length * .35);
+  layout.enemies = [circle('near', contact, 20), circle('far', { x: contact.x + 400, y: contact.y }, 20)];
+  const shot = planShot({ layout, pull, enemies: living(['near', 'far']),
+    prototype: 'forest-elevated-v1', loadedCandyId: 'alchemist-candy' });
+  assert.deepEqual(shot.hitIds, ['near']);
+  assert.equal(shot.abilityContacts.length, 1);
+  assert.equal(shot.abilityContacts[0].sourceId, 'near');
+  assert.deepEqual(shot.abilityContacts[0].targetIds, ['near']);
+  assert.equal(planShot({ layout, pull, enemies: living(['near', 'far']),
+    prototype: null, loadedCandyId: 'alchemist-candy' }).abilityContacts, undefined);
+});
+
 test('elevated launcher pulls start at its actual pouch and the supported target remains hittable', () => {
   const enemies = BattleEngine.createRoundEnemies('forest', 2, { rng: () => .5 });
   const layout = buildPlayableBattlefield({ area: 'forest', round: 2, enemies,

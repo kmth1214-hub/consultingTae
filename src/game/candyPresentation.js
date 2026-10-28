@@ -12,6 +12,11 @@ export function getCandyDetails(run) {
   const multiplier = run.fireballArmed ? 2 : 1;
   const range = run.spearArmed ? { min: 2, max: 5 } : BattleEngine.getWeaponDamageRange(weapon.grade, run.zeroRollsThisRound || 0);
   const buffs = [];
+  if (run.studioPrototype === 'forest-elevated-v1' && run.area === 'forest') {
+    if (run.spearArmed) buffs.push('이번 발사는 창 관통 효과가 고유 발사 효과를 대신합니다.');
+    else if (weapon.id === 'adventurer-candy') buffs.push('첫 바닥 착지에서 한 번 튀고, 두 번째 착지 후 굴러갑니다.');
+    else if (weapon.id === 'alchemist-candy') buffs.push('적·장애물 충돌 지점에서 반경 180 물약 파동: 범위 안 적마다 피해 1.');
+  }
   if (run.fireballArmed) buffs.push(`불공 · 이번 사탕 피해 ×2 (${range.min * 2}–${range.max * 2}, 조건부 추가 피해도 2배)`);
   if (run.spearArmed) buffs.push('창 · 실제 닿은 적 최대 3마리 관통 · 관통마다 피해 1 감소 · 이번 발사는 창 피해만 적용');
   if (run.pendingAimInversion) buffs.push('혼돈의 역풍 · 다음 한 발 조작 반전');
