@@ -1,6 +1,6 @@
 # Task: T02 혼돈 융합체 명단과 교대 공격
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -111,6 +111,6 @@ Task: T02-chaos-fusions
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과: 단위 41/41, 관리자 E2E 28/28, 빌드
 - commit: pending

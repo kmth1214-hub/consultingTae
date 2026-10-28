@@ -15,8 +15,8 @@ export function createStudioScenario({ area, round, characterId = 'adventurer', 
     return rosterSeed / 0x100000000;
   };
   const run = engine.createRunState({ ...runOptions, area, round, characterId, playerHp: 100, ammo: 9, rng: rosterRng,
+    studioMonsterPrototype: area !== 'forest' ? 'regional-monsters-v1' : null,
     inventory: { fireball: 3, spear: 3, defense: 3, heal: 3 } });
-  if (area !== 'forest') run.studioMonsterPrototype = 'regional-monsters-v1';
   if (area === 'forest') {
     run.studioPrototype = 'forest-elevated-v1';
     run.enemyLandingPositions = {};

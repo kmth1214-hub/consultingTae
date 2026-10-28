@@ -10,6 +10,17 @@ export function attackStyle(attack) {
   if (special === 'boar-charge') return { label: '가시 돌진', color: '#ef8950', melee: true };
   if (special === 'frozen-breath') return { label: '얼음 숨결', color: '#a2e9ff', breath: true };
   if (special === 'oven-overheat') return { label: '오븐 과열', color: '#ff9853', flame: true };
+  if (attack.fusionAttack) {
+    if (attack.kind === 'frost-gear-snake') return attack.fusionAttack === 'base'
+      ? { label: '젤리 톱니탄', color: '#9ce79e', thrown: true, ammo: 'jelly' }
+      : { label: '서리 톱니탄', color: '#8bd9ff', thrown: true, ammo: 'ice' };
+    if (attack.kind === 'oven-snow-boar') return attack.fusionAttack === 'base'
+      ? { label: '화덕 박치기', color: '#f9a46d', melee: true }
+      : { label: '설탕 화덕탄', color: '#d6ecff', thrown: true, ammo: 'snow' };
+    if (attack.kind === 'jelly-cloud-robot') return attack.fusionAttack === 'base'
+      ? { label: '젤리 기어탄', color: '#ffc978', thrown: true, ammo: 'energy' }
+      : { label: '눈구름 탄', color: '#c4e9ff', thrown: true, ammo: 'snow' };
+  }
   if (kind.includes('boar')) return { label: '몸통 박치기', color: '#d9a279', melee: true };
   if (kind === 'snake') return { label: '젤리 탄', color: '#a9df78', thrown: true, ammo: 'jelly' };
   if (kind === 'dry-ice') return { label: '얼음 파편', color: '#b6efff', thrown: true, ammo: 'ice' };

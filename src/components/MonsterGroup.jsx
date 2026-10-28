@@ -35,7 +35,10 @@ const REGIONAL_MONSTER_ART = {
   snowball: ASSETS.monsters.snowballV2,
   'cowardly-snowman': ASSETS.monsters.cowardlySnowmanV2,
   'washing-robot': ASSETS.monsters.washingRobotV2,
-  'oven-robot': ASSETS.monsters.ovenRobotV2
+  'oven-robot': ASSETS.monsters.ovenRobotV2,
+  'frost-gear-snake': ASSETS.monsters.frostGearSnake,
+  'oven-snow-boar': ASSETS.monsters.ovenSnowBoar,
+  'jelly-cloud-robot': ASSETS.monsters.jellyCloudRobot
 };
 
 function MonsterArt({ enemy, studioMonsterPrototype }) {
@@ -116,11 +119,11 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
         </span> : <span className="monster-health">{hp}<span className="sr-only"> / {enemy.maxHp}</span></span>}
         {visual?.thrown && response.stage === 'windup' && <svg className="monster-throw-rig" viewBox="0 0 100 100" aria-hidden="true"
           style={{ '--ammo-color': visual.color }}>
-          <g className={enemy.kind === 'snake' || enemy.kind === 'dry-ice' ? 'monster-ammo-gather' : 'monster-throw-grip'}>
-            {enemy.kind !== 'snake' && enemy.kind !== 'dry-ice' && <g data-testid="monster-throw-arm" className="monster-throw-arm">
-              <path d="M66 64 48 50 25 35" fill="none" stroke={enemy.kind.includes('robot') ? '#657f89' : '#8fbbc9'} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+          <g className={['snake', 'dry-ice'].includes(response.attack.attackKind || enemy.kind) ? 'monster-ammo-gather' : 'monster-throw-grip'}>
+            {!['snake', 'dry-ice'].includes(response.attack.attackKind || enemy.kind) && <g data-testid="monster-throw-arm" className="monster-throw-arm">
+              <path d="M66 64 48 50 25 35" fill="none" stroke={(response.attack.attackKind || enemy.kind).includes('robot') ? '#657f89' : '#8fbbc9'} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
               <circle cx="48" cy="50" r="5" fill="#c2dee1" stroke="#577786" strokeWidth="2" />
-              <circle cx="25" cy="35" r="7" fill={enemy.kind.includes('robot') ? '#a3bec2' : '#e9faff'} stroke="#577786" strokeWidth="2" />
+              <circle cx="25" cy="35" r="7" fill={(response.attack.attackKind || enemy.kind).includes('robot') ? '#a3bec2' : '#e9faff'} stroke="#577786" strokeWidth="2" />
             </g>}
             <g data-testid="monster-held-projectile" data-ammo={visual.ammo} transform={`translate(25 35) scale(${100 / enemy.size})`}>
               <EnemyProjectileArt ammo={visual.ammo} />

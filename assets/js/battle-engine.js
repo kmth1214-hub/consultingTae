@@ -21,6 +21,12 @@
     snow: Object.freeze([5, 6, 6, 7]),
     city: Object.freeze([9, 10, 10, 11])
   });
+  const CHAOS_FUSION_KINDS = Object.freeze(['frost-gear-snake', 'oven-snow-boar', 'jelly-cloud-robot']);
+  const CHAOS_FUSION_ATTACKS = Object.freeze({
+    'frost-gear-snake': Object.freeze(['snake', 'dry-ice']),
+    'oven-snow-boar': Object.freeze(['boar', 'snowball']),
+    'jelly-cloud-robot': Object.freeze(['washing-robot', 'snowball'])
+  });
   const WEAPON_CATALOG = Object.freeze([
     { id:'adventurer-candy',name:'모험가의 마법사탕',grade:'C',effect:'세 번째 영구 무기 명중마다 점수 +10' },
     { id:'alchemist-candy',name:'연금술사의 마법사탕',grade:'C',effect:'소모품 사용마다 점수 +10' },
@@ -97,7 +103,12 @@
     const count = area === 'chaos'
       ? randomInt(rng, 9, 13)
       : REGULAR_COUNTS[area][Math.min(roundNumber - 1, 3)];
-    const kinds = area === 'forest'
+    const studioFusions = area === 'chaos' && roundNumber < 3
+      && options && options.studioMonsterPrototype === 'regional-monsters-v1';
+    const kinds = studioFusions
+      ? [...CHAOS_FUSION_KINDS, ...Array.from({ length: count - CHAOS_FUSION_KINDS.length },
+        () => CHAOS_FUSION_KINDS[randomInt(rng, 0, CHAOS_FUSION_KINDS.length - 1)])]
+      : area === 'forest'
       ? ['snake', ...Array.from({ length: Math.max(0, count - 1) }, () => 'boar')]
       : area === 'snow'
         ? ['dry-ice', ...Array.from({ length: Math.max(0, count - 1) }, () => 'snowball')]
@@ -129,6 +140,8 @@
     const state = {
       area,
       round,
+      ...(config.studioMonsterPrototype === 'regional-monsters-v1'
+        ? { studioMonsterPrototype: 'regional-monsters-v1' } : {}),
       characterId,
       playerHp: Math.max(0, Math.min(100, Number.isFinite(config.playerHp) ? config.playerHp : 100)),
       maxPlayerHp: 100,
@@ -146,7 +159,8 @@
       enemyTurnIndex: 0,
       turnNumber: 0,
       terminal: null,
-      enemies: createRoundEnemies(area, round, { rng: config.rng }),
+      enemies: createRoundEnemies(area, round, { rng: config.rng,
+        studioMonsterPrototype: config.studioMonsterPrototype }),
       chaosBossPhase: area === 'chaos' && round === 3 ? 'fused' : null,
       consumablesBlockedTurns: 0,
       consumablesBlocked: false,
@@ -267,7 +281,8 @@
   function enterRound(state,options) {
     const config=options||{};
     state.maxAmmo=roundAmmoCapacity(state.weapons);state.ammo=state.maxAmmo;state.zeroRollsThisRound=0;state.enemyTurnIndex=0;state.terminal=null;state.pendingCamp=false;
-    state.roundStartedAt=timestamp(config.now);state.enemies=createRoundEnemies(state.area,state.round,{rng:config.rng});
+    state.roundStartedAt=timestamp(config.now);state.enemies=createRoundEnemies(state.area,state.round,
+      {rng:config.rng,studioMonsterPrototype:state.studioMonsterPrototype});
     state.chaosBossPhase = state.area === 'chaos' && state.round === 3 ? 'fused' : null;
     state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
     state.toppledObstacleIds=[];state.forestLogDebris=[];state.obstacleDebris=[];
@@ -414,9 +429,17 @@
     state.turnNumber += 1;
 
     const sourceRng = typeof rng === 'function' ? rng : Math.random;
-    let special = null, attackKind = enemy.kind;
+    let special = null, attackKind = enemy.kind, fusionAttack = null;
     let minDamage = enemy.isBoss ? 3 : 1;
     let maxDamage = enemy.isBoss ? 15 : 8;
+    const studioFusion = state.studioMonsterPrototype === 'regional-monsters-v1'
+      && state.area === 'chaos' && state.round < 3 && !enemy.isBoss
+      && Object.prototype.hasOwnProperty.call(CHAOS_FUSION_ATTACKS, enemy.kind);
+    if (studioFusion) {
+      fusionAttack = enemy.attackCount % 2 === 0 ? 'base' : 'disrupt';
+      attackKind = CHAOS_FUSION_ATTACKS[enemy.kind][enemy.attackCount % 2];
+      enemy.attackCount += 1;
+    }
     if (enemy.isBoss) {
       enemy.attackCount += 1;
       const definitions = Object.values(AREA_BOSSES);
@@ -435,17 +458,18 @@
     }
     if (special === 'boar-charge') { minDamage = 8; maxDamage = 15; }
     const throwing = ['snake', 'dry-ice', 'snowball', 'washing-robot', 'cowardly-snowman', 'oven-robot'].includes(attackKind);
-    if (!special && throwing) {
+    if (!special && (throwing || studioFusion)) {
       const sample = Math.max(0, Math.min(.999999999999, Number(sourceRng())));
       const threshold = enemy.isBoss ? .95 : .9;
       if (sample >= threshold) return {
-        enemyId: enemy.id, kind: enemy.kind, attackKind, damage: 0, special: null, attemptedSpecial: null,
+        enemyId: enemy.id, kind: enemy.kind, attackKind, fusionAttack,
+        damage: 0, special: null, attemptedSpecial: null,
         playerHpBefore: state.playerHp, playerHpAfter: state.playerHp, blocked: false, blockedBy: null,
         healedEnemy: 0, ammoLost: 0, consumablesBlocked: false, missed: true,
         missStyle: sample < (enemy.isBoss ? .975 : .95) ? 'slip' : 'overshoot'
       };
     }
-    const event = applyIncomingDamage(state, { enemyId: enemy.id, kind: enemy.kind, attackKind,
+    const event = applyIncomingDamage(state, { enemyId: enemy.id, kind: enemy.kind, attackKind, fusionAttack,
       special, attemptedSpecial: special }, sourceRng, minDamage, maxDamage, enemy.isBoss);
     if (!event.blocked && special === 'frozen-breath') {
       state.consumablesBlockedTurns = 1;

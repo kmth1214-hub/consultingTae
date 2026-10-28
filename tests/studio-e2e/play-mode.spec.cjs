@@ -27,6 +27,38 @@ async function directForestShot(enemyHp = 4) {
   throw new Error('No direct Forest hit for the studio impact test');
 }
 
+test('Chaos studio preview and play share the three painted fusion enemies', async ({ page }) => {
+  await installGame(page);
+  await page.goto('/__dev/maps');
+  await page.getByLabel('지역 선택').selectOption('chaos');
+  for (const round of ['1', '2']) {
+    await page.getByLabel('테스트 라운드').selectOption(round);
+    const preview = page.locator('.studio-viewport');
+    const ids = await preview.locator('.monster').evaluateAll(nodes => nodes.map(node => node.dataset.enemyId));
+    expect(ids.length).toBeGreaterThanOrEqual(9);
+    for (const kind of ['frost-gear-snake', 'oven-snow-boar', 'jelly-cloud-robot']) {
+      const art = preview.locator(`img[data-monster-art="${kind}"]`).first();
+      await expect(art).toBeVisible();
+      await expect.poll(() => art.evaluate(node => node.naturalWidth)).toBeGreaterThan(0);
+    }
+    await page.screenshot({ path: `tmp/studio-chaos-round-${round}-fusions.png` });
+    await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
+    await phase(page, 'idle');
+    const playableIds = await page.locator('.battle-arena .monster')
+      .evaluateAll(nodes => nodes.map(node => node.dataset.enemyId));
+    expect(playableIds).toEqual(ids);
+    if (round === '1') {
+      await dragPull(page, { angleDeg: -5, powerRatio: .08 }); await page.mouse.up();
+      await expect(page.getByTestId('enemy-attack')).toBeVisible({ timeout: 10000 });
+      const attack = (await snapshot(page)).lastEvent.enemyAttack;
+      expect(attack.fusionAttack).toBe('base');
+      expect(attack.kind).toBe('frost-gear-snake');
+      await phase(page, 'idle');
+    }
+    await page.getByRole('button', { name: '지도 검토로 돌아가기' }).click();
+  }
+});
+
 test('Forest studio shows the final candy impact before removing a defeated monster', async ({ page }) => {
   const target = await directForestShot(1);
   await installGame(page, { stateOverride: { enemies: target.enemies } });

@@ -91,4 +91,4 @@ Task: T01-regional-art
 
 - [x] 구현 완료
 - [x] 검증 통과: build, test:studio 27/27, 사용자 E2E 13/13
-- commit: pending
+- commit: 44fc2ff
