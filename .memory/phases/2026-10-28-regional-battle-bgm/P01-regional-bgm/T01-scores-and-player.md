@@ -1,6 +1,6 @@
 # Task: T01 지역 원곡과 재생 엔진
 
-## Status: pending
+## Status: done
 
 ## Goal
 숲·눈·도시·혼돈의 60~75초 반복 악보와 보스 변주를 자체 합성해 브라우저에서 재생·일시정지·음량 변경할 수 있는 독립 엔진을 제공한다.
@@ -41,7 +41,7 @@
 #### Details
 - **Signatures & Types**:
   ```js
-  export function scheduleBgmEvent(context, destination, event, when); // -> void
+  export function scheduleBgmEvent(context, destination, event, when, secondsPerBeat); // -> void
   export function createBgmPlayer({ contextFactory, setTimer, clearTimer, scheduleEvent } = {});
   // -> { setScene(area, boss), setActive(active), setVolume(value),
   //      setMuted(muted), resume(), getStatus(), destroy() }
@@ -49,7 +49,7 @@
   ```
 - **Data & Schema Fields**: `volume`은 0..1 실수(기본 .35), `muted:boolean` 기본 false. 기본 contextFactory는 `AudioContext` 또는 `webkitAudioContext`, 둘 다 없으면 unavailable. 타이머/스케줄 함수는 테스트 주입 가능.
 - **Execution Flow / Logic**:
-  1. 현악=완만한 톱니파와 저역 필터, 목관=정현/삼각파, 종=감쇠 정현 배음, 베이스=삼각파, 혼돈=약한 detune, 타악=짧은 잡음/저주파로 표현한다. gain은 시작·끝 0으로 클릭 소음을 막고 최대 레벨을 제한한다.
+  1. `event.duration`은 박 단위이며 `secondsPerBeat=60/bpm`으로 실제 초를 구한다. 현악=완만한 톱니파와 저역 필터, 목관=정현/삼각파, 종=감쇠 정현 배음, 베이스=삼각파, 혼돈=약한 detune, 타악=짧은 잡음/저주파로 표현한다. gain은 시작·끝 0으로 클릭 소음을 막고 최대 레벨을 제한한다.
   2. AudioContext는 실제 재생 시 지연 생성한다. `setScene`은 지역/보스가 달라질 때만 악보 교체·이전 트랙 빠른 감쇠·타이머 재설정; 동일 값은 재시작 금지.
   3. `setActive(false)`는 타이머 중지와 context suspend. `setActive(true)`·`resume()`은 context resume 후 선행 예약. Promise 거부는 blocked 상태로 기록하되 throw하지 않는다.
   4. 타이머는 현재 시각보다 0.35초까지만 예약하고 128박 끝에서 반복한다. 지난 이벤트 중복 없음. `destroy()`는 타이머와 context를 한 번만 정리한다.
@@ -63,7 +63,7 @@
 
 ## Validation
 - `node --test tests/bgm-score.test.mjs tests/bgm-player.test.mjs` — 악보·재생 상태 테스트 통과
-- `npm run build` — ESM/Vite 빌드 통과
+- `npm.cmd run build` — Windows PowerShell의 npm.ps1 실행 정책을 우회해 ESM/Vite 빌드 통과
 
 ## Commit Message
 ```text
@@ -78,6 +78,6 @@ Task: T01-scores-and-player
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과 — 단위 테스트 6개, Vite 빌드
 - commit: pending
