@@ -7,6 +7,8 @@ import CandyProjectileArt from './CandyProjectileArt.jsx';
 export default function ProjectileFlight({ flight, onProgress, onComplete, onFailure }) {
   const id = `candy-${useId().replace(/:/g, '')}`;
   const variant = flight.projectileKind || (flight.fireball ? 'fireball' : 'normal');
+  const candyRadius = flight.candyRadius ?? BATTLEFIELD.candyRadius;
+  const worldScale = candyRadius / BATTLEFIELD.candyRadius;
   const wake = variant === 'spear' ? ['#3b91b2', '#b8faff'] : flight.fireball ? ['#ff6c32', '#ff9f4d'] : flight.path?.kind === 'homing' ? ['#72d9c0', '#b7f8d4'] : ['#ffe5a2', '#ffe9af'];
   const candyRef = useRef(null);
   const trailRef = useRef(null), trailGlowRef = useRef(null), gradientRef = useRef(null);
@@ -48,7 +50,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         const before = sampleAtDistance(flight.path, Math.max(0, distance - 2));
         const after = sampleAtDistance(flight.path, Math.min(flight.path.length, distance + 2));
         const rotation = !rolling && variant !== 'normal' ? Math.atan2(after.y-before.y, after.x-before.x) * 180 / Math.PI : reduced ? 0 : rolling
-          ? rollStart.time * 480 + (point.x - rollStart.x) / BATTLEFIELD.candyRadius * 180 / Math.PI
+          ? rollStart.time * 480 + (point.x - rollStart.x) / candyRadius * 180 / Math.PI
           : simulationTime * 480;
         candyRef.current.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${rotation})`);
         if (bounceRef.current && flight.bounce) {
@@ -68,12 +70,12 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         }
         if (rollDustRef.current) {
           rollDustRef.current.style.display = !reduced && rolling && !candyFinished ? '' : 'none';
-          rollDustRef.current.setAttribute('transform', `translate(${point.x} ${point.y + 13})`);
+          rollDustRef.current.setAttribute('transform', `translate(${point.x} ${point.y + 13 * worldScale})`);
           dustDirectionRef.current?.setAttribute('transform', `scale(${Math.sign(point.x - rollStart?.x) || 1} 1)`);
         }
         if (rollShadowRef.current) {
           rollShadowRef.current.style.display = rolling && !candyFinished ? '' : 'none';
-          rollShadowRef.current.setAttribute('transform', `translate(${point.x} ${point.y + BATTLEFIELD.candyRadius})`);
+          rollShadowRef.current.setAttribute('transform', `translate(${point.x} ${point.y + candyRadius})`);
         }
         if (!reduced) {
           // Decorative wake samples only the path already flown; never reveal the landing point.
@@ -117,27 +119,28 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
       </linearGradient>
     </defs>
     <g className={`projectile-trail ${flight.fireball ? 'is-fiery' : ''}`} fill="none" stroke={`url(#${id}-trail)`} strokeLinecap="round" strokeLinejoin="round">
-      <path ref={trailGlowRef} strokeWidth="18" opacity=".18" /><path ref={trailRef} strokeWidth="6" opacity=".9" />
+      <path ref={trailGlowRef} strokeWidth={18 * worldScale} opacity=".18" /><path ref={trailRef} strokeWidth={6 * worldScale} opacity=".9" />
     </g>
-    <ellipse ref={rollShadowRef} data-testid="roll-shadow" rx="13" ry="3" fill="#664729" opacity=".3" style={{ display: 'none' }} />
+    <ellipse ref={rollShadowRef} data-testid="roll-shadow" rx={13 * worldScale} ry={3 * worldScale}
+      fill="#664729" opacity=".3" style={{ display: 'none' }} />
     <g ref={candyRef} data-testid="projectile" className={flight.fireball ? 'projectile-candy is-fiery' : 'projectile-candy'}
     data-projectile-kind={variant}
     transform={`translate(${flight.path?.start.x || 0} ${flight.path?.start.y || 0})`}>
-      <CandyProjectileArt variant={variant} />
+      <g transform={`scale(${worldScale})`}><CandyProjectileArt variant={variant} /></g>
     </g>
     <g ref={rollDustRef} data-testid="roll-dust" aria-hidden="true" style={{ display: 'none' }}>
-      <g ref={dustDirectionRef}><g className="roll-dust">
+      <g ref={dustDirectionRef}><g className="roll-dust" transform={`scale(${worldScale})`}>
         <circle cx="-12" cy="1" r="3" /><circle cx="-24" cy="5" r="2" /><circle cx="-36" cy="0" r="3.5" />
       </g></g>
     </g>
     <g ref={bounceRef} data-testid="bounce-dust" aria-hidden="true" style={{ display: 'none' }} className="bounce-dust">
-      <circle cx="-17" cy="-2" r="5" /><circle cy="-6" r="7" /><circle cx="19" cy="-3" r="4" />
+      <g transform={`scale(${worldScale})`}><circle cx="-17" cy="-2" r="5" /><circle cy="-6" r="7" /><circle cx="19" cy="-3" r="4" /></g>
     </g>
     {flight.splitOrbs?.children.map(child => <g key={child.id} ref={node => node
       ? childRefs.current.set(child.id, node) : childRefs.current.delete(child.id)}
       data-testid="wizard-child-orb" data-orb-id={child.id} className="wizard-child-orb" style={{ visibility: 'hidden' }}>
-      <circle r="15" fill="#9cdfff" opacity=".3" /><circle r="8" fill="#d7f7ff" stroke="#5389dd" strokeWidth="3" />
-      <circle cx="-2" cy="-2" r="2" fill="#fff" />
+      <g transform={`scale(${worldScale})`}><circle r="15" fill="#9cdfff" opacity=".3" /><circle r="8" fill="#d7f7ff" stroke="#5389dd" strokeWidth="3" />
+        <circle cx="-2" cy="-2" r="2" fill="#fff" /></g>
     </g>)}
   </>;
 }

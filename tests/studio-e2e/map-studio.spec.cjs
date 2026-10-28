@@ -30,6 +30,33 @@ test('development map studio is a separate, keyboard-accessible review screen wi
     .toEqual({ test: undefined, storage: 0 });
 });
 
+test('all four studio regions preview the enlarged bodies and reuse them in play', async ({ page }) => {
+  const { createStudioScenario } = await import('../../src/dev/createStudioSession.js');
+  await page.goto('/__dev/maps');
+  for (const area of ['forest', 'snow', 'city', 'chaos']) {
+    await page.getByLabel('지역 선택').selectOption(area);
+    const layout = createStudioScenario({ area, round: 1, seed: 0 }).layout;
+    const readActors = root => root.evaluate(node => ({
+      key: node.dataset.layoutKey,
+      cookie: node.querySelector('.player-cookie').style.width,
+      sling: node.querySelector('.launcher').style.width,
+      scale: node.querySelector('.launcher').dataset.worldScale,
+      enemies: [...node.querySelectorAll('.monster')].map(monster => monster.style.width),
+      obstacles: [...node.querySelectorAll('[data-obstacle-id]')].length
+    }));
+    const preview = await readActors(page.locator('.studio-viewport > .arena-world'));
+    expect(preview.cookie).toBe(`${layout.player.width}px`);
+    expect(preview.sling).toBe(`${layout.launcher.width}px`);
+    expect(preview.scale).toBe('1.5');
+    expect(preview.enemies).toEqual(layout.enemies.map(enemy => `${enemy.size}px`));
+    expect(preview.obstacles).toBe(layout.obstacles.length);
+    await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
+    await expect(page.locator('.battle-arena')).toBeVisible();
+    expect(await readActors(page.locator('.battle-arena > .arena-world'))).toEqual(preview);
+    await page.getByRole('button', { name: '지도 검토로 돌아가기' }).click();
+  }
+});
+
 test('Snow and City studio preview and play use the same detailed monster art', async ({ page }) => {
   await page.goto('/__dev/maps');
   for (const [area, regular, boss] of [

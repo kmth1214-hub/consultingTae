@@ -34,6 +34,7 @@ export default function Slingshot({ aim, run, launcherRef, layout }) {
   const overdraw = tension > BATTLEFIELD.powerBoostStart;
   const strength = overdraw ? '한계까지 당김' : tension < .35 ? '약하게 당김' : tension < .7 ? '보통으로 당김' : '강하게 당김';
   return <div className={`launcher ${active ? 'is-aiming' : ''} ${active && tension >= .68 ? 'is-primed' : ''} ${active && overdraw ? 'is-overdrawn' : ''} ${run.fireballArmed ? 'is-fireball' : ''}`}
+    data-world-scale={layout.worldScale ?? 1}
     style={{ left: layout.launcher.x, top: layout.launcher.y, width: layout.launcher.width, height: layout.launcher.height,
       '--sling-tension': tension, '--sling-color': run.fireballArmed ? '#ff9c53' : '#ffe5a0' }}>
     <button ref={launcherRef} className={`launcher-button ${active ? 'is-drawn' : ''} ${launching ? 'is-releasing' : ''}`}

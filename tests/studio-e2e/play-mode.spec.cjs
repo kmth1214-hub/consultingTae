@@ -27,6 +27,17 @@ async function directForestShot(enemyHp = 4) {
   throw new Error('No direct Forest hit for the studio impact test');
 }
 
+test('studio projectile art, roll shadow and slingshot follow the enlarged collision radius', async ({ page }) => {
+  await installGame(page);
+  await enter(page);
+  await expect(page.locator('.battle-arena .launcher')).toHaveAttribute('data-world-scale', '1.5');
+  await dragPull(page, { angleDeg: -5, powerRatio: .08 }); await page.mouse.up();
+  const projectile = page.getByTestId('projectile');
+  await expect(projectile).toBeAttached();
+  await expect(projectile.locator('g[transform="scale(1.5)"]')).toHaveCount(1);
+  await expect(page.getByTestId('roll-shadow')).toHaveAttribute('rx', '19.5');
+});
+
 test('Chaos studio preview and play share the three painted fusion enemies', async ({ page }) => {
   await installGame(page);
   await page.goto('/__dev/maps');

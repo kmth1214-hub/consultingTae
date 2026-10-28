@@ -12,7 +12,7 @@ test('studio Chaos final uses the fused special and real split without persistin
   await page.getByRole('checkbox',{name:'보스 특수 공격부터 확인',exact:true}).check();
   await page.getByRole('button',{name:'테스트 플레이',exact:true}).click();await phase(page,'idle');
   expect((await snapshot(page)).run.enemies[0].hp).toBe(29);
-  await expect(page.locator('.monster--boss')).toHaveCSS('width','414px');
+  await expect(page.locator('.monster--boss')).toHaveCSS('width','621px');
   await page.clock.install({time:new Date('2026-10-26T00:00:00Z')});
   await page.clock.pauseAt(new Date('2026-10-26T00:00:01Z'));
   await dragPull(page,{angleDeg:-5,powerRatio:.08});await page.mouse.up();
@@ -20,7 +20,7 @@ test('studio Chaos final uses the fused special and real split without persistin
   await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-special','frozen-breath');
   await expect(page.locator('.enemy-warning')).toContainText('혼돈의 융합 군주');
   await page.clock.runFor(2400);await phase(page,'idle');
-  const shot=await aimedShot({area:'chaos',round:3,piercing:false,enemies:[enemy]});
+  const shot=await aimedShot({area:'chaos',round:3,piercing:false,enemies:[enemy],worldScale:1.5});
   await dragPull(page,shot);await page.mouse.up();
   for(let i=0;i<150;i++){await page.clock.runFor(100);if(await page.getByTestId('boss-split-transition').count())break;}
   await expect(arena(page)).toHaveAttribute('data-aim-phase','splitting');

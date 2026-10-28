@@ -8,7 +8,7 @@ test('studio plays a giant boss mistake and can switch directly to its guarantee
   await page.getByLabel('테스트 라운드').selectOption('3');
   await page.getByRole('button',{name:'테스트 플레이',exact:true}).click();
   await phase(page,'idle');
-  await expect(page.locator('.monster--boss')).toHaveCSS('width','276px');
+  await expect(page.locator('.monster--boss')).toHaveCSS('width','414px');
   await expect(page.getByTestId('boss-health')).toBeInViewport();
   await page.clock.install({time:new Date('2026-10-26T00:00:00Z')});
   await page.clock.pauseAt(new Date('2026-10-26T00:00:01Z'));

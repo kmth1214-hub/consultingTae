@@ -1,6 +1,6 @@
 # Task: T02 그림·비행 연출과 관리자 화면 검증
 
-## Status: pending
+## Status: done
 
 ## Goal
 확대된 물체가 관리자 미리보기·플레이에서 실제 판정과 같은 크기·위치로 보이고, 사탕 비행·굴림·보스 전환에도 시각적 불일치가 없게 한다.
@@ -58,6 +58,6 @@ Task: T02-presentation-parity
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과 (`node --test` 41/41, 관리자 Playwright 34/34, `npm.cmd run build`)
+- commit: 아래 커밋 참조
