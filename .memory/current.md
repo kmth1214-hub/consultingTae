@@ -10,17 +10,17 @@
 
 ## Active Task
 
-[T02 받침 위 몬스터 낙하와 실충돌](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/T02-rider-fall-physics.md)
+[T03 모험가 바운스·연금술사 파동](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/T03-bounce-and-splash.md)
 
 ## Status
 
-- P01-T01 구현과 배치·궤적 25개, 관리자 세션 6개 테스트 및 Vite 빌드 완료.
+- P01-T01·T02 구현과 낙하·충돌·정산 65개 테스트 및 Vite 빌드 완료.
 - 개발 전용 관리자 숲 시범판. 사용자 게임과 Azure 배포는 이번 계획 범위 밖.
 - 순서: P01-T01 → P01-T02 → P01-T03 → P01-T04 → P02-T01.
 
 ## Next Step
 
-T02 청사진을 읽고 통나무 받침 위 몬스터의 낙하 경로, 움직이는 충돌 판정, 착지 피해와 점수 정산을 구현한다.
+T03 청사진을 읽고 모험가 바운스와 연금술사 파동을 숲 관리자 시범판의 실제 물리 발사·정산에 연결한다.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -44,7 +44,7 @@ T02 청사진을 읽고 통나무 받침 위 몬스터의 낙하 경로, 움직�
 
 ## Pending commits
 
-- 이 계획의 5개 Task는 아직 구현·커밋 전이다.
+- 이 계획의 T03·T04·P02-T01이 남았다.
 - 기존 사용자 HTML 수정·캐시·사이트 임시 파일은 이번 계획 범위 밖이다.
 
 ## Local review

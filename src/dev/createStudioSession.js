@@ -19,7 +19,10 @@ export function createStudioSession({ area, round, characterId = 'adventurer', b
     engine: { ...engine, createRunState(options) {
       const run = engine.createRunState({ ...options, area, round, characterId, playerHp: 100, ammo: 9, rng: rosterRng,
         inventory: { fireball: 3, spear: 3, defense: 3, heal: 3 } });
-      if (area === 'forest') run.studioPrototype = 'forest-elevated-v1';
+      if (area === 'forest') {
+        run.studioPrototype = 'forest-elevated-v1';
+        run.enemyLandingPositions = {};
+      }
       if (round === 3 && bossSpecial) for (const enemy of run.enemies) if (enemy.isBoss) enemy.attackCount = 2;
       return run;
     },

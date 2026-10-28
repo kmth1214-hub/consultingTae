@@ -36,10 +36,12 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   const scenery = reviewingSplit ? bossTransition.split.previousScenery : run;
   const slotKey = JSON.stringify(roster.map(({ id, kind, isBoss }) => [id, kind, isBoss]));
   const encounterPhase = reviewingSplit ? null : run.chaosBossPhase === 'split' ? 'split' : null;
+  const landingKey = JSON.stringify(run.enemyLandingPositions || null);
   const layout = useMemo(() => buildPlayableBattlefield({ area: run.area, round: run.round,
     seed: run.layoutSeed ?? 0, encounterPhase, prototype: run.studioPrototype ?? null,
+    enemyLandingPositions: run.enemyLandingPositions ?? null,
     enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss, alive: true, hp: 1 })) }),
-  [run.area, run.round, run.layoutSeed, run.studioPrototype, slotKey, encounterPhase]);
+  [run.area, run.round, run.layoutSeed, run.studioPrototype, slotKey, encounterPhase, landingKey]);
   const splitSource = useMemo(() => bossTransition ? buildPlayableBattlefield({ area: run.area, round: run.round,
     seed: run.layoutSeed ?? 0, enemies: [bossTransition.split.fromEnemy] }).enemies[0] : null,
   [bossTransition?.id, run.area, run.round, run.layoutSeed]);

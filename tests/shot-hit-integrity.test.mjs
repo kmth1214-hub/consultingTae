@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {BattleEngine as E} from '../src/game/battleEngine.js';
 import {buildPlayableBattlefield} from '../src/game/battlefieldPlacement.js';
 import {planShot,sampleAtDistance} from '../src/game/shotGeometry.js';
+import {createStudioSession} from '../src/dev/createStudioSession.js';
 function fixture(piercing=false) {
  const run=E.createRunState({area:'snow',round:1,rng:()=>.5,inventory:{spear:1},weapons:[{...E.WEAPON_CATALOG[0],grade:'A'}]});
  const layout=buildPlayableBattlefield({area:'snow',round:1,enemies:run.enemies,seed:0});
@@ -42,4 +43,32 @@ test('even a physical Wind override cannot introduce a second non-piercing damag
  run.weapons.push({id:'wind-candy',grade:'C'});run.enemies[0].hp=1;
  E.resolveProjectile(run,{selectedTargetId:run.enemies[0].id,hitIds:[run.enemies[1].id],damage:10,shotMeta:meta(shot),rng:()=>.5});
  assert.equal(run.enemies[0].hp,0);assert.equal(run.enemies[1].hp,4);
+});
+
+test('a reserved studio shot topples the support, scores only actual rider fall damage, and preserves the landing position', () => {
+ const session=createStudioSession({area:'forest',round:2,seed:0},{rng:()=>.5,now:()=>1000});
+ const before=session.getSnapshot().run;
+ const layout=buildPlayableBattlefield({area:'forest',round:2,enemies:before.enemies,seed:before.layoutSeed,
+  prototype:before.studioPrototype});
+ const support=layout.obstacles.find(o=>o.supportsEnemyId);
+ const angle=9*Math.PI/180,pull={ready:true,powerRatio:1,direction:{x:Math.cos(angle),y:-Math.sin(angle)}};
+ const planned=planShot({layout,pull,enemies:before.enemies});
+ const contact=planned.contacts.find(c=>c.obstacleId===support.id);
+ assert.ok(contact?.riderMotion);assert.notEqual(contact.logHit?.id,support.supportsEnemyId);
+ const reservation=session.actions.beginShot({launchId:1,pull});
+ assert.equal(reservation.accepted,true);
+ const event=session.actions.fireShot({shotId:reservation.shotId,encounterId:reservation.encounterId,
+  shotMeta:{riderFalls:[{enemyId:'forged',fallDamage:999}]}});
+ assert.equal(event.accepted,true);
+ const fallHit=event.hits.find(hit=>hit.source==='rider-fall');
+ assert.equal(fallHit?.id,support.supportsEnemyId);
+ assert.equal(fallHit.damage,contact.riderMotion.fallDamage);
+ assert.equal(event.shotMeta.riderFalls[0].enemyId,support.supportsEnemyId);
+ assert.equal(event.shotMeta.contacts.some(c=>'riderMotion'in c),false);
+ const after=session.getSnapshot().run;
+ assert.equal(after.enemyLandingPositions[fallHit.id].y,900);
+ const next=buildPlayableBattlefield({area:'forest',round:2,enemies:after.enemies,seed:after.layoutSeed,
+  prototype:after.studioPrototype,enemyLandingPositions:after.enemyLandingPositions});
+ assert.equal(next.enemies.find(e=>e.id===fallHit.id).collider.x,after.enemyLandingPositions[fallHit.id].x);
+ assert.ok(after.toppledObstacleIds.includes(support.id));
 });

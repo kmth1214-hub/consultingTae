@@ -172,6 +172,51 @@ export function simulateObstacleMotion({ obstacle, point, velocity, startTime = 
 
 export function simulateForestLog(args) { return simulateObstacleMotion(args); }
 
+/** A supported enemy leaves the tilting log and follows a deterministic world-space arc. */
+export function simulateRiderFall({ supportMotion, riderSlot, layout, startTime } = {}) {
+  const damage = { low: 1, medium: 2, high: 3 }[riderSlot?.elevation];
+  if (!damage || !supportMotion?.samples?.length || !Number.isFinite(startTime)
+    || startTime < 0 || !Number.isFinite(riderSlot?.x) || !Number.isFinite(riderSlot?.y)
+    || !Number.isFinite(riderSlot?.size) || riderSlot.size <= 0
+    || !Number.isFinite(layout?.groundY) || !Number.isFinite(layout?.width)
+    || layout.width <= riderSlot.size || riderSlot.y >= layout.groundY
+    || typeof riderSlot.id !== 'string' || typeof riderSlot.supportObstacleId !== 'string') return null;
+  const before = supportMotion.samples[0], after = supportMotion.samples[1] || before;
+  const supportVx = after.time > before.time ? (after.x - before.x) / (after.time - before.time) : 0;
+  const direction = Math.sign(supportVx) || Math.sign(after.angle) || 1;
+  const vx = clamp(supportVx * .8 + direction * 130, -520, 520);
+  const vy = -Math.min(320, 80 + (layout.groundY - riderSlot.y) * .65);
+  const half = riderSlot.size / 2;
+  const samples = [{ time: 0, x: riderSlot.x, y: riderSlot.y }];
+  for (let step = 1; step <= 720; step++) {
+    const time = step * STEP;
+    const x = clamp(riderSlot.x + vx * time, half, layout.width - half);
+    const y = Math.min(layout.groundY, riderSlot.y + vy * time + .5 * GRAVITY * time * time);
+    samples.push({ time, x, y });
+    if (y >= layout.groundY) break;
+  }
+  const last = samples.at(-1);
+  if (last.y !== layout.groundY) return null;
+  return { enemyId: riderSlot.id, supportObstacleId: riderSlot.supportObstacleId,
+    elevation: riderSlot.elevation,
+    startTime, durationSeconds: last.time, samples,
+    landing: { x: last.x, y: layout.groundY }, fallDamage: damage };
+}
+
+/** Accepts absolute shot time; samples store relative time from support activation. */
+export function sampleRiderMotion(motion, absoluteTime) {
+  if (!motion?.samples?.length || !Number.isFinite(motion.startTime)
+    || !Number.isFinite(absoluteTime)) throw new TypeError('Invalid rider motion');
+  const time = clamp(absoluteTime - motion.startTime, 0, motion.durationSeconds);
+  const samples = motion.samples;
+  let low = 0, high = samples.length - 1;
+  while (low < high) { const mid = (low + high) >>> 1; if (samples[mid].time < time) low = mid + 1; else high = mid; }
+  if (!low) return { ...samples[0] };
+  const a = samples[low - 1], b = samples[low];
+  const fraction = (time - a.time) / (b.time - a.time);
+  return { time, x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction };
+}
+
 export function sampleLogMotion(motion, absoluteTime) {
   if (!motion?.samples?.length || !Number.isFinite(motion.startTime) || !Number.isFinite(absoluteTime)) {
     throw new TypeError('Invalid log motion');

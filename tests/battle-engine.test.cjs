@@ -105,6 +105,40 @@ test('Forest log damages its actual physical target and adds scored hits to the 
   assert.equal(event.enemyAttack, null);
 });
 
+test('a supported Forest rider takes only landing damage, persists its new position, and resets next round', () => {
+  const state = engine.createRunState({ area: 'forest', round: 2, rng: () => 0 });
+  state.studioPrototype = 'forest-elevated-v1';
+  state.enemyLandingPositions = {};
+  const [struck, rider] = state.enemies;
+  const fall = { enemyId: rider.id, supportObstacleId: 'support', startTime: .2,
+    landingTime: 1, landing: { x: 1400, y: 900 }, fallDamage: 2 };
+  const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, weaponGrade: 'B', rng: () => 0,
+    shotMeta: { directHitTime: Infinity, riderFalls: [fall], contacts: [{ obstacleId: 'support',
+      obstacleKind: 'log', time: .2, logHit: { id: struck.id, time: .7 } }] } });
+  assert.deepEqual(event.hits.map(hit => [hit.id, hit.damage]), [[struck.id, 3], [rider.id, 2]]);
+  assert.equal(event.hits[1].source, 'rider-fall');
+  assert.equal(state.score, 10);
+  assert.deepEqual(state.enemyLandingPositions[rider.id], fall.landing);
+  state.terminal = 'round-clear';
+  state.selectedRewards = { weapon: 'chosen', consumable: 'chosen' };
+  engine.advanceRound(state, { rng: () => 0 });
+  assert.deepEqual(state.enemyLandingPositions, {});
+});
+
+test('a rider killed by an earlier direct candy hit cannot take fall damage or score twice', () => {
+  const state = engine.createRunState({ area: 'forest', round: 2, rng: () => 0 });
+  state.studioPrototype = 'forest-elevated-v1';
+  const rider = state.enemies[0];
+  const event = engine.resolveProjectile(state, { hitIds: [rider.id], damage: rider.hp,
+    weaponGrade: 'C', rng: () => 0, shotMeta: { directHitTime: .4,
+      riderFalls: [{ enemyId: rider.id, supportObstacleId: 'support', startTime: .2,
+        landingTime: 1, landing: { x: 1400, y: 900 }, fallDamage: 3 }],
+      contacts: [{ obstacleId: 'support', obstacleKind: 'log', time: .2 }] } });
+  assert.deepEqual(event.hits.map(hit => hit.id), [rider.id]);
+  assert.equal(state.score, rider.maxHp);
+  assert.deepEqual(state.enemyLandingPositions || {}, {});
+});
+
 test('Snow ice halves the next attack once and a blocked attack consumes the guard', () => {
   const state = engine.createRunState({ area: 'snow', round: 1, rng: () => 0 });
   let attackDraw = 0;

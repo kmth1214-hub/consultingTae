@@ -31,6 +31,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     const draw = layoutRng();
     if (!Number.isFinite(draw) || draw < 0 || draw >= 1) throw new RangeError('Invalid layout RNG');
     run.layoutSeed = Math.floor(draw * 0x100000000);
+    if (run.studioPrototype === 'forest-elevated-v1') run.enemyLandingPositions = {};
     run.encounterId = ++encounterSequence;
     pendingShot = null;
   };
@@ -183,6 +184,19 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const obstacleKinds = ['log', 'ice', 'crate'];
       const contacts = shotMeta?.contacts;
       const enemyContacts = shotMeta?.enemyContacts;
+      const riderFalls = shotMeta?.riderFalls;
+      const validRiderFalls = riderFalls === undefined || (state.run.studioPrototype === 'forest-elevated-v1'
+        && Array.isArray(riderFalls) && Array.isArray(contacts)
+        && new Set(riderFalls.map(fall => fall?.enemyId)).size === riderFalls.length
+        && new Set(riderFalls.map(fall => fall?.supportObstacleId)).size === riderFalls.length
+        && riderFalls.every(fall => fall && state.run.enemies.some(enemy => enemy.id === fall.enemyId)
+          && typeof fall.supportObstacleId === 'string'
+          && contacts.some(contact => contact.obstacleId === fall.supportObstacleId
+            && Math.abs(contact.time - fall.startTime) < 1e-6)
+          && ({ low: 1, medium: 2, high: 3 })[fall.elevation] === fall.fallDamage
+          && [fall.startTime, fall.landingTime, fall.landing?.x, fall.landing?.y].every(Number.isFinite)
+          && fall.startTime >= 0 && fall.landingTime > fall.startTime
+          && fall.landing.x >= 0 && fall.landing.x <= 3600 && fall.landing.y === 900));
       const validEnemyContacts = enemyContacts === undefined || (state.run.spearArmed === true
         && Array.isArray(hitIds) && Array.isArray(enemyContacts) && enemyContacts.length <= 3
         && enemyContacts.length === hitIds.length
@@ -228,7 +242,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         || typeof shotMeta.reverse !== 'boolean' || typeof shotMeta.rolling !== 'boolean'
         || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')
         || new Set(shotMeta.obstacleTargetIds).size !== shotMeta.obstacleTargetIds.length
-        || !validContacts || !validEnemyContacts
+        || !validContacts || !validEnemyContacts || !validRiderFalls
         || (contacts !== undefined
           ? (contacts.length ? shotMeta.obstacleId !== contacts[0].obstacleId
               || shotMeta.obstacleKind !== contacts[0].obstacleKind

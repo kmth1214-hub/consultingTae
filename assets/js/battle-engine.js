@@ -271,6 +271,7 @@
     state.chaosBossPhase = state.area === 'chaos' && state.round === 3 ? 'fused' : null;
     state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
     state.toppledObstacleIds=[];state.forestLogDebris=[];state.obstacleDebris=[];
+    if (state.studioPrototype === 'forest-elevated-v1') state.enemyLandingPositions = {};
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
     state.consumableUsedSinceShot=false;
     state.spearArmed=false;
@@ -538,6 +539,8 @@
     if (config.shotMeta && !spear) hitIds.splice(1);
     let bonusDamage = 0;
     const shotMeta = config.shotMeta;
+    const riderFalls = state.studioPrototype === 'forest-elevated-v1'
+      && Array.isArray(shotMeta?.riderFalls) ? shotMeta.riderFalls : [];
     const hasContactStream = Array.isArray(shotMeta?.contacts);
     const contacts = hasContactStream ? shotMeta.contacts
       : shotMeta?.impactKind === 'obstacle' && shotMeta.obstacleKind
@@ -665,6 +668,21 @@
         if (!enabled || !physicalEffect) return;
         const effect = applyObstacle(contact);
         physicalEffect.hits.push(...effect.hits); hits.push(...effect.hits);
+      } });
+      const fall = riderFalls.find(item => item.supportObstacleId === contact.obstacleId);
+      if (fall) timeline.push({ time: fall.landingTime, order: 3, apply() {
+        if (!enabled || !toppled.includes(fall.supportObstacleId)) return;
+        const target = state.enemies.find(enemy => enemy.id === fall.enemyId && enemy.alive && enemy.hp > 0);
+        if (!target) return;
+        const removed = Math.min(target.hp, fall.fallDamage);
+        target.hp -= removed;
+        target.alive = target.hp > 0;
+        const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+        addScore(state, scoreDelta);
+        hits.push({ id: target.id, kind: target.kind, source: 'rider-fall', damage: removed,
+          remainingHp: target.hp, defeated: !target.alive, scoreDelta });
+        if (target.alive) (state.enemyLandingPositions || (state.enemyLandingPositions = {}))[target.id]
+          = { x: fall.landing.x, y: fall.landing.y };
       } });
     }
     if (hasContactStream) {

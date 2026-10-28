@@ -1,6 +1,6 @@
 # Task: T02 받침 위 몬스터 낙하와 실충돌
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -83,6 +83,6 @@ Task: T02-rider-fall-physics
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: T02 작업 커밋

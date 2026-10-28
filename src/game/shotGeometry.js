@@ -1,5 +1,5 @@
 import { BATTLEFIELD, getDragDraw, getLaunchSpeed } from './battlefieldModel.js';
-import { simulateObstacleMotion } from './forestLogPhysics.js';
+import { simulateObstacleMotion, simulateRiderFall, sampleRiderMotion } from './forestLogPhysics.js';
 
 const EPS = 1e-6;
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -248,6 +248,48 @@ function circleContact(path, circle, radius) {
   return null;
 }
 
+/** First swept contact against a rider whose collider follows a falling log's clock. */
+export function findMovingRiderContact(path, slot, motion, elapsed, candyRadius) {
+  const samples = path.samples, radius = slot.collider.radius + candyRadius;
+  const riderAt = time => {
+    const foot = sampleRiderMotion(motion, time);
+    return { x: foot.x, y: foot.y - slot.size * .52 };
+  };
+  for (let i = 1; i < samples.length; i++) {
+    const a = samples[i - 1], b = samples[i];
+    const cuts = [a.time, b.time];
+    for (const t of [motion.startTime - elapsed,
+      motion.startTime + motion.durationSeconds - elapsed]) {
+      if (t > a.time + EPS && t < b.time - EPS) cuts.push(t);
+    }
+    const low = Math.max(a.time, motion.startTime - elapsed);
+    const high = Math.min(b.time, motion.startTime + motion.durationSeconds - elapsed);
+    if (low < high) for (const p of motion.samples) {
+      const t = motion.startTime + p.time - elapsed;
+      if (t > low + EPS && t < high - EPS) cuts.push(t);
+    }
+    cuts.sort((x, y) => x - y);
+    for (let j = 1; j < cuts.length; j++) {
+      const t0 = cuts[j - 1], t1 = cuts[j];
+      const f0 = (t0 - a.time) / (b.time - a.time), f1 = (t1 - a.time) / (b.time - a.time);
+      const p0 = lerp(a, b, f0), p1 = lerp(a, b, f1);
+      const r0 = riderAt(elapsed + t0), r1 = riderAt(elapsed + t1);
+      const dx = p0.x - r0.x, dy = p0.y - r0.y;
+      if (dx * dx + dy * dy <= radius * radius) return a.distance + (b.distance - a.distance) * f0;
+      const vx = (p1.x - r1.x) - dx, vy = (p1.y - r1.y) - dy;
+      const aa = vx * vx + vy * vy, bb = 2 * (dx * vx + dy * vy);
+      const cc = dx * dx + dy * dy - radius * radius, disc = bb * bb - 4 * aa * cc;
+      if (aa <= EPS || disc < 0) continue;
+      const fraction = (-bb - Math.sqrt(disc)) / (2 * aa);
+      if (fraction >= 0 && fraction <= 1) {
+        const t = t0 + (t1 - t0) * fraction;
+        return a.distance + (b.distance - a.distance) * ((t - a.time) / (b.time - a.time));
+      }
+    }
+  }
+  return null;
+}
+
 export function getHomingPath({ start, target, obstacles, layout } = {}) {
   if (!point(start) || !validCircle(target) || !validLayout(layout)
     || !validObstacles(obstacles) || distance(start, target) < EPS) return null;
@@ -298,9 +340,14 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     if (ignored.has(obstacle.id)) return;
     ignored.add(obstacle.id);
     const forestLog = layout.area === 'forest' && obstacle.kind === 'log';
+    const rider = layout.prototype === 'forest-elevated-v1' && obstacle.supportsEnemyId
+      ? living.find(item => item.id === obstacle.supportsEnemyId) : null;
     const motion = simulateObstacleMotion({ obstacle, point: hitPoint, velocity: impactVelocity,
-      startTime: time, layout, enemies: forestLog ? living : [],
+      startTime: time, layout, enemies: forestLog ? living.filter(item => item.id !== rider?.id) : [],
       obstacles: layout.obstacles.filter(item => !ignored.has(item.id)), transfer: Boolean(source) });
+    if (!motion && rider) throw new TypeError('Invalid supported log motion');
+    const riderMotion = rider ? simulateRiderFall({ supportMotion: motion, riderSlot: rider,
+      layout, startTime: time }) : null;
     const contact = { obstacleId: obstacle.id, obstacleKind: obstacle.kind,
       point: { x: hitPoint.x, y: hitPoint.y }, time, rolling: isRolling,
       trigger: source ? 'obstacle' : 'candy', sourceObstacleId: source?.obstacleId ?? null,
@@ -308,19 +355,23 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
       obstacleTargetIds: [...living].sort((a, b) => distance(hitPoint, a.collider)
         - distance(hitPoint, b.collider)).map(item => item.id),
       ...(motion ? { obstacleMotion: motion, obstacleEndPose: motion.endPose,
-        ...(forestLog ? { logMotion: motion, logHit: motion.hit, logEndPose: motion.endPose } : {}) } : {}) };
+        ...(forestLog ? { logMotion: motion, logHit: motion.hit, logEndPose: motion.endPose } : {}),
+        ...(riderMotion ? { riderMotion } : {}) } : {}) };
     contacts.push(contact);
     for (const hit of motion?.obstacleHits || []) pending.push({ ...hit, source: contact });
   };
   const advanceChains = until => {
+    let changed = false;
     pending.sort((a, b) => a.time - b.time);
     while (pending.length && pending[0].time <= until + EPS) {
       const hit = pending.shift();
       if (ignored.has(hit.id)) continue;
       const obstacle = layout.obstacles.find(item => item.id === hit.id);
       activate(obstacle, hit.point, hit.velocity, Math.max(hit.time, hit.source.time + EPS), false, hit.source);
+      changed = true;
       pending.sort((a, b) => a.time - b.time);
     }
+    return changed;
   };
 
   const appendPrefix = (segment, endDistance) => {
@@ -347,19 +398,22 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
       segment = extended.path;
       if (extended.rollDistance > 0 && !rolling) localRollStart = extended.rollStartDistance;
     }
-    const enemyHits = living.filter(enemy => !pierced.has(enemy.id)).map(enemy => ({ id: enemy.id,
-      distance: circleContact(segment, enemy.collider, layout.candyRadius) }))
-      .filter(hit => hit.distance !== null).sort((a, b) => a.distance - b.distance);
-    const enemy = piercing ? enemyHits[3 - enemyContacts.length - 1] : enemyHits[0];
-    let remaining, barrier;
+    let remaining, barrier, enemyHits, enemy;
     // A neighbouring stack can fall before the candy reaches it. Recompute only
     // that collision, so the candy never loses energy against an empty location.
     for (;;) {
+      enemyHits = living.filter(item => !pierced.has(item.id)).map(item => {
+        const riderMotion = contacts.find(contact => contact.riderMotion?.enemyId === item.id)?.riderMotion;
+        return { id: item.id, distance: riderMotion
+          ? findMovingRiderContact(segment, item, riderMotion, elapsed, layout.candyRadius)
+          : circleContact(segment, item.collider, layout.candyRadius) };
+      }).filter(hit => hit.distance !== null).sort((a, b) => a.distance - b.distance);
+      enemy = piercing ? enemyHits[3 - enemyContacts.length - 1] : enemyHits[0];
       remaining = layout.obstacles.filter(item => !ignored.has(item.id));
       barrier = findObstacleContact(segment, remaining, layout.candyRadius);
       const nextDistance = Math.min(barrier?.distance ?? segment.length, enemy?.distance ?? segment.length);
-      advanceChains(elapsed + sampleUnchecked(segment, nextDistance).time);
-      if (!barrier || !ignored.has(barrier.id)) break;
+      const changed = advanceChains(elapsed + sampleUnchecked(segment, nextDistance).time);
+      if (!changed && (!barrier || !ignored.has(barrier.id))) break;
     }
     const obstacleFirst = barrier && (!enemy || barrier.distance <= enemy.distance + EPS);
     const endDistance = obstacleFirst ? barrier.distance : enemy ? enemy.distance : segment.length;
@@ -413,8 +467,9 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
   contacts.sort((a, b) => a.time - b.time);
   for (const contact of contacts) contact.distance = sampleAtTime(path, contact.time).distance;
   const first = contacts[0];
-  const simulationSeconds = Math.max(path.durationSeconds, ...contacts.map(c =>
-    c.obstacleMotion ? c.obstacleMotion.startTime + c.obstacleMotion.durationSeconds : 0));
+  const simulationSeconds = Math.max(path.durationSeconds, ...contacts.map(c => Math.max(
+    c.obstacleMotion ? c.obstacleMotion.startTime + c.obstacleMotion.durationSeconds : 0,
+    c.riderMotion ? c.riderMotion.startTime + c.riderMotion.durationSeconds : 0)));
   return { path, hitIds: piercing ? enemyContacts.map(hit => hit.id) : targetId ? [targetId] : [], selectedTargetId: null,
     ...(piercing ? { enemyContacts } : {}),
     impactKind: terminal, impactDistance: path.length,

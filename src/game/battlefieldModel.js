@@ -41,9 +41,13 @@ function subtract(intervals, low, high) {
     : [[a, Math.min(b, low)], [Math.max(a, high), b]].filter(([x, y]) => y > x));
 }
 
-export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhase = null, prototype = null } = {}) {
+export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhase = null,
+  prototype = null, enemyLandingPositions = null } = {}) {
   if (!['forest', 'snow', 'city', 'chaos'].includes(area) || !Number.isFinite(round)
     || !Array.isArray(enemies) || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff
+    || (enemyLandingPositions !== null && (prototype !== FOREST_PROTOTYPE
+      || !enemyLandingPositions || Array.isArray(enemyLandingPositions)
+      || typeof enemyLandingPositions !== 'object'))
     || (prototype !== null && (prototype !== FOREST_PROTOTYPE || area !== 'forest'
       || !Number.isInteger(round) || round < 1 || round > 3))) {
     throw new TypeError('Invalid battlefield configuration');
@@ -122,8 +126,20 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
       launcherPlatform = { x: 28, y: BATTLEFIELD.groundY - lift, width: 330, height: lift };
     }
   }
+  if (enemyLandingPositions) for (const [id, landing] of Object.entries(enemyLandingPositions)) {
+    const slot = placements.find(item => item.id === id);
+    if (!slot || !Number.isFinite(landing?.x) || landing?.y !== BATTLEFIELD.groundY
+      || landing.x < slot.size / 2 || landing.x > BATTLEFIELD.width - slot.size / 2) {
+      throw new TypeError('Invalid enemy landing position');
+    }
+    slot.x = landing.x;
+    slot.y = landing.y;
+    slot.collider = { ...slot.collider, x: landing.x, y: landing.y - slot.size * .52 };
+  }
   return { ...BATTLEFIELD, encounterPhase, key: JSON.stringify([area, round, seed, encounterPhase,
-    enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss]), ...(prototype ? [prototype] : [])]), area, round,
+    enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss]), ...(prototype ? [prototype] : []),
+    ...(enemyLandingPositions && Object.keys(enemyLandingPositions).length
+      ? [Object.entries(enemyLandingPositions).sort(([a], [b]) => a.localeCompare(b))] : [])]), area, round,
   ...(prototype ? { prototype, launcherPlatform } : {}),
   // Presentation-only cookie bounds and canonical incoming-attack anchor.
   player: { x: 44, y: 748 - lift, width: 152, height: 152,

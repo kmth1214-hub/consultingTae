@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { simulateForestLog, simulateObstacleMotion, sampleLogMotion } from '../src/game/forestLogPhysics.js';
+import { simulateForestLog, simulateObstacleMotion, simulateRiderFall,
+  sampleLogMotion, sampleRiderMotion } from '../src/game/forestLogPhysics.js';
 
 const obstacle = { id: 'log', kind: 'log', x: 600, y: 744, width: 80, height: 156 };
 const enemy = (id, x, y = 852, radius = 38) => ({ id, collider: { id, x, y, radius } });
@@ -57,6 +58,29 @@ test('world edges contain the whole moving body and inputs are not mutated', () 
     assert.ok(p.x >= ex - .001 && p.x + ex <= 3600 + .001);
   }
   assert.deepEqual(input, copy);
+});
+
+test('supported riders fall in the log direction, land on ground, and take height-specific damage', () => {
+  for (const [elevation, height, damage] of [['low', 132, 1], ['medium', 184, 2], ['high', 236, 3]]) {
+    const support = { ...obstacle, id: `support-${elevation}`, y: 900 - height, height };
+    const motion = simulateObstacleMotion(args({ obstacle: support, point: { x: 605, y: 900 - height / 2 },
+      velocity: { x: 1000, y: 0 } }));
+    const rider = { id: `rider-${elevation}`, supportObstacleId: support.id, elevation,
+      x: support.x + support.width / 2, y: support.y, size: 92 };
+    const unchanged = structuredClone(rider);
+    const fall = simulateRiderFall({ supportMotion: motion, riderSlot: rider,
+      layout: { width: 3600, groundY: 900 }, startTime: 1 });
+    assert.equal(fall.fallDamage, damage);
+    assert.equal(fall.landing.y, 900);
+    assert.ok(fall.landing.x > rider.x);
+    assert.ok(fall.samples.some(point => point.y < rider.y));
+    assert.deepEqual(sampleRiderMotion(fall, .5), fall.samples[0]);
+    assert.deepEqual(sampleRiderMotion(fall, 100), fall.samples.at(-1));
+    assert.deepEqual(rider, unchanged);
+  }
+  assert.equal(simulateRiderFall({ supportMotion: { samples: [{ x: 0, y: 0, time: 0 }] },
+    riderSlot: { id: 'bad', supportObstacleId: 'log', elevation: 'none', x: 100, y: 700, size: 92 },
+    layout: { width: 3600, groundY: 900 }, startTime: 0 }), null);
 });
 
 const stack = (id, x) => ({ id, x, y: 744, width: 80, height: 156,

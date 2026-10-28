@@ -5,6 +5,8 @@ import { BATTLEFIELD, buildBattlefield, getDragDraw, getLaunchSpeed } from '../s
 import { buildPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
 import { getPull, getBallisticPath, getHomingPath, sampleAtDistance, pathPrefixD,
   appendGroundRoll, findObstacleContact, planShot } from '../src/game/shotGeometry.js';
+import { findMovingRiderContact } from '../src/game/shotGeometry.js';
+import { simulateRiderFall, sampleRiderMotion } from '../src/game/forestLogPhysics.js';
 
 const close = (a, b, eps = 1e-7) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 const empty = () => buildBattlefield({ area: 'forest', round: 1, enemies: [] });
@@ -31,6 +33,21 @@ test('elevated launcher pulls start at its actual pouch and the supported target
 });
 const physicalStack = (id, x, kind = 'log') => ({ ...box(id, x, 744, 80, 156),
   kind, x, y: 744, width: 80, height: 156 });
+
+test('a moving rider collider is hit at its falling position, not its abandoned support position', () => {
+  const slot = { id: 'rider', supportObstacleId: 'support', elevation: 'high',
+    x: 700, y: 664, size: 92, collider: { id: 'rider', x: 700, y: 664 - 92 * .52, radius: 92 * .42 } };
+  const fall = simulateRiderFall({ riderSlot: slot, supportMotion: { samples: [
+    { x: 700, y: 800, angle: 0, time: 0 }, { x: 702, y: 800, angle: .01, time: 1 / 240 } ] },
+    layout: { width: 3600, groundY: 900 }, startTime: .3 });
+  const now = .3 + Math.min(.4, fall.durationSeconds / 2);
+  const foot = sampleRiderMotion(fall, now);
+  const y = foot.y - slot.size * .52;
+  const path = line({ x: foot.x - 100, y }, { x: foot.x + 100, y });
+  assert.ok(findMovingRiderContact(path, slot, fall, now - .5, 10) !== null);
+  const far = line({ x: foot.x - 100, y: y - 300 }, { x: foot.x + 100, y: y - 300 });
+  assert.equal(findMovingRiderContact(far, slot, fall, now - .5, 10), null);
+});
 function line(a, b) {
   const length = Math.hypot(b.x - a.x, b.y - a.y);
   return { length, samples: [{ ...a, time: 0, distance: 0 }, { ...b, time: 1, distance: length }] };
