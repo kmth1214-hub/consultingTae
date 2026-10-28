@@ -60,18 +60,23 @@ function MonsterArt({ enemy }) {
   </svg>;
 }
 
-export default function MonsterGroup({ enemies, placements, selectedTargetId, lastEvent, response, groupRef, layout, travelMs }) {
+export default function MonsterGroup({ enemies, placements, selectedTargetId, lastEvent, response, groupRef, layout, travelMs,
+  hitEffectsEnabled = false, showDefeatedHit = false }) {
   return <div ref={groupRef} className="monster-group" role="group" aria-label={`몬스터 ${enemies.filter(enemy => enemy.alive).length}마리`}>
     {placements.map(placement => {
       const live = enemies.find(e => e.id === placement.id);
       const enemy = { ...live, ...placement };
-      if (!enemy.alive) return null;
-      const hit = lastEvent?.hits?.find(item => item.id === enemy.id);
+      const actualHits = lastEvent?.hits?.filter(item => item.id === enemy.id && item.damage > 0) || [];
+      const hit = hitEffectsEnabled && actualHits.length
+        ? { ...actualHits.at(-1), damage: actualHits.reduce((sum, item) => sum + item.damage, 0) }
+        : lastEvent?.hits?.find(item => item.id === enemy.id);
+      const hitNow = hitEffectsEnabled && showDefeatedHit && actualHits.length > 0;
+      if (!enemy.alive && !hitNow) return null;
       const attacking = response?.attack.enemyId === enemy.id;
       const visual = attacking ? attackStyle(response.attack) : null;
       const melee = visual?.melee;
       const hp = attacking && response.stage !== 'impact' ? enemy.hp - response.attack.healedEnemy : enemy.hp;
-      return <div role="img" className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''} ${attacking ? 'is-attacking' : ''}`}
+      return <div role="img" className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''} ${attacking ? 'is-attacking' : ''} ${hitNow ? 'is-hit' : ''} ${!enemy.alive ? 'is-defeated-hit' : ''}`}
         data-attack-phase={attacking ? response.stage : undefined} data-melee={melee || undefined}
         data-throwing={visual?.thrown || undefined}
         data-miss-style={attacking ? response.attack.missStyle || undefined : undefined}
@@ -81,10 +86,14 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
           '--attack-travel': `${travelMs}ms`,
           '--strike-x': `${(layout.player.contact.x - enemy.x) / enemy.size * 100}%`,
           '--strike-y': `${(layout.player.contact.y - enemy.y) / enemy.size * 100}%` }}>
-        <span className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} />
+        <span key={hitNow ? `hit-${lastEvent.id}` : 'idle'} className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} />
           {enemy.isBoss && enemy.kind !== 'chaos-fused-boss' && <BossArmor kind={enemy.kind} />}
           {attacking && response.attack.missed && response.stage === 'windup' && <span className="monster-mistake" aria-hidden="true">?!</span>}
         </span>
+        {hitNow && <span key={`burst-${lastEvent.id}`} className="monster-hit-burst" data-testid="monster-hit-burst"
+          data-hit-kind={lastEvent.visualKey || 'candy'} aria-hidden="true">
+          <i className="monster-hit-ring" />{Array.from({ length: 5 }, (_, index) => <i key={index} className="monster-hit-crumb" />)}
+        </span>}
         {enemy.isBoss ? <span className="boss-health" data-testid="boss-health" aria-hidden="true">
           <strong>◆ {MONSTER_NAMES[enemy.kind]}</strong>
           <span className="boss-health-track"><span style={{ width: `${Math.max(0, Math.min(100, hp / enemy.maxHp * 100))}%` }} /></span>

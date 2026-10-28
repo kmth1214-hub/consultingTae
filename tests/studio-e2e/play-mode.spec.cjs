@@ -11,6 +11,50 @@ async function enter(page, { area = 'forest', round = 1, characterId = 'adventur
   await phase(page, 'idle');
 }
 
+async function directForestShot(enemyHp = 4) {
+  const [{ createStudioScenario }, { planShot }] = await Promise.all([
+    import('../../src/dev/createStudioSession.js'), import('../../src/game/shotGeometry.js')
+  ]);
+  const scenario = createStudioScenario({ area: 'forest', round: 1, seed: 0 });
+  const enemies = scenario.enemies.map(enemy => ({ ...enemy, hp: enemyHp, maxHp: 4 }));
+  for (let angleDeg = 0; angleDeg <= 75; angleDeg += 2.5) for (let step = 1; step <= 40; step++) {
+    const powerRatio = step / 40, radians = angleDeg * Math.PI / 180;
+    const shot = planShot({ layout: scenario.layout, enemies, prototype: 'forest-elevated-v1',
+      loadedCandyId: 'adventurer-candy', pull: { ready: true, powerRatio,
+        direction: { x: Math.cos(radians), y: -Math.sin(radians) } } });
+    if (shot?.hitIds.includes(enemies[0].id) && !shot.contacts.length) return { enemies, angleDeg, powerRatio };
+  }
+  throw new Error('No direct Forest hit for the studio impact test');
+}
+
+test('Forest studio shows the final candy impact before removing a defeated monster', async ({ page }) => {
+  const target = await directForestShot(1);
+  await installGame(page, { stateOverride: { enemies: target.enemies } });
+  await enter(page);
+  await dragPull(page, target); await page.mouse.up();
+  await expect(page.locator('.monster.is-defeated-hit')).toHaveCount(1, { timeout: 10000 });
+  await expect(page.getByTestId('monster-hit-burst')).toBeVisible();
+  await expect(page.locator('.monster.is-defeated-hit .hit-effect')).toContainText('−1');
+  await page.screenshot({ path: 'tmp/studio-forest-monster-hit.png' });
+  await expect(page.getByRole('heading', { name: '테스트 전투 완료', exact: true })).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('.monster')).toHaveCount(0);
+});
+
+test('Forest studio distinguishes real cookie damage from a defended counterattack', async ({ page }) => {
+  await installGame(page);
+  await enter(page);
+  await dragPull(page, { angleDeg: -5, powerRatio: .08 }); await page.mouse.up();
+  await expect(page.getByTestId('player-hit-crumbs')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByTestId('player-guard-wave')).toHaveCount(0);
+  await page.screenshot({ path: 'tmp/studio-forest-cookie-hit.png' });
+  await phase(page, 'idle');
+  await page.getByRole('button', { name: '방어 사용', exact: true }).click();
+  await dragPull(page, { angleDeg: -5, powerRatio: .08 }); await page.mouse.up();
+  await expect(page.getByTestId('player-guard-wave')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByTestId('player-hit-crumbs')).toHaveCount(0);
+  await page.screenshot({ path: 'tmp/studio-forest-cookie-guard.png' });
+});
+
 for (const [area, name] of [['forest', '숲'], ['snow', '눈'], ['city', '도시'], ['chaos', '혼돈']]) {
   test(`${area} can be played directly with the real round and counterattack`, async ({ page }) => {
     await installGame(page, { layoutSeed: 4927 });

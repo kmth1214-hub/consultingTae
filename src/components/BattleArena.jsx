@@ -111,6 +111,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       ? { ...enemy, hp: enemy.hp - enemyResponse.attack.healedEnemy } : enemy) : roster;
   const landingResponse = activeSplit?.stage === 'impact'
     ? { id: activeSplit.id, stage: 'impact', attack: activeSplit.split.shock } : null;
+  const hitEffectsEnabled = run.studioPrototype === 'forest-elevated-v1' && run.area === 'forest';
   const hudRun = beforeImpact ? { ...run, ammo: run.ammo + enemyResponse.attack.ammoLost,
     consumablesBlocked: enemyResponse.attack.consumablesBlocked ? false : run.consumablesBlocked } : run;
   function completeFlight(shot) {
@@ -203,6 +204,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           obstacleDebris={scenery.obstacleDebris || []} />}
         <Slingshot aim={state} run={run} launcherRef={launcherRef} layout={layout} />
         <PlayerCookie characterId={run.characterId} placement={layout.player} aimPhase={state.phase}
+          hitEffectsEnabled={hitEffectsEnabled}
           launchId={state.launchId} response={landingResponse || activeResponse} playerHp={bossTransition && bossTransition.stage !== 'impact'
             ? bossTransition.split.shock.playerHpBefore : beforeImpact
             ? enemyResponse.attack.playerHpBefore : run.playerHp} defenseArmed={run.defenseArmed
@@ -250,6 +252,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           {lastImpact && <ContactEffect key={lastImpact.id} impact={lastImpact} effect={lastEvent?.obstacleEffect} obstacles={layout.obstacles} />}
         </svg>
         {!activeSplit && <MonsterGroup groupRef={enemyGroupRef} enemies={visibleEnemies} placements={layout.enemies} layout={layout} travelMs={travelMs}
+          hitEffectsEnabled={hitEffectsEnabled} showDefeatedHit={Boolean(shotReview)}
           lastEvent={lastEvent} response={activeResponse} selectedTargetId={solution?.selectedTargetId || flight?.selectedTargetId} />}
         {activeSplit && <BossSplitTransition transition={activeSplit} source={splitSource} layout={layout}
           onImpact={onBossImpact} onComplete={onBossComplete} />}
