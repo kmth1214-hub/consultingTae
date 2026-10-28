@@ -72,4 +72,4 @@ Task: T02-battle-integration
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — 엔진 6개, 일반 브라우저 6개, 관리자 브라우저 1개, Vite 빌드 및 오디오 신호 확인
-- commit: pending
+- commit: `91d025c`

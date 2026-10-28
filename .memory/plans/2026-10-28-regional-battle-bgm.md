@@ -9,7 +9,7 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 원곡과 브라우저 재생, 게임 연결 | [P01](../phases/2026-10-28-regional-battle-bgm/P01-regional-bgm/phase.md) |
+| P01 | `done` | 원곡과 브라우저 재생, 게임 연결 | [P01](../phases/2026-10-28-regional-battle-bgm/P01-regional-bgm/phase.md) |
 
 ## Sequence
 T01 악보·합성·재생 엔진 → T02 사용자 게임·관리자 테스트 전투 연결과 조절 UI. 각 Task는 독립 검증 후 한국어 커밋한다.

@@ -7,11 +7,11 @@
 [P01 지역별 전투 BGM](./phases/2026-10-28-regional-battle-bgm/P01-regional-bgm/phase.md)
 
 ## Active Task
-[T02 게임 음악 연결과 조절 UI](./phases/2026-10-28-regional-battle-bgm/P01-regional-bgm/T02-battle-integration.md)
+없음 — 지역별 전투 BGM 계획 완료
 
 ## Status
-- T01 완료 (`7a45d84`), T02 구현 시작 준비 완료
+- T01 완료 (`7a45d84`), T02 완료 (`91d025c`). 활성 Task 없음.
 - 이전 지역 몬스터 시범판 완료, 사용자 게임의 배치 개선은 BGM 이후 별도 진행
 
 ## Next Step (IMPORTANT)
-T02 청사진을 읽고 `src/game/useBattleBgm.js`, `src/App.jsx`, `src/dev/StudioPlay.jsx`, `src/components/BattleScreen.jsx`를 연결한다.
+로컬 게임 `http://127.0.0.1:5173/`에서 네 지역 음악을 듣고 음색·음량을 검토한다. Azure 배포는 사용자 검토 이후 별도 진행한다. 실제 게임의 몬스터 배치 개선도 별도 계획으로 이어간다.
