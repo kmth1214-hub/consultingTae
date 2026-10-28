@@ -10,19 +10,20 @@
 
 ## Active Task
 
-[P01-T03 방어 가능한 한 발 조준 교란](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/T03-aim-disruptions.md)
+없음 — 지역 몬스터와 혼돈 융합체 계획 완료
 
 ## Status
 
-- P01-T01~T02 구현·검증·커밋 완료. P01-T03 구현 중.
+- P01-T01~T03 구현·검증·커밋 완료. 활성 Task 없음.
 - 범위: 로컬 관리자 눈·도시·혼돈 시범판. 사용자 게임과 Azure 배포는 제외.
 - 순서: T01 그림 → T02 융합체 → T03 한 발 교란.
 
 ## Next Step
 
-P01-T03 청사진에 따라 방어 가능한 다음 한 발의 조준 교란을 구현하고 관리자 HUD·실제 탄도까지 검증한다.
+로컬 관리자 `/__dev/maps`에서 눈·도시 그림과 혼돈 융합체·교란을 검토한다. 사용자 게임·Azure 반영은 별도 계획으로 진행한다.
 
 ## Completed commits
+- 21cf54e — [지역 몬스터 P01-T03](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/T03-aim-disruptions.md)
 - f4f2e25 — [지역 몬스터 P01-T02](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/T02-chaos-fusions.md)
 - 44fc2ff — [지역 몬스터 P01-T01](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/T01-regional-art.md)
 - 0b641af — [피격 반응 P01-T01](./phases/2026-10-28-hit-reaction-effects/P01-hit-visuals/T01-hit-reactions.md)
@@ -52,7 +53,7 @@ P01-T03 청사진에 따라 방어 가능한 다음 한 발의 조준 교란을 
 
 ## Pending commits
 
-- 지역 몬스터 계획 T03이 남았다.
+- 지역 몬스터 계획의 남은 Task 없음.
 - 기존 사용자 HTML 수정·캐시·사이트 임시 파일은 이번 계획 범위 밖이다.
 
 ## Local review

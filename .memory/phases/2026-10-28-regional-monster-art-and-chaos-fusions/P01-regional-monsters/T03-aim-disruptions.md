@@ -119,4 +119,4 @@ Task: T03-aim-disruptions
 
 - [x] 구현 완료
 - [x] 검증 통과: 단위 235/235, 관리자 E2E 32/32, 사용자 E2E 14/14, 빌드
-- commit: pending
+- commit: 21cf54e
