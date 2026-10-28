@@ -80,4 +80,4 @@ Task: T01-scores-and-player
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 — 단위 테스트 6개, Vite 빌드
-- commit: pending
+- commit: `7a45d84`

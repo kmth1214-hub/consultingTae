@@ -6,6 +6,10 @@
 .battle-stats { display: flex; gap: 26px; margin-left: auto; font-size: .78rem; color: #756551; }
 .battle-stats strong { margin-left: 7px; font-size: 1.1rem; color: #3d4d35; font-variant-numeric: tabular-nums; }
 .battle-stats small { font-size: .7rem; }
+.battle-bgm-controls { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+.battle-bgm-toggle { width: 35px; height: 35px; border: 1px solid #cec9b9; border-radius: 10px; background: #fffaf0; font-size: 1.15rem; line-height: 1; }
+.battle-bgm-toggle[aria-pressed="true"] { color: #887b6f; text-decoration: line-through; }
+.battle-bgm-controls input[type="range"] { width: 72px; accent-color: #497b63; cursor: pointer; }
 .fullscreen-button { background: #fffaf0; border: 1px solid #cec9b9; border-radius: 11px; width: 38px; height: 38px; font-size: 1.5rem; }
 .battle-arena { position: relative; isolation: isolate; width: 100%; height: 100%; min-height: 0; min-width: 0; margin: 0; overflow: hidden; border: 1px solid #738e79; border-radius: 16px; background: #a6d7c2; container-type: inline-size; touch-action: none; user-select: none; }
 .battle-arena:focus-visible { outline: 3px solid #477c61; outline-offset: 3px; }
@@ -282,6 +286,7 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .battle-screen:fullscreen { background: #192c26; width: 100%; height: 100%; }
 .battle-screen:fullscreen .battle-header { width: 100%; color: #fff5dc; }
 .battle-screen:fullscreen .battle-stats, .battle-screen:fullscreen .battle-stats strong, .battle-screen:fullscreen .battle-status { color: #f4ebcf; }
+.battle-screen:fullscreen .battle-bgm-toggle { color: #2d4736; }
 .battle-screen:fullscreen .aim-instructions { color: #e3e8d6; }
 @container (max-width: 800px) {
   .hud-surface { top: 12px; border-radius: 12px; }
@@ -303,6 +308,8 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .battle-stats { gap: 10px; font-size: .65rem; }
   .battle-stats strong { font-size: .85rem; margin-left: 3px; }
   .battle-stats small { display: none; }
+  .battle-bgm-toggle { width: 30px; height: 30px; font-size: 1rem; }
+  .battle-bgm-controls input[type="range"] { width: 54px; }
   .fullscreen-button { width: 30px; height: 30px; font-size: 1.15rem; }
   .battle-arena { width: 100%; border-radius: 14px; }
   .battle-status { font-size: .68rem; }

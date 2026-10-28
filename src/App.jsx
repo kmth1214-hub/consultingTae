@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useGameSession } from './game/useGameSession.js';
+import { useBattleBgm } from './game/useBattleBgm.js';
 import GameHome from './components/GameHome.jsx';
 import CharacterSelect from './components/CharacterSelect.jsx';
 import BattleScreen from './components/BattleScreen.jsx';
@@ -14,6 +15,8 @@ import './styles/arena.css';
 
 export default function App() {
   const session = useGameSession();
+  const music = useBattleBgm({ active: session.screen === 'battle',
+    area: session.run?.area, boss: session.run?.round === 3 });
   const main = useRef(null);
   useEffect(() => { main.current?.focus({ preventScroll: true }); }, [session.screen]);
   const screens = { home: GameHome, characters: CharacterSelect, battle: BattleScreen,
@@ -22,7 +25,7 @@ export default function App() {
   const Screen = screens[session.screen];
   return <div className={`app app--${session.screen}`}>
     <a className="skip-link" href="#main">본문으로 이동</a>
-    <main id="main" ref={main} tabIndex={-1}><Screen session={session} /></main>
+    <main id="main" ref={main} tabIndex={-1}><Screen session={session} music={music} /></main>
     <Toast notification={session.notification} onDismiss={session.dismissNotification} />
   </div>;
 }

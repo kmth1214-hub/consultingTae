@@ -28,7 +28,7 @@ function combatMessage(event, area) {
     : attack.blocked ? ' · 적 공격 차단!' : ` · 적 반격 −${attack.damage}` : ''}`;
 }
 
-export default function BattleScreen({ session }) {
+export default function BattleScreen({ session, music }) {
   const { run, aim, enemyResponse, bossTransition } = session;
   const beforeImpact = enemyResponse && enemyResponse.stage !== 'impact';
   const visibleHp = bossTransition && bossTransition.stage !== 'impact' ? bossTransition.split.shock.playerHpBefore
@@ -57,6 +57,14 @@ export default function BattleScreen({ session }) {
       <div className="battle-stats"><span>체력 <strong>{visibleHp}</strong><small> / {run.maxPlayerHp}</small></span>
         <span>사탕 <strong>{visibleAmmo}</strong><small> / {run.maxAmmo}</small></span>
         <span>{run.bonusMode ? '보너스' : '점수'} <strong>{(run.bonusMode ? run.bonusScore : run.score).toLocaleString()}</strong></span></div>
+      {music && <div className="battle-bgm-controls" aria-label="배경 음악 설정">
+        <button type="button" className="battle-bgm-toggle" aria-label={music.state === 'blocked' && !music.muted
+          ? 'BGM 재생' : music.muted ? 'BGM 켜기' : 'BGM 음소거'}
+          aria-pressed={music.muted} onClick={() => music.state === 'blocked' && !music.muted
+            ? music.resume() : music.toggleMuted()}>♫</button>
+        <input type="range" min="0" max="100" step="1" value={Math.round(music.volume * 100)}
+          onChange={event => music.setVolume(Number(event.target.value) / 100)} aria-label="BGM 음량" />
+      </div>}
       <button className="fullscreen-button" onClick={fullscreen} aria-label="전체화면 전환">⛶</button>
     </header>
     <BattleArena key={`${run.area}-${run.round}`} run={run} aim={aim} lastEvent={session.lastEvent} setAim={session.setAim}

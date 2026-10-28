@@ -1,6 +1,7 @@
 import React, { useState, useSyncExternalStore } from 'react';
 import { createStudioSession } from './createStudioSession.js';
 import { CHARACTERS, REGIONS } from '../game/gameData.js';
+import { useBattleBgm } from '../game/useBattleBgm.js';
 import BattleScreen from '../components/BattleScreen.jsx';
 import Toast from '../components/Toast.jsx';
 import '../styles/game.css';
@@ -14,6 +15,8 @@ export default function StudioPlay({ config, onRestart, onExit }) {
   const select = patch => setDraft(current => ({ ...current, ...patch }));
   const finished = snapshot.screen !== 'battle'
     || Boolean(snapshot.run.terminal && !snapshot.shotReview && !snapshot.enemyResponse && !snapshot.bossTransition);
+  const music = useBattleBgm({ active: !finished, area: snapshot.run.area,
+    boss: snapshot.run.round === 3 });
   return <main className="studio-play" data-dev-tool="studio-battle-play" data-layout-seed={config.seed}>
     <header className="studio-play-toolbar">
       <div className="studio-play-heading"><div><strong>관리자 테스트 플레이</strong>
@@ -39,7 +42,7 @@ export default function StudioPlay({ config, onRestart, onExit }) {
         {' · '}소모품 각 3개 · 배치 {config.seed}{config.round === 3 && config.bossSpecial ? ' · 다음 보스 공격은 특수 공격' : ''}</p>
     </header>
     <div className="studio-play-game">
-      {!finished ? <BattleScreen session={session} /> : <section className="studio-play-result" role="status">
+      {!finished ? <BattleScreen session={session} music={music} /> : <section className="studio-play-result" role="status">
         <h1>{snapshot.run.terminal === 'defeat' ? '테스트 전투 종료' : '테스트 전투 완료'}</h1>
         <p>{REGIONS[config.area].name} {config.round}라운드 · 점수 {snapshot.run.bonusMode ? snapshot.run.bonusScore : snapshot.run.score}</p>
         <p>다른 전투를 선택하거나 다시 시작해서 계속 확인하세요.</p>

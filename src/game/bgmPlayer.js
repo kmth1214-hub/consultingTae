@@ -36,7 +36,8 @@ export function createBgmPlayer({
       retiredTracks.push(track);
     }
     track = context.createGain();
-    track.gain.setValueAtTime(1, context.currentTime);
+    // Synth voices are intentionally quiet; the track bus restores listening level.
+    track.gain.setValueAtTime(3.2, context.currentTime);
     track.connect(master);
   };
   const ensureContext = () => {

@@ -1,6 +1,6 @@
 # Task: T02 게임 음악 연결과 조절 UI
 
-## Status: pending
+## Status: done
 
 ## Goal
 로컬 사용자 게임과 관리자 테스트 전투에서 지역 BGM 및 3라운드 보스 변주가 전환되고, 플레이어가 음소거·음량을 조절할 수 있다. 전투 외 화면과 숨긴 탭에서는 음악을 멈춘다.
@@ -33,7 +33,10 @@
 - Related Files:
   - `src/components/BattleScreen.jsx` :: `BattleScreen` — 헤더 BGM 음소거 버튼·음량 슬라이더; modify
   - `src/styles/arena.css` :: `.battle-bgm-*` — 데스크톱·600px 모바일·전체화면 배치; modify
+  - `src/game/bgmPlayer.js` :: `newTrack` — 실제 브라우저 신호 측정에 맞춰 재생 버스 음량 조정; modify
   - `tests/e2e/bgm.spec.cjs` :: `BGM smoke` — UI 설정·지역/보스 진입 확인; new
+  - `tests/studio-e2e/bgm.spec.cjs` :: `studio BGM smoke` — 개발 지도 테스트 플레이 네 지역 확인; new
+  - `tests/config/bgm-preview.config.cjs`, `tests/config/bgm-studio.config.cjs` :: `Playwright configs` — 독립 서버에서 종료 가능한 검증 설정; new
 #### Details
 - **Signatures & Types**: `BattleScreen({session, music})`; music 누락 시 기존 호출은 동작하고 컨트롤만 숨긴다. range input은 min=0,max=100,step=1,value=`Math.round(volume*100)`, accessible name `BGM 음량`. 버튼은 `BGM 음소거`/`BGM 켜기`, `aria-pressed` 사용. blocked 상태면 `BGM 재생`으로 resume.
 - **Execution Flow / Logic**:
@@ -50,8 +53,9 @@
 
 ## Validation
 - `node --test tests/bgm-score.test.mjs tests/bgm-player.test.mjs` — 엔진 회귀 없음
-- `npm run build` — 통합 빌드 통과
-- `npx playwright test tests/e2e/bgm.spec.cjs` — 로컬 빌드에서 컨트롤·전환 통과
+- `npm.cmd run build` — Windows PowerShell에서 통합 빌드 통과
+- `node ./node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4180 --strictPort`를 별도 세션에서 시작한 뒤 `node ./node_modules/@playwright/test/cli.js test tests/e2e/bgm.spec.cjs --config tests/config/bgm-preview.config.cjs` — 로컬 빌드 미리보기에서 컨트롤·전환·모바일 통과
+- `node ./node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4181 --strictPort`를 별도 세션에서 시작한 뒤 `node ./node_modules/@playwright/test/cli.js test tests/studio-e2e/bgm.spec.cjs --config tests/config/bgm-studio.config.cjs` — 개발 지도 테스트 전투 네 지역 통과
 
 ## Commit Message
 ```text
@@ -66,6 +70,6 @@ Task: T02-battle-integration
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과 — 엔진 6개, 일반 브라우저 6개, 관리자 브라우저 1개, Vite 빌드 및 오디오 신호 확인
 - commit: pending
