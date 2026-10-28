@@ -48,6 +48,50 @@ test('prototype Alchemist splash is anchored to the first real candy collision',
     prototype: null, loadedCandyId: 'alchemist-candy' }).abilityContacts, undefined);
 });
 
+test('prototype Wizard candy splits into two deterministic paths at the apex and never changes the large path', () => {
+  const layout = empty(), pull = pullAt(45, .55);
+  const input = { layout, pull, enemies: [] };
+  const ordinary = planShot(input);
+  const split = planShot({ ...input, prototype: 'forest-elevated-v1', loadedCandyId: 'wizard-orb' });
+  assert.ok(split.splitOrbs);
+  assert.equal(split.splitOrbs.children.length, 2);
+  assert.deepEqual(split.path.samples, ordinary.path.samples);
+  assert.ok(split.splitOrbs.children[0].path.end.x !== split.splitOrbs.children[1].path.end.x);
+  close(split.splitOrbs.splitTime, -pull.direction.y * getLaunchSpeed(pull.powerRatio) / BATTLEFIELD.gravity, .02);
+  const child = split.splitOrbs.children[0];
+  const p = sampleAtDistance(child.path, child.path.length * .5);
+  layout.enemies = [circle('child-target', p, 22)];
+  const struck = planShot({ ...input, prototype: 'forest-elevated-v1', loadedCandyId: 'wizard-orb',
+    enemies: living(['child-target']) });
+  assert.ok(struck.splitOrbs.children.some(orb => orb.hit?.enemyId === 'child-target'));
+  assert.equal(planShot({ ...input, prototype: null, loadedCandyId: 'wizard-orb',
+    enemies: living(['child-target']) }).splitOrbs, undefined);
+  assert.equal(planShot({ ...input, prototype: 'forest-elevated-v1', loadedCandyId: 'wizard-orb',
+    enemies: living(['child-target']), piercing: true }).splitOrbs, undefined);
+});
+
+test('a low Wizard shot splits near one third of its first flight before landing', () => {
+  const layout = empty(), pull = pullAt(-4, .55);
+  const shot = planShot({ layout, pull, enemies: [], prototype: 'forest-elevated-v1',
+    loadedCandyId: 'wizard-orb' });
+  assert.ok(shot.splitOrbs);
+  close(shot.splitOrbs.splitTime, shot.path.durationSeconds / 3, .08);
+});
+
+test('a small Wizard orb only records a wobble when crossing a log', () => {
+  const layout = empty(), pull = pullAt(45, .55);
+  const first = planShot({ layout, pull, enemies: [], prototype: 'forest-elevated-v1',
+    loadedCandyId: 'wizard-orb' });
+  const p = sampleAtDistance(first.splitOrbs.children[0].path,
+    first.splitOrbs.children[0].path.length * .6);
+  layout.obstacles = [{ ...box('wobble-log', p.x - 8, p.y - 8, 16, 16),
+    kind: 'log', x: p.x - 8, y: p.y - 8, width: 16, height: 16 }];
+  const shot = planShot({ layout, pull, enemies: [], prototype: 'forest-elevated-v1',
+    loadedCandyId: 'wizard-orb' });
+  assert.ok(shot.splitOrbs.children.some(child => child.wobbles.some(w => w.obstacleId === 'wobble-log')));
+  assert.equal(shot.contacts.some(contact => contact.trigger === 'orb'), false);
+});
+
 test('elevated launcher pulls start at its actual pouch and the supported target remains hittable', () => {
   const enemies = BattleEngine.createRoundEnemies('forest', 2, { rng: () => .5 });
   const layout = buildPlayableBattlefield({ area: 'forest', round: 2, enemies,

@@ -168,6 +168,35 @@ test('Alchemist splash does not damage an enemy already killed by the direct hit
   assert.equal(state.score, direct.maxHp);
 });
 
+test('two Wizard child orbs can each hit the large candy target without multiplying damage or counters', () => {
+  const state = engine.createRunState({ characterId: 'wizard', area: 'forest', round: 2, rng: () => 0 });
+  state.studioPrototype = 'forest-elevated-v1';
+  const target = state.enemies[0];
+  target.hp = target.maxHp = 10;
+  state.fireballArmed = true;
+  const childHits = ['left', 'right'].map((orbId, index) => ({ orbId, enemyId: target.id,
+    time: 1.1 + index * .1, point: { x: 1000, y: 700 } }));
+  const event = engine.resolveProjectile(state, { hitIds: [target.id], damage: 2, rng: () => 0,
+    shotMeta: { contacts: [], directHitTime: 1, childHits } });
+  assert.deepEqual(event.hits.map(hit => hit.damage), [4, 1, 1]);
+  assert.deepEqual(event.hits.slice(1).map(hit => hit.orbId), ['left', 'right']);
+  assert.equal(state.score, 6);
+  assert.equal(state.effectCounters.projectileCollisions, 1);
+  assert.equal(state.effectCounters.permanentWeaponHits, 1);
+});
+
+test('Wizard child hits after a killing large candy do not resurrect or score the enemy', () => {
+  const state = engine.createRunState({ characterId: 'wizard', area: 'forest', round: 2, rng: () => 0 });
+  state.studioPrototype = 'forest-elevated-v1';
+  const target = state.enemies[0];
+  const event = engine.resolveProjectile(state, { hitIds: [target.id], damage: target.hp, rng: () => 0,
+    shotMeta: { contacts: [], directHitTime: .5,
+      childHits: [{ orbId: 'left', enemyId: target.id, time: 1,
+        point: { x: 1000, y: 700 } }] } });
+  assert.deepEqual(event.hits.map(hit => hit.id), [target.id]);
+  assert.equal(state.score, target.maxHp);
+});
+
 test('Snow ice halves the next attack once and a blocked attack consumes the guard', () => {
   const state = engine.createRunState({ area: 'snow', round: 1, rng: () => 0 });
   let attackDraw = 0;

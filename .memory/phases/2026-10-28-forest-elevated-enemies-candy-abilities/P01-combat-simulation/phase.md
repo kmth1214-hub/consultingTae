@@ -11,11 +11,11 @@
 | T01 | `done ✅` | 개발 전용 시나리오·고저차 배치·도달성 검증 | [T01](./T01-elevated-layout.md) |
 | T02 | `done ✅` | 통나무 위 몬스터의 낙하 궤적·이동 충돌·피해 정산 | [T02](./T02-rider-fall-physics.md) |
 | T03 | `done ✅` | 모험가 바운스·연금술사 파동·불공/창 조합 | [T03](./T03-bounce-and-splash.md) |
-| T04 | `in_progress 🔵` | 마법사 분기 구슬·장애물 흔들림·다중 실충돌 | [T04](./T04-wizard-split-orbs.md) |
+| T04 | `done ✅` | 마법사 분기 구슬·장애물 흔들림·다중 실충돌 | [T04](./T04-wizard-split-orbs.md) |
 
 ## Progress
 
-- done: 3/4 (active: T04)
+- done: 4/4 (complete)
 - 각 Task에서 지정한 테스트와 `npm.cmd run build`를 확인하고 Task별 한국어 커밋을 남긴다.
 
 ## Phase exit

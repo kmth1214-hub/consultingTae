@@ -520,6 +520,58 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     durationMs: clamp(simulationSeconds * 1000, 420, 4500) };
 }
 
+function withWizardSplit(solution, { layout, start, direction, powerRatio, living }) {
+  if (!solution?.path || solution.path.kind !== 'ballistic') return solution;
+  const speed = getLaunchSpeed(powerRatio), vx = direction.x * speed, vy = direction.y * speed;
+  const firstContactTime = Math.min(solution.path.durationSeconds,
+    ...solution.contacts.filter(contact => contact.trigger === 'candy').map(contact => contact.time));
+  const apex = vy < -60 ? -vy / BATTLEFIELD.gravity : null;
+  const marker = apex !== null && apex < firstContactTime - EPS
+    ? sampleAtTime(solution.path, apex)
+    : sampleAtDistance(solution.path, sampleAtTime(solution.path, firstContactTime).distance / 3);
+  const splitTime = marker.time;
+  if (!Number.isFinite(splitTime) || splitTime <= EPS || splitTime >= firstContactTime - EPS
+    || splitTime >= BATTLEFIELD.maxSeconds || marker.y >= layout.groundY - layout.candyRadius - EPS
+    || marker.x < 0 || marker.x > layout.width) return solution;
+  const splitPoint = { x: marker.x, y: marker.y };
+  const children = [];
+  for (const [id, sign] of [['left', -1], ['right', 1]]) {
+    const angle = sign * .19, dx = vx * .7, dy = (vy + BATTLEFIELD.gravity * splitTime) * .7;
+    const child = ballisticFromVelocity(splitPoint, {
+      x: dx * Math.cos(angle) - dy * Math.sin(angle),
+      y: dx * Math.sin(angle) + dy * Math.cos(angle)
+    }, layout);
+    if (!child) continue;
+    const limit = BATTLEFIELD.maxSeconds - splitTime;
+    const capped = child.durationSeconds > limit ? makePath('ballistic', [
+      ...child.samples.filter(sample => sample.time < limit - EPS), sampleAtTime(child, limit)], 'timeout') : child;
+    const relative = capped;
+    const enemy = living.map(item => {
+      const motion = solution.contacts.find(contact => contact.riderMotion?.enemyId === item.id)?.riderMotion;
+      return { id: item.id, distance: motion
+        ? findMovingRiderContact(relative, item, motion, splitTime, layout.candyRadius * .62)
+        : circleContact(relative, item.collider, layout.candyRadius * .62) };
+    }).filter(hit => hit.distance !== null).sort((a, b) => a.distance - b.distance)[0];
+    const impactDistance = enemy?.distance ?? relative.length;
+    const impact = sampleUnchecked(relative, impactDistance);
+    const path = enemy ? makePath('ballistic', [
+      ...relative.samples.filter(sample => sample.distance < impactDistance - EPS), impact], 'enemy') : relative;
+    const wobbles = layout.obstacles.map(obstacle => ({ obstacleId: obstacle.id,
+      distance: findObstacleContact(relative, [obstacle], layout.candyRadius * .62)?.distance }))
+      .filter(item => item.distance !== null && item.distance !== undefined && item.distance < impactDistance - EPS)
+      .map(item => { const hit = sampleUnchecked(relative, item.distance);
+        return { obstacleId: item.obstacleId, time: splitTime + hit.time, point: { x: hit.x, y: hit.y } }; });
+    children.push({ id, path, impactKind: enemy ? 'enemy' : capped.endKind,
+      impactTime: splitTime + impact.time,
+      hit: enemy ? { enemyId: enemy.id, time: splitTime + impact.time, point: { x: impact.x, y: impact.y } } : null,
+      wobbles });
+  }
+  if (children.length !== 2) return solution;
+  const simulationSeconds = Math.max(solution.simulationSeconds, ...children.map(child => child.impactTime));
+  return { ...solution, abilityKind: 'split', splitOrbs: { splitTime, splitPoint, children },
+    simulationSeconds, durationMs: clamp(simulationSeconds * 1000, 420, 4500) };
+}
+
 export function planShot({ layout, pull, enemies, windAvailable = false,
   toppledObstacleIds = [], piercing = false, loadedCandyId = null, prototype = null } = {}) {
   if (!validLayout(layout) || !validObstacles(layout.obstacles)
@@ -530,7 +582,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   const activeLayout = { ...layout, obstacles: layout.obstacles.filter(item =>
     !toppledObstacleIds.includes(item.id)) };
   const abilityKind = prototype === 'forest-elevated-v1' && layout.area === 'forest' && !piercing
-    ? ({ 'adventurer-candy': 'bounce', 'alchemist-candy': 'splash' })[loadedCandyId] || null : null;
+    ? ({ 'adventurer-candy': 'bounce', 'alchemist-candy': 'splash', 'wizard-orb': 'split' })[loadedCandyId] || null : null;
   const direction = unit(pull.direction), draw = getDragDraw({ ...pull, direction });
   const start = { x: layout.launcher.x + draw.pouch.x, y: layout.launcher.y + draw.pouch.y };
   const ballistic = getBallisticPath({ start, direction, powerRatio: pull.powerRatio, layout: activeLayout });
@@ -549,8 +601,10 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     }
   }
   if (!target && (activeLayout.obstacles.some(item => item.kind) || abilityKind)) {
-    return planStackedShot({ layout: activeLayout, start, direction,
+    const solution = planStackedShot({ layout: activeLayout, start, direction,
       powerRatio: pull.powerRatio, living, piercing, abilityKind });
+    return abilityKind === 'split' ? withWizardSplit(solution, { layout: activeLayout, start,
+      direction, powerRatio: pull.powerRatio, living }) : solution;
   }
   const hitsFor = candidate => target ? [{ id: target.id, distance: candidate.length }]
     : living.map(e => ({ id: e.id, distance: circleContact(candidate, e.collider, layout.candyRadius) }))

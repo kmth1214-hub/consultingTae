@@ -20,8 +20,8 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 결정적 고저차 배치, 낙하 물리·피해, 기본 사탕 3종의 물리 능력 | [P01](../phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/phase.md) |
-| P02 | `pending` | 관리자 지도 미리보기·테스트 재생·HUD를 같은 시나리오에 연결하고 화면 회귀 검증 | [P02](../phases/2026-10-28-forest-elevated-enemies-candy-abilities/P02-studio-presentation/phase.md) |
+| P01 | `done` | 결정적 고저차 배치, 낙하 물리·피해, 기본 사탕 3종의 물리 능력 | [P01](../phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/phase.md) |
+| P02 | `in_progress` | 관리자 지도 미리보기·테스트 재생·HUD를 같은 시나리오에 연결하고 화면 회귀 검증 | [P02](../phases/2026-10-28-forest-elevated-enemies-candy-abilities/P02-studio-presentation/phase.md) |
 
 ## Completion criteria
 

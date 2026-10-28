@@ -544,6 +544,9 @@
     const splashes = state.studioPrototype === 'forest-elevated-v1' && state.area === 'forest'
       && !spear && usedWeapon?.id === 'alchemist-candy' && Array.isArray(shotMeta?.abilityContacts)
       ? shotMeta.abilityContacts : [];
+    const childHits = state.studioPrototype === 'forest-elevated-v1' && state.area === 'forest'
+      && !spear && usedWeapon?.id === 'wizard-orb' && Array.isArray(shotMeta?.childHits)
+      ? shotMeta.childHits : [];
     const hasContactStream = Array.isArray(shotMeta?.contacts);
     const contacts = hasContactStream ? shotMeta.contacts
       : shotMeta?.impactKind === 'obstacle' && shotMeta.obstacleKind
@@ -708,6 +711,16 @@
         hits.push({ id: target.id, kind: target.kind, source: 'alchemist-splash', damage: 1,
           remainingHp: target.hp, defeated: !target.alive, scoreDelta });
       }
+    } });
+    for (const child of childHits) timeline.push({ time: child.time, order: 4, apply() {
+      const target = state.enemies.find(enemy => enemy.id === child.enemyId && enemy.alive && enemy.hp > 0);
+      if (!target) return;
+      target.hp -= 1;
+      target.alive = target.hp > 0;
+      const scoreDelta = GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1;
+      addScore(state, scoreDelta);
+      hits.push({ id: target.id, kind: target.kind, source: 'wizard-child', orbId: child.orbId,
+        damage: 1, remainingHp: target.hp, defeated: !target.alive, scoreDelta });
     } });
     timeline.sort((a, b) => a.time - b.time || a.order - b.order).forEach(action => action.apply());
     if (permanent && directHitCount) {

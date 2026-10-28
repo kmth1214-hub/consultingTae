@@ -206,6 +206,23 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
             : hitIds.includes(contact.sourceId)
               && Math.abs(shotMeta.directHitTime - contact.time) < 1e-6)
           && (!index || abilityContacts[index - 1].time <= contact.time)));
+      const childHits = shotMeta?.childHits, childWobbles = shotMeta?.childWobbles;
+      const validChildren = childHits === undefined && childWobbles === undefined && shotMeta?.splitTime === undefined
+        || (state.run.studioPrototype === 'forest-elevated-v1' && state.run.area === 'forest'
+          && !state.run.spearArmed && loadedCandy?.id === 'wizard-orb'
+          && pendingShot?.flight?.splitOrbs && Number.isFinite(shotMeta.splitTime)
+          && Math.abs(shotMeta.splitTime - pendingShot.flight.splitOrbs.splitTime) < 1e-6
+          && Array.isArray(childHits) && childHits.length <= 2
+          && new Set(childHits.map(hit => hit?.orbId)).size === childHits.length
+          && childHits.every(hit => ['left', 'right'].includes(hit?.orbId)
+            && state.run.enemies.some(enemy => enemy.id === hit.enemyId)
+            && [hit.time, hit.point?.x, hit.point?.y].every(Number.isFinite)
+            && hit.time > shotMeta.splitTime && hit.time <= 8)
+          && Array.isArray(childWobbles)
+          && childWobbles.every(wobble => ['left', 'right'].includes(wobble?.orbId)
+            && typeof wobble.obstacleId === 'string'
+            && [wobble.time, wobble.point?.x, wobble.point?.y].every(Number.isFinite)
+            && wobble.time > shotMeta.splitTime && wobble.time <= 8));
       const validRiderFalls = riderFalls === undefined || (state.run.studioPrototype === 'forest-elevated-v1'
         && Array.isArray(riderFalls) && Array.isArray(contacts)
         && new Set(riderFalls.map(fall => fall?.enemyId)).size === riderFalls.length
@@ -263,7 +280,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         || typeof shotMeta.reverse !== 'boolean' || typeof shotMeta.rolling !== 'boolean'
         || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')
         || new Set(shotMeta.obstacleTargetIds).size !== shotMeta.obstacleTargetIds.length
-        || !validContacts || !validEnemyContacts || !validRiderFalls || !validAbilityContacts
+        || !validContacts || !validEnemyContacts || !validRiderFalls || !validAbilityContacts || !validChildren
         || (contacts !== undefined
           ? (contacts.length ? shotMeta.obstacleId !== contacts[0].obstacleId
               || shotMeta.obstacleKind !== contacts[0].obstacleKind

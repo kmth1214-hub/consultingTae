@@ -19,6 +19,14 @@ test('studio candy HUD explains only the loaded prototype ability and Spear repl
   assert.equal(getCandyDetails(state).buffs.some(text => text.includes('대신합니다')), false);
 });
 
+test('Wizard studio HUD describes split orb damage without changing the regular HUD', () => {
+  const state = BattleEngine.createRunState({ characterId: 'wizard', rng: () => .5 });
+  state.studioPrototype = 'forest-elevated-v1';
+  assert.ok(getCandyDetails(state).buffs.some(text => text.includes('작은 구슬 2개')));
+  state.studioPrototype = null;
+  assert.equal(getCandyDetails(state).buffs.some(text => text.includes('작은 구슬 2개')), false);
+});
+
 test('HUD ranges use the actual engine roll endpoints for every grade and zero protection', () => {
   for (const [grade, expected] of [['C', [0, 4]], ['B', [1, 6]], ['A', [2, 10]]]) {
     const state = run(grade), details = getCandyDetails(state);

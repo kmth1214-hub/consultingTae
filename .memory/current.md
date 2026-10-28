@@ -6,21 +6,21 @@
 
 ## Active Phase
 
-[P01 전투 시뮬레이션](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/phase.md)
+[P02 관리자 화면 연결](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P02-studio-presentation/phase.md)
 
 ## Active Task
 
-[T04 마법사 분기 구슬·장애물 흔들림](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P01-combat-simulation/T04-wizard-split-orbs.md)
+[P02-T01 관리자 미리보기·재생·HUD](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P02-studio-presentation/T01-studio-preview-playback.md)
 
 ## Status
 
-- P01-T01~T03 구현과 바운스·파동·낙하 검증 75개 테스트 및 Vite 빌드 완료.
+- P01-T01~T04 구현과 분기·바운스·파동·낙하 검증 82개 테스트 및 Vite 빌드 완료.
 - 개발 전용 관리자 숲 시범판. 사용자 게임과 Azure 배포는 이번 계획 범위 밖.
 - 순서: P01-T01 → P01-T02 → P01-T03 → P01-T04 → P02-T01.
 
 ## Next Step
 
-T04 청사진을 읽고 마법사 분기 구슬 두 개의 물리 궤적·충돌·장애물 흔들림을 구현한다.
+P02-T01 청사진을 읽고 관리자 지도 미리보기와 테스트 플레이를 동일 배치로 연결하며 낙하·파동·분기 화면을 표시한다.
 
 ## Completed commits
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
@@ -44,7 +44,7 @@ T04 청사진을 읽고 마법사 분기 구슬 두 개의 물리 궤적·충돌
 
 ## Pending commits
 
-- 이 계획의 T04·P02-T01이 남았다.
+- 이 계획의 P02-T01이 남았다.
 - 기존 사용자 HTML 수정·캐시·사이트 임시 파일은 이번 계획 범위 밖이다.
 
 ## Local review

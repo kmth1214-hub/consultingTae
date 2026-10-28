@@ -102,3 +102,20 @@ test('only a reserved Alchemist impact can supply splash contacts; Spear replace
  assert.equal(spear.accepted,true);
  assert.equal(spear.flight.abilityContacts,undefined);
 });
+
+test('a reserved Wizard shot owns its two child trajectories and rejects fabricated child metadata', () => {
+ const session=createStudioSession({area:'forest',round:2,characterId:'wizard',seed:0},{rng:()=>.5});
+ const angle=40*Math.PI/180,pull={ready:true,powerRatio:.7,
+  direction:{x:Math.cos(angle),y:-Math.sin(angle)}};
+ const reservation=session.actions.beginShot({launchId:3,pull});
+ assert.equal(reservation.accepted,true);
+ assert.equal(reservation.flight.splitOrbs?.children.length,2);
+ const event=session.actions.fireShot({shotId:reservation.shotId,encounterId:reservation.encounterId,
+  shotMeta:{childHits:[{orbId:'left',enemyId:'fake',time:0}]}});
+ assert.equal(event.accepted,true);
+ assert.equal(event.shotMeta.childHits.length,
+  reservation.flight.splitOrbs.children.filter(child=>child.hit).length);
+ assert.equal(event.shotMeta.splitTime,reservation.flight.splitOrbs.splitTime);
+ assert.deepEqual(session.getSnapshot().run.toppledObstacleIds,
+  reservation.flight.contacts.map(contact=>contact.obstacleId));
+});

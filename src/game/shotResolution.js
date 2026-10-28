@@ -28,6 +28,12 @@ export function flightResultPayload(flight) {
       directHitTime:flight.directHitTime??flight.path.durationSeconds,
       ...(flight.enemyContacts?{enemyContacts:structuredClone(flight.enemyContacts)}:{}),
       ...(flight.abilityContacts?.length?{abilityContacts:structuredClone(flight.abilityContacts)}:{}),
+      ...(flight.splitOrbs?{
+        childHits:flight.splitOrbs.children.filter(child=>child.hit).map(child=>({orbId:child.id,
+          enemyId:child.hit.enemyId,time:child.hit.time,point:child.hit.point})),
+        childWobbles:flight.splitOrbs.children.flatMap(child=>child.wobbles.map(wobble=>({orbId:child.id,...wobble}))),
+        splitTime:flight.splitOrbs.splitTime
+      }:{}),
       obstacleTargetIds:flight.obstacleTargetIds||[],rolling:flight.rollStartDistance!==null
         &&flight.impactDistance>flight.rollStartDistance,reverse:flight.reverse}};
 }
