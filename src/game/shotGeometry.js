@@ -598,7 +598,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     !toppledObstacleIds.includes(item.id)) };
   const abilityKind = prototype === 'forest-elevated-v1' && layout.area === 'forest' && !piercing
     ? ({ 'adventurer-candy': 'bounce', 'alchemist-candy': 'splash', 'wizard-orb': 'split' })[loadedCandyId] || null : null;
-  const direction = unit(pull.direction), draw = getDragDraw({ ...pull, direction });
+  const direction = unit(pull.direction), draw = getDragDraw({ ...pull, direction }, true, layout.worldScale ?? 1);
   const start = { x: layout.launcher.x + draw.pouch.x, y: layout.launcher.y + draw.pouch.y };
   const ballistic = getBallisticPath({ start, direction, powerRatio: pull.powerRatio, layout: activeLayout });
   if (!ballistic) return null;

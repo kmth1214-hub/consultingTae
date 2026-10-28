@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { createStudioScenario, createStudioSession } from '../src/dev/createStudioSession.js';
 import { BattleEngine } from '../src/game/battleEngine.js';
 import { CHARACTERS } from '../src/game/gameData.js';
+import { preparePhysicalFlight } from '../src/game/shotResolution.js';
+import { planShot } from '../src/game/shotGeometry.js';
 
 const options = { rng: () => .5, now: () => 1000 };
 test('map preview and playable studio session share the exact seeded enemy and support layout', () => {
@@ -30,6 +32,10 @@ test('all twelve regional rounds enter the real battle immediately with a fresh 
     assert.equal(run.bonusMode, area === 'chaos');
     assert.equal(run.playerHp, 100); assert.equal(run.ammo, 9);
     assert.equal(run.layoutSeed, 4927);
+    assert.equal(run.studioWorldScale, 1.5);
+    const preview = createStudioScenario({ area, round, seed: 4927 });
+    assert.equal(preview.layout.worldScale, 1.5);
+    assert.equal(preview.layout.candyRadius, 15);
     assert.equal(run.studioPrototype, area === 'forest' ? 'forest-elevated-v1' : undefined);
     assert.deepEqual(run.inventory, { fireball: 3, spear: 3, defense: 3, heal: 3 });
     if (area === 'chaos' && round < 3) {
@@ -113,4 +119,19 @@ test('same-layout Chaos replay reproduces the random monster roster independentl
   assert.deepEqual(second.enemies, first.enemies);
   const third = createStudioSession({ ...config, seed: 43 }, options).getSnapshot().run;
   assert.notDeepEqual(third.enemies, first.enemies);
+});
+
+test('studio combat and map preview solve a shot from the same enlarged world', () => {
+  for (const area of ['forest', 'snow', 'city', 'chaos']) {
+    const config = { area, round: 1, seed: 4927 };
+    const scenario = createStudioScenario(config);
+    const run = createStudioSession(config, options).getSnapshot().run;
+    const pull = { direction: { x: .8, y: -.6 }, powerRatio: .65, ready: true };
+    const predicted = planShot({ layout: scenario.layout, pull, enemies: scenario.enemies,
+      prototype: run.studioPrototype ?? null });
+    const actual = preparePhysicalFlight(run, pull, 1, 1);
+    assert.ok(predicted && actual);
+    assert.deepEqual(actual.path.start, predicted.path.start);
+    assert.equal(actual.candyRadius, scenario.layout.candyRadius);
+  }
 });

@@ -17,6 +17,7 @@ export function createStudioScenario({ area, round, characterId = 'adventurer', 
   const run = engine.createRunState({ ...runOptions, area, round, characterId, playerHp: 100, ammo: 9, rng: rosterRng,
     studioMonsterPrototype: area !== 'forest' ? 'regional-monsters-v1' : null,
     inventory: { fireball: 3, spear: 3, defense: 3, heal: 3 } });
+  run.studioWorldScale = 1.5;
   if (area === 'forest') {
     run.studioPrototype = 'forest-elevated-v1';
     run.enemyLandingPositions = {};
@@ -24,7 +25,7 @@ export function createStudioScenario({ area, round, characterId = 'adventurer', 
   if (round === 3 && bossSpecial) for (const enemy of run.enemies) if (enemy.isBoss) enemy.attackCount = 2;
   run.layoutSeed = seed;
   const layout = buildPlayableBattlefield({ area, round, enemies: run.enemies, seed,
-    prototype: run.studioPrototype ?? null });
+    prototype: run.studioPrototype ?? null, worldScale: run.studioWorldScale });
   return { area, round, characterId, bossSpecial, seed, prototype: run.studioPrototype ?? null,
     enemies: structuredClone(run.enemies), layout, run };
 }

@@ -41,12 +41,14 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   const landingKey = JSON.stringify(run.enemyLandingPositions || null);
   const layout = useMemo(() => buildPlayableBattlefield({ area: run.area, round: run.round,
     seed: run.layoutSeed ?? 0, encounterPhase, prototype: run.studioPrototype ?? null,
+    worldScale: run.studioWorldScale ?? 1,
     enemyLandingPositions: run.enemyLandingPositions ?? null,
     enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss, alive: true, hp: 1 })) }),
-  [run.area, run.round, run.layoutSeed, run.studioPrototype, slotKey, encounterPhase, landingKey]);
+  [run.area, run.round, run.layoutSeed, run.studioPrototype, run.studioWorldScale, slotKey, encounterPhase, landingKey]);
   const splitSource = useMemo(() => bossTransition ? buildPlayableBattlefield({ area: run.area, round: run.round,
-    seed: run.layoutSeed ?? 0, enemies: [bossTransition.split.fromEnemy] }).enemies[0] : null,
-  [bossTransition?.id, run.area, run.round, run.layoutSeed]);
+    seed: run.layoutSeed ?? 0, enemies: [bossTransition.split.fromEnemy],
+    worldScale: run.studioWorldScale ?? 1 }).enemies[0] : null,
+  [bossTransition?.id, run.area, run.round, run.layoutSeed, run.studioWorldScale]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const [visualContacts, setVisualContacts] = useState([]);
   const [visualEnemyContacts, setVisualEnemyContacts] = useState([]);

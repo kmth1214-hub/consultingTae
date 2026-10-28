@@ -13,7 +13,7 @@ function witnessAt(layout, enemies, x, y, matches) {
     const pullAt = power => asPull(angle, power);
     const error = power => {
       const pull = pullAt(power);
-      const pouch = getDragDraw(pull).pouch;
+      const pouch = getDragDraw(pull, true, layout.worldScale).pouch;
       const x0 = layout.launcher.x + pouch.x;
       const y0 = layout.launcher.y + pouch.y;
       const speed = getLaunchSpeed(power);
@@ -85,21 +85,21 @@ export function isPlayableBattlefield(layout, enemies) {
 
 /** All attempts derive from one round seed, so rerenders cannot shuffle the battlefield. */
 export function buildPlayableBattlefield({ area, round, enemies, seed = 0, encounterPhase = null,
-  prototype = null, enemyLandingPositions = null } = {}) {
+  prototype = null, enemyLandingPositions = null, worldScale = 1 } = {}) {
   if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) {
     throw new TypeError('Invalid battlefield seed');
   }
   for (let attempt = 0; attempt < 32; attempt++) {
     const candidateSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
-    const layout = buildBattlefield({ area, round, enemies, seed: candidateSeed, encounterPhase, prototype });
+    const layout = buildBattlefield({ area, round, enemies, seed: candidateSeed, encounterPhase, prototype, worldScale });
     if (isPlayableBattlefield(layout, enemies)) return enemyLandingPositions
-      ? buildBattlefield({ area, round, enemies, seed: candidateSeed, encounterPhase, prototype, enemyLandingPositions })
+      ? buildBattlefield({ area, round, enemies, seed: candidateSeed, encounterPhase, prototype, enemyLandingPositions, worldScale })
       : layout;
   }
   // A deliberately placed two-stack layout is still verified before use.
-  const fallback = buildBattlefield({ area, round, enemies, seed: 0, encounterPhase, prototype });
+  const fallback = buildBattlefield({ area, round, enemies, seed: 0, encounterPhase, prototype, worldScale });
   if (isPlayableBattlefield(fallback, enemies)) return enemyLandingPositions
-    ? buildBattlefield({ area, round, enemies, seed: 0, encounterPhase, prototype, enemyLandingPositions })
+    ? buildBattlefield({ area, round, enemies, seed: 0, encounterPhase, prototype, enemyLandingPositions, worldScale })
     : fallback;
   throw new Error('Could not place a playable battlefield');
 }

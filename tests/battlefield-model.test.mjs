@@ -65,6 +65,39 @@ test('distinct round seeds change positions without changing enemy identity', ()
   assert.notEqual(first.key, second.key);
 });
 
+test('studio scale enlarges world bodies and collision circles without changing the public layout', () => {
+  for (const area of ['forest', 'snow', 'city', 'chaos']) for (const round of [1, 2, 3]) {
+    const enemies = BattleEngine.createRoundEnemies(area, round, { rng: () => .5 });
+    const input = { area, round, enemies, seed: 4927,
+      ...(area === 'forest' ? { prototype: 'forest-elevated-v1' } : {}) };
+    const original = buildPlayableBattlefield(input);
+    const studio = buildPlayableBattlefield({ ...input, worldScale: 1.5 });
+    assert.equal(studio.worldScale, 1.5);
+    assert.equal(studio.candyRadius, 15);
+    assert.equal(studio.width, original.width);
+    assert.equal(studio.player.width, original.player.width * 1.5);
+    assert.equal(studio.launcher.width, original.launcher.width * 1.5);
+    assert.equal(studio.launcher.restPouch.x, original.launcher.restPouch.x * 1.5);
+    assert.equal(studio.player.contact.y, studio.launcher.contact.y);
+    assert.notEqual(studio.key, original.key);
+    assert.equal(studio.enemies.length, original.enemies.length);
+    assert.ok(isPlayableBattlefield(studio, enemies));
+    for (const [index, slot] of studio.enemies.entries()) {
+      assert.equal(slot.size, original.enemies[index].size * 1.5);
+      assert.equal(slot.collider.radius, original.enemies[index].collider.radius * 1.5);
+    }
+    for (const obstacle of studio.obstacles) {
+      assert.equal(obstacle.width, (obstacle.supportsEnemyId ? 128 : 80) * 1.5);
+      assert.equal(obstacle.y + obstacle.height, studio.groundY);
+    }
+    assert.deepEqual(buildPlayableBattlefield({ ...input, worldScale: 1.5 }), studio);
+    assert.deepEqual(buildPlayableBattlefield(input), original);
+  }
+  const input = { area: 'forest', round: 1, enemies: [] };
+  for (const worldScale of [0, 1.2, 2, NaN])
+    assert.throws(() => buildBattlefield({ ...input, worldScale }), TypeError);
+});
+
 test('studio-only Forest elevation keeps one rider on a reachable support and moves both launch anchors together', () => {
   const heights = new Set(), launchHeights = new Set();
   for (const round of [1, 2, 3]) for (const seed of [0, 1, 3, 4, 15, 4927]) {

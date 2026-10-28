@@ -42,9 +42,10 @@ function subtract(intervals, low, high) {
 }
 
 export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhase = null,
-  prototype = null, enemyLandingPositions = null } = {}) {
+  prototype = null, enemyLandingPositions = null, worldScale = 1 } = {}) {
   if (!['forest', 'snow', 'city', 'chaos'].includes(area) || !Number.isFinite(round)
     || !Array.isArray(enemies) || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff
+    || ![1, 1.5].includes(worldScale)
     || (enemyLandingPositions !== null && (prototype !== FOREST_PROTOTYPE
       || !enemyLandingPositions || Array.isArray(enemyLandingPositions)
       || typeof enemyLandingPositions !== 'object'))
@@ -65,40 +66,41 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     throw new TypeError('Elevated forest round needs two regular enemies');
   }
   const random = randomFromSeed(seed);
+  const stackWidth = STACK_WIDTH * worldScale;
   const placements = enemies.map(({ id, kind, isBoss }, i) => {
     const nominal = enemies.length === 1 ? 2438 : 1000 + i * 1860 / (enemies.length - 1);
     const jitter = enemies.length > 10 ? 24 : enemies.length > 6 ? 42 : 135;
     const x = Math.round(nominal + (random() * 2 - 1) * jitter);
-    const size = kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60;
+    const size = (kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60) * worldScale;
     return { id, kind, isBoss, x, y: 900, size,
       collider: { id, x, y: 900 - size * .52, radius: size * .42 } };
   });
   let free = [[560, 3240]];
   for (const enemy of placements) free = subtract(free, enemy.x - enemy.size / 2 - 8,
     enemy.x + enemy.size / 2 + 8);
-  let centers = free.map(([a, b]) => [a + STACK_WIDTH / 2 + 8, b - STACK_WIDTH / 2 - 8])
+  let centers = free.map(([a, b]) => [a + stackWidth / 2 + 8, b - stackWidth / 2 - 8])
     .filter(([a, b]) => a <= b);
   const obstacles = [];
   const split = area === 'chaos' && round === 3 && encounterPhase === 'split';
   const count = placements.length ? split ? 3 : 2 + Math.floor(random() * 3) : 0;
-  const regularSize = enemies.length <= 6 ? 92 : 60;
+  const regularSize = (enemies.length <= 6 ? 92 : 60) * worldScale;
   const nearEnemy = area === 'forest' && placements.length ? placements[Math.floor(random() * placements.length)] : null;
   for (let slot = 0; slot < count; slot++) {
     const landingBoss = split ? placements[slot] : null;
-    const nominal = landingBoss ? landingBoss.x - landingBoss.size / 2 - STACK_WIDTH / 2 - 40
+    const nominal = landingBoss ? landingBoss.x - landingBoss.size / 2 - stackWidth / 2 - 40
       : slot === 0 && nearEnemy
-      ? nearEnemy.x - nearEnemy.size / 2 - STACK_WIDTH / 2 - (24 + random() * 86)
+      ? nearEnemy.x - nearEnemy.size / 2 - stackWidth / 2 - (24 + random() * 86)
       : [740, 1510, 2290, 3050][slot] + (random() * 2 - 1) * 190;
     const choices = centers.map(([a, b]) => Math.max(a, Math.min(b, nominal)));
     choices.sort((a, b) => Math.abs(a - nominal) - Math.abs(b - nominal) || a - b);
     if (!choices.length) break;
     const center = Math.round(choices[0]);
     const kind = area === 'chaos' ? ['log', 'ice', 'crate'][slot % 3] : THEMES[area];
-    const height = Math.round(regularSize * 1.7), x = center - STACK_WIDTH / 2, y = 900 - height;
+    const height = Math.round(regularSize * 1.7), x = center - stackWidth / 2, y = 900 - height;
     obstacles.push({ id: `${area}-${round}-${split ? 'split-' : ''}obstacle-${slot}`, kind, x, y,
-      width: STACK_WIDTH, height,
-      polygon: SHAPES[kind].map(([u, v]) => ({ x: x + u * STACK_WIDTH, y: y + v * height })) });
-    centers = subtract(centers, center - 145, center + 145);
+      width: stackWidth, height,
+      polygon: SHAPES[kind].map(([u, v]) => ({ x: x + u * stackWidth, y: y + v * height })) });
+    centers = subtract(centers, center - stackWidth / 2 - 105, center + stackWidth / 2 + 105);
   }
   let launcherPlatform = null;
   let lift = 0;
@@ -106,7 +108,7 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     if (round === 2) {
       const rider = placements[Math.floor(random() * 2)];
       const elevation = ['low', 'medium', 'high'][Math.floor(random() * 3)];
-      const width = 128, height = SUPPORT_HEIGHTS[elevation];
+      const width = 128 * worldScale, height = SUPPORT_HEIGHTS[elevation] * worldScale;
       const x = rider.x - width / 2, y = BATTLEFIELD.groundY - height;
       const support = { id: 'forest-2-support-0', kind: 'log', x, y, width, height,
         supportsEnemyId: rider.id, elevation,
@@ -122,8 +124,8 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
       rider.collider = { ...rider.collider, y: y - rider.size * .52 };
     }
     if (round >= 2 && random() < .5) {
-      lift = 80;
-      launcherPlatform = { x: 28, y: BATTLEFIELD.groundY - lift, width: 330, height: lift };
+      lift = 80 * worldScale;
+      launcherPlatform = { x: 28, y: BATTLEFIELD.groundY - lift, width: 330 * worldScale, height: lift };
     }
   }
   if (enemyLandingPositions) for (const [id, landing] of Object.entries(enemyLandingPositions)) {
@@ -136,27 +138,36 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     slot.y = landing.y;
     slot.collider = { ...slot.collider, x: landing.x, y: landing.y - slot.size * .52 };
   }
-  return { ...BATTLEFIELD, encounterPhase, key: JSON.stringify([area, round, seed, encounterPhase,
+  const playerX = 44, launcherX = 220 + (worldScale - 1) * 160;
+  return { ...BATTLEFIELD, candyRadius: BATTLEFIELD.candyRadius * worldScale, worldScale,
+    encounterPhase, key: JSON.stringify([area, round, seed, encounterPhase,
     enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss]), ...(prototype ? [prototype] : []),
+    ...(worldScale !== 1 ? [worldScale] : []),
     ...(enemyLandingPositions && Object.keys(enemyLandingPositions).length
       ? [Object.entries(enemyLandingPositions).sort(([a], [b]) => a.localeCompare(b))] : [])]), area, round,
   ...(prototype ? { prototype, launcherPlatform } : {}),
   // Presentation-only cookie bounds and canonical incoming-attack anchor.
-  player: { x: 44, y: 748 - lift, width: 152, height: 152,
-    impact: { x: 120, y: 824 - lift }, contact: { x: 170, y: 900 - lift } },
+  player: { x: playerX, y: 900 - lift - 152 * worldScale, width: 152 * worldScale, height: 152 * worldScale,
+    impact: { x: playerX + 76 * worldScale, y: 900 - lift - 76 * worldScale },
+    contact: { x: playerX + 126 * worldScale, y: 900 - lift } },
   // restPouch is LOCAL to the sprite; impact/contact are WORLD coordinates.
-  launcher: { x: 220, y: 758 - lift, width: 124, height: 142, restPouch: { x: 64, y: 54 },
-    impact: { x: 284, y: 823 - lift }, contact: { x: 319, y: 900 - lift } },
+  launcher: { x: launcherX, y: 900 - lift - 142 * worldScale,
+    width: 124 * worldScale, height: 142 * worldScale,
+    restPouch: { x: 64 * worldScale, y: 54 * worldScale },
+    impact: { x: launcherX + 64 * worldScale, y: 900 - lift - 77 * worldScale },
+    contact: { x: launcherX + 99 * worldScale, y: 900 - lift } },
   enemies: placements, obstacles };
 }
 
-export function getDragDraw({ direction, powerRatio }, active = true) {
+export function getDragDraw({ direction, powerRatio }, active = true, worldScale = 1) {
   const length = Math.hypot(direction?.x, direction?.y);
-  if (!Number.isFinite(length) || length === 0 || !Number.isFinite(powerRatio)) {
+  if (!Number.isFinite(length) || length === 0 || !Number.isFinite(powerRatio)
+    || ![1, 1.5].includes(worldScale)) {
     throw new TypeError('Invalid pull vector');
   }
   const tension = active ? 12 + 60 * Math.max(0, Math.min(1, powerRatio)) : 0;
-  return { pouch: { x: 64 - direction.x / length * tension,
-    y: 54 - direction.y / length * tension }, left: { x: 34, y: 22 },
-  right: { x: 91, y: 22 }, tension };
+  return { pouch: { x: (64 - direction.x / length * tension) * worldScale,
+    y: (54 - direction.y / length * tension) * worldScale },
+  left: { x: 34 * worldScale, y: 22 * worldScale },
+  right: { x: 91 * worldScale, y: 22 * worldScale }, tension: tension * worldScale };
 }

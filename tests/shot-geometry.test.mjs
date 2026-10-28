@@ -17,6 +17,18 @@ const box = (id, x, y, w, h) => ({ id, polygon: [{ x, y }, { x: x + w, y },
 const circle = (id, p, radius = 10) => ({ id, collider: { id, x: p.x, y: p.y, radius } });
 const living = ids => ids.map(id => ({ id, alive: true, hp: 4 }));
 
+test('scaled studio shot starts at the visibly scaled pouch and keeps five-diameter roll cap', () => {
+  const layout = buildBattlefield({ area: 'forest', round: 1, enemies: [], worldScale: 1.5 });
+  const pull = pullAt(32, .45);
+  const draw = getDragDraw(pull, true, 1.5);
+  const shot = planShot({ layout, pull, enemies: [] });
+  assert.ok(shot);
+  close(shot.path.start.x, layout.launcher.x + draw.pouch.x);
+  close(shot.path.start.y, layout.launcher.y + draw.pouch.y);
+  assert.equal(layout.candyRadius, 15);
+  assert.ok(shot.rollDistance <= 5 * layout.candyRadius * 2 + 1e-7);
+});
+
 test('prototype Adventurer candy bounces once before rolling; ordinary and Spear shots do not', () => {
   const layout = empty(), pull = pullAt(24, .6);
   const input = { layout, pull, enemies: [], prototype: 'forest-elevated-v1',
