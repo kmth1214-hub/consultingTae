@@ -253,6 +253,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
         </svg>
         {!activeSplit && <MonsterGroup groupRef={enemyGroupRef} enemies={visibleEnemies} placements={layout.enemies} layout={layout} travelMs={travelMs}
           hitEffectsEnabled={hitEffectsEnabled} showDefeatedHit={Boolean(shotReview)}
+          studioMonsterPrototype={run.studioMonsterPrototype}
           lastEvent={lastEvent} response={activeResponse} selectedTargetId={solution?.selectedTargetId || flight?.selectedTargetId} />}
         {activeSplit && <BossSplitTransition transition={activeSplit} source={splitSource} layout={layout}
           onImpact={onBossImpact} onComplete={onBossComplete} />}

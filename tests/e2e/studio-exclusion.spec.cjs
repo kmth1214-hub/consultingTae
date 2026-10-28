@@ -1,4 +1,4 @@
-const { test, expect } = require('./support.cjs');
+const { test, expect, installGame, start } = require('./support.cjs');
 
 test('production direct links fail closed without mounting the development studio or game session', async ({ page }) => {
   for (const route of ['/__dev/maps', '/__dev/maps/']) {
@@ -17,4 +17,12 @@ test('query and hash strings cannot enable the studio and the ordinary game home
   await expect(page.locator('[data-dev-tool="regional-map-studio-v1"]')).toHaveCount(0);
   await expect(page.locator('.battle-arena')).toHaveCount(0);
   expect(await page.evaluate(() => window.__gameTest)).toBeUndefined();
+});
+
+for (const area of ['snow', 'city']) test(`ordinary ${area} battle keeps its original monster art`, async ({ page }) => {
+  await installGame(page, { initial: { area, round: 3 } });
+  await start(page);
+  await expect(page.locator('.monster--boss .monster-art')).toBeVisible();
+  await expect(page.locator('[data-monster-art]')).toHaveCount(0);
+  await expect(page.getByTestId('boss-armor')).toHaveCount(1);
 });

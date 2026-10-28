@@ -30,7 +30,20 @@ function BossArmor({ kind }) {
   </svg>;
 }
 
-function MonsterArt({ enemy }) {
+const REGIONAL_MONSTER_ART = {
+  'dry-ice': ASSETS.monsters.dryIceV2,
+  snowball: ASSETS.monsters.snowballV2,
+  'cowardly-snowman': ASSETS.monsters.cowardlySnowmanV2,
+  'washing-robot': ASSETS.monsters.washingRobotV2,
+  'oven-robot': ASSETS.monsters.ovenRobotV2
+};
+
+function MonsterArt({ enemy, studioMonsterPrototype }) {
+  const [failedSource, setFailedSource] = React.useState(null);
+  const studioArt = studioMonsterPrototype === 'regional-monsters-v1' ? REGIONAL_MONSTER_ART[enemy.kind] : null;
+  if (studioArt && failedSource !== studioArt) return <img src={studioArt} alt="" aria-hidden="true"
+    className="monster-art monster-art--regional" data-monster-art={enemy.kind}
+    onError={() => setFailedSource(studioArt)} />;
   if (enemy.kind === 'chaos-fused-boss') return <AssetImage src={ASSETS.monsters.chaosFusedBoss} className="monster-art monster-art--fused" />;
   const art = enemy.kind === 'snake' ? ASSETS.monsters.jellySnake
     : ['boar', 'pointy-boar'].includes(enemy.kind) ? ASSETS.monsters.chocolateBoar : null;
@@ -61,7 +74,7 @@ function MonsterArt({ enemy }) {
 }
 
 export default function MonsterGroup({ enemies, placements, selectedTargetId, lastEvent, response, groupRef, layout, travelMs,
-  hitEffectsEnabled = false, showDefeatedHit = false }) {
+  hitEffectsEnabled = false, showDefeatedHit = false, studioMonsterPrototype = null }) {
   return <div ref={groupRef} className="monster-group" role="group" aria-label={`몬스터 ${enemies.filter(enemy => enemy.alive).length}마리`}>
     {placements.map(placement => {
       const live = enemies.find(e => e.id === placement.id);
@@ -86,8 +99,10 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
           '--attack-travel': `${travelMs}ms`,
           '--strike-x': `${(layout.player.contact.x - enemy.x) / enemy.size * 100}%`,
           '--strike-y': `${(layout.player.contact.y - enemy.y) / enemy.size * 100}%` }}>
-        <span key={hitNow ? `hit-${lastEvent.id}` : 'idle'} className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} />
-          {enemy.isBoss && enemy.kind !== 'chaos-fused-boss' && <BossArmor kind={enemy.kind} />}
+        <span key={hitNow ? `hit-${lastEvent.id}` : 'idle'} className="monster-body"><span className="monster-shadow" /><MonsterArt enemy={enemy} studioMonsterPrototype={studioMonsterPrototype} />
+          {enemy.isBoss && enemy.kind !== 'chaos-fused-boss'
+            && !(studioMonsterPrototype === 'regional-monsters-v1' && ['cowardly-snowman', 'oven-robot'].includes(enemy.kind))
+            && <BossArmor kind={enemy.kind} />}
           {attacking && response.attack.missed && response.stage === 'windup' && <span className="monster-mistake" aria-hidden="true">?!</span>}
         </span>
         {hitNow && <span key={`burst-${lastEvent.id}`} className="monster-hit-burst" data-testid="monster-hit-burst"

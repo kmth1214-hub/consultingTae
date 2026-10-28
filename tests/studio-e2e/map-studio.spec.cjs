@@ -30,6 +30,29 @@ test('development map studio is a separate, keyboard-accessible review screen wi
     .toEqual({ test: undefined, storage: 0 });
 });
 
+test('Snow and City studio preview and play use the same detailed monster art', async ({ page }) => {
+  await page.goto('/__dev/maps');
+  for (const [area, regular, boss] of [
+    ['snow', ['dry-ice', 'snowball'], 'cowardly-snowman'],
+    ['city', ['washing-robot'], 'oven-robot']
+  ]) {
+    await page.getByLabel('지역 선택').selectOption(area);
+    for (const [round, kinds] of [[1, regular], [3, [boss]]]) {
+      await page.getByLabel('테스트 라운드').selectOption(String(round));
+      for (const kind of kinds) {
+        const art = page.locator(`.studio-viewport img[data-monster-art="${kind}"]`).first();
+        await expect(art).toBeVisible();
+        await expect.poll(() => art.evaluate(node => node.naturalWidth)).toBeGreaterThan(0);
+      }
+      if (round === 3) await expect(page.locator('.studio-viewport .boss-armor')).toHaveCount(0);
+      await page.screenshot({ path: `tmp/studio-${area}-round-${round}-art.png` });
+      await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
+      for (const kind of kinds) await expect(page.locator(`.battle-arena img[data-monster-art="${kind}"]`).first()).toBeVisible();
+      await page.getByRole('button', { name: '지도 검토로 돌아가기' }).click();
+    }
+  }
+});
+
 test('forest round two preview and test play use identical elevated actors and supports', async ({ page }) => {
   await page.goto('/__dev/maps');
   await page.getByLabel('테스트 라운드').selectOption('2');

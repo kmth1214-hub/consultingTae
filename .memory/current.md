@@ -2,25 +2,25 @@
 
 ## Active Plan
 
-[관리자 숲 시범판 피격 반응 이펙트](./plans/2026-10-28-hit-reaction-effects.md)
+[눈·도시 몬스터 일러스트와 혼돈 융합체](./plans/2026-10-28-regional-monster-art-and-chaos-fusions.md)
 
 ## Active Phase
 
-[P01 피격 반응 시각화](./phases/2026-10-28-hit-reaction-effects/P01-hit-visuals/phase.md)
+[P01 지역 몬스터와 혼돈 시범 전투](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/phase.md)
 
 ## Active Task
 
-없음 — 피격 반응 계획 완료.
+[P01-T01 눈·도시 몬스터 일러스트](./phases/2026-10-28-regional-monster-art-and-chaos-fusions/P01-regional-monsters/T01-regional-art.md)
 
 ## Status
 
-- 피격 반응 이펙트 P01-T01 완료. 단위/API 227개, 관리자 E2E 26개, 일반 E2E 24개, 빌드 통과.
-- 개발 전용 관리자 숲 시범판에만 적용. 사용자 게임과 Azure 배포는 이번 계획 범위 밖.
-- 이전 숲 고저차·사탕 능력 계획도 완료.
+- 피격 반응 계획 완료. 새 지역 몬스터 계획 P01-T01 구현 준비.
+- 범위: 로컬 관리자 눈·도시·혼돈 시범판. 사용자 게임과 Azure 배포는 제외.
+- 순서: T01 그림 → T02 융합체 → T03 한 발 교란.
 
 ## Next Step
 
-로컬 관리자 숲 시범판에서 피격 연출을 검토한다. 사용자 게임·다른 지역 승격은 검토 후 별도 계획으로 진행한다.
+P01-T01 청사진을 읽고 눈·도시 몬스터 투명 일러스트 5종을 만들어 관리자 지도·플레이에만 연결한다.
 
 ## Completed commits
 - 0b641af — [피격 반응 P01-T01](./phases/2026-10-28-hit-reaction-effects/P01-hit-visuals/T01-hit-reactions.md)
@@ -50,10 +50,10 @@
 
 ## Pending commits
 
-- 피격 반응 계획에 남은 Task 없음.
+- 지역 몬스터 계획 T01~T03이 남았다.
 - 기존 사용자 HTML 수정·캐시·사이트 임시 파일은 이번 계획 범위 밖이다.
 
 ## Local review
 
 - 개발 서버 전용: http://127.0.0.1:5173/__dev/maps
-- 관리자 시범판 검토 후 사용자 게임·Azure 승격은 별도 작업.
+- 새 지역 몬스터 시범판 검토 후 사용자 게임·Azure 승격은 별도 작업.

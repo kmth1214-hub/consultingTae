@@ -196,7 +196,8 @@ export default function MapStudio() {
               run={scenario.run} layout={layout} />
             <PlayerCookie characterId={characterId} placement={layout.player} aimPhase="idle"
               playerHp={100} defenseArmed={false} />
-            <MonsterGroup enemies={scenario.enemies} placements={layout.enemies} layout={layout} />
+            <MonsterGroup enemies={scenario.enemies} placements={layout.enemies} layout={layout}
+              studioMonsterPrototype={scenario.run.studioMonsterPrototype} />
           </div>}
         </div>}
         {layout && <p className="studio-map-label">{AREA_NAMES[area]} · {round}라운드 · 장애물 {layout.obstacles.length}개 · 배치 {seed}</p>}

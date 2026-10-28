@@ -37,6 +37,11 @@ import chaosLayers from '../../assets/maps/chaos-layers/layers.json';
 import jellySnake from '../../assets/monsters/jelly-snake.png';
 import chocolateBoar from '../../assets/monsters/chocolate-boar.png';
 import chaosFusedBoss from '../../assets/monsters/chaos-fused-boss.png';
+import dryIceV2 from '../../assets/monsters/dry-ice-v2.png';
+import snowballV2 from '../../assets/monsters/snowball-v2.png';
+import cowardlySnowmanV2 from '../../assets/monsters/cowardly-snowman-v2.png';
+import washingRobotV2 from '../../assets/monsters/washing-robot-v2.png';
+import ovenRobotV2 from '../../assets/monsters/oven-robot-v2.png';
 import fireball from '../../assets/items/fiery-candy-comet.png';
 import spear from '../../assets/items/candy-cane-staff-of-darkness.png';
 import defense from '../../assets/items/gigawatt-cube.png';
@@ -50,6 +55,7 @@ export const ASSETS = Object.freeze({
     city: Object.freeze({ distant: Object.freeze({ west: cityDistantWest, east: cityDistantEast }), midground: Object.freeze({ west: cityMidgroundWest, east: cityMidgroundEast }), path: Object.freeze({ west: cityPathWest, east: cityPathEast }), foreground: Object.freeze({ west: cityForegroundWest, east: cityForegroundEast }), metadata: cityLayers }),
     chaos: Object.freeze({ distant: Object.freeze({ west: chaosDistantWest, east: chaosDistantEast }), midground: Object.freeze({ west: chaosMidgroundWest, east: chaosMidgroundEast }), path: Object.freeze({ west: chaosPathWest, east: chaosPathEast }), foreground: Object.freeze({ west: chaosForegroundWest, east: chaosForegroundEast }), metadata: chaosLayers })
   }),
-  monsters: Object.freeze({ jellySnake, chocolateBoar, chaosFusedBoss }),
+  monsters: Object.freeze({ jellySnake, chocolateBoar, chaosFusedBoss,
+    dryIceV2, snowballV2, cowardlySnowmanV2, washingRobotV2, ovenRobotV2 }),
   items: Object.freeze({ fireball, spear, defense, heal })
 });
