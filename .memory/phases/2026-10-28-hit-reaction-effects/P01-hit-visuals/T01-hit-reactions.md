@@ -108,4 +108,4 @@ Task: T01-hit-reactions
 
 - [x] 구현 완료
 - [x] 검증 통과 — 단위/API 227개, 관리자 E2E 26개, 일반 E2E 24개, 빌드 통과.
-- commit: pending (아래 커밋에서 기록)
+- commit: `0b641af`

@@ -12,7 +12,7 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 몬스터·쿠키 피격 표시, 접근성, 관리자/사용자 회귀 | [P01](../phases/2026-10-28-hit-reaction-effects/P01-hit-visuals/phase.md) |
+| P01 | `done` ✅ | 몬스터·쿠키 피격 표시, 접근성, 관리자/사용자 회귀 | [P01](../phases/2026-10-28-hit-reaction-effects/P01-hit-visuals/phase.md) |
 
 ## Completion criteria
 

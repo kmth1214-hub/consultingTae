@@ -2,27 +2,28 @@
 
 ## Active Plan
 
-[숲 고저차 몬스터와 기본 사탕 능력 관리자 시범판](./plans/2026-10-28-forest-elevated-enemies-candy-abilities.md)
+[관리자 숲 시범판 피격 반응 이펙트](./plans/2026-10-28-hit-reaction-effects.md)
 
 ## Active Phase
 
-[P02 관리자 화면 연결](./phases/2026-10-28-forest-elevated-enemies-candy-abilities/P02-studio-presentation/phase.md)
+[P01 피격 반응 시각화](./phases/2026-10-28-hit-reaction-effects/P01-hit-visuals/phase.md)
 
 ## Active Task
 
-없음 (현재 계획 완료)
+없음 — 피격 반응 계획 완료.
 
 ## Status
 
-- P01-T01~T04와 P02-T01 구현 완료. 전체 단위/API 227개, 관리자 E2E 24개, 일반 게임·배포 격리 E2E 7개 및 Vite 빌드 통과.
-- 개발 전용 관리자 숲 시범판. 사용자 게임과 Azure 배포는 이번 계획 범위 밖.
-- 순서: P01-T01 → P01-T02 → P01-T03 → P01-T04 → P02-T01.
+- 피격 반응 이펙트 P01-T01 완료. 단위/API 227개, 관리자 E2E 26개, 일반 E2E 24개, 빌드 통과.
+- 개발 전용 관리자 숲 시범판에만 적용. 사용자 게임과 Azure 배포는 이번 계획 범위 밖.
+- 이전 숲 고저차·사탕 능력 계획도 완료.
 
 ## Next Step
 
-로컬 관리자 시범판에서 숲 1~3라운드를 검토한다. 사용자 게임·Azure 승격은 검토 후 별도 계획으로 진행한다.
+로컬 관리자 숲 시범판에서 피격 연출을 검토한다. 사용자 게임·다른 지역 승격은 검토 후 별도 계획으로 진행한다.
 
 ## Completed commits
+- 0b641af — [피격 반응 P01-T01](./phases/2026-10-28-hit-reaction-effects/P01-hit-visuals/T01-hit-reactions.md)
 - aa57886 — [2026-10-26-monster-projectile-throws / T01-projectile-throw](./phases/2026-10-26-monster-projectile-throws/P01-throw/T01-projectile-throw.md)
 - 242a740 — [2026-10-26-map-studio-play-mode / T01-studio-play](./phases/2026-10-26-map-studio-play-mode/P01-play/T01-studio-play.md)
 - d4264f4 — [2026-10-26-chaos-obstacle-effect-feedback / T01-chaos-effects](./phases/2026-10-26-chaos-obstacle-effect-feedback/P01-feedback/T01-chaos-effects.md)
@@ -49,7 +50,7 @@
 
 ## Pending commits
 
-- 이 계획의 남은 Task 없음.
+- 피격 반응 계획에 남은 Task 없음.
 - 기존 사용자 HTML 수정·캐시·사이트 임시 파일은 이번 계획 범위 밖이다.
 
 ## Local review
