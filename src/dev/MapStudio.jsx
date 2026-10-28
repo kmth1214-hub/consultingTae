@@ -1,17 +1,26 @@
 import React, { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import ArenaScenery from '../components/ArenaScenery.jsx';
 import BattlefieldBackdrop from '../components/BattlefieldBackdrop.jsx';
-import { buildBattlefield } from '../game/battlefieldModel.js';
+import MonsterGroup from '../components/MonsterGroup.jsx';
+import PlayerCookie from '../components/PlayerCookie.jsx';
+import Slingshot from '../components/Slingshot.jsx';
+import { createStudioScenario } from './createStudioSession.js';
 import { applyScenePose } from '../game/sceneParallax.js';
 import { CHARACTERS } from '../game/gameData.js';
 import { getStudioPose, panStudio, zoomStudioAt } from './mapStudioCamera.js';
 import './mapStudio.css';
+import '../styles/arena.css';
 
 const AREA_NAMES = { forest: '숲', snow: '눈', city: '도시', chaos: '혼돈' };
 const LAYER_NAMES = { sky: '하늘', distant: '원경', midground: '중경', route: '길', foreground: '전경' };
 const LAYER_KEYS = Object.keys(LAYER_NAMES);
 const RESET_CAMERA = { zoom: 1, center: { x: 1800, y: 600 } };
 const StudioPlay = lazy(() => import('./StudioPlay.jsx'));
+const randomSeed = previous => {
+  const next = globalThis.crypto?.getRandomValues
+    ? crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random() * 0x100000000);
+  return next === previous ? (next + 1) >>> 0 : next;
+};
 
 function ErrorScreen() {
   return <main className="studio-error"><h1>지도 검토 화면을 열지 못했습니다</h1><a href="/__dev/maps">다시 불러오기</a><a href="/">게임으로 돌아가기</a></main>;
@@ -20,6 +29,7 @@ function ErrorScreen() {
 export default function MapStudio() {
   const [area, setArea] = useState('forest');
   const [round, setRound] = useState(1), [characterId, setCharacterId] = useState('adventurer');
+  const [seed, setSeed] = useState(0);
   const [bossSpecial, setBossSpecial] = useState(false), [play, setPlay] = useState(null);
   const playId = useRef(0);
   const [visibleLayers, setVisibleLayers] = useState(() => Object.fromEntries(LAYER_KEYS.map(key => [key, true])));
@@ -29,8 +39,11 @@ export default function MapStudio() {
   const [reducedMotion, setReducedMotion] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [dragging, setDragging] = useState(false);
   const viewportRef = useRef(null), worldRef = useRef(null), dragRef = useRef(null);
-  const layout = useMemo(() => buildBattlefield({ area, round: 1,
-    enemies: [{ id: 'studio-reference-target', kind: 'snake', isBoss: false }] }), [area]);
+  const preview = useMemo(() => {
+    try { return { scenario: createStudioScenario({ area, round, characterId, bossSpecial, seed }), error: null }; }
+    catch (error) { return { scenario: null, error: error.message }; }
+  }, [area, round, characterId, bossSpecial, seed]);
+  const scenario = preview.scenario, layout = scenario?.layout;
   const pose = getStudioPose({ viewport, camera });
 
   useEffect(() => {
@@ -111,17 +124,17 @@ export default function MapStudio() {
   function changeArea(nextArea) {
     cancelDrag(); setCamera(RESET_CAMERA); setArea(nextArea);
   }
-  function launchPlay(config = { area, round, characterId, bossSpecial }, newLayout = true) {
+  function launchPlay(config = { area, round, characterId, bossSpecial, seed }, newLayout = false) {
     cancelDrag();
     if (config.area !== area) changeArea(config.area);
     setRound(config.round); setCharacterId(config.characterId); setBossSpecial(config.bossSpecial);
-    const seed = !newLayout ? config.seed : globalThis.crypto?.getRandomValues
-      ? crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random() * 0x100000000);
+    const nextSeed = newLayout ? randomSeed(config.seed) : config.seed;
+    setSeed(nextSeed);
     setPlay({ area: config.area, round: config.round, characterId: config.characterId,
-      bossSpecial: config.bossSpecial && config.round === 3, seed, id: ++playId.current });
+      bossSpecial: config.bossSpecial && config.round === 3, seed: nextSeed, id: ++playId.current });
   }
 
-  return <><main className="map-studio" hidden={Boolean(play)} data-dev-tool="regional-map-studio-v1">
+  return <><main className="map-studio" data-dev-tool="regional-map-studio-v1" hidden={Boolean(play)}>
     <header className="studio-header">
       <div><p className="studio-kicker">개발 검토 도구</p><h1>지역 지도 스튜디오</h1>
         <p>전투와 같은 배경·장애물 장면을 확인합니다. 이 화면은 개발 환경 전용입니다.</p></div>
@@ -163,7 +176,9 @@ export default function MapStudio() {
           </select></label>
           <label className="studio-check"><input type="checkbox" checked={bossSpecial} disabled={round !== 3}
             onChange={event => setBossSpecial(event.target.checked)} />보스 특수 공격부터 확인</label>
-          <button type="button" className="studio-play-primary" onClick={() => launchPlay()}>테스트 플레이</button>
+          <button type="button" onClick={() => setSeed(current => randomSeed(current))}>새 배치</button>
+          <button type="button" className="studio-play-primary" disabled={!scenario} onClick={() => launchPlay()}>테스트 플레이</button>
+          <output className="studio-seed" data-testid="studio-preview-seed">배치 {seed}</output>
           <p>선택한 지역에서 바로 시작 · 소모품 각 3개</p>
         </fieldset>
       </aside>
@@ -172,11 +187,19 @@ export default function MapStudio() {
         onPointerMove={onPointerMove} onPointerUp={() => cancelDrag()} onPointerCancel={() => cancelDrag()}
         onLostPointerCapture={() => cancelDrag(false)} onKeyDown={onKeyDown}>
         {!pose && <p className="studio-waiting" role="status">미리보기 크기를 확인하는 중…</p>}
-        <div ref={worldRef} className="arena-world" style={{ width: layout.width, height: layout.height }}>
+        {preview.error && <p className="studio-waiting" role="alert">배치를 만들 수 없습니다: {preview.error}</p>}
+        {layout && <div ref={worldRef} className="arena-world" data-layout-key={layout.key} style={{ width: layout.width, height: layout.height }}>
           <BattlefieldBackdrop area={area} visibleLayers={visibleLayers} motionPaused={motionPaused || reducedMotion || Boolean(play)} />
           <ArenaScenery layout={layout} />
-        </div>
-        <p className="studio-map-label">{AREA_NAMES[area]} 지역 · 장애물 {layout.obstacles.length}개</p>
+          {!play && <div className="studio-preview-actors" data-testid="studio-preview-actors">
+            <Slingshot aim={{ phase: 'idle', powerRatio: 0, direction: { x: 1, y: 0 }, launchId: 0 }}
+              run={scenario.run} layout={layout} />
+            <PlayerCookie characterId={characterId} placement={layout.player} aimPhase="idle"
+              playerHp={100} defenseArmed={false} />
+            <MonsterGroup enemies={scenario.enemies} placements={layout.enemies} layout={layout} />
+          </div>}
+        </div>}
+        {layout && <p className="studio-map-label">{AREA_NAMES[area]} · {round}라운드 · 장애물 {layout.obstacles.length}개 · 배치 {seed}</p>}
       </section>
     </div>
     <footer className="studio-footer">개발 환경 전용 · 테스트 플레이는 일반 게임의 프로필·순위 기록을 변경하지 않습니다.</footer>

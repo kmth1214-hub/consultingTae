@@ -17,6 +17,7 @@ import { useAimController } from '../game/useAimController.js';
 import { useBattlefieldCamera } from '../game/useBattlefieldCamera.js';
 import { getChaosObstacleCues } from '../game/chaosObstacleFeedback.js';
 import BossSplitTransition from './BossSplitTransition.jsx';
+import { sampleRiderMotion } from '../game/forestLogPhysics.js';
 
 const INSTRUCTIONS = {
   idle: '맵 어디든 누르고 뒤로 당긴 뒤 놓으세요. 당긴 반대 방향으로 발사됩니다.',
@@ -48,6 +49,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const [visualContacts, setVisualContacts] = useState([]);
   const [visualEnemyContacts, setVisualEnemyContacts] = useState([]);
+  const [visualAbilities, setVisualAbilities] = useState([]);
+  const triggeredAbilities = useRef(new Set());
   const triggeredEnemies = useRef(new Set());
   const chaosCues = useMemo(() => activeSplit ? [] : getChaosObstacleCues({ area: run.area, layout, event: lastEvent }), [run.area, layout, lastEvent, activeSplit]);
   const activeFlight = useRef(null), triggeredContacts = useRef(new Set());
@@ -63,12 +66,16 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     clearFlight(); setImpact(null);
   }, [activeSplit?.id]);
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
+    prototype: run.studioPrototype ?? null,
+    loadedCandyId: run.weapons.find(weapon => weapon.instanceId ===
+      (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id ?? null,
     piercing: run.spearArmed === true,
     toppledObstacleIds: run.toppledObstacleIds || [],
     windAvailable: run.weapons.some(w => w.id === 'wind-candy') && !run.roundEffects.windHomingUsed });
   function clearFlight() {
     if (activeFlight.current) onCancelShot(activeFlight.current.shotId);
     activeFlight.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]);
+    setVisualAbilities([]); triggeredAbilities.current.clear();
     triggeredContacts.current.clear(); triggeredEnemies.current.clear();
   }
   function failLaunch() { controller.cancelAim(); setRetry('조준을 다시 잡고 당겨 주세요.'); }
@@ -80,6 +87,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     activeFlight.current = shot;
     triggeredContacts.current.clear();
     triggeredEnemies.current.clear(); setVisualEnemyContacts([]);
+    triggeredAbilities.current.clear(); setVisualAbilities([]);
     setVisualContacts([]);
     focusRef.current = shot.path.start;
     setFlight(shot);
@@ -135,6 +143,39 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     }
     if (fresh.length) setVisualContacts(current => [...current, ...fresh]);
   }
+  function showAbilityContacts(shot, progressTime) {
+    const cues = [
+      ...(shot.abilityContacts || []).map((contact, index) => ({ ...contact,
+        kind: 'splash', id: `${shot.id}-splash-${index}` })),
+      ...(shot.splitOrbs?.children || []).flatMap(child => [
+        ...child.wobbles.map((wobble, index) => ({ ...wobble, kind: 'wobble',
+          id: `${shot.id}-${child.id}-wobble-${index}` })),
+        ...(child.hit ? [{ ...child.hit, kind: 'child-hit',
+          id: `${shot.id}-${child.id}-hit` }] : [])
+      ])
+    ];
+    const fresh = cues.filter(cue => cue.time <= progressTime && !triggeredAbilities.current.has(cue.id));
+    if (fresh.length) {
+      fresh.forEach(cue => triggeredAbilities.current.add(cue.id));
+      setVisualAbilities(current => [...current, ...fresh]);
+    }
+  }
+  function moveFallingRiders(shot, time) {
+    for (const contact of shot.contacts || []) {
+      const motion = contact.riderMotion;
+      if (!motion || time < motion.startTime) continue;
+      const position = sampleRiderMotion(motion, time);
+      const monster = [...enemyGroupRef.current?.querySelectorAll('[data-enemy-id]') || []]
+        .find(node => node.dataset.enemyId === motion.enemyId);
+      if (monster) { monster.style.left = `${position.x}px`; monster.style.top = `${position.y}px`; }
+      const marker = [...arenaRef.current?.querySelectorAll('[data-minimap-enemy]') || []]
+        .find(node => node.dataset.minimapEnemy === motion.enemyId);
+      if (marker) {
+        marker.style.left = `${position.x / layout.width * 100}%`;
+        marker.style.top = `${(position.y - layout.enemies.find(enemy => enemy.id === motion.enemyId).size * .42) / layout.height * 100}%`;
+      }
+    }
+  }
   return <>
     <div ref={arenaRef} className={`battle-arena battle-arena--${run.area}`} tabIndex={0} role="group" aria-label="전투 맵"
       data-camera-mode={camera.reducedMotion ? 'overview' : mode}
@@ -153,10 +194,12 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       onPointerDown={controller.onPointerDown} onPointerMove={controller.onPointerMove} onPointerUp={controller.onPointerUp}
       onPointerCancel={controller.onPointerCancel} onLostPointerCapture={controller.onLostPointerCapture}
       onContextMenu={controller.onContextMenu} onKeyDown={controller.onKeyDown}>
-      <div ref={worldRef} className="arena-world" style={{ width: layout.width, height: layout.height }}>
+      <div ref={worldRef} className="arena-world" data-layout-key={layout.key}
+        style={{ width: layout.width, height: layout.height }}>
         <BattlefieldBackdrop area={run.area} layout={layout} motionPaused={Boolean(run.terminal)} />
         {(!activeSplit || activeSplit.stage === 'impact') && <ArenaScenery ref={sceneryRef} layout={layout} area={run.area} toppledObstacleIds={scenery.toppledObstacleIds || []}
-          visualContacts={activeSplit ? [] : visualContacts} flight={activeSplit ? null : flight} forestLogDebris={scenery.forestLogDebris || []}
+          visualContacts={activeSplit ? [] : visualContacts} visualWobbles={visualAbilities.filter(cue => cue.kind === 'wobble')}
+          flight={activeSplit ? null : flight} forestLogDebris={scenery.forestLogDebris || []}
           obstacleDebris={scenery.obstacleDebris || []} />}
         <Slingshot aim={state} run={run} launcherRef={launcherRef} layout={layout} />
         <PlayerCookie characterId={run.characterId} placement={layout.player} aimPhase={state.phase}
@@ -169,11 +212,13 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           <TrajectoryPreview path={solution?.path || flight?.path} previewD={solution?.previewD}
             visible={state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} onFailure={failLaunch}
-            onProgress={({ id, point, time }) => {
+            onProgress={({ id, point, focusPoint, time }) => {
               if (activeFlight.current?.id !== id) return;
               const logFocus = sceneryRef.current?.advance(time);
-              focusRef.current = time > flight.directHitTime && logFocus ? logFocus : point;
+              focusRef.current = time > flight.directHitTime && logFocus ? logFocus : focusPoint || point;
               showFlightContacts(flight, time);
+              showAbilityContacts(flight, time);
+              moveFallingRiders(flight, time);
               const fresh = (flight.enemyContacts || []).filter(contact => contact.time <= time && !triggeredEnemies.current.has(contact.id));
               if (fresh.length) {
                 fresh.forEach(contact => triggeredEnemies.current.add(contact.id));
@@ -188,6 +233,15 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           {visualContacts.map(contact => <ContactEffect key={contact.id} impact={{
             id: contact.id, point: contact.point, obstacleId: contact.obstacleId }}
             obstacles={layout.obstacles} />)}
+          {visualAbilities.filter(cue => cue.kind === 'splash').map(cue => <g key={cue.id}
+            data-testid="alchemist-splash" className="alchemist-splash" transform={`translate(${cue.point.x} ${cue.point.y})`}>
+            <circle r="180" fill="none" stroke="#b8ffcb" strokeWidth="12" />
+            <circle r="22" fill="#b8ffcb" opacity=".38" />
+          </g>)}
+          {visualAbilities.filter(cue => cue.kind === 'child-hit').map(cue => <g key={cue.id}
+            data-testid="wizard-child-hit" className="wizard-child-hit" transform={`translate(${cue.point.x} ${cue.point.y})`}>
+            <circle r="24" fill="none" stroke="#b6eaff" strokeWidth="5" />
+          </g>)}
           {run.area === 'city' && visualContacts.map(contact =>
             <CityGroundBursts key={contact.id} contact={contact} layout={layout} />)}
           {chaosCues.map(cue => cue.kind === 'jar-burst'

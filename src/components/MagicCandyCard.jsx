@@ -4,12 +4,13 @@ import { getCandyDetails } from '../game/candyPresentation.js';
 export default function MagicCandyCard({ run, hidden }) {
   const details = getCandyDetails(run);
   if (!details || hidden) return null;
-  const { current, damage, next, buffs, passives } = details;
+  const { current, currentAbility, damage, next, buffs, passives } = details;
   const chips = [run.spearArmed && '창 · 최대 3마리 관통', run.fireballArmed && '불공 ×2', run.pendingAimInversion && '조작 반전',
     run.defenseArmed && '보호막', run.nextAttackDamageMultiplier === .5 && '적 피해 50%↓'].filter(Boolean);
   return <aside className="candy-hud hud-surface" aria-label="장전된 마법사탕">
     <div className="candy-card-top"><span className="candy-symbol" aria-hidden="true">✦</span><span className="candy-label">이번 사탕</span><span className="grade">{current.grade} 등급</span></div>
     <h2>{current.name}</h2>
+    {currentAbility && <p className="candy-current-ability" data-testid="current-candy-ability">{currentAbility}</p>}
     <p className="candy-damage">기본 피해 <strong>{damage.min}–{damage.max}</strong><span>발사 시 무작위 · 추가 피해는 조건부</span></p>
     {chips.length > 0 && <ul className="candy-status-chips" aria-label="적용 중인 상태 요약">{chips.map(text => <li key={text}>{text}</li>)}</ul>}
     <div className="next-candy" aria-label="다음 사탕">

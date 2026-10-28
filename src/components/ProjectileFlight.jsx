@@ -12,6 +12,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
   const trailRef = useRef(null), trailGlowRef = useRef(null), gradientRef = useRef(null);
   const rollDustRef = useRef(null);
   const rollShadowRef = useRef(null), dustDirectionRef = useRef(null);
+  const childRefs = useRef(new Map()), bounceRef = useRef(null);
   const complete = useRef(onComplete);
   complete.current = { onComplete, onProgress, onFailure };
   useEffect(() => {
@@ -35,7 +36,11 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         const distance = Math.min(flight.impactDistance, point.distance);
         const candyFinished = simulationTime > candyTime;
         const rolling = Number.isFinite(flight.rollStartDistance) && distance > flight.rollStartDistance;
-        complete.current.onProgress?.({ id: flight.id, point, distance, time: simulationTime });
+        const activeChild = flight.splitOrbs?.children.find(child => simulationTime >= flight.splitOrbs.splitTime
+          && simulationTime <= child.impactTime);
+        const focusPoint = candyFinished && activeChild
+          ? sampleAtTime(activeChild.path, simulationTime - flight.splitOrbs.splitTime) : point;
+        complete.current.onProgress?.({ id: flight.id, point, focusPoint, distance, time: simulationTime });
         candyRef.current.style.visibility = candyFinished ? 'hidden' : '';
         if (trailRef.current) trailRef.current.style.visibility = candyFinished ? 'hidden' : '';
         if (trailGlowRef.current) trailGlowRef.current.style.visibility = candyFinished ? 'hidden' : '';
@@ -46,6 +51,21 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
           ? rollStart.time * 480 + (point.x - rollStart.x) / BATTLEFIELD.candyRadius * 180 / Math.PI
           : simulationTime * 480;
         candyRef.current.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${rotation})`);
+        if (bounceRef.current && flight.bounce) {
+          const nearLanding = Math.abs(simulationTime - flight.bounce.firstLandingTime) < .22;
+          bounceRef.current.style.display = nearLanding && !reduced ? '' : 'none';
+          bounceRef.current.setAttribute('transform', `translate(${flight.bounce.firstLanding.x} ${flight.bounce.firstLanding.y})`);
+        }
+        for (const child of flight.splitOrbs?.children || []) {
+          const node = childRefs.current.get(child.id);
+          if (!node) continue;
+          const active = simulationTime >= flight.splitOrbs.splitTime && simulationTime <= child.impactTime;
+          node.style.visibility = active ? '' : 'hidden';
+          if (active) {
+            const position = sampleAtTime(child.path, simulationTime - flight.splitOrbs.splitTime);
+            node.setAttribute('transform', `translate(${position.x} ${position.y})`);
+          }
+        }
         if (rollDustRef.current) {
           rollDustRef.current.style.display = !reduced && rolling && !candyFinished ? '' : 'none';
           rollDustRef.current.setAttribute('transform', `translate(${point.x} ${point.y + 13})`);
@@ -110,5 +130,14 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         <circle cx="-12" cy="1" r="3" /><circle cx="-24" cy="5" r="2" /><circle cx="-36" cy="0" r="3.5" />
       </g></g>
     </g>
+    <g ref={bounceRef} data-testid="bounce-dust" aria-hidden="true" style={{ display: 'none' }} className="bounce-dust">
+      <circle cx="-17" cy="-2" r="5" /><circle cy="-6" r="7" /><circle cx="19" cy="-3" r="4" />
+    </g>
+    {flight.splitOrbs?.children.map(child => <g key={child.id} ref={node => node
+      ? childRefs.current.set(child.id, node) : childRefs.current.delete(child.id)}
+      data-testid="wizard-child-orb" data-orb-id={child.id} className="wizard-child-orb" style={{ visibility: 'hidden' }}>
+      <circle r="15" fill="#9cdfff" opacity=".3" /><circle r="8" fill="#d7f7ff" stroke="#5389dd" strokeWidth="3" />
+      <circle cx="-2" cy="-2" r="2" fill="#fff" />
+    </g>)}
   </>;
 }

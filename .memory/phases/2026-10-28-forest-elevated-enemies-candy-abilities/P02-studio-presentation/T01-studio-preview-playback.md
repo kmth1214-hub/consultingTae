@@ -1,6 +1,6 @@
 # Task: T01 관리자 지도·전투 시범 화면 연결과 통합 검증
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -103,6 +103,6 @@ Task: T01-studio-preview-playback
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: T01 작업 커밋

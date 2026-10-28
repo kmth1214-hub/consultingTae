@@ -1,10 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createStudioSession } from '../src/dev/createStudioSession.js';
+import { createStudioScenario, createStudioSession } from '../src/dev/createStudioSession.js';
 import { BattleEngine } from '../src/game/battleEngine.js';
 import { CHARACTERS } from '../src/game/gameData.js';
 
 const options = { rng: () => .5, now: () => 1000 };
+test('map preview and playable studio session share the exact seeded enemy and support layout', () => {
+  for (const round of [1, 2, 3]) {
+    const config = { area: 'forest', round, seed: 17, characterId: 'wizard' };
+    const preview = createStudioScenario(config);
+    const run = createStudioSession(config, options).getSnapshot().run;
+    const playable = createStudioScenario(config);
+    assert.deepEqual(run.enemies, preview.enemies);
+    assert.deepEqual(playable.layout, preview.layout);
+    assert.equal(preview.layout.launcher.y, playable.layout.launcher.y);
+    assert.deepEqual(preview.layout.enemies.map(({ id, x, y, supportObstacleId }) =>
+      ({ id, x, y, supportObstacleId })), playable.layout.enemies.map(({ id, x, y, supportObstacleId }) =>
+      ({ id, x, y, supportObstacleId })));
+    if (round === 2) assert.equal(preview.layout.enemies.filter(enemy => enemy.supportObstacleId).length, 1);
+    else assert.equal(preview.layout.enemies.filter(enemy => enemy.supportObstacleId).length, 0);
+  }
+});
 test('all twelve regional rounds enter the real battle immediately with a fresh test inventory and layout seed', () => {
   for (const area of ['forest', 'snow', 'city', 'chaos']) for (const round of [1, 2, 3]) {
     const session = createStudioSession({ area, round, seed: 4927 }, options);

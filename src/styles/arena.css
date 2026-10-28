@@ -80,6 +80,16 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .next-candy > strong { flex: 1; min-width: 0; font-weight: 650; }
 .next-candy small { color: #8e784a; }
 .monster-group { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
+.stack-body.is-wobbling { transform-box: fill-box; transform-origin: 50% 85%; animation: studio-stack-wobble .48s ease-out 1; }
+.bounce-dust { fill: #eac78d; opacity: .7; }
+.wizard-child-orb { filter: drop-shadow(0 0 7px #a7dbff); }
+.alchemist-splash circle:first-child { transform-box: fill-box; transform-origin: center; animation: studio-splash .55s ease-out forwards; }
+.alchemist-splash circle:last-child, .wizard-child-hit circle { animation: studio-hit-fade .5s ease-out forwards; }
+.candy-current-ability { color: #315d49; font-size: .72rem; line-height: 1.4; font-weight: 750; }
+@keyframes studio-stack-wobble { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-7deg); } 60% { transform: rotate(6deg); } }
+@keyframes studio-splash { from { transform: scale(.07); opacity: .95; } to { transform: scale(1); opacity: 0; } }
+@keyframes studio-hit-fade { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .stack-body.is-wobbling, .alchemist-splash circle, .wizard-child-hit circle { animation-duration: .01ms; } }
 .player-cookie { position: absolute; z-index: 7; pointer-events: none; }
 .player-cookie-body { position: absolute; inset: 0; display: grid; place-items: end center; transform-origin: 50% 92%; }
 .player-cookie-art { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 2px 1px #3c36204a); }

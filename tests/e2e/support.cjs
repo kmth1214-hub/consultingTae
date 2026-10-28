@@ -23,7 +23,12 @@ async function installGame(page, fixture = {}) {
     Object.defineProperty(window, 'BattleEngine', { configurable: true, get: () => api, set(real) {
       api = { ...real };
       api.createRunState = options => {
-        const seeded = trace.creates++ === 0;
+        // The studio renders a read-only scenario before opening a playable session.
+        // Keep fixtures reserved for the first actual run, not that preview.
+        if (location.pathname === '/__dev/maps' && options.now === undefined)
+          return real.createRunState(options);
+        // React StrictMode invokes the studio's session initializer twice on mount.
+        const seeded = trace.creates++ < (location.pathname === '/__dev/maps' ? 2 : 1);
         const initial = seeded ? { ...options, ...config.initial } : options;
         if (seeded && config.allWeapons) initial.weapons = real.WEAPON_CATALOG.map(weapon => ({ ...weapon, grade: 'C' }));
         const run = real.createRunState(initial);

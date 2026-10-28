@@ -12,13 +12,16 @@ export function getCandyDetails(run) {
   const multiplier = run.fireballArmed ? 2 : 1;
   const range = run.spearArmed ? { min: 2, max: 5 } : BattleEngine.getWeaponDamageRange(weapon.grade, run.zeroRollsThisRound || 0);
   const buffs = [];
+  let currentAbility = null;
   if (run.studioPrototype === 'forest-elevated-v1' && run.area === 'forest') {
-    if (run.spearArmed) buffs.push('이번 발사는 창 관통 효과가 고유 발사 효과를 대신합니다.');
-    else if (weapon.id === 'adventurer-candy') buffs.push('첫 바닥 착지에서 한 번 튀고, 두 번째 착지 후 굴러갑니다.');
-    else if (weapon.id === 'alchemist-candy') buffs.push('적·장애물 충돌 지점에서 반경 180 물약 파동: 범위 안 적마다 피해 1.');
-    else if (weapon.id === 'wizard-orb') buffs.push('비행 중 작은 구슬 2개로 갈라집니다. 각 구슬이 실제 적에게 닿으면 피해 1.');
+    if (run.spearArmed) currentAbility = '이번 발은 창 관통으로 대체됩니다.';
+    else if (weapon.id === 'adventurer-candy') currentAbility = '첫 바닥 착지에서 한 번 튀고, 두 번째 착지 후 굴러갑니다.';
+    else if (weapon.id === 'alchemist-candy') currentAbility = '적·장애물 충돌 지점에서 반경 180 물약 파동: 범위 안 적마다 피해 1.';
+    else if (weapon.id === 'wizard-orb') currentAbility = '비행 중 작은 구슬 2개로 갈라집니다. 각 구슬이 실제 적에게 닿으면 피해 1.';
   }
-  if (run.fireballArmed) buffs.push(`불공 · 이번 사탕 피해 ×2 (${range.min * 2}–${range.max * 2}, 조건부 추가 피해도 2배)`);
+  if (run.fireballArmed) buffs.push(run.studioPrototype === 'forest-elevated-v1' && run.area === 'forest'
+    ? `불공 · 큰 사탕 직접 피해 ×2 (${range.min * 2}–${range.max * 2}), 파동·작은 구슬 피해는 그대로`
+    : `불공 · 이번 사탕 피해 ×2 (${range.min * 2}–${range.max * 2}, 조건부 추가 피해도 2배)`);
   if (run.spearArmed) buffs.push('창 · 실제 닿은 적 최대 3마리 관통 · 관통마다 피해 1 감소 · 이번 발사는 창 피해만 적용');
   if (run.pendingAimInversion) buffs.push('혼돈의 역풍 · 다음 한 발 조작 반전');
   if (run.defenseArmed) buffs.push('보호막 · 다음 적 공격 차단');
@@ -34,6 +37,6 @@ export function getCandyDetails(run) {
   };
   const passives = [...new Set(run.weapons.map(item => item.id))]
     .filter(id => descriptions[id]).map(id => ({ id, text: descriptions[id] }));
-  return { current: describe(weapon), damage: { ...range, multiplier },
+  return { current: describe(weapon), currentAbility, damage: { ...range, multiplier },
     next: next ? describe(next) : null, reshuffleNext: queue.length <= 1, buffs, passives };
 }

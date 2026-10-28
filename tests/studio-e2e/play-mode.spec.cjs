@@ -96,13 +96,13 @@ test('same-layout replay, new layout and review return preserve the chosen map a
   await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
   await phase(page, 'idle');
   const play = page.locator('[data-dev-tool="studio-battle-play"]');
-  await expect(play).toHaveAttribute('data-layout-seed', '5');
+  await expect(play).toHaveAttribute('data-layout-seed', '0');
   const geometry = () => page.locator('.battle-arena .scene-scenery > g').evaluateAll(nodes => nodes.map(n => n.getAttribute('transform')));
   const before = await geometry();
   await page.getByRole('button', { name: '다시 시작', exact: true }).click(); await phase(page, 'idle');
-  await expect(play).toHaveAttribute('data-layout-seed', '5'); expect(await geometry()).toEqual(before);
+  await expect(play).toHaveAttribute('data-layout-seed', '0'); expect(await geometry()).toEqual(before);
   await page.getByRole('button', { name: '새 배치로 시작', exact: true }).click(); await phase(page, 'idle');
-  await expect(play).toHaveAttribute('data-layout-seed', '6'); expect(await geometry()).not.toEqual(before);
+  await expect(play).toHaveAttribute('data-layout-seed', '5'); expect(await geometry()).not.toEqual(before);
   await page.getByRole('button', { name: '지도 검토로 돌아가기', exact: true }).click();
   await expect(page.locator('.map-studio')).toBeVisible();
   await expect(play).toHaveCount(0);

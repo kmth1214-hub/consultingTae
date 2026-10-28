@@ -1,9 +1,8 @@
 const { test, expect } = require('../e2e/support.cjs');
 
 async function expectedObstacleCount(area = 'forest') {
-  const { buildBattlefield } = await import('../../src/game/battlefieldModel.js');
-  return buildBattlefield({ area, round: 1,
-    enemies: [{ id: 'studio-reference-target', kind: 'snake', isBoss: false }] }).obstacles.length;
+  const { createStudioScenario } = await import('../../src/dev/createStudioSession.js');
+  return createStudioScenario({ area, round: 1, seed: 0 }).layout.obstacles.length;
 }
 
 async function readyArt(page) {
@@ -18,7 +17,10 @@ test('development map studio is a separate, keyboard-accessible review screen wi
   await expect(page.locator('[data-dev-tool="regional-map-studio-v1"]')).toBeVisible();
   await expect(page.locator('.app')).toHaveCount(0);
   await expect(page.locator('.battle-arena')).toHaveCount(0);
-  await expect(page.locator('.monster')).toHaveCount(0);
+  await expect(page.locator('.studio-viewport .monster')).toHaveCount(1);
+  await expect(page.getByTestId('studio-preview-actors')).toBeVisible();
+  await expect(page.locator('.studio-viewport .launcher')).toHaveCount(1);
+  await expect(page.locator('.studio-viewport .player-cookie')).toHaveCount(1);
   await expect(page.locator('.studio-viewport')).toHaveAttribute('role', 'group');
   await expect(page.locator('.studio-viewport [data-scene-layer]')).toHaveCount(5);
   await expect(page.locator('.studio-viewport .scene-scenery [data-obstacle-id]')).toHaveCount(await expectedObstacleCount());
@@ -26,6 +28,27 @@ test('development map studio is a separate, keyboard-accessible review screen wi
   await expect(page.locator('.studio-viewport')).toHaveAttribute('aria-label', /숲 지역 지도 미리보기/);
   expect(await page.evaluate(() => ({ test: window.__gameTest, storage: localStorage.length })))
     .toEqual({ test: undefined, storage: 0 });
+});
+
+test('forest round two preview and test play use identical elevated actors and supports', async ({ page }) => {
+  await page.goto('/__dev/maps');
+  await page.getByLabel('테스트 라운드').selectOption('2');
+  const capture = async selector => page.locator(selector).evaluate(world => {
+    const coords = node => [node.style.left, node.style.top, node.style.width, node.style.height];
+    return {
+      key: world.dataset.layoutKey,
+      enemies: [...world.querySelectorAll('[data-enemy-id]')].map(node => [node.dataset.enemyId, ...coords(node)]),
+      cookie: coords(world.querySelector('.player-cookie')),
+      launcher: coords(world.querySelector('.launcher')),
+      supports: [...world.querySelectorAll('[data-obstacle-id]')].map(node => [node.dataset.obstacleId, node.getAttribute('transform')])
+    };
+  });
+  const preview = await capture('.studio-viewport > .arena-world');
+  expect(preview.enemies.length).toBeGreaterThan(1);
+  expect(preview.enemies.some(([, , y]) => Number.parseFloat(y) < Math.max(...preview.enemies.map(([, , top]) => Number.parseFloat(top))))).toBe(true);
+  await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
+  await expect(page.locator('.battle-arena')).toBeVisible();
+  expect(await capture('.battle-arena > .arena-world')).toEqual(preview);
 });
 
 test('all four areas use their real painted layers and registered blocker placement', async ({ page }) => {

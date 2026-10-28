@@ -40,9 +40,15 @@ function CityStack() {
   </>;
 }
 
-function StackBody({ kind, chaos }) {
+function StackBody({ kind, chaos, supported }) {
   return <>
     {kind === 'log' ? <LogStack /> : kind === 'ice' ? <IceStack /> : <CityStack />}
+    {supported && <g className="supported-log-top" stroke="#61402b" strokeWidth="3" strokeLinejoin="round">
+      <path d="M5 22 19 159h16L25 20Zm70 0L61 159H44L56 20Z" fill="#a66d43" />
+      <path d="M11 148 69 58M8 84 71 147" fill="none" stroke="#e5ae70" strokeWidth="5" />
+      <rect x="-4" y="0" width="88" height="20" rx="7" fill="#c98c56" />
+      <path d="M10 5h59M20 14h44" fill="none" stroke="#f4c68e" strokeWidth="2" />
+    </g>}
     {chaos && <>
       <path d="M23 9 61 146M56 15 17 140" fill="none" stroke="#492d68" strokeWidth="6" opacity=".7" />
       <path d="M24 15 51 108M54 21 23 129" fill="none" stroke="#dc9aee" strokeWidth="2" opacity=".8" />
@@ -66,7 +72,7 @@ function Debris({ kind }) {
 }
 
 const ArenaScenery = forwardRef(function ArenaScenery({ layout, area = layout.area,
-  toppledObstacleIds = [], visualContacts = [], flight, forestLogDebris = [], obstacleDebris = [] }, ref) {
+  toppledObstacleIds = [], visualContacts = [], visualWobbles = [], flight, forestLogDebris = [], obstacleDebris = [] }, ref) {
   const nodes = useRef(new Map()), clock = useRef(0);
   const contacts = new Map((flight?.contacts || []).map(c => [c.obstacleId, c]));
   const motions = new Map((flight?.contacts || []).filter(c => c.obstacleMotion || c.logMotion)
@@ -91,7 +97,14 @@ const ArenaScenery = forwardRef(function ArenaScenery({ layout, area = layout.ar
   useLayoutEffect(() => { clock.current = 0; advance(0); }, [flight?.id]);
   const fallen = new Set(toppledObstacleIds);
   const active = new Map(visualContacts.map(contact => [contact.obstacleId, contact]));
+  const wobbling = new Set(visualWobbles.map(contact => contact.obstacleId));
   return <svg className="scene-scenery" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
+    {layout.launcherPlatform && <g data-testid="launcher-platform" className="launcher-platform"
+      transform={`translate(${layout.launcherPlatform.x} ${layout.launcherPlatform.y})`}>
+      <path d={`M0 0h${layout.launcherPlatform.width}v${layout.launcherPlatform.height}H0Z`} fill="#8c6140" stroke="#61452c" strokeWidth="5" />
+      <path d={`M0 0h${layout.launcherPlatform.width}v15H0Z`} fill="#96b75f" stroke="#516e3e" strokeWidth="4" />
+      <path d={`M20 30h${layout.launcherPlatform.width - 40}M30 58h${layout.launcherPlatform.width - 65}`} stroke="#c79261" strokeWidth="3" />
+    </g>}
     {layout.obstacles.map(prop => {
       const motion = motions.get(prop.id), finalPose = debris.get(prop.id);
       if (motion || finalPose) {
@@ -103,7 +116,7 @@ const ArenaScenery = forwardRef(function ArenaScenery({ layout, area = layout.ar
           data-contact-source={contact?.sourceObstacleId || undefined}
           transform={`translate(${pose.x} ${pose.y}) rotate(${pose.angle * 180 / Math.PI})`}>
           <g transform={`translate(${-prop.width / 2} ${-prop.height / 2}) scale(${prop.width / 80} ${prop.height / 160})`}>
-            <g className="stack-body"><StackBody kind={prop.kind} chaos={area === 'chaos'} /></g>
+            <g className={`stack-body${wobbling.has(prop.id) ? ' is-wobbling' : ''}`}><StackBody kind={prop.kind} chaos={area === 'chaos'} supported={Boolean(prop.supportsEnemyId)} /></g>
           </g>
         </g>;
       }
@@ -115,7 +128,7 @@ const ArenaScenery = forwardRef(function ArenaScenery({ layout, area = layout.ar
         transform={`translate(${prop.x} ${prop.y})`}>
         <ellipse cx={prop.width / 2} cy={prop.height - 4} rx={prop.width * .54} ry="9" fill="#2e281c" opacity=".25" />
         <g transform={`scale(${prop.width / 80} ${prop.height / 160})`}>
-          <g className="stack-body"><StackBody kind={prop.kind} chaos={area === 'chaos'} /></g>
+          <g className={`stack-body${wobbling.has(prop.id) ? ' is-wobbling' : ''}`}><StackBody kind={prop.kind} chaos={area === 'chaos'} supported={Boolean(prop.supportsEnemyId)} /></g>
           <g className="stack-debris"><Debris kind={prop.kind} /></g>
         </g>
       </g>;

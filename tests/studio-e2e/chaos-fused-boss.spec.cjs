@@ -11,6 +11,7 @@ test('studio Chaos final uses the fused special and real split without persistin
   await page.getByLabel('테스트 라운드').selectOption('3');
   await page.getByRole('checkbox',{name:'보스 특수 공격부터 확인',exact:true}).check();
   await page.getByRole('button',{name:'테스트 플레이',exact:true}).click();await phase(page,'idle');
+  expect((await snapshot(page)).run.enemies[0].hp).toBe(29);
   await expect(page.locator('.monster--boss')).toHaveCSS('width','414px');
   await page.clock.install({time:new Date('2026-10-26T00:00:00Z')});
   await page.clock.pauseAt(new Date('2026-10-26T00:00:01Z'));
