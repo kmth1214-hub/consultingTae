@@ -65,4 +65,4 @@ Task: T01-world-geometry
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`node --test` 41/41, `npm.cmd run build`)
-- commit: 아래 커밋 참조
+- commit: `f93dd61`

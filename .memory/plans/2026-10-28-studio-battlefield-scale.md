@@ -9,7 +9,7 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 관리자 전장 배율과 전투 그림 일치 | [P01](../phases/2026-10-28-studio-battlefield-scale/P01-studio-scale/phase.md) |
+| P01 | `done` | 관리자 전장 배율과 전투 그림 일치 | [P01](../phases/2026-10-28-studio-battlefield-scale/P01-studio-scale/phase.md) |
 
 ## Sequence
 T01 월드 배치·물리 판정 → T02 시각 연출·미리보기/플레이 일치 검증. Task별 한국어 커밋.

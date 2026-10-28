@@ -60,4 +60,4 @@ Task: T02-presentation-parity
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`node --test` 41/41, 관리자 Playwright 34/34, `npm.cmd run build`)
-- commit: 아래 커밋 참조
+- commit: `91ad60c`
