@@ -1,4 +1,8 @@
 const { test, expect, installGame, start, dragPull, arena, phase, snapshot } = require('./support.cjs');
+const { BattleEngine } = require('../../src/game/battleEngine.js');
+const { buildPlayableBattlefield } = require('../../src/game/battlefieldPlacement.js');
+const { planShot } = require('../../src/game/shotGeometry.js');
+const { createProjectilePlayback } = require('../../src/game/projectilePlayback.js');
 
 const cases = [
   { area: 'forest', seed: 5, angleDeg: 20, powerRatio: .825 },
@@ -7,9 +11,6 @@ const cases = [
   { area: 'chaos', seed: 5, angleDeg: -5, powerRatio: .875 },
 ];
 async function begin(page, options) {
-  const [{ BattleEngine }, { buildPlayableBattlefield }, { planShot }, { createProjectilePlayback }] = await Promise.all([
-    import('../../src/game/battleEngine.js'), import('../../src/game/battlefieldPlacement.js'),
-    import('../../src/game/shotGeometry.js'), import('../../src/game/projectilePlayback.js')]);
   const enemies = BattleEngine.createRoundEnemies(options.area, 1, { rng: () => .5 });
   enemies.forEach(enemy => {
     enemy.hp = enemy.maxHp = 20;

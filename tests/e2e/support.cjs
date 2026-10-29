@@ -1,4 +1,7 @@
 const { test: base, expect } = require('@playwright/test');
+const { BattleEngine } = require('../../src/game/battleEngine.js');
+const { buildPlayableBattlefield } = require('../../src/game/battlefieldPlacement.js');
+const { planShot } = require('../../src/game/shotGeometry.js');
 
 // The built app has no test entry point. Install observation/fixtures before its UMD
 // engine assignment; normal cases delegate every action unchanged to the real engine.
@@ -141,8 +144,6 @@ async function selectRewards(page, merge = false) {
   await page.locator('.continue-button').click();
 }
 async function stackShot({ area = 'forest', round = 1, seed = 0, physical = false, enemies: inputEnemies } = {}) {
-  const [{ BattleEngine }, { buildPlayableBattlefield }, { planShot }] = await Promise.all([
-    import('../../src/game/battleEngine.js'), import('../../src/game/battlefieldPlacement.js'), import('../../src/game/shotGeometry.js')]);
   const enemies = inputEnemies || BattleEngine.createRoundEnemies(area, round, { rng: () => .5 });
   const layout = buildPlayableBattlefield({ area, round, enemies, seed, worldScale: 1.5,
     prototype: area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1' });

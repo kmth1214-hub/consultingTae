@@ -1,7 +1,7 @@
 const {test,expect,installGame,start,dragPull,snapshot,arena}=require('./support.cjs');
 const {aimedShot}=require('./spear-support.cjs');
+const {BattleEngine}=require('../../src/game/battleEngine.js');
 for(const [grade,range,max] of [['B','1–6',6],['A','2–10',10]])test(`${grade} HUD and a real fiery hit use the new maximum ${max}`,async({page})=>{
- const {BattleEngine}=await import('../../src/game/battleEngine.js');
  await installGame(page,{random:.999,enemyHp:40,initial:{weapons:[{...BattleEngine.WEAPON_CATALOG[0],grade}],inventory:{fireball:1}}});
  await start(page);await expect(page.locator('.candy-hud')).toContainText(range);
  await page.keyboard.press('1');await expect(page.locator('.candy-hud')).toContainText('피해 ×2');

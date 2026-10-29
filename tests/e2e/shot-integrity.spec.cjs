@@ -1,5 +1,7 @@
 const {test,expect,installGame,start,dragPull,arena,phase,snapshot,selectRewards}=require('./support.cjs');
 const {aimedShot}=require('./spear-support.cjs');
+const {BattleEngine}=require('../../src/game/battleEngine.js');
+const {buildPlayableBattlefield}=require('../../src/game/battlefieldPlacement.js');
 async function pause(page) {
  await page.clock.install({time:new Date('2026-10-26T00:00:00Z')});
  await page.clock.pauseAt(new Date('2026-10-26T00:00:01Z'));
@@ -15,8 +17,6 @@ async function shootReview(page,pull) {
 }
 
 test('after all stacks fall, a visible first impact cannot remotely kill the last enemy and advance the round',async({page})=>{
- const {BattleEngine}=await import('../../src/game/battleEngine.js');
- const {buildPlayableBattlefield}=await import('../../src/game/battlefieldPlacement.js');
  const enemies=BattleEngine.createRoundEnemies('snow',1,{rng:()=>.5});
  const layout=buildPlayableBattlefield({area:'snow',round:1,enemies,seed:0});
  enemies.forEach((e,i)=>{e.hp=i<2?1:0;e.alive=i<2;});

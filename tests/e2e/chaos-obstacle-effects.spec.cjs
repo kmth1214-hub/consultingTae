@@ -1,15 +1,15 @@
 const { test, expect, installGame, start, dragPull, phase, arena, snapshot } = require('./support.cjs');
+const { BattleEngine } = require('../../src/game/battleEngine.js');
+const { buildPlayableBattlefield } = require('../../src/game/battlefieldPlacement.js');
+const { planShot } = require('../../src/game/shotGeometry.js');
 
 async function begin(page, random, { seed = 4927, chain = false } = {}) {
-  const { BattleEngine } = await import('../../src/game/battleEngine.js');
   const enemies = BattleEngine.createRoundEnemies('chaos', 1, { rng: () => .25 });
   enemies.forEach(e => { e.hp = e.maxHp = 30; });
   await installGame(page, { initial: { area: 'chaos', round: 1 }, stateOverride: { enemies }, layoutSeed: seed, random });
   await start(page);
   let options = { angleDeg: 50, powerRatio: .525 };
   if (chain) {
-    const [{ buildPlayableBattlefield }, { planShot }] = await Promise.all([
-      import('../../src/game/battlefieldPlacement.js'), import('../../src/game/shotGeometry.js')]);
     const layout = buildPlayableBattlefield({ area: 'chaos', round: 1, enemies, seed,
       prototype: 'regional-elevated-v1', worldScale: 1.5 });
     let found = false;

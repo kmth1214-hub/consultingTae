@@ -1,6 +1,8 @@
+const { BattleEngine } = require('../../src/game/battleEngine.js');
+const { buildPlayableBattlefield } = require('../../src/game/battlefieldPlacement.js');
+const { planShot } = require('../../src/game/shotGeometry.js');
+
 async function aimedShot({area='forest',round=1,seed=0,piercing=true,enemies:provided,encounterPhase=null,worldScale=1.5}={}) {
-  const [{BattleEngine},{buildPlayableBattlefield},{planShot}]=await Promise.all([
-    import('../../src/game/battleEngine.js'),import('../../src/game/battlefieldPlacement.js'),import('../../src/game/shotGeometry.js')]);
   const enemies=provided || BattleEngine.createRoundEnemies(area,round,{rng:()=>.5});
   const layout=buildPlayableBattlefield({area,round,seed,enemies,encounterPhase,worldScale,
     prototype:area==='forest'?'forest-elevated-v1':'regional-elevated-v1'});

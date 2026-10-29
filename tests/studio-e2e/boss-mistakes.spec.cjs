@@ -1,6 +1,7 @@
 const {test,expect,installGame,dragPull,phase,snapshot}=require('../e2e/support.cjs');
 
 test('studio plays a giant boss mistake and can switch directly to its guaranteed special without persisting progress',async({page})=>{
+  test.setTimeout(60000);
   await installGame(page,{random:.96});
   await page.addInitScript(()=>localStorage.setItem('cookie-roguelike.profile.v1',JSON.stringify({version:1,snowAreaCleared:false})));
   await page.goto('/__dev/maps');

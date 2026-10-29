@@ -1,4 +1,7 @@
 const { test, expect, installGame, start, phase, snapshot, dragPull } = require('./support.cjs');
+const { BattleEngine } = require('../../src/game/battleEngine.js');
+const { buildPlayableBattlefield } = require('../../src/game/battlefieldPlacement.js');
+const { planShot } = require('../../src/game/shotGeometry.js');
 
 for (const [area, round, expected] of [
   ['forest', 1, 0], ['forest', 2, 1], ['snow', 1, 0], ['snow', 2, 1],
@@ -19,9 +22,6 @@ for (const [area, round, expected] of [
 });
 
 test('a public Snow support hit drops its rider, applies frost guard and moves the minimap marker', async ({ page }) => {
-  const [{ BattleEngine }, { buildPlayableBattlefield }, { planShot }] = await Promise.all([
-    import('../../src/game/battleEngine.js'), import('../../src/game/battlefieldPlacement.js'),
-    import('../../src/game/shotGeometry.js')]);
   const enemies = BattleEngine.createRoundEnemies('snow', 2, { rng: () => .5 });
   const layout = buildPlayableBattlefield({ area: 'snow', round: 2, enemies, seed: 0,
     prototype: 'regional-elevated-v1', worldScale: 1.5 });
