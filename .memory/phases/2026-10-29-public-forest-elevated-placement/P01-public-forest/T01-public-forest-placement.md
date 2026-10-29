@@ -100,4 +100,4 @@ Task: T01-public-forest-placement
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`npm.cmd test`: 248/248, production 숲 배치·음악 제외: 4/4, 지역 전환 재검증: 3/3, build 성공)
-- commit: pending
+- commit: `72fbe01`

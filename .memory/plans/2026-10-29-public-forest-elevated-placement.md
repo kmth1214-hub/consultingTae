@@ -10,7 +10,7 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 일반 게임 배치와 낙하 연결, 회귀 검증 | [P01](../phases/2026-10-29-public-forest-elevated-placement/P01-public-forest/phase.md) |
+| P01 | `done` | 일반 게임 배치와 낙하 연결, 회귀 검증 | [P01](../phases/2026-10-29-public-forest-elevated-placement/P01-public-forest/phase.md) |
 
 ## Release
 T01 검증 및 커밋 후 기존 Azure workflow의 음악 제외 빌드를 푸시하고 배포 실행을 확인한다. 별도 Azure 인증·저장소 값은 코드에 넣지 않는다.
