@@ -50,6 +50,11 @@ Storage Account 이름은 전역에서 고유해야 하므로 이미 사용 중�
 - Storage 키를 교체할 때 현재 API가 쓰는 키와 다른 키부터 교체하고, 새 연결 문자열을 저장한 뒤 실제 리더보드 조회를 확인합니다.
 - 맵 스튜디오 `/__dev/maps`는 개발 서버 전용입니다. Azure 배포에는 사용자 게임과 리더보드가 포함됩니다.
 
+### 이번 배포의 BGM 상태
+
+- Azure workflow의 `VITE_ENABLE_BGM=false` 설정으로 사용자 게임의 음악 재생과 음량 조절 UI를 제외합니다. 음악을 들으며 검토하는 로컬 개발 서버는 그대로 유지합니다.
+- 음악을 검토할 별도 production 시범 빌드는 `VITE_ENABLE_BGM=true`로 만들 수 있습니다. Azure에서 음악을 공개하려면 workflow 설정을 변경하고 해당 브라우저 검증을 통과시킵니다.
+
 ## 접근 제어 확인
 
 `dist/staticwebapp.config.json`은 빌드 때 테넌트 ID를 주입합니다. `/api/*`와 `/*` 경로는 `authenticated` 역할을 요구하고, 익명 요청은 Entra 로그인을 시작합니다. `/.auth/*`와 `/assets/*`는 SPA fallback에서 제외합니다. Azure의 기본 Entra 공급자는 다른 테넌트도 받을 수 있으므로 생성된 테넌트 전용 custom issuer를 유지해야 합니다.

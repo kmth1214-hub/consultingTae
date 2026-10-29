@@ -13,10 +13,16 @@ import Toast from './components/Toast.jsx';
 import './styles/game.css';
 import './styles/arena.css';
 
-export default function App() {
-  const session = useGameSession();
+const BGM_ENABLED = import.meta.env.DEV || import.meta.env.VITE_ENABLE_BGM === 'true';
+
+function MusicScreen({ session, Screen }) {
   const music = useBattleBgm({ active: session.screen === 'battle',
     area: session.run?.area, boss: session.run?.round === 3 });
+  return <Screen session={session} music={music} />;
+}
+
+export default function App() {
+  const session = useGameSession();
   const main = useRef(null);
   useEffect(() => { main.current?.focus({ preventScroll: true }); }, [session.screen]);
   const screens = { home: GameHome, characters: CharacterSelect, battle: BattleScreen,
@@ -25,7 +31,9 @@ export default function App() {
   const Screen = screens[session.screen];
   return <div className={`app app--${session.screen}`}>
     <a className="skip-link" href="#main">본문으로 이동</a>
-    <main id="main" ref={main} tabIndex={-1}><Screen session={session} music={music} /></main>
+    <main id="main" ref={main} tabIndex={-1}>
+      {BGM_ENABLED ? <MusicScreen session={session} Screen={Screen} /> : <Screen session={session} />}
+    </main>
     <Toast notification={session.notification} onDismiss={session.dismissNotification} />
   </div>;
 }

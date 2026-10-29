@@ -1,6 +1,17 @@
 const { test, expect, installGame, start } = require('./support.cjs');
+const musicPreview = process.env.VITE_ENABLE_BGM === 'true';
+const musicTest = musicPreview ? test : test.skip;
 
-test('battle music controls persist mute and volume across visits', async ({ page }) => {
+test('release battle does not initialize background music', async ({ page }) => {
+  test.skip(musicPreview, 'music preview build');
+  await installGame(page);
+  await start(page);
+  await expect(page.getByRole('group', { name: '전투 맵', exact: true })).toBeVisible();
+  await expect(page.locator('.battle-bgm-controls')).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('cookie-expedition-bgm-v1'))).toBeNull();
+});
+
+musicTest('battle music controls persist mute and volume across visits', async ({ page }) => {
   await installGame(page);
   await start(page);
   const mute = page.getByRole('button', { name: 'BGM 음소거' });
@@ -22,7 +33,7 @@ test('battle music controls persist mute and volume across visits', async ({ pag
 });
 
 for (const [area, label] of [['forest', '숲'], ['snow', '눈'], ['city', '도시'], ['chaos', '혼돈']]) {
-  test(`${label} boss round keeps music controls and game playable`, async ({ page }) => {
+  musicTest(`${label} boss round keeps music controls and game playable`, async ({ page }) => {
     await installGame(page, { initial: { area, round: 3 } });
     await start(page);
     await expect(page.getByRole('heading', { name: new RegExp(`${label} 지역.*3 / 3`) })).toBeVisible();
@@ -31,7 +42,7 @@ for (const [area, label] of [['forest', '숲'], ['snow', '눈'], ['city', '도�
   });
 }
 
-test('small-screen battle keeps music controls inside the viewport', async ({ page }) => {
+musicTest('small-screen battle keeps music controls inside the viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installGame(page);
   await start(page);
