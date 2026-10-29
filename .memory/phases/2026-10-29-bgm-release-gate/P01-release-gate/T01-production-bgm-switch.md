@@ -81,4 +81,4 @@ Task: T01-production-bgm-switch
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`npm.cmd test`: 244/244, 기본 production 브라우저: 1/1, 음악 시범 브라우저: 6/6, 두 빌드 성공)
-- commit: pending
+- commit: `201653b`

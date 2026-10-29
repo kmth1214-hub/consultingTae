@@ -9,7 +9,7 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 프로덕션 BGM 게이트와 양쪽 빌드 검증 | [P01](../phases/2026-10-29-bgm-release-gate/P01-release-gate/phase.md) |
+| P01 | `done` | 프로덕션 BGM 게이트와 양쪽 빌드 검증 | [P01](../phases/2026-10-29-bgm-release-gate/P01-release-gate/phase.md) |
 
 ## Boundary
 Azure 업로드 시점은 사용자 답변을 기다린다. 이 계획은 배포 아티팩트의 음악 제외 기능까지 구현하며 다른 전투 규칙을 바꾸지 않는다.
