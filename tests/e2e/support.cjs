@@ -144,7 +144,8 @@ async function stackShot({ area = 'forest', round = 1, seed = 0, physical = fals
   const [{ BattleEngine }, { buildPlayableBattlefield }, { planShot }] = await Promise.all([
     import('../../src/game/battleEngine.js'), import('../../src/game/battlefieldPlacement.js'), import('../../src/game/shotGeometry.js')]);
   const enemies = inputEnemies || BattleEngine.createRoundEnemies(area, round, { rng: () => .5 });
-  const layout = buildPlayableBattlefield({ area, round, enemies, seed });
+  const layout = buildPlayableBattlefield({ area, round, enemies, seed, worldScale: 1.5,
+    prototype: area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1' });
   for (let angleDeg = 0; angleDeg <= 75; angleDeg += 2.5) for (let step = 1; step <= 20; step++) {
     const powerRatio = step / 20, radians = angleDeg * Math.PI / 180;
     const shot = planShot({ layout, enemies, pull: { ready: true, powerRatio,

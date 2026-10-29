@@ -8,6 +8,7 @@ for (const [area, round, expected] of [
   await start(page);
   const trace = await snapshot(page);
   expect(trace.run.battlefieldPrototype).toBe(area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1');
+  expect(trace.run.battlefieldWorldScale).toBe(1.5);
   const supports = page.locator('.battle-arena [data-supports-enemy]');
   await expect(supports).toHaveCount(expected);
   const y = await page.locator('.battle-arena .monster').evaluateAll(nodes => nodes.map(node => Number.parseFloat(node.style.top)));
@@ -23,7 +24,7 @@ test('a public Snow support hit drops its rider, applies frost guard and moves t
     import('../../src/game/shotGeometry.js')]);
   const enemies = BattleEngine.createRoundEnemies('snow', 2, { rng: () => .5 });
   const layout = buildPlayableBattlefield({ area: 'snow', round: 2, enemies, seed: 0,
-    prototype: 'regional-elevated-v1' });
+    prototype: 'regional-elevated-v1', worldScale: 1.5 });
   const support = layout.obstacles.find(item => item.supportsEnemyId);
   let target;
   for (let angleDeg = 0; angleDeg <= 80 && !target; angleDeg += 2.5)

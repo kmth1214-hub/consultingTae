@@ -35,7 +35,8 @@ test('actual public shots topple each regional support, cause one fall and retai
     const session = sessionFor(area, round);
     const before = session.getSnapshot().run;
     const layout = buildPlayableBattlefield({ area, round, enemies: before.enemies,
-      seed: before.layoutSeed, prototype: before.battlefieldPrototype });
+      seed: before.layoutSeed, prototype: before.battlefieldPrototype,
+      worldScale: before.battlefieldWorldScale });
     const support = layout.obstacles.find(item => item.supportsEnemyId);
     assert.ok(support);
     const pull = pullFor(layout, before.enemies, support.id);
@@ -63,7 +64,8 @@ test('a regional fall cannot be fabricated by the caller', () => {
   const session = sessionFor('snow', 2);
   const before = session.getSnapshot().run;
   const layout = buildPlayableBattlefield({ area: 'snow', round: 2, enemies: before.enemies,
-    seed: before.layoutSeed, prototype: before.battlefieldPrototype });
+    seed: before.layoutSeed, prototype: before.battlefieldPrototype,
+    worldScale: before.battlefieldWorldScale });
   const support = layout.obstacles.find(item => item.supportsEnemyId);
   const pull = pullFor(layout, before.enemies, support.id);
   const reservation = session.actions.beginShot({ launchId: 1, pull });

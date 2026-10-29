@@ -16,7 +16,8 @@ const make = (area, round, seed = 0) => {
 
 const layoutFor = run => buildPlayableBattlefield({ area: run.area, round: run.round,
   enemies: run.enemies, seed: run.layoutSeed, prototype: run.battlefieldPrototype ?? run.studioPrototype ?? null,
-  enemyLandingPositions: run.enemyLandingPositions ?? null, worldScale: run.studioWorldScale ?? 1 });
+  enemyLandingPositions: run.enemyLandingPositions ?? null,
+  worldScale: run.studioWorldScale ?? run.battlefieldWorldScale ?? 1 });
 
 test('public Forest elevates one regular enemy only in round two and keeps studio abilities private', () => {
   for (const round of [1, 2, 3]) for (const seed of [0, 1, 4, 4927]) {
@@ -25,7 +26,8 @@ test('public Forest elevates one regular enemy only in round two and keeps studi
     assert.equal(run.battlefieldPrototype, 'forest-elevated-v1');
     assert.equal(run.studioPrototype, undefined);
     assert.equal(run.studioWorldScale, undefined);
-    assert.equal(layout.worldScale, 1);
+    assert.equal(run.battlefieldWorldScale, 1.5);
+    assert.equal(layout.worldScale, 1.5);
     assert.ok(isPlayableBattlefield(layout, run.enemies));
     const riders = layout.enemies.filter(enemy => enemy.supportObstacleId);
     const supports = layout.obstacles.filter(prop => prop.supportsEnemyId);

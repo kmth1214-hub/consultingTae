@@ -4,6 +4,8 @@ import { BattleEngine } from '../src/game/battleEngine.js';
 import { buildPlayableBattlefield, isPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
 import { createGameSession } from '../src/game/gameSession.js';
 import { createStudioScenario } from '../src/dev/createStudioSession.js';
+import { getDragDraw, BATTLEFIELD } from '../src/game/battlefieldModel.js';
+import { preparePhysicalFlight } from '../src/game/shotResolution.js';
 
 const areas = ['forest', 'snow', 'city', 'chaos'];
 const prototypeFor = area => area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1';
@@ -45,10 +47,45 @@ test('public session and studio preview use regional elevation without publishin
     session.actions.startRun('adventurer');
     const run = session.getSnapshot().run;
     assert.equal(run.battlefieldPrototype, prototypeFor(area));
+    assert.equal(run.battlefieldWorldScale, 1.5);
     assert.equal(run.studioPrototype, undefined);
     assert.deepEqual(run.enemyLandingPositions, {});
+    assert.equal(buildPlayableBattlefield({ area, round: 2, enemies: run.enemies,
+      seed: run.layoutSeed, prototype: run.battlefieldPrototype,
+      worldScale: run.battlefieldWorldScale }).worldScale, 1.5);
     const studio = createStudioScenario({ area, round: 2, seed: 0 });
     assert.equal(studio.prototype, prototypeFor(area));
     assert.ok(studio.layout.enemies.some(item => item.supportObstacleId));
+  }
+});
+
+test('public physical flights use the same enlarged bodies and launch anchor in all regions', () => {
+  for (const area of areas) for (const round of [1, 2, 3]) {
+    const session = createGameSession({ rng: () => .5, layoutRng: () => 0,
+      storage: { getItem: () => null, setItem() {} },
+      engine: { ...BattleEngine, createRunState: options => BattleEngine.createRunState({ ...options, area, round }) } });
+    session.actions.startCharacterSelect();
+    session.actions.startRun('adventurer');
+    const run = session.getSnapshot().run;
+    const input = { area, round, enemies: run.enemies, seed: run.layoutSeed,
+      prototype: run.battlefieldPrototype, enemyLandingPositions: run.enemyLandingPositions };
+    const original = buildPlayableBattlefield({ ...input, worldScale: 1 });
+    const layout = buildPlayableBattlefield({ ...input, worldScale: run.battlefieldWorldScale });
+    const pull = { ready: true, powerRatio: .7, direction: { x: .8, y: -.6 } };
+    const flight = preparePhysicalFlight(run, pull, 1, 1);
+    const draw = getDragDraw(pull, true, 1.5);
+    assert.ok(flight, `${area}/${round} should produce a flight`);
+    assert.equal(flight.candyRadius, 15);
+    assert.deepEqual(flight.path.start, { x: layout.launcher.x + draw.pouch.x,
+      y: layout.launcher.y + draw.pouch.y });
+    assert.equal(layout.candyRadius * 2 * BATTLEFIELD.maxRollDiameters, 150);
+    assert.equal(layout.player.width, original.player.width * 1.5);
+    assert.equal(layout.launcher.width, original.launcher.width * 1.5);
+    for (const [index, enemy] of layout.enemies.entries()) {
+      assert.equal(enemy.size, original.enemies[index].size * 1.5);
+      assert.equal(enemy.collider.radius, original.enemies[index].collider.radius * 1.5);
+      if (enemy.isBoss) assert.equal(enemy.size / (92 * 1.5), enemy.kind === 'chaos-fused-boss' ? 4.5 : 3);
+    }
+    for (const obstacle of layout.obstacles) assert.equal(obstacle.width, original.obstacles.find(item => item.id === obstacle.id).width * 1.5);
   }
 });

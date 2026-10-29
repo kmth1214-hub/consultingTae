@@ -7,7 +7,7 @@ export function preparePhysicalFlight(run, pull, launchId, shotId) {
     seed:run.layoutSeed??0,encounterPhase:run.chaosBossPhase==='split'?'split':null,
     prototype:run.battlefieldPrototype??run.studioPrototype??null,
     enemyLandingPositions:run.enemyLandingPositions??null,
-    worldScale:run.studioWorldScale??1});
+    worldScale:run.studioWorldScale??run.battlefieldWorldScale??1});
   const loaded=run.weapons.find(weapon=>weapon.instanceId===(run.weaponQueue?.[0]??run.currentWeaponId));
   const solution=planShot({layout,pull,enemies:run.enemies,piercing:run.spearArmed===true,
     ...shotDisruptionOptions(run),
