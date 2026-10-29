@@ -76,19 +76,20 @@ test('a real public Forest support hit applies one fall and persists the survivo
   assert.equal(session.actions.fireShot({ shotId: reservation.shotId, encounterId: reservation.encounterId }).accepted, false);
 });
 
-test('other regions keep their original ground layout and no public Forest mode', () => {
+test('other regions use their own public elevated mode', () => {
   for (const area of ['snow', 'city', 'chaos']) for (const round of [1, 2, 3]) {
     const run = make(area, round).getSnapshot().run;
-    assert.equal(run.battlefieldPrototype, null);
+    assert.equal(run.battlefieldPrototype, 'regional-elevated-v1');
     assert.equal(run.studioPrototype, undefined);
-    assert.equal(run.enemyLandingPositions, undefined);
+    assert.deepEqual(run.enemyLandingPositions, {});
     const layout = layoutFor(run);
-    assert.equal('prototype' in layout, false);
-    assert.ok(layout.enemies.every(enemy => enemy.y === layout.groundY));
+    assert.equal(layout.prototype, 'regional-elevated-v1');
+    const expected = round === 3 ? 0 : area === 'chaos' ? layout.enemies.length > 10 ? 3 : 2 : round === 2 ? 1 : 0;
+    assert.equal(layout.enemies.filter(enemy => enemy.y < layout.groundY).length, expected);
   }
 });
 
-test('leaving Forest clears its landing coordinates before Snow builds a new battlefield', () => {
+test('leaving Forest resets its landing coordinates before Snow builds a new battlefield', () => {
   const session = createGameSession({ rng: () => .999, layoutRng: () => 0,
     storage: { getItem: () => null, setItem() {} },
     engine: { ...BattleEngine,
@@ -108,7 +109,7 @@ test('leaving Forest clears its landing coordinates before Snow builds a new bat
   assert.equal(session.actions.chooseCampReward('heal').accepted, true);
   const run = session.getSnapshot().run;
   assert.equal(run.area, 'snow');
-  assert.equal(run.battlefieldPrototype, null);
-  assert.equal(run.enemyLandingPositions, undefined);
+  assert.equal(run.battlefieldPrototype, 'regional-elevated-v1');
+  assert.deepEqual(run.enemyLandingPositions, {});
   assert.ok(isPlayableBattlefield(layoutFor(run), run.enemies));
 });

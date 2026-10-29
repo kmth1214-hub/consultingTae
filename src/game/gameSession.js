@@ -31,9 +31,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     const draw = layoutRng();
     if (!Number.isFinite(draw) || draw < 0 || draw >= 1) throw new RangeError('Invalid layout RNG');
     run.layoutSeed = Math.floor(draw * 0x100000000);
-    run.battlefieldPrototype = run.area === 'forest' ? 'forest-elevated-v1' : null;
-    if (run.battlefieldPrototype === 'forest-elevated-v1'
-      || run.studioPrototype === 'forest-elevated-v1') run.enemyLandingPositions = {};
+    run.battlefieldPrototype = run.area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1';
+    if (run.battlefieldPrototype || run.studioPrototype) run.enemyLandingPositions = {};
     else delete run.enemyLandingPositions;
     run.encounterId = ++encounterSequence;
     pendingShot = null;

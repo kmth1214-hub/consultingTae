@@ -24,7 +24,12 @@ const SHAPES = {
 const THEMES = { forest: 'log', snow: 'ice', city: 'crate' };
 const STACK_WIDTH = 80;
 const FOREST_PROTOTYPE = 'forest-elevated-v1';
+const REGIONAL_PROTOTYPE = 'regional-elevated-v1';
 const SUPPORT_HEIGHTS = { low: 132, medium: 184, high: 236 };
+const elevated = (area, prototype) => area === 'forest' ? prototype === FOREST_PROTOTYPE
+  : prototype === REGIONAL_PROTOTYPE;
+const riderCount = (area, round, count) => round === 3 ? 0
+  : area === 'chaos' ? count > 10 ? 3 : 2 : round === 2 ? 1 : 0;
 
 function randomFromSeed(seed) {
   let value = seed >>> 0;
@@ -46,10 +51,10 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
   if (!['forest', 'snow', 'city', 'chaos'].includes(area) || !Number.isFinite(round)
     || !Array.isArray(enemies) || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff
     || ![1, 1.5].includes(worldScale)
-    || (enemyLandingPositions !== null && (prototype !== FOREST_PROTOTYPE
+    || (enemyLandingPositions !== null && (!elevated(area, prototype)
       || !enemyLandingPositions || Array.isArray(enemyLandingPositions)
       || typeof enemyLandingPositions !== 'object'))
-    || (prototype !== null && (prototype !== FOREST_PROTOTYPE || area !== 'forest'
+    || (prototype !== null && (!elevated(area, prototype)
       || !Number.isInteger(round) || round < 1 || round > 3))) {
     throw new TypeError('Invalid battlefield configuration');
   }
@@ -61,14 +66,16 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     }
     ids.add(enemy.id);
   }
-  if (prototype === FOREST_PROTOTYPE && round === 2
-    && (enemies.length !== 2 || enemies.some(enemy => enemy.isBoss))) {
-    throw new TypeError('Elevated forest round needs two regular enemies');
+  if (elevated(area, prototype) && round < 3 && riderCount(area, round, enemies.length)
+    && (enemies.length < (area === 'chaos' ? 9 : 2) || enemies.some(enemy => enemy.isBoss))) {
+    throw new TypeError('Elevated round needs a complete regular enemy roster');
   }
   const random = randomFromSeed(seed);
   const stackWidth = STACK_WIDTH * worldScale;
   const placements = enemies.map(({ id, kind, isBoss }, i) => {
-    const nominal = enemies.length === 1 ? 2438 : 1000 + i * 1860 / (enemies.length - 1);
+    const nominal = enemies.length === 1 ? 2438
+      : area === 'chaos' && elevated(area, prototype) && round < 3
+        ? 760 + i * 2470 / (enemies.length - 1) : 1000 + i * 1860 / (enemies.length - 1);
     const jitter = enemies.length > 10 ? 24 : enemies.length > 6 ? 42 : 135;
     const x = Math.round(nominal + (random() * 2 - 1) * jitter);
     const size = (kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60) * worldScale;
@@ -104,26 +111,36 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
   }
   let launcherPlatform = null;
   let lift = 0;
-  if (prototype === FOREST_PROTOTYPE) {
-    if (round === 2) {
-      const rider = placements[Math.floor(random() * 2)];
-      const elevation = ['low', 'medium', 'high'][Math.floor(random() * 3)];
+  if (elevated(area, prototype)) {
+    const required = riderCount(area, round, placements.length);
+    const riderIndices = area === 'chaos' && required
+      ? (required === 3 ? [1, Math.floor(placements.length / 2), placements.length - 2]
+        : [1, placements.length - 2]) : required ? [Math.floor(random() * placements.length)] : [];
+    const elevations = ['low', 'medium', 'high'];
+    const offset = Math.floor(random() * 3);
+    const supports = [];
+    for (const [index, riderIndex] of riderIndices.entries()) {
+      const rider = placements[riderIndex];
+      const elevation = elevations[(offset + index) % 3];
       const width = 128 * worldScale, height = SUPPORT_HEIGHTS[elevation] * worldScale;
       const x = rider.x - width / 2, y = BATTLEFIELD.groundY - height;
-      const support = { id: 'forest-2-support-0', kind: 'log', x, y, width, height,
+      const kind = area === 'chaos' ? ['log', 'ice', 'crate'][index] : THEMES[area];
+      const support = { id: `${area}-${round}-support-${index}`, kind, x, y, width, height,
         supportsEnemyId: rider.id, elevation,
         polygon: SHAPES.supportedLog.map(([u, v]) => ({ x: x + u * width, y: y + v * height })) };
-      // Existing free intervals already keep ordinary stacks away from both enemies.
-      // Reserve the support's full footprint without moving the ground enemy.
-      const retained = obstacles.filter(item => item.x + item.width + 28 < x || item.x > x + width + 28);
-      obstacles.splice(0, obstacles.length, support, ...retained.slice(0, 3));
+      supports.push(support);
       rider.y = y;
       rider.groundY = BATTLEFIELD.groundY;
       rider.supportObstacleId = support.id;
       rider.elevation = elevation;
       rider.collider = { ...rider.collider, y: y - rider.size * .52 };
     }
-    if (round >= 2 && random() < .5) {
+    if (supports.length) {
+      const retained = obstacles.filter(item => supports.every(support =>
+        item.x + item.width + 28 < support.x || item.x > support.x + support.width + 28));
+      obstacles.splice(0, obstacles.length, ...supports, ...retained.slice(0, Math.max(0, count - supports.length)));
+    }
+    if ((round >= 2 || area === 'chaos' && round === 1) && random() < .5) {
       lift = 80 * worldScale;
       launcherPlatform = { x: 28, y: BATTLEFIELD.groundY - lift, width: 330 * worldScale, height: lift };
     }

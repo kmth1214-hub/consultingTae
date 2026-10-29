@@ -46,13 +46,18 @@ export function findForestLogOpportunity(layout) {
 /** Use actual first-contact shots to reject random layouts that cannot be played. */
 export function isPlayableBattlefield(layout, enemies) {
   if (!layout || !Array.isArray(enemies) || !Array.isArray(layout.obstacles)) return false;
-  if (layout.prototype === 'forest-elevated-v1') {
+  if (['forest-elevated-v1', 'regional-elevated-v1'].includes(layout.prototype)) {
     const riders = layout.enemies.filter(slot => slot.supportObstacleId);
     const supports = layout.obstacles.filter(prop => prop.supportsEnemyId);
-    if (layout.round === 2 ? riders.length !== 1 || supports.length !== 1
-      || supports[0].id !== riders[0].supportObstacleId || supports[0].supportsEnemyId !== riders[0].id
-      || riders[0].y !== supports[0].y || riders[0].collider.y !== riders[0].y - riders[0].size * .52
-      : riders.length !== 0 || supports.length !== 0) return false;
+    const expected = layout.round === 3 ? 0 : layout.area === 'chaos'
+      ? layout.enemies.length > 10 ? 3 : 2 : layout.round === 2 ? 1 : 0;
+    if (riders.length !== expected || supports.length !== expected
+      || new Set(supports.map(prop => prop.elevation)).size !== expected
+      || supports.some(prop => {
+        const rider = riders.find(slot => slot.id === prop.supportsEnemyId);
+        return !rider || prop.id !== rider.supportObstacleId || rider.y !== prop.y
+          || rider.collider.y !== rider.y - rider.size * .52;
+      })) return false;
     for (const prop of layout.obstacles) {
       if (prop.x < 0 || prop.x + prop.width > layout.width || prop.y + prop.height !== layout.groundY) return false;
       for (const slot of layout.enemies) {
@@ -79,7 +84,7 @@ export function isPlayableBattlefield(layout, enemies) {
       x, stack.y + stack.height * ratio, shot => shot?.contacts?.some(contact =>
         contact.obstacleId === stack.id)))) return false;
   }
-  if (layout.prototype === 'forest-elevated-v1') return true;
+  if (['forest-elevated-v1', 'regional-elevated-v1'].includes(layout.prototype)) return true;
   return layout.area !== 'forest' || !layout.enemies.length || Boolean(findForestLogOpportunity(layout));
 }
 

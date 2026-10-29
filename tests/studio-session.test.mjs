@@ -36,7 +36,7 @@ test('all twelve regional rounds enter the real battle immediately with a fresh 
     const preview = createStudioScenario({ area, round, seed: 4927 });
     assert.equal(preview.layout.worldScale, 1.5);
     assert.equal(preview.layout.candyRadius, 15);
-    assert.equal(run.studioPrototype, area === 'forest' ? 'forest-elevated-v1' : undefined);
+    assert.equal(run.studioPrototype, area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1');
     assert.deepEqual(run.inventory, { fireball: 3, spear: 3, defense: 3, heal: 3 });
     if (area === 'chaos' && round < 3) {
       assert.ok(run.enemies.length >= 9 && run.enemies.length <= 13);
