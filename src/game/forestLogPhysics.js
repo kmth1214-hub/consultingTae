@@ -223,6 +223,7 @@ export function sampleLogMotion(motion, absoluteTime) {
   }
   const time = clamp(absoluteTime - motion.startTime, 0, motion.durationSeconds);
   const samples = motion.samples;
+  if (time >= motion.durationSeconds - 1e-6) return { ...samples.at(-1) };
   let low = 0, high = samples.length - 1;
   while (low < high) { const mid = (low + high) >>> 1; if (samples[mid].time < time) low = mid + 1; else high = mid; }
   if (!low) return { ...samples[0] };

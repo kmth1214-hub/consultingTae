@@ -1,4 +1,5 @@
 const { test, expect, installGame, arena, phase, ammo, hp, snapshot, start, grabMap, shoot } = require('./support.cjs');
+const { aimedShot } = require('./spear-support.cjs');
 
 test('production landing and character selection start the real default engine state without prototype navigation', async ({ page }) => {
   await installGame(page);
@@ -35,7 +36,7 @@ test('map drag previews a live partial arc with mouse movement alone, then real 
   // Cancel the exploratory aim and use a fresh default-angle shot.
   await page.keyboard.press('Escape');
   await page.mouse.up();
-  await shoot(page);
+  await shoot(page, await aimedShot({ piercing: false }));
   await expect(ammo(page)).toHaveText('8');
   await expect(hp(page)).toHaveText('95');
   let trace = await snapshot(page);

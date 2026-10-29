@@ -1,10 +1,10 @@
 const { test, expect, installGame, start, dragPull, arena, phase, snapshot } = require('./support.cjs');
 
 const cases = [
-  { area: 'forest', seed: 5, angleDeg: 20, powerRatio: .863 },
-  { area: 'snow', seed: 36, angleDeg: 25, powerRatio: .88 },
-  { area: 'city', seed: 34, angleDeg: 5, powerRatio: .95 },
-  { area: 'chaos', seed: 14, angleDeg: 5, powerRatio: .95 },
+  { area: 'forest', seed: 5, angleDeg: 20, powerRatio: .825 },
+  { area: 'snow', seed: 36, angleDeg: 25, powerRatio: .875 },
+  { area: 'city', seed: 7, angleDeg: 35, powerRatio: .85 },
+  { area: 'chaos', seed: 5, angleDeg: -5, powerRatio: .875 },
 ];
 async function begin(page, options) {
   const [{ BattleEngine }, { buildPlayableBattlefield }, { planShot }, { createProjectilePlayback }] = await Promise.all([
@@ -16,7 +16,8 @@ async function begin(page, options) {
     // Keep counterattack repair separate from the chain damage assertion.
     if (options.area === 'city') enemy.kind = 'washing-robot';
   });
-  const layout = buildPlayableBattlefield({ area: options.area, round: 1, enemies, seed: options.seed });
+  const layout = buildPlayableBattlefield({ area: options.area, round: 1, enemies, seed: options.seed,
+    worldScale: 1.5, prototype: options.area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1' });
   const radians = options.angleDeg * Math.PI / 180;
   const shot = planShot({ layout, enemies, pull: { ready: true, powerRatio: options.powerRatio,
     direction: { x: Math.cos(radians), y: -Math.sin(radians) } } });

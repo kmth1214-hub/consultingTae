@@ -37,7 +37,7 @@ for(const [style,random] of [['slip',.92],['overshoot',.98]])
     const event=(await snapshot(page)).lastEvent.enemyAttack;
     expect(event.missed).toBe(true); expect(event.damage).toBe(0); expect(event.blocked).toBe(false);
     const target=await impact(page);
-    expect(target.tx).toBe(style==='slip'?376:20); expect(target.ty).toBe(style==='slip'?886:560);
+    expect(target.tx).toBe(style==='slip'?452:20); expect(target.ty).toBe(style==='slip'?886:560);
     await expect(page.getByTestId('enemy-miss-impact')).toBeVisible();
     if(style==='overshoot') {
       const label=await page.getByTestId('enemy-miss-impact').locator('text').boundingBox();

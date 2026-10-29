@@ -384,7 +384,7 @@ test('Forest physical contact summaries require valid times and targets before s
 });
 
 test('a physical chain after candy settlement is accepted, but orphan/duplicate/invalid transfers cannot spend ammo', () => {
-  const session = start({ rng: () => .5,layoutRng:()=>5/0x100000000 });
+  const session = start({ rng: () => .5,layoutRng:()=>1/0x100000000 });
   const target = session.getSnapshot().run.enemies[0].id;
   const a = { obstacleId: 'a', obstacleKind: 'log', point: { x: 600, y: 850 },
     time: .2, distance: 400, rolling: false, obstacleTargetIds: [target], trigger: 'candy',
@@ -400,11 +400,11 @@ test('a physical chain after candy settlement is accepted, but orphan/duplicate/
     assert.equal(session.actions.fireShot({ shotMeta: { ...meta, contacts: [a, { ...b, ...patch }] } }).accepted, false);
     assert.deepEqual(session.getSnapshot().run, before);
   }
-  const physical=reserveAt(session,27.5,.8);
+  const physical=reserveAt(session,10,.925);
   assert.ok(physical.flight.contacts.some(c=>c.trigger==='obstacle'&&c.time>physical.flight.directHitTime));
   assert.equal(commitFlight(session,physical,{reviewResult:true}).accepted,true);
   const state = session.getSnapshot();
-  assert.equal(state.run.enemies[0].hp,4);
+  assert.equal(state.run.enemies[0].hp,1);
   assert.equal(state.run.ammo, 8);
   assert.deepEqual(state.run.toppledObstacleIds, physical.flight.contacts.map(c=>c.obstacleId));
   assert.ok(state.shotReview);

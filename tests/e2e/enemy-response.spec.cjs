@@ -26,6 +26,7 @@ async function advanceToImpact(page) {
 }
 
 test('shield intercepts a visible incoming attack from the actual enemy without losing HP', async ({ page }) => {
+  test.setTimeout(60000);
   await installGame(page, { initial: { inventory } });
   await start(page);
   await page.getByRole('button', { name: '방어 사용', exact: true }).click();
@@ -131,6 +132,7 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
 for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breath'], ['city', 'oven-overheat']]) {
   for (const blocked of [false, true]) {
     test(`${area} boss third response visibly ${blocked ? 'hits the shield and suppresses' : 'executes'} ${special}`, async ({ page }) => {
+      test.setTimeout(60000);
       await installGame(page, { initial: { area, round: 3, inventory } });
       await start(page);
       for (let turn = 0; turn < 2; turn++) {

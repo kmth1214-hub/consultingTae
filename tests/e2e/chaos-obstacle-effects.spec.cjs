@@ -6,14 +6,15 @@ async function begin(page, random, { seed = 4927, chain = false } = {}) {
   enemies.forEach(e => { e.hp = e.maxHp = 30; });
   await installGame(page, { initial: { area: 'chaos', round: 1 }, stateOverride: { enemies }, layoutSeed: seed, random });
   await start(page);
-  let options = { angleDeg: 32.5, powerRatio: .6 };
+  let options = { angleDeg: 50, powerRatio: .525 };
   if (chain) {
     const [{ buildPlayableBattlefield }, { planShot }] = await Promise.all([
       import('../../src/game/battlefieldPlacement.js'), import('../../src/game/shotGeometry.js')]);
-    const layout = buildPlayableBattlefield({ area: 'chaos', round: 1, enemies, seed });
+    const layout = buildPlayableBattlefield({ area: 'chaos', round: 1, enemies, seed,
+      prototype: 'regional-elevated-v1', worldScale: 1.5 });
     let found = false;
-    for (let angleDeg = 0; angleDeg <= 75 && !found; angleDeg += 5) for (let i = 6; i <= 20; i++) {
-      const powerRatio = i / 20, r = angleDeg * Math.PI / 180;
+    for (let angleDeg = 0; angleDeg <= 75 && !found; angleDeg += 2.5) for (let i = 1; i <= 40; i++) {
+      const powerRatio = i / 40, r = angleDeg * Math.PI / 180;
       const shot = planShot({ layout, enemies, pull: { ready: true, powerRatio, direction: { x: Math.cos(r), y: -Math.sin(r) } } });
       if (shot?.contacts.some(c => c.trigger === 'obstacle')) { options = { angleDeg, powerRatio }; found = true; break; }
     }
@@ -78,7 +79,7 @@ for (const [random, kind, text] of [[.1, 'log-strike', '단일 타격'], [.3, 'i
 }
 
 test('Chaos chained props each show their actual burst once, regardless of their material', async ({ page }) => {
-  const event = await begin(page, .6, { seed: 14, chain: true });
+  const event = await begin(page, .6, { seed: 4927, chain: true });
   expect(event.obstacleEffects.length).toBeGreaterThan(1);
   const notices = page.getByTestId('chaos-obstacle-notice');
   await expect(notices).toHaveCount(event.obstacleEffects.length);

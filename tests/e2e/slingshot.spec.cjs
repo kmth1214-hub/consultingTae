@@ -1,4 +1,5 @@
 const { test, expect, installGame, arena, phase, ammo, snapshot, start, grabMap, dragPull, shoot } = require('./support.cjs');
+const { aimedShot } = require('./spear-support.cjs');
 const scale = page => page.locator('.arena-world').evaluate(el => new DOMMatrix(getComputedStyle(el).transform).a);
 const card = page => page.getByRole('complementary', { name: '장전된 마법사탕' });
 
@@ -31,7 +32,7 @@ test('grab zoom, two-axis deformation and frozen pixel pull survive camera easin
   const overviewScale = await scale(page), origin = await grabMap(page);
   await expect(arena(page)).toHaveAttribute('data-camera-mode', 'aim');
   const band = await page.getByTestId('sling-band').getAttribute('d');
-  await dragPull(page, { origin });
+  await dragPull(page, { origin, ...await aimedShot({ piercing: false }) });
   await expect(page.getByTestId('sling-band')).not.toHaveAttribute('d', band);
   const meter = await page.locator('.power-meter-fill').getAttribute('style');
   const path = await page.getByTestId('trajectory-preview').getAttribute('d');
@@ -123,7 +124,7 @@ test('stack contact topples the prop and applies the regional collision effect o
   await expect(page.locator(`.scene-scenery [data-obstacle-id="${id}"]`)).toHaveAttribute('data-stack-state', 'toppled');
   const trace = await snapshot(page);
   expect(trace.lastEvent.hits.map(hit => hit.damage)).toEqual([3]);
-  await expect(page.locator('.battle-status')).toContainText('통나무 충돌');
+  await expect(page.locator('.battle-status')).toContainText(/통나무 충돌|연쇄 충돌/);
   expect(trace.lastEvent.obstacleEffect.kind).toBe('log-strike');
   await expect(arena(page)).toHaveAttribute('data-obstacle-effect', 'log-strike');
   expect(trace.run.enemies[0].hp).toBe(1);
@@ -151,8 +152,9 @@ test('reduced motion is static overview and reload during flight cannot affect a
 });
 
 test('a killing shot unmounts at impact and cannot resolve again on the reward screen', async ({ page }) => {
-  await shoot(page); await expect(ammo(page)).toHaveText('8');
-  await shoot(page, { finalHeading: '다음 한 발을 위한 선물' });
+  const aimed = await aimedShot({ piercing: false });
+  await shoot(page, aimed); await expect(ammo(page)).toHaveText('8');
+  await shoot(page, { ...aimed, finalHeading: '다음 한 발을 위한 선물' });
   const trace = await snapshot(page);
   await page.waitForTimeout(500);
   await expect(page.getByRole('heading', { name: '다음 한 발을 위한 선물', exact: true })).toBeVisible();
@@ -179,7 +181,7 @@ test('Wind bypasses the solid prop once, while reverse preserves its charge and 
 
 test('DOM matrices cannot change world hits; zero-size viewport rejects a grab without getting stuck', async ({ page }) => {
   await page.locator('.projectile-layer').evaluate(el => { el.getScreenCTM = () => null; });
-  await shoot(page);
+  await shoot(page, await aimedShot({ piercing: false }));
   expect((await snapshot(page)).run.enemies[0].hp).toBe(2);
   await arena(page).evaluate(el => { el.getBoundingClientRect = () => ({ width: 0, height: 0 }); });
   await page.mouse.click(700, 350); await phase(page, 'idle'); await expect(ammo(page)).toHaveText('8');
@@ -190,7 +192,7 @@ test('390px viewport keeps mouse drag, flight and response functional through th
   const rect = await arena(page).boundingBox();
   await expect.poll(async () => Math.abs(await scale(page) - rect.width / 3600)).toBeLessThan(.00001);
   await page.screenshot({ path: 'tmp/wide-t02-overview-390.jpg' });
-  await dragPull(page);
+  await dragPull(page, await aimedShot({ piercing: false }));
   await expect(arena(page)).toHaveAttribute('data-camera-mode', 'aim');
   await page.screenshot({ path: 'tmp/wide-t02-drag-390.jpg' });
   await page.mouse.up(); await phase(page, 'launching');

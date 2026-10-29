@@ -6,7 +6,7 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 배치·전투·출시 | [P01](../phases/2026-10-29-regional-elevated-enemies/P01-regional-placement/phase.md) |
+| P01 | `done` | 배치·전투·출시 | [P01](../phases/2026-10-29-regional-elevated-enemies/P01-regional-placement/phase.md) |
 
 ## Constraints
 - 공개 숲 `forest-elevated-v1`은 유지한다. 눈·도시·혼돈에는 `regional-elevated-v1`을 사용한다.

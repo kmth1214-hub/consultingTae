@@ -4,7 +4,7 @@ for (const [area, kind] of [['forest','pointy-boar'],['snow','cowardly-snowman']
   test(`${area} boss has a three-times body, regional armor and a named HP bar`, async ({page}) => {
     await installGame(page, { initial:{area,round:3} }); await start(page);
     const boss = page.locator('.monster--boss');
-    await expect(boss).toHaveCSS('width','276px');
+    await expect(boss).toHaveCSS('width','414px');
     await expect(page.getByTestId('boss-armor')).toHaveAttribute('data-kind', kind);
     await expect(page.getByTestId('boss-health')).toBeVisible();
     await expect(page.getByTestId('boss-health')).toContainText('/');
@@ -21,7 +21,7 @@ for (const [area, kind] of [['forest','pointy-boar'],['snow','cowardly-snowman']
       const d = await page.getByTestId('enemy-projectile-trail').getAttribute('data-trajectory');
       const [x,y] = d.match(/-?\d+(?:\.\d+)?/g).map(Number);
       const placement = await boss.evaluate(node=>({x:parseFloat(node.style.left),y:parseFloat(node.style.top)}));
-      expect(x).toBeCloseTo(placement.x-276*.25); expect(y).toBeCloseTo(placement.y-276*.65);
+      expect(x).toBeCloseTo(placement.x-414*.25); expect(y).toBeCloseTo(placement.y-414*.65);
     }
   });
 
@@ -30,7 +30,7 @@ test('the 4.5-times fused Chaos boss and nameplate fit on a reduced-motion phone
   await installGame(page,{initial:{area:'chaos',round:3}}); await start(page);
   const bosses=page.locator('.monster--boss'), bars=page.getByTestId('boss-health');
   await expect(bosses).toHaveCount(1); await expect(bars).toHaveCount(1);
-  await expect(bosses).toHaveCSS('width','414px');
+  await expect(bosses).toHaveCSS('width','621px');
   const boxes=[];
   await expect(bars).toBeInViewport(); boxes.push(await bars.boundingBox());
   const candy = await page.locator('.candy-hud').boundingBox();

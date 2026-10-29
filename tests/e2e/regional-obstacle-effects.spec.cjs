@@ -6,7 +6,8 @@ async function contactRegion(page, area) {
     : ['a', 'b', 'c'].map(id => enemy(`city-${id}`, 'washing-robot'));
   await installGame(page, { layoutSeed: 4927, stateOverride: { area, round: 1, enemies } });
   await start(page);
-  await dragPull(page, { angleDeg: 0, powerRatio: .8 });
+  const { stackShot } = require('./support.cjs');
+  await dragPull(page, await stackShot({ area, seed: 4927, enemies }));
   await page.mouse.up();
 }
 

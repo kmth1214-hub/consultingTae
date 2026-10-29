@@ -1,9 +1,9 @@
 const { test, expect, installGame, arena, phase, snapshot, start, dragPull } = require('./support.cjs');
 
-async function beginReview(page, fixture = {}) {
+async function beginReview(page, fixture = {}, pull = { angleDeg: -5, powerRatio: .6 }) {
   await installGame(page, { layoutSeed: 4927, ...fixture });
   await start(page);
-  await dragPull(page, { angleDeg: -5, powerRatio: .6 });
+  await dragPull(page, pull);
   await page.clock.install({ time: new Date('2026-10-26T00:00:00Z') });
   await page.clock.pauseAt(new Date('2026-10-26T00:00:01Z'));
   await page.mouse.up();
@@ -78,7 +78,7 @@ test('reduced-motion mobile also gets two seconds to read the result without mov
 test('pending Oven repair and ammo loss stay hidden until its counterattack impact', async ({ page }) => {
   await beginReview(page, { stateOverride: { area: 'city', round: 3, enemies: [{
     id: 'city-oven-robot', kind: 'oven-robot', isBoss: true, hp: 10, maxHp: 18, alive: true, attackCount: 2,
-  }] } });
+  }] } }, { angleDeg: -90, powerRatio: .08 });
   const committed = await snapshot(page);
   expect(committed.lastEvent.enemyAttack.healedEnemy).toBe(3);
   expect(committed.run.enemies[0].hp).toBe(13);

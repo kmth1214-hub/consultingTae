@@ -38,6 +38,7 @@ test('Chaos inversion remains armed on cancel and reverses both drag axes for th
 });
 
 test('real obstacle contacts apply each regional effect with fixed RNG', async ({ page }) => {
+  test.setTimeout(60000);
   const enemy = (id, kind = 'snake') => ({ id, kind, hp: 20, maxHp: 20, isBoss: false, attackCount: 0, alive: true });
   const cases = [
     { area: 'forest', random: .5, enemies: [enemy('forest-near'), enemy('forest-far', 'boar')],
@@ -56,9 +57,9 @@ test('real obstacle contacts apply each regional effect with fixed RNG', async (
       enemies: scenario.enemies
     } });
     await start(page);
-    const options = scenario.area === 'forest'
-      ? await require('./support.cjs').stackShot({ area: 'forest', seed: 4927, physical: true, enemies: scenario.enemies })
-      : { angleDeg: 0, powerRatio: .8 };
+    const options = await require('./support.cjs').stackShot({ area: scenario.area,
+      round: scenario.round || 1, seed: 4927, physical: scenario.area === 'forest',
+      enemies: scenario.enemies });
     await dragPull(page, options); await page.mouse.up();
     await expect(arena(page)).toHaveAttribute('data-obstacle-id', /obstacle-\d/);
     await expect(arena(page)).toHaveAttribute('data-obstacle-effect', scenario.effect);

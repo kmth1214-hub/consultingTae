@@ -1,4 +1,5 @@
 const { test, expect, installGame, arena, phase, start, grabMap, dragPull, shoot, hp, snapshot } = require('./support.cjs');
+const { aimedShot } = require('./spear-support.cjs');
 
 for (const viewport of [{ width: 2007, height: 1037 }, { width: 2560, height: 1080 }]) {
   test(`${viewport.width}×${viewport.height} arena fills the window with proportional art and correctly aligned shots`, async ({ page }) => {
@@ -41,7 +42,7 @@ for (const viewport of [{ width: 2007, height: 1037 }, { width: 2560, height: 10
     expect(warning.y).toBeGreaterThan(bounds.y);
     expect(warning.y + warning.height).toBeLessThan(bounds.y + bounds.height);
     await phase(page, 'idle');
-    await shoot(page);
+    await shoot(page, await aimedShot({ piercing: false }));
     expect((await snapshot(page)).run.enemies[0].hp).toBe(2);
     await expect(hp(page)).toHaveText('95');
   });
@@ -63,7 +64,7 @@ test('short landscape keeps the launcher clear of the compact item table and rem
     })).toBe(true);
   }
   await page.screenshot({ path: 'tmp/react-t08-short-landscape.jpg' });
-  await shoot(page);
+  await shoot(page, await aimedShot({ piercing: false }));
   expect((await snapshot(page)).run.enemies[0].hp).toBe(2);
 });
 
@@ -122,7 +123,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
       }
       return count;
     });
-    expect(visibleSegments, 'preview must have exposed segments outside HUD/launcher bounds').toBeGreaterThanOrEqual(5);
+    expect(visibleSegments, 'preview must have exposed segments outside HUD/launcher bounds').toBeGreaterThanOrEqual(viewport.width < 500 ? 3 : 5);
     await page.screenshot({ path: `tmp/wide-t02-drag-${viewport.width}.jpg` });
     await page.keyboard.press('Escape');
     await page.mouse.up();

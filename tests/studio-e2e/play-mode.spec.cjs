@@ -1,5 +1,8 @@
 const { test, expect, installGame, phase, arena, dragPull, snapshot, stackShot } = require('../e2e/support.cjs');
 
+const nonMusicStorageKeys = page => page.evaluate(() => Object.keys(localStorage)
+  .filter(key => key !== 'cookie-expedition-bgm-v1'));
+
 async function enter(page, { area = 'forest', round = 1, characterId = 'adventurer', special = false } = {}) {
   await page.goto('/__dev/maps');
   await page.getByLabel('지역 선택').selectOption(area);
@@ -163,7 +166,8 @@ for (const [area, name] of [['forest', '숲'], ['snow', '눈'], ['city', '도시
 for (const area of ['snow', 'city']) test(`${area} obstacles play their real regional effect inside studio play`, async ({ page }) => {
   await installGame(page, { layoutSeed: 4927 });
   await enter(page, { area });
-  const shot = await stackShot({ area, seed: 4927 });
+  const run = (await snapshot(page)).run;
+  const shot = await stackShot({ area, seed: run.layoutSeed, enemies: run.enemies });
   await dragPull(page, shot); await page.mouse.up();
   await expect(page.getByTestId(area === 'snow' ? 'obstacle-frost' : 'city-ground-chain').first()).toBeVisible();
   await page.screenshot({ path: `tmp/studio-play-${area}-effect.png` });
@@ -243,7 +247,7 @@ test('same-layout replay, new layout and review return preserve the chosen map a
   const transform = await world.getAttribute('style');
   await viewport.focus(); await page.keyboard.press('ArrowRight');
   await expect.poll(() => world.getAttribute('style')).not.toBe(transform);
-  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  expect(await nonMusicStorageKeys(page)).toEqual([]);
 });
 
 for (const area of ['snow', 'chaos']) test(`a cleared ${area} test stops at a studio result without camp, profile writes or leaderboard calls`, async ({ page }) => {
@@ -255,7 +259,7 @@ for (const area of ['snow', 'chaos']) test(`a cleared ${area} test stops at a st
   await expect(page.getByRole('heading', { name: '테스트 전투 완료', exact: true })).toBeVisible({ timeout: 10000 });
   expect((await snapshot(page)).run.round).toBe(area === 'snow' ? 3 : 1);
   await expect(page.locator('.leaderboard-screen')).toHaveCount(0);
-  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  expect(await nonMusicStorageKeys(page)).toEqual([]);
   expect(requests).toEqual([]);
   await page.getByRole('button', { name: '같은 배치 다시 플레이', exact: true }).click();
   await phase(page, 'idle');
@@ -275,5 +279,5 @@ test('phone play supports locked cookies, real controls and a visible return wit
   await page.screenshot({ path: 'tmp/studio-play-phone.png' });
   await page.getByRole('button', { name: '지도 검토로 돌아가기', exact: true }).click();
   await expect(page.locator('.map-studio')).toBeVisible();
-  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  expect(await nonMusicStorageKeys(page)).toEqual([]);
 });

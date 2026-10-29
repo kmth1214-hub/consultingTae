@@ -41,6 +41,7 @@ test('swept collision includes landing/slide contact and sampling uses the exact
   assert.equal(motion.hit?.id, 'landing');
   assert.deepEqual(sampleLogMotion(motion, -5), motion.samples[0]);
   assert.deepEqual(sampleLogMotion(motion, 100), motion.samples.at(-1));
+  assert.deepEqual(sampleLogMotion(motion, motion.startTime + motion.durationSeconds), motion.samples.at(-1));
   const at = sampleLogMotion(motion, motion.startTime + .1);
   assert.ok(Number.isFinite(at.x) && Number.isFinite(at.angle));
   const before = structuredClone(motion);

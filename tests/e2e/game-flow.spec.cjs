@@ -48,7 +48,7 @@ test('Defense blocks damage, Fireball arms/doubles the next shot, and both count
   trace = await snapshot(page);
   expect(trace.run.fireballArmed).toBe(true);
   expect(trace.run.inventory.fireball).toBe(0);
-  await shoot(page);
+  await shoot(page, await aimedShot({ piercing: false }));
   await expect(hp(page)).toHaveText('35');
   trace = await snapshot(page);
   expect(trace.lastEvent.damage).toBe(4);

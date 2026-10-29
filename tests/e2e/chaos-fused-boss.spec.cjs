@@ -10,10 +10,10 @@ async function advanceUntil(page, predicate, max=150) {
   throw new Error('Timed out advancing the committed boss playback');
 }
 
-test('Chaos final opens as one illustrated 414-unit boss with full 56 HP',async({page})=>{
+test('Chaos final opens as one illustrated 621-unit boss with full 56 HP',async({page})=>{
   await installGame(page,{initial:{area:'chaos',round:3}});await start(page);
   await expect(page.locator('.monster--boss')).toHaveCount(1);
-  await expect(page.locator('.monster--boss')).toHaveCSS('width','414px');
+  await expect(page.locator('.monster--boss')).toHaveCSS('width','621px');
   await expect(page.locator('.monster--boss')).toHaveAttribute('aria-label',/혼돈의 융합 군주, 체력 56\/56/);
   await expect(page.locator('.monster-art--fused')).toBeVisible();
   expect(await page.locator('.monster-art--fused').evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
@@ -63,7 +63,7 @@ for(const setting of ['shield','phone-ice','milk','fatal']) test(`actual shot re
   if(setting==='fatal') await expect(page.getByRole('heading',{name:'다음엔 조금 더 멀리',exact:true})).toBeVisible();
   else {
     await phase(page,'idle');await expect(page.locator('.monster--boss')).toHaveCount(3);
-    for(const boss of await page.locator('.monster--boss').all()) await expect(boss).toHaveCSS('width','276px');
+    for(const boss of await page.locator('.monster--boss').all()) await expect(boss).toHaveCSS('width','414px');
     if(setting==='shield') {
       await page.keyboard.press('2');expect((await snapshot(page)).run.enemies).toEqual(after.run.enemies);
       const next=await aimedShot({area:'chaos',round:3,enemies:after.run.enemies,encounterPhase:'split'});

@@ -4,16 +4,17 @@ for (const [area, material] of [['forest', 'log'], ['snow', 'ice'], ['city', 'cr
   test(`${area} stack topples, keeps its regional effect, and remains as debris`, async ({ page }) => {
     await installGame(page, { initial: { area }, layoutSeed: 4927 });
     await start(page);
-    await dragPull(page, area === 'forest' ? await stackShot({ seed: 4927, physical: true }) : { angleDeg: 0, powerRatio: 1 });
+    await dragPull(page, await stackShot({ area, seed: 4927, physical: area === 'forest' }));
     await page.mouse.up();
     await phase(page, 'launching');
     const battle = arena(page);
-    await expect(battle).toHaveAttribute('data-obstacle-id', /obstacle-\d/);
+    await expect(battle).toHaveAttribute('data-obstacle-id', /(?:obstacle|support)-\d/);
     const obstacleId = await battle.getAttribute('data-obstacle-id');
     const stack = page.locator(`.scene-scenery [data-obstacle-id="${obstacleId}"]`);
     await expect(stack).toHaveAttribute('data-obstacle-kind', material);
     await expect(stack).toHaveAttribute('data-stack-state', /falling|toppled/);
     await expect(stack).toHaveAttribute('data-stack-state', 'toppled');
+    await expect.poll(async () => (await snapshot(page)).events.filter(event => event.name === 'resolveProjectile').length).toBe(1);
     const trace = await snapshot(page);
     expect(trace.run.toppledObstacleIds).toContain(obstacleId);
     expect(trace.events.filter(event => event.name === 'resolveProjectile')).toHaveLength(1);
