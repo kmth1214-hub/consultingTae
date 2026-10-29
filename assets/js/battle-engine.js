@@ -291,7 +291,8 @@
     state.chaosBossPhase = state.area === 'chaos' && state.round === 3 ? 'fused' : null;
     state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
     state.toppledObstacleIds=[];state.forestLogDebris=[];state.obstacleDebris=[];
-    if (state.studioPrototype === 'forest-elevated-v1') state.enemyLandingPositions = {};
+    if (state.battlefieldPrototype === 'forest-elevated-v1'
+      || state.studioPrototype === 'forest-elevated-v1') state.enemyLandingPositions = {};
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
     state.consumableUsedSinceShot=false;
     if (state.studioMonsterPrototype === 'regional-monsters-v1') state.pendingAimDisruption = null;
@@ -573,7 +574,8 @@
     if (config.shotMeta && !spear) hitIds.splice(1);
     let bonusDamage = 0;
     const shotMeta = config.shotMeta;
-    const riderFalls = state.studioPrototype === 'forest-elevated-v1'
+    const riderFalls = (state.battlefieldPrototype === 'forest-elevated-v1'
+      || state.studioPrototype === 'forest-elevated-v1')
       && Array.isArray(shotMeta?.riderFalls) ? shotMeta.riderFalls : [];
     const splashes = state.studioPrototype === 'forest-elevated-v1' && state.area === 'forest'
       && !spear && usedWeapon?.id === 'alchemist-candy' && Array.isArray(shotMeta?.abilityContacts)

@@ -31,7 +31,10 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     const draw = layoutRng();
     if (!Number.isFinite(draw) || draw < 0 || draw >= 1) throw new RangeError('Invalid layout RNG');
     run.layoutSeed = Math.floor(draw * 0x100000000);
-    if (run.studioPrototype === 'forest-elevated-v1') run.enemyLandingPositions = {};
+    run.battlefieldPrototype = run.area === 'forest' ? 'forest-elevated-v1' : null;
+    if (run.battlefieldPrototype === 'forest-elevated-v1'
+      || run.studioPrototype === 'forest-elevated-v1') run.enemyLandingPositions = {};
+    else delete run.enemyLandingPositions;
     run.encounterId = ++encounterSequence;
     pendingShot = null;
   };
@@ -223,7 +226,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
             && typeof wobble.obstacleId === 'string'
             && [wobble.time, wobble.point?.x, wobble.point?.y].every(Number.isFinite)
             && wobble.time > shotMeta.splitTime && wobble.time <= 8));
-      const validRiderFalls = riderFalls === undefined || (state.run.studioPrototype === 'forest-elevated-v1'
+      const validRiderFalls = riderFalls === undefined || ((state.run.battlefieldPrototype === 'forest-elevated-v1'
+        || state.run.studioPrototype === 'forest-elevated-v1')
         && Array.isArray(riderFalls) && Array.isArray(contacts)
         && new Set(riderFalls.map(fall => fall?.enemyId)).size === riderFalls.length
         && new Set(riderFalls.map(fall => fall?.supportObstacleId)).size === riderFalls.length

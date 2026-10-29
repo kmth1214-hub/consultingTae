@@ -5,7 +5,8 @@ import {planShot,shotDisruptionOptions} from './shotGeometry.js';
 export function preparePhysicalFlight(run, pull, launchId, shotId) {
   const layout=buildPlayableBattlefield({area:run.area,round:run.round,enemies:run.enemies,
     seed:run.layoutSeed??0,encounterPhase:run.chaosBossPhase==='split'?'split':null,
-    prototype:run.studioPrototype??null,enemyLandingPositions:run.enemyLandingPositions??null,
+    prototype:run.battlefieldPrototype??run.studioPrototype??null,
+    enemyLandingPositions:run.enemyLandingPositions??null,
     worldScale:run.studioWorldScale??1});
   const loaded=run.weapons.find(weapon=>weapon.instanceId===(run.weaponQueue?.[0]??run.currentWeaponId));
   const solution=planShot({layout,pull,enemies:run.enemies,piercing:run.spearArmed===true,
