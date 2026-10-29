@@ -142,7 +142,7 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
       }
       const bossStartX = area === 'forest' ? (await page.locator('.monster-body').boundingBox()).x : null;
       await page.keyboard.press(blocked ? '3' : '4');
-      await launchResponse(page);
+      await launchResponse(page, { paused: area === 'city' });
       const trace = await snapshot(page);
       const event = trace.lastEvent.enemyAttack;
       expect(event.attemptedSpecial).toBe(special);
@@ -163,9 +163,11 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
         await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'travel');
         await expect.poll(async () => (await body.boundingBox()).x, { intervals: [16] }).toBeLessThan(bossStartX - 40);
       }
+      if (area === 'city') await advanceToImpact(page);
       await expect(page.getByTestId(blocked ? 'shield-impact' : 'player-impact')).toBeVisible();
       await expect(hp(page)).toHaveText(String(event.playerHpAfter));
       await page.screenshot({ path: `tmp/react-t06-${area}-${blocked ? 'blocked' : 'special'}.jpg` });
+      if (area === 'city') await page.clock.runFor(1000);
       await phase(page, 'idle');
       expect((await snapshot(page)).run).toEqual(trace.run);
       if (special === 'frozen-breath') expect(trace.run.consumablesBlocked).toBe(!blocked);
