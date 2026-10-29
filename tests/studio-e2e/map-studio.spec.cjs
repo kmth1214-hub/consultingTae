@@ -1,7 +1,7 @@
 const { test, expect } = require('../e2e/support.cjs');
+const { createStudioScenario } = require('../../src/dev/createStudioSession.js');
 
 async function expectedObstacleCount(area = 'forest') {
-  const { createStudioScenario } = await import('../../src/dev/createStudioSession.js');
   return createStudioScenario({ area, round: 1, seed: 0 }).layout.obstacles.length;
 }
 
@@ -31,7 +31,6 @@ test('development map studio is a separate, keyboard-accessible review screen wi
 });
 
 test('all four studio regions preview the enlarged bodies and reuse them in play', async ({ page }) => {
-  const { createStudioScenario } = await import('../../src/dev/createStudioSession.js');
   await page.goto('/__dev/maps');
   for (const area of ['forest', 'snow', 'city', 'chaos']) {
     await page.getByLabel('지역 선택').selectOption(area);

@@ -1,4 +1,6 @@
 const { test, expect, installGame, phase, arena, dragPull, snapshot, stackShot } = require('../e2e/support.cjs');
+const { createStudioScenario } = require('../../src/dev/createStudioSession.js');
+const { planShot } = require('../../src/game/shotGeometry.js');
 
 const nonMusicStorageKeys = page => page.evaluate(() => Object.keys(localStorage)
   .filter(key => key !== 'cookie-expedition-bgm-v1'));
@@ -15,9 +17,6 @@ async function enter(page, { area = 'forest', round = 1, characterId = 'adventur
 }
 
 async function directForestShot(enemyHp = 4) {
-  const [{ createStudioScenario }, { planShot }] = await Promise.all([
-    import('../../src/dev/createStudioSession.js'), import('../../src/game/shotGeometry.js')
-  ]);
   const scenario = createStudioScenario({ area: 'forest', round: 1, seed: 0 });
   const enemies = scenario.enemies.map(enemy => ({ ...enemy, hp: enemyHp, maxHp: 4 }));
   for (let angleDeg = 0; angleDeg <= 75; angleDeg += 2.5) for (let step = 1; step <= 40; step++) {
@@ -78,7 +77,6 @@ for (const [kind, disruption, label] of [
   ['oven-snow-boar', 'preview', '궤적 안내 30%→15%'],
   ['jelly-cloud-robot', 'roll', '굴림 최대 5→3배']
 ]) test(`${kind} landed disruption is shown for the next shot only`, async ({ page }) => {
-  const { createStudioScenario } = await import('../../src/dev/createStudioSession.js');
   const enemy = createStudioScenario({ area: 'chaos', round: 1, seed: 0 })
     .enemies.find(item => item.kind === kind);
   await installGame(page, { stateOverride: { enemies: [{ ...enemy, attackCount: 1 }] } });
@@ -103,7 +101,6 @@ for (const [kind, disruption, label] of [
 });
 
 test('defended fusion disruption leaves no aiming penalty', async ({ page }) => {
-  const { createStudioScenario } = await import('../../src/dev/createStudioSession.js');
   const enemy = createStudioScenario({ area: 'chaos', round: 1, seed: 0 })
     .enemies.find(item => item.kind === 'frost-gear-snake');
   await installGame(page, { stateOverride: { enemies: [{ ...enemy, attackCount: 1 }], defenseArmed: true } });
