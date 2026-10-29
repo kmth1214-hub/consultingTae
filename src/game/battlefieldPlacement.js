@@ -50,7 +50,8 @@ export function isPlayableBattlefield(layout, enemies) {
     const riders = layout.enemies.filter(slot => slot.supportObstacleId);
     const supports = layout.obstacles.filter(prop => prop.supportsEnemyId);
     const expected = layout.round === 3 ? 0 : layout.area === 'chaos'
-      ? layout.enemies.length > 10 ? 3 : 2 : layout.round === 2 ? 1 : 0;
+      ? layout.enemies.length < 9 ? 0 : layout.enemies.length > 10 ? 3 : 2
+      : layout.round === 2 && layout.enemies.length >= 2 ? 1 : 0;
     if (riders.length !== expected || supports.length !== expected
       || new Set(supports.map(prop => prop.elevation)).size !== expected
       || supports.some(prop => {

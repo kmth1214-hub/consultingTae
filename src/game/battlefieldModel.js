@@ -29,7 +29,8 @@ const SUPPORT_HEIGHTS = { low: 132, medium: 184, high: 236 };
 const elevated = (area, prototype) => area === 'forest' ? prototype === FOREST_PROTOTYPE
   : prototype === REGIONAL_PROTOTYPE;
 const riderCount = (area, round, count) => round === 3 ? 0
-  : area === 'chaos' ? count > 10 ? 3 : 2 : round === 2 ? 1 : 0;
+  : area === 'chaos' ? count < 9 ? 0 : count > 10 ? 3 : 2
+    : round === 2 && count >= 2 ? 1 : 0;
 
 function randomFromSeed(seed) {
   let value = seed >>> 0;
@@ -66,8 +67,12 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     }
     ids.add(enemy.id);
   }
+  if (prototype === FOREST_PROTOTYPE && round === 2
+    && (enemies.length !== 2 || enemies.some(enemy => enemy.isBoss))) {
+    throw new TypeError('Elevated forest round needs two regular enemies');
+  }
   if (elevated(area, prototype) && round < 3 && riderCount(area, round, enemies.length)
-    && (enemies.length < (area === 'chaos' ? 9 : 2) || enemies.some(enemy => enemy.isBoss))) {
+    && enemies.some(enemy => enemy.isBoss)) {
     throw new TypeError('Elevated round needs a complete regular enemy roster');
   }
   const random = randomFromSeed(seed);

@@ -225,8 +225,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
             && typeof wobble.obstacleId === 'string'
             && [wobble.time, wobble.point?.x, wobble.point?.y].every(Number.isFinite)
             && wobble.time > shotMeta.splitTime && wobble.time <= 8));
-      const validRiderFalls = riderFalls === undefined || ((state.run.battlefieldPrototype === 'forest-elevated-v1'
-        || state.run.studioPrototype === 'forest-elevated-v1')
+      const validRiderFalls = riderFalls === undefined || ((['forest-elevated-v1', 'regional-elevated-v1'].includes(state.run.battlefieldPrototype)
+        || ['forest-elevated-v1', 'regional-elevated-v1'].includes(state.run.studioPrototype))
         && Array.isArray(riderFalls) && Array.isArray(contacts)
         && new Set(riderFalls.map(fall => fall?.enemyId)).size === riderFalls.length
         && new Set(riderFalls.map(fall => fall?.supportObstacleId)).size === riderFalls.length

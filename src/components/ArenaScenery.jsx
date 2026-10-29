@@ -40,15 +40,33 @@ function CityStack() {
   </>;
 }
 
+function SupportTop({ kind }) {
+  if (kind === 'ice') return <g className="supported-stack-top" strokeLinejoin="round">
+    <path d="M10 18 24 151h13L31 20Zm60 0L55 151H43L49 20Z" fill="#7bc5dd" stroke="#438bb3" strokeWidth="3" />
+    <path d="M21 45 33 126M59 46 48 127" stroke="#e6ffff" strokeWidth="4" opacity=".82" />
+    <path d="M-4 5 10-2h59L84 5 79 22H1Z" fill="#b8edf2" stroke="#5fa8c5" strokeWidth="3" />
+    <path d="M9 4h61M16 13h49" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity=".95" />
+    <path d="m7 20 4 7 4-7m53 0 4 7 4-7" fill="#d7f9ff" stroke="#7fc3d4" strokeWidth="2" />
+  </g>;
+  if (kind === 'crate') return <g className="supported-stack-top" strokeLinejoin="round">
+    <path d="M7 26 15 154h15L23 22Zm65 0-8 128H49L57 22Z" fill="#a37961" stroke="#67483b" strokeWidth="3" />
+    <path d="M14 55 65 114M66 55 15 114" stroke="#d7aa7a" strokeWidth="6" />
+    <path d="M-4 4 4-1h72l8 5v19H-4Z" fill="#d4b18b" stroke="#735344" strokeWidth="3" />
+    <path d="M5 5h70M12 15h56" stroke="#f7d8a6" strokeWidth="3" opacity=".9" />
+    <circle cx="9" cy="10" r="2" fill="#60483e" /><circle cx="70" cy="10" r="2" fill="#60483e" />
+  </g>;
+  return <g className="supported-stack-top supported-log-top" stroke="#61402b" strokeWidth="3" strokeLinejoin="round">
+    <path d="M5 22 19 159h16L25 20Zm70 0L61 159H44L56 20Z" fill="#a66d43" />
+    <path d="M11 148 69 58M8 84 71 147" fill="none" stroke="#e5ae70" strokeWidth="5" />
+    <rect x="-4" y="0" width="88" height="20" rx="7" fill="#c98c56" />
+    <path d="M10 5h59M20 14h44" fill="none" stroke="#f4c68e" strokeWidth="2" />
+  </g>;
+}
+
 function StackBody({ kind, chaos, supported }) {
   return <>
     {kind === 'log' ? <LogStack /> : kind === 'ice' ? <IceStack /> : <CityStack />}
-    {supported && <g className="supported-log-top" stroke="#61402b" strokeWidth="3" strokeLinejoin="round">
-      <path d="M5 22 19 159h16L25 20Zm70 0L61 159H44L56 20Z" fill="#a66d43" />
-      <path d="M11 148 69 58M8 84 71 147" fill="none" stroke="#e5ae70" strokeWidth="5" />
-      <rect x="-4" y="0" width="88" height="20" rx="7" fill="#c98c56" />
-      <path d="M10 5h59M20 14h44" fill="none" stroke="#f4c68e" strokeWidth="2" />
-    </g>}
+    {supported && <SupportTop kind={kind} />}
     {chaos && <>
       <path d="M23 9 61 146M56 15 17 140" fill="none" stroke="#492d68" strokeWidth="6" opacity=".7" />
       <path d="M24 15 51 108M54 21 23 129" fill="none" stroke="#dc9aee" strokeWidth="2" opacity=".8" />
@@ -110,7 +128,8 @@ const ArenaScenery = forwardRef(function ArenaScenery({ layout, area = layout.ar
       if (motion || finalPose) {
         const pose = finalPose || motion.samples[0], contact = contacts.get(prop.id);
         return <g key={prop.id} ref={node => node ? nodes.current.set(prop.id, node) : nodes.current.delete(prop.id)}
-          data-obstacle-id={prop.id} data-obstacle-kind={prop.kind} data-stack-state={finalPose ? 'toppled' : 'standing'}
+          data-obstacle-id={prop.id} data-obstacle-kind={prop.kind} data-supports-enemy={prop.supportsEnemyId || undefined}
+          data-stack-state={finalPose ? 'toppled' : 'standing'}
           data-motion-phase={finalPose ? 'settled' : 'standing'} className="stack stack--physical"
           data-contact-trigger={contact?.trigger} data-chain-depth={contact?.chainDepth}
           data-contact-source={contact?.sourceObstacleId || undefined}
@@ -124,6 +143,7 @@ const ArenaScenery = forwardRef(function ArenaScenery({ layout, area = layout.ar
       const state = fallen.has(prop.id) ? 'toppled' : touching ? 'falling' : 'standing';
       const direction = touching?.direction < 0 ? 'left' : 'right';
       return <g key={prop.id} data-obstacle-id={prop.id} data-obstacle-kind={prop.kind}
+        data-supports-enemy={prop.supportsEnemyId || undefined}
         data-stack-state={state} className={`stack stack--${prop.kind} stack--${state} stack--fall-${direction}`}
         transform={`translate(${prop.x} ${prop.y})`}>
         <ellipse cx={prop.width / 2} cy={prop.height - 4} rx={prop.width * .54} ry="9" fill="#2e281c" opacity=".25" />

@@ -342,12 +342,12 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     if (ignored.has(obstacle.id)) return;
     ignored.add(obstacle.id);
     const forestLog = layout.area === 'forest' && obstacle.kind === 'log';
-    const rider = layout.prototype === 'forest-elevated-v1' && obstacle.supportsEnemyId
+    const rider = ['forest-elevated-v1', 'regional-elevated-v1'].includes(layout.prototype) && obstacle.supportsEnemyId
       ? living.find(item => item.id === obstacle.supportsEnemyId) : null;
     const motion = simulateObstacleMotion({ obstacle, point: hitPoint, velocity: impactVelocity,
       startTime: time, layout, enemies: forestLog ? living.filter(item => item.id !== rider?.id) : [],
       obstacles: layout.obstacles.filter(item => !ignored.has(item.id)), transfer: Boolean(source) });
-    if (!motion && rider) throw new TypeError('Invalid supported log motion');
+    if (!motion && rider) throw new TypeError('Invalid supported obstacle motion');
     const riderMotion = rider ? simulateRiderFall({ supportMotion: motion, riderSlot: rider,
       layout, startTime: time }) : null;
     const contact = { obstacleId: obstacle.id, obstacleKind: obstacle.kind,
