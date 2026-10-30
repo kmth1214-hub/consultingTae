@@ -1,6 +1,6 @@
 # Task: T04 바람궁수 Q 자동 유도와 연쇄 폭풍
 
-## Status: pending
+## Status: done
 
 ## Goal
 캐릭터별 충전 스톤 조건으로 4점을 모으고, 바람궁수 스톤이 장전되었을 때 Q로 다음 한 발의 유도 또는 연쇄 폭풍을 발동한다.
@@ -61,6 +61,6 @@ Task: T04-wind-q-chain-storm
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

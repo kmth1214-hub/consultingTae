@@ -59,7 +59,7 @@ test('owned passive abilities are deduplicated with actual counters and availabl
   assert.equal(details.passives.length, 5);
   assert.match(details.passives[0].text, /튀어/);
   assert.match(details.passives.find(p => p.id === 'wizard-orb').text, /2\/3/);
-  assert.match(details.passives.find(p => p.id === 'wind-candy').text, /사용 완료/);
+  assert.match(details.passives.find(p => p.id === 'wind-candy').text, /4점/);
   assert.equal(details.buffs.length, 3);
   assert.equal(details.next.id, 'wizard-orb');
   assert.equal(details.reshuffleNext, false);

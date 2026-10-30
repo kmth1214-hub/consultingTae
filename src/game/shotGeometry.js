@@ -346,10 +346,11 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
     || [start.x, target.x].some(x => x < 0 || x > layout.width)) return null;
   const route = [start, { x: start.x, y: safeY }, { x: target.x, y: safeY }, target];
   const points = [{ ...start }];
-  const lineTo = end => {
-    const a = points.at(-1), count = Math.max(1, Math.ceil(distance(a, end) / 4));
+  const lineTo = (end, weave = false) => {
+    const a = points.at(-1), count = Math.max(1, Math.ceil(distance(a, end) / (weave ? 2.5 : 4)));
     for (let i = 1; i <= count; i++) {
       const p = lerp(a, end, i / count);
+      if (weave) p.y += 22 * Math.sin(Math.PI * i / count) * Math.sin(4 * Math.PI * i / count);
       if (distance(points.at(-1), p) > 1e-10) points.push(p);
     }
   };
@@ -358,7 +359,7 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
     const radius = Math.min(48, distance(a, corner) / 4, distance(corner, b) / 4);
     const before = lerp(corner, a, radius / (distance(a, corner) || 1));
     const after = lerp(corner, b, radius / (distance(corner, b) || 1));
-    lineTo(before);
+    lineTo(before, i === 2);
     const count = Math.max(1, Math.ceil(2 * radius / 4));
     for (let j = 1; j <= count; j++) {
       const t = j / count;

@@ -372,9 +372,9 @@ test('session supports full-vector angles and only the new phases; invalid metad
   assert.ok(['enemy','ground','bounds','obstacle','timeout'].includes(session.getSnapshot().lastEvent.shotMeta.impactKind));
 });
 
-test('explicit null and reverse override a stale Wind target without consuming homing, then forward Wind works once', () => {
+test('Wind only homes after Q and a reverse shot cannot force a stale target', () => {
   const engine = { ...BattleEngine, createRunState: options => BattleEngine.createRunState({ ...options,
-    weapons: Array.from({ length: 4 }, () => ({ id: 'wind-candy', grade: 'C' })) }) };
+    characterId:'wind', weapons: Array.from({ length: 4 }, () => ({ id: 'wind-candy', grade: 'C' })) }) };
   const session = start({ engine, rng: () => .5 });
   const { actions } = session, target = session.getSnapshot().run.enemies[0].id;
   actions.setAim({ selectedTargetId: target });
@@ -387,6 +387,7 @@ test('explicit null and reverse override a stale Wind target without consuming h
   assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, false);
   assert.equal(session.getSnapshot().run.enemies[0].hp, 4);
   finishResponse(session);
+  assert.equal(actions.armWindSkill().mode,'homing');
   commitFlight(session,reserveAt(session,0,.5));
   assert.equal(session.getSnapshot().run.roundEffects.windHomingUsed, true);
   assert.equal(session.getSnapshot().run.enemies[0].hp, 2);

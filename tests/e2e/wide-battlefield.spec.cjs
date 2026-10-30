@@ -50,6 +50,8 @@ test('ordinary candy topples a stack while Wind homing flies to its enemy withou
   await installGame(windPage, { initial: { weapons: [wind, basic, basic] }, layoutSeed: 4927 });
   await windPage.addInitScript(() => localStorage.setItem('cookie-roguelike.profile.v1', JSON.stringify({ version: 1, snowAreaCleared: true })));
   await start(windPage, '바람궁수 쿠키');
+  await windPage.keyboard.press('q');
+  await expect(windPage.getByTestId('wind-skill-status')).toContainText('자동 유도 준비');
   await dragPull(windPage, { angleDeg: 0, powerRatio: 1 });
   await expect(windPage.locator('.monster.is-targeted')).toHaveCount(1);
   await windPage.mouse.up();

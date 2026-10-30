@@ -7,8 +7,9 @@ test.beforeEach(async ({ page }, testInfo) => {
   const windCase = testInfo.title.startsWith('Wind bypasses');
   const basic = { id: 'basic-stone', name: '기본 스톤', grade: 'C' };
   const wind = { id: 'wind-candy', name: '바람궁수의 사탕', grade: 'C' };
-  await installGame(page, windCase ? { initial: { weapons: [basic, basic, wind] } } : {});
-  await start(page);
+  await installGame(page, windCase ? { initial: { characterId: 'wind', weapons: [basic, basic, wind] } } : {});
+  if (windCase) await page.addInitScript(() => localStorage.setItem('cookie-roguelike.profile.v1', JSON.stringify({ version: 1, snowAreaCleared: true })));
+  await start(page, windCase ? '바람궁수 쿠키' : '모험가맛 쿠키');
 });
 
 test('any map point starts primary mouse drag while HUD, touch and secondary inputs remain independent', async ({ page }) => {
@@ -174,6 +175,7 @@ test('Wind bypasses the solid prop once, while reverse preserves its charge and 
   await page.getByRole('button', { name: /^바람궁수 쿠키/ }).click();
   await shoot(page, { reverse: true, powerRatio: .6 });
   expect((await snapshot(page)).run.roundEffects.windHomingUsed).toBe(false);
+  await page.keyboard.press('q');
   await dragPull(page, { angleDeg: 0, powerRatio: 1 });
   await expect(page.locator('.monster.is-targeted')).toHaveCount(1);
   await page.mouse.up(); await phase(page, 'launching');

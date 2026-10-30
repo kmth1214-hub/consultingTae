@@ -505,3 +505,8 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .alchemist-explosion.is-failure { opacity: .55; }
 @keyframes alchemist-burst { from { opacity: .95; scale: .12; } to { opacity: 0; scale: 1.3; } }
 @media (prefers-reduced-motion: reduce) { .alchemist-explosion { animation: none; opacity: .75; } }
+.wind-skill-status{margin:.55rem 0;padding:.42rem .6rem;border-radius:.65rem;background:#e5f4ee;color:#286256;font-weight:800;font-size:.84rem}
+.wind-skill-status.is-ready{background:#cef5cf;box-shadow:0 0 0 2px #71c794 inset}
+.wind-skill-status.is-armed{background:#d1f8df;animation:windSkillPulse 1.2s ease-in-out infinite alternate}
+@keyframes windSkillPulse{to{box-shadow:0 0 0 4px #65c99b88 inset}}
+@media (prefers-reduced-motion:reduce){.wind-skill-status.is-armed{animation:none;box-shadow:0 0 0 3px #65c99b inset}}

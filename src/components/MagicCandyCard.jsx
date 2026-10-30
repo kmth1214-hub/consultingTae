@@ -5,7 +5,7 @@ import { AIM_DISRUPTION_LABELS } from '../game/gameData.js';
 export default function MagicCandyCard({ run, hidden }) {
   const details = getCandyDetails(run);
   if (!details || hidden) return null;
-  const { current, currentAbility, damage, next, buffs, passives } = details;
+  const { current, currentAbility, damage, next, buffs, passives, wind } = details;
   const chips = [run.spearArmed && '창 · 최대 3마리 관통', run.fireballArmed && '불공 ×2', run.pendingAimInversion && '조작 반전',
     run.studioMonsterPrototype === 'regional-monsters-v1' && AIM_DISRUPTION_LABELS[run.pendingAimDisruption],
     run.defenseArmed && '보호막', run.nextAttackDamageMultiplier === .5 && '적 피해 50%↓'].filter(Boolean);
@@ -13,6 +13,11 @@ export default function MagicCandyCard({ run, hidden }) {
     <div className="candy-card-top"><span className="candy-symbol" aria-hidden="true">{current.id === 'basic-stone' ? '●' : '✦'}</span><span className="candy-label">이번 스톤</span><span className="grade">{current.grade} 등급</span></div>
     <h2>{current.name}</h2>
     {currentAbility && <p className="candy-current-ability" data-testid="current-candy-ability">{currentAbility}</p>}
+    {wind && <p className={`wind-skill-status ${wind.armed ? 'is-armed' : wind.canUse ? 'is-ready' : ''}`}
+      data-testid="wind-skill-status">바람 {wind.charge}/4 · {wind.armed === 'storm' ? 'Q 연쇄 폭풍 준비'
+        : wind.armed === 'homing' ? 'Q 자동 유도 준비' : wind.cooldown > 0 ? `재사용까지 ${wind.cooldown}발`
+          : wind.canUse ? `Q ${wind.charge === 4 ? '연쇄 폭풍' : '자동 유도'} 사용 가능`
+            : current.id === 'wind-candy' ? '바람 충전 대기' : '바람 스톤 장전 필요'}</p>}
     <p className="candy-damage">기본 피해 <strong>{damage.min}–{damage.max}</strong><span>발사 시 무작위 · 추가 피해는 조건부</span></p>
     {chips.length > 0 && <ul className="candy-status-chips" aria-label="적용 중인 상태 요약">{chips.map(text => <li key={text}>{text}</li>)}</ul>}
     <div className="next-candy" aria-label="다음 스톤">

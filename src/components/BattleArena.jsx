@@ -87,7 +87,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     piercing: run.spearArmed === true,
     toppledObstacleIds: run.toppledObstacleIds || [],
     windAvailable: run.weapons.find(weapon => weapon.instanceId ===
-      (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id === 'wind-candy' && !run.roundEffects.windHomingUsed });
+      (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id === 'wind-candy' && run.windArmedMode === 'homing' });
   function clearFlight() {
     if (activeFlight.current) onCancelShot(activeFlight.current.shotId);
     activeFlight.current = null; flightTimeRef.current = 0; crowTimeRef.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]);
@@ -263,7 +263,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
               || Boolean(shotReview && enemyResponse?.attack.blockedBy === 'defense')} lastEvent={lastEvent} />
         <svg className="projectile-layer" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
           <TrajectoryPreview path={solution?.path || flight?.path} previewD={solution?.previewD}
-            visible={state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />
+            visible={run.windArmedMode !== 'homing' && state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} onFailure={failLaunch}
             onProgress={({ id, point, focusPoint, time }) => {
               if (activeFlight.current?.id !== id) return;

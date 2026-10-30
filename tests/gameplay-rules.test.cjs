@@ -109,11 +109,12 @@ test('Defense takes priority over a Milk shield and unused Milk protection expir
 });
 
 test('Wind guarantees the selected boss first once per round and carries its damage onward', () => {
-  const state = create(['wind-candy', 'wind-candy', 'wind-candy'], { area: 'chaos', round: 3 });
+  const state = create(['wind-candy', 'wind-candy', 'wind-candy'], { area: 'chaos', round: 3, characterId:'wind' });
   engine.resolveProjectile(state, {hitIds:[state.enemies[0].id],damage:28,rng:()=>0});
   const scoreBefore = state.bonusScore;
   const [boar, , robot] = state.enemies;
   robot.hp = 1;
+  assert.equal(engine.armWindSkill(state).mode,'homing');
   const hit = engine.resolveProjectile(state, { selectedTargetId: robot.id, hitIds: [boar.id, robot.id], damage: 3, rng: () => 0 });
   assert.deepEqual(hit.hits.map(e => e.id), [robot.id, boar.id]);
   assert.deepEqual(hit.hits.map(e => e.damage), [1, 3]);
@@ -330,12 +331,16 @@ test('duplicate Alchemist stones do not award cookie-specific item points', () =
   assert.equal(state.effectCounters.consumablesUsed, 1);
 });
 
-test('invalid target does not spend the Wind charge and duplicate Wind copies cannot home twice', () => {
-  const state = create(['wind-candy', 'wind-candy'], { area: 'forest', round: 2 });
+test('a Q homing shot misses without a target and enters cooldown; later Wind copies remain ballistic', () => {
+  const state = create(['wind-candy', 'wind-candy'], { area: 'forest', round: 2, characterId:'wind' });
+  assert.equal(engine.armWindSkill(state).mode,'homing');
   engine.resolveProjectile(state, { selectedTargetId: 'missing', hitIds: [], damage: 1, rng: () => 0 });
   assert.equal(state.roundEffects.windHomingUsed, false);
+  assert.equal(state.windCooldownShots,3);
   const target = state.enemies[0];
-  assert.equal(engine.resolveProjectile(state, { selectedTargetId: target.id, hitIds: [], damage: 1, rng: () => 0 }).missed, false);
+  assert.equal(engine.armWindSkill(state).reason,'cooldown');
+  assert.equal(engine.resolveProjectile(state, { selectedTargetId: target.id, hitIds: [], damage: 1, rng: () => 0 }).missed, true);
+  assert.equal(state.windCooldownShots,2);
   assert.equal(engine.resolveProjectile(state, { selectedTargetId: target.id, hitIds: [], damage: 1, rng: () => 0 }).missed, true);
 });
 

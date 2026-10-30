@@ -40,10 +40,13 @@ export default function BattleScreen({ session, music }) {
       if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
       const key = ['fireball', 'spear', 'defense', 'heal'][Number(event.key) - 1];
       if (key) { event.preventDefault(); session.useConsumable(key); }
+      if (event.key.toLowerCase() === 'q' && event.target.tagName !== 'BUTTON') {
+        event.preventDefault(); session.armWindSkill();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [session.useConsumable]);
+  }, [session.useConsumable, session.armWindSkill]);
   const fullscreen = async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();

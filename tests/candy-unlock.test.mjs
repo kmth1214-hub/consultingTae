@@ -9,9 +9,9 @@ const storage = cleared => {
   return { getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value) };
 };
 
-test('slot rewards grant only the selected cookie stone or a basic stone, regardless of Snow unlock', () => {
+test('slot rewards draw from every unlocked special stone or give a basic stone on a miss', () => {
   for (const unlocked of [false, true]) {
-    for (const [characterId, exclusive] of [
+    for (const [characterId] of [
       ['adventurer', 'adventurer-candy'], ['alchemist', 'alchemist-candy'],
       ['wizard', 'wizard-orb'], ['milk', 'milk-candy'], ['wind', 'wind-candy']
     ]) {
@@ -20,8 +20,8 @@ test('slot rewards grant only the selected cookie stone or a basic stone, regard
       assert.deepEqual(engine.drawRewardChoices(run, () => .5).weapons, []);
       const won = engine.spinRewardSlot(run, 'stone', () => 0);
       assert.equal(won.accepted, true);
-      assert.equal(won.result.prizeId, exclusive);
-      assert.equal(run.weapons.at(-1).id, exclusive);
+      assert.equal(won.result.prizeId, 'adventurer-candy');
+      assert.equal(run.weapons.at(-1).id, 'adventurer-candy');
       assert.equal(run.weapons.at(-1).grade, 'C');
       const missed = engine.createRunState({ characterId, snowRewardsUnlocked: unlocked });
       missed.terminal = 'round-clear';

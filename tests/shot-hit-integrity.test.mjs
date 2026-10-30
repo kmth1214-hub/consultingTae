@@ -43,7 +43,7 @@ test('Spear may hit the same second enemy only by actually continuing into its c
 });
 test('even a physical Wind override cannot introduce a second non-piercing damage target',()=>{
  const {run,shot}=fixture();
- run.weapons.push({id:'wind-candy',instanceId:'wind-test',grade:'C'});run.weaponQueue[0]='wind-test';run.currentWeaponId='wind-test';run.enemies[0].hp=1;
+ run.weapons.push({id:'wind-candy',instanceId:'wind-test',grade:'C'});run.weaponQueue[0]='wind-test';run.currentWeaponId='wind-test';run.enemies[0].hp=1;run.windArmedMode='homing';
  E.resolveProjectile(run,{selectedTargetId:run.enemies[0].id,hitIds:[run.enemies[1].id],damage:10,shotMeta:meta(shot),rng:()=>.5});
  assert.equal(run.enemies[0].hp,0);assert.equal(run.enemies[1].hp,4);
 });

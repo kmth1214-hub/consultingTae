@@ -165,6 +165,7 @@
       effectCounters: { permanentWeaponHits: 0, projectileCollisions: 0, consumablesUsed: 0 },
       roundEffects: { windHomingUsed: false },
       milkShieldPending: false, milkShieldActive: false,
+      windCharge: 0, windCooldownShots: 0, windArmedMode: null,
       zeroRollsThisRound: 0,
       enemyTurnIndex: 0,
       turnNumber: 0,
@@ -205,6 +206,19 @@
     state.currentWeaponId=state.weaponQueue[0]||null;
   }
   function getCurrentWeapon(state) { return state&&state.weapons.find(weapon=>weapon.instanceId===state.currentWeaponId)||state&&state.weapons[0]||null; }
+
+  function armWindSkill(state) {
+    if (!state || state.terminal || state.ammo <= 0 || state.windArmedMode) return {accepted:false,reason:'invalid-state'};
+    const loaded=state.weapons.find(weapon=>weapon.instanceId===(state.weaponQueue?.[0]??state.currentWeaponId));
+    if (loaded?.id!=='wind-candy') return {accepted:false,reason:'wrong-stone'};
+    if (state.characterId==='wind' && state.windCooldownShots > 0) return {accepted:false,reason:'cooldown'};
+    if (state.characterId!=='wind' && state.windCharge < 4) return {accepted:false,reason:'not-charged'};
+    const mode=state.windCharge >= 4 ? 'storm' : 'homing';
+    if (mode==='homing' && state.spearArmed) return {accepted:false,reason:'spear-armed'};
+    state.windArmedMode=mode;
+    if (mode==='storm') state.windCharge=0;
+    return {accepted:true,mode};
+  }
   function fusionWeapon(state, source, grade) {
     return grade === 'A' ? null : state.weapons.find(item => item.id === source.id && item.grade === grade);
   }
@@ -487,7 +501,6 @@
     const enemy = state.enemies[index];
     state.enemyTurnIndex = (index + 1) % size;
     state.turnNumber += 1;
-    state.playerShotsFired = (state.playerShotsFired || 0) + 1;
 
     const sourceRng = typeof rng === 'function' ? rng : Math.random;
     let special = null, attackKind = enemy.kind, fusionAttack = null;
@@ -588,6 +601,13 @@
       return { accepted: false, reason: 'no-ammo', hits: [], enemyAttack: null, roundCleared: false, runDefeated: true };
     }
     const scoreBefore = activeScore(state);
+    const windMode = state.windArmedMode;
+    state.windArmedMode = null;
+    if (state.characterId === 'wind') {
+      if (windMode) state.windCooldownShots = 3;
+      else if (state.windCooldownShots > 0) state.windCooldownShots--;
+    }
+    state.playerShotsFired = (state.playerShotsFired || 0) + 1;
     state.milkShieldActive = Boolean(state.milkShieldPending);
     state.milkShieldPending = false;
     const spear = state.spearArmed === true;
@@ -618,7 +638,7 @@
     const seen = new Set();
     const hitIds = Array.isArray(config.hitIds) ? config.hitIds.slice() : [];
     let homingTarget = null;
-    if (permanent && usedWeapon?.id === 'wind-candy' && !state.roundEffects.windHomingUsed) {
+    if (permanent && usedWeapon?.id === 'wind-candy' && windMode === 'homing') {
       homingTarget = state.enemies.find(enemy => enemy.id === config.selectedTargetId && enemy.alive && enemy.hp > 0) || null;
       if (homingTarget) {
         hitIds.unshift(homingTarget.id);
@@ -630,6 +650,9 @@
     if (config.shotMeta && !spear) hitIds.splice(1);
     let bonusDamage = 0;
     const shotMeta = config.shotMeta;
+    const windOrder = Array.isArray(shotMeta?.enemyOrder) ? shotMeta.enemyOrder
+      : state.enemies.map(enemy=>enemy.id);
+    const livingWindOrder = windOrder.filter(id=>state.enemies.some(enemy=>enemy.id===id&&enemy.alive&&enemy.hp>0));
     const riderFalls = (['forest-elevated-v1', 'regional-elevated-v1'].includes(state.battlefieldPrototype)
       || ['forest-elevated-v1', 'regional-elevated-v1'].includes(state.studioPrototype))
       && Array.isArray(shotMeta?.riderFalls) ? shotMeta.riderFalls : [];
@@ -643,7 +666,7 @@
         ? [{ obstacleId: shotMeta.obstacleId, obstacleKind: shotMeta.obstacleKind,
           obstacleTargetIds: shotMeta.obstacleTargetIds || [] }] : [];
     const toppled = state.toppledObstacleIds || (state.toppledObstacleIds = []);
-    let directHitCount = 0;
+    let directHitCount = 0, lastDirectHitId = null;
     const applySpearHit = (id, index) => {
       if (index >= 3 || seen.has(id)) return;
       seen.add(id);
@@ -653,7 +676,7 @@
       enemy.hp -= removed; enemy.alive = enemy.hp > 0;
       addScore(state, removed);
       hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp, defeated: !enemy.alive, scoreDelta: removed });
-      directHitCount++;
+      directHitCount++; lastDirectHitId = enemy.id;
     };
     const applyDirectHits = () => {
       if (spear) { [...new Set(hitIds)].slice(0, 3).forEach(applySpearHit); return; }
@@ -688,7 +711,7 @@
         addScore(state, scoreDelta);
         hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp,
           defeated: !enemy.alive, scoreDelta });
-        directHitCount++;
+        directHitCount++; lastDirectHitId = enemy.id;
         if (enemy.alive) break;
       }
     };
@@ -818,6 +841,25 @@
         damage: 1, remainingHp: target.hp, defeated: !target.alive, scoreDelta });
     } });
     timeline.sort((a, b) => a.time - b.time || a.order - b.order).forEach(action => action.apply());
+    if (windMode === 'storm' && directHitCount > 0) {
+      const anchorIndex = livingWindOrder.indexOf(lastDirectHitId);
+      const base = rolledDamage * damageMultiplier;
+      for (let index = anchorIndex - 1; index >= 0; index--) {
+        const amount = Math.max(0, base - (anchorIndex - index));
+        if (!amount) continue;
+        const target = state.enemies.find(enemy=>enemy.id===livingWindOrder[index]&&enemy.alive&&enemy.hp>0);
+        if (!target) continue;
+        const removed = Math.min(target.hp, amount);
+        target.hp -= removed; target.alive = target.hp > 0;
+        const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+        addScore(state, scoreDelta);
+        hits.push({id:target.id,kind:target.kind,source:'wind-chain',damage:removed,
+          remainingHp:target.hp,defeated:!target.alive,scoreDelta});
+      }
+    }
+    const chargeStone = state.characterId === 'wind' ? 'basic-stone' : 'wind-candy';
+    if (usedWeapon?.id === chargeStone && shotMeta?.windCrossed && state.windCharge < 4)
+      state.windCharge = Math.min(4, state.windCharge + (directHitCount > 0 ? 2 : 1));
     if (permanent && directHitCount) {
       state.effectCounters.permanentWeaponHits++;
     }
@@ -825,6 +867,7 @@
       accepted: true, source: config.source || 'weapon', weaponId: usedWeaponId,
       modifier: spear ? 'spear' : fiery ? 'fireball' : null,
       damage: rolledDamage * damageMultiplier, bonusDamage, healedPlayer, milkShieldGained,
+      windMode, windChargeAfter: state.windCharge,
       homingTargetId: homingTarget && homingTarget.id, spillover: spear ? 0 : damage, hits,
       missed: hits.length === 0 && !obstacleEffects.some(effect =>
         ['ice-guard', 'aim-inversion'].includes(effect.kind)),
@@ -904,6 +947,7 @@
     rollWeaponDamage,
     getWeaponDamageRange,
     resolveProjectile,
+    armWindSkill,
     resolveEnemyTurn,
     getLivingEnemies,
     isRunDefeated,

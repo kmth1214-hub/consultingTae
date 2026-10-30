@@ -20,7 +20,7 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
     ...shotDisruptionOptions(run),
     loadedCandyId:loaded?.id??null,prototype:run.battlefieldPrototype??run.studioPrototype??null,
     toppledObstacleIds:run.toppledObstacleIds||[],
-    windAvailable:loaded?.id==='wind-candy'&&!run.roundEffects.windHomingUsed});
+    windAvailable:loaded?.id==='wind-candy'&&run.windArmedMode==='homing'});
   const firstContact=solution && Math.min(...(solution.contacts||[])
     .filter(contact=>contact.trigger==='candy').map(contact=>contact.time),
     solution.hitIds.length?solution.directHitTime:Infinity);
@@ -34,6 +34,7 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
       ?Math.max(solution.durationMs,Math.round(abilityDeadlineTime*1000)):solution.durationMs,
     weaponGrade:loaded?.grade??'C',
     windField,windCrossed:crossedWindZone(solution.path,windField,solution.impactDistance),
+    enemyOrder:layout.enemies.slice().sort((a,b)=>a.collider.x-b.collider.x||a.id.localeCompare(b.id)).map(slot=>slot.id),
     loadedStoneId:loaded?.id??'basic-stone',
     candyRadius:layout.candyRadius,
     fireball:run.fireballArmed,projectileKind:run.spearArmed?'spear':run.fireballArmed?'fireball':'normal'} : null;
@@ -72,6 +73,7 @@ export function flightResultPayload(flight) {
         splitTime:flight.splitOrbs.splitTime
       }:{}),
       windCrossed:flight.windCrossed===true,
+      enemyOrder:flight.enemyOrder?.slice(),
       obstacleTargetIds:flight.obstacleTargetIds||[],rolling:flight.rollStartDistance!==null
         &&flight.impactDistance>flight.rollStartDistance,reverse:flight.reverse}};
 }

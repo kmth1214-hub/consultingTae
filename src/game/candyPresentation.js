@@ -19,7 +19,9 @@ export function getCandyDetails(run) {
   else if (weapon.id === 'alchemist-candy') currentAbility = `비행 중 클릭·Space로 폭발. ${weapon.grade}등급 성공률 ${({ C: 20, B: 45, A: 70 })[weapon.grade]}%, 반경 ${({ C: 300, B: 375, A: 450 })[weapon.grade]}. 성공 시 주변 적마다 피해 1.`;
   else if (weapon.id === 'wizard-orb') currentAbility = '비행 중 클릭·Space로 작은 구슬 2개 분열. 각 구슬이 실제 적에게 닿으면 피해 1.';
   else if (weapon.id === 'milk-candy') currentAbility = '적에게 직접 닿으면 체력 5 회복 · 다음 발사 뒤 적 공격 1회 보호.';
-  else if (weapon.id === 'wind-candy') currentAbility = '라운드당 한 번 선택한 적을 유도해 명중합니다.';
+  else if (weapon.id === 'wind-candy') currentAbility = run.characterId === 'wind'
+    ? 'Q로 자동 유도, 바람 4점이면 연쇄 폭풍. 발사 전 유도 궤도는 보이지 않아요.'
+    : '바람 4점을 모은 뒤 Q로 연쇄 폭풍. 자동 유도는 바람궁수만 사용해요.';
   if (run.fireballArmed) buffs.push(`불공 · 큰 스톤 직접 피해 ×2 (${range.min * 2}–${range.max * 2}), 파동·작은 구슬 피해는 그대로`);
   if (run.spearArmed) buffs.push('창 · 실제 닿은 적 최대 3마리 관통 · 관통마다 피해 1 감소 · 이번 발사는 창 피해만 적용');
   if (run.pendingAimInversion) buffs.push('혼돈의 역풍 · 다음 한 발 조작 반전');
@@ -33,10 +35,17 @@ export function getCandyDetails(run) {
     'alchemist-candy': '추가 클릭·Space로 폭발합니다. 적·장애물 충돌 시 자동 발동합니다.',
     'wizard-orb': `사탕이 적에게 3회 닿을 때마다 추가 피해 +1 · 현재 ${collision}/3`,
     'milk-candy': `직접 명중 시 체력 +5와 다음 발사 보호막 · ${run.milkShieldPending ? '보호막 대기 중' : '명중 대기 중'}`,
-    'wind-candy': `라운드당 유도 사격 1회 · ${effects.windHomingUsed ? '사용 완료' : '사용 가능'}. 유도 사탕이 보스에 명중하면 추가 피해 +1`
+    'wind-candy': run.characterId === 'wind'
+      ? '기본 스톤이 바람을 지나면 +1, 그 뒤 적에게 직접 닿으면 총 +2. Q 유도 후 3발 재사용 대기.'
+      : '바람궁수 스톤이 바람을 지나면 +1, 그 뒤 적에게 직접 닿으면 총 +2. 4점이면 Q 연쇄 폭풍.'
   };
   const passives = [...new Set(run.weapons.map(item => item.id))]
     .filter(id => descriptions[id]).map(id => ({ id, text: descriptions[id] }));
-  return { current: describe(weapon), currentAbility, damage: { ...range, multiplier },
+  const wind = run.characterId === 'wind' || run.weapons.some(item => item.id === 'wind-candy')
+    ? { charge: Math.max(0, Math.min(4, run.windCharge || 0)), cooldown: run.windCooldownShots || 0,
+      armed: run.windArmedMode || null, canUse: weapon.id === 'wind-candy'
+        && (!run.windCooldownShots || run.characterId !== 'wind')
+        && (run.characterId === 'wind' || run.windCharge >= 4) } : null;
+  return { current: describe(weapon), currentAbility, damage: { ...range, multiplier }, wind,
     next: next ? describe(next) : null, reshuffleNext: queue.length <= 1, buffs, passives };
 }

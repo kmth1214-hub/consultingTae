@@ -5,6 +5,7 @@ import { BATTLEFIELD, buildBattlefield } from '../src/game/battlefieldModel.js';
 import { buildPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
 import { planShot, pathPrefixD, shotDisruptionOptions } from '../src/game/shotGeometry.js';
 import { preparePhysicalFlight } from '../src/game/shotResolution.js';
+import { buildWindField } from '../src/game/windField.js';
 
 const pull = { ready: true, direction: { x: 1, y: -.02 }, powerRatio: 1 };
 
@@ -36,9 +37,12 @@ test('preview and committed flight use identical altered geometry and physical c
     run.pendingAimDisruption = effect;
     const layout = buildPlayableBattlefield({ area: run.area, round: run.round,
       enemies: run.enemies, seed: run.layoutSeed });
+    const windField=buildWindField({area:run.area,round:run.round,layoutSeed:run.layoutSeed,
+      shotOrdinal:run.playerShotsFired,layout});
     const preview = planShot({ layout, pull, enemies: run.enemies,
+      windField,flightStartMs:1000,
       ...shotDisruptionOptions(run), toppledObstacleIds: run.toppledObstacleIds });
-    const flight = preparePhysicalFlight(run, pull, 1, 1);
+    const flight = preparePhysicalFlight(run, pull, 1, 1, 1000);
     assert.ok(preview && flight);
     assert.deepEqual(preview.path.samples, flight.path.samples);
     assert.equal(preview.previewD, flight.previewD);

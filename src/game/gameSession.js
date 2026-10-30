@@ -20,6 +20,10 @@ const REASONS = {
   'rewards-incomplete': '슬롯과 소모품 보상을 모두 마무리하세요.', 'camp-choice-locked': '시작한 슬롯 보상을 먼저 마무리하세요.',
   locked: '눈 지역을 클리어하면 이 쿠키가 해금돼요.', 'invalid-state': '지금은 이 동작을 할 수 없어요.',
   'candy-locked': '눈 지역을 클리어하면 이 마법사탕이 해금돼요.',
+  'wrong-stone': '바람궁수 전용 스톤을 장전해야 Q를 사용할 수 있어요.',
+  'not-charged': '바람을 4점 모으면 연쇄 폭풍을 사용할 수 있어요.',
+  cooldown: '바람 기술이 재사용 대기 중이에요.',
+  'spear-armed': '창 관통을 준비한 발사에는 자동 유도를 사용할 수 없어요.',
   'profile-unavailable': '계정 기록을 확인하거나 저장하고 있어요. 잠시 후 다시 시도해 주세요.'
 };
 
@@ -183,6 +187,17 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       publish({ aim });
     },
     resetAim() { pendingShot = null; publish({ aim: initialAim() }); },
+    armWindSkill() {
+      if (state.screen !== 'battle' || !state.run || state.enemyResponse || state.shotReview
+        || state.bossTransition || pendingShot) return reject('invalid-state');
+      const run = structuredClone(state.run);
+      const event = engine.armWindSkill(run);
+      if (!event.accepted) return reject(event.reason);
+      publish({ run, notification: { id: ++sequence, kind: 'success',
+        message: event.mode === 'storm' ? '연쇄 폭풍 준비! 다음 바람 스톤이 명중하면 앞의 적도 피해를 입어요.'
+          : '자동 유도 준비! 궤적 없이 굽이쳐 날아가요.' } });
+      return event;
+    },
     beginShot({ launchId, pull } = {}) {
       if (state.screen !== 'battle' || state.run.terminal || state.run.ammo <= 0) return reject('combat-ended');
       if (state.shotReview) return reject('reviewing');
@@ -382,6 +397,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       return routeCombat(run, event, reviewResult === true);
     },
     useConsumable(key) {
+      if (key === 'spear' && state.run?.windArmedMode === 'homing') return reject('spear-armed');
       if (state.screen !== 'battle') return reject('invalid-state');
       if (pendingShot) return reject('flight-pending');
       if (state.bossTransition) return reject('splitting');
