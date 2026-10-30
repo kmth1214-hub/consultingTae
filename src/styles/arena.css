@@ -490,3 +490,14 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
   .scene-atmosphere .scene-mote { display: none; }
   .scene-atmosphere .scene-mote, .scene-atmosphere .scene-mist { animation: none !important; }
 }
+.wind-weather { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: visible; }
+.wind-weather__zone { fill: #eafaff; fill-opacity: .065; stroke: #fff; stroke-opacity: .36; stroke-width: 3; stroke-dasharray: 18 20; }
+.wind-weather__arrow { fill: none; stroke: #fff; stroke-opacity: .6; stroke-width: 4; stroke-linecap: round; }
+.wind-weather__direction { fill: #fff; opacity: .75; font: bold 46px sans-serif; }
+.wind-weather__particle { fill: #fff; opacity: .6; font: 36px sans-serif; }
+.wind-weather--forest .wind-weather__particle { fill: #d7efab; }
+.wind-weather--city .wind-weather__particle { fill: #f7e7bd; opacity: .38; }
+.wind-weather--chaos .wind-weather__particle { fill: #272347; opacity: .65; }
+.wind-weather.is-active .wind-weather__particle { animation: wind-drift 4.2s linear infinite; animation-delay: var(--wind-delay); }
+@keyframes wind-drift { from { transform: translate(0, -14px); opacity: 0; } 30% { opacity: .65; } to { transform: translate(var(--wind-shift), 85px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .wind-weather__particle { display: none; } }

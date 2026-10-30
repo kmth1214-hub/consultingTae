@@ -1,5 +1,6 @@
 import {buildPlayableBattlefield} from './battlefieldPlacement.js';
 import {planShot,shotDisruptionOptions} from './shotGeometry.js';
+import { buildWindField, crossedWindZone } from './windField.js';
 
 /** One canonical solution is shared by visible playback and combat resolution. */
 export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs = Date.now()) {
@@ -9,13 +10,17 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
     enemyLandingPositions:run.enemyLandingPositions??null,
     worldScale:run.studioWorldScale??run.battlefieldWorldScale??1});
   const loaded=run.weapons.find(weapon=>weapon.instanceId===(run.weaponQueue?.[0]??run.currentWeaponId));
+  const windField=buildWindField({area:run.area,round:run.round,layoutSeed:run.layoutSeed??0,
+    shotOrdinal:run.playerShotsFired??0,layout});
   const solution=planShot({layout,pull,enemies:run.enemies,piercing:run.spearArmed===true,
     flightStartMs,
+    windField,
     ...shotDisruptionOptions(run),
     loadedCandyId:loaded?.id??null,prototype:run.battlefieldPrototype??run.studioPrototype??null,
     toppledObstacleIds:run.toppledObstacleIds||[],
     windAvailable:loaded?.id==='wind-candy'&&!run.roundEffects.windHomingUsed});
   return solution ? {...solution,id:launchId,shotId,encounterId:run.encounterId,flightStartMs,
+    windField,windCrossed:crossedWindZone(solution.path,windField,solution.impactDistance),
     loadedStoneId:loaded?.id??'basic-stone',
     candyRadius:layout.candyRadius,
     fireball:run.fireballArmed,projectileKind:run.spearArmed?'spear':run.fireballArmed?'fireball':'normal'} : null;
@@ -40,6 +45,7 @@ export function flightResultPayload(flight) {
         childWobbles:flight.splitOrbs.children.flatMap(child=>child.wobbles.map(wobble=>({orbId:child.id,...wobble}))),
         splitTime:flight.splitOrbs.splitTime
       }:{}),
+      windCrossed:flight.windCrossed===true,
       obstacleTargetIds:flight.obstacleTargetIds||[],rolling:flight.rollStartDistance!==null
         &&flight.impactDistance>flight.rollStartDistance,reverse:flight.reverse}};
 }

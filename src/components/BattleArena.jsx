@@ -19,6 +19,8 @@ import { useBattlefieldCamera } from '../game/useBattlefieldCamera.js';
 import { getChaosObstacleCues } from '../game/chaosObstacleFeedback.js';
 import BossSplitTransition from './BossSplitTransition.jsx';
 import { sampleRiderMotion } from '../game/forestLogPhysics.js';
+import { buildWindField } from '../game/windField.js';
+import WindWeather from './WindWeather.jsx';
 
 const INSTRUCTIONS = {
   idle: '맵 어디든 누르고 뒤로 당긴 뒤 놓으세요. 당긴 반대 방향으로 발사됩니다.',
@@ -52,6 +54,9 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     seed: run.layoutSeed ?? 0, enemies: [bossTransition.split.fromEnemy],
     worldScale: run.studioWorldScale ?? run.battlefieldWorldScale ?? 1 }).enemies[0] : null,
   [bossTransition?.id, run.area, run.round, run.layoutSeed, run.studioWorldScale, run.battlefieldWorldScale]);
+  const windField = useMemo(() => buildWindField({ area: run.area, round: run.round,
+    layoutSeed: run.layoutSeed ?? 0, shotOrdinal: run.playerShotsFired ?? 0, layout }),
+  [run.area, run.round, run.layoutSeed, run.playerShotsFired, layout]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const [visualContacts, setVisualContacts] = useState([]);
   const [visualEnemyContacts, setVisualEnemyContacts] = useState([]);
@@ -73,6 +78,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   }, [activeSplit?.id]);
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
     flightStartMs: Date.now(),
+    windField,
     ...shotDisruptionOptions(run),
     prototype: run.battlefieldPrototype ?? run.studioPrototype ?? null,
     loadedCandyId: run.weapons.find(weapon => weapon.instanceId ===
@@ -204,6 +210,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       data-shot-rolling={flight ? undefined : lastImpact ? (lastImpact.rolling ? 'true' : 'false') : undefined}
       data-aim-inverted={run.pendingAimInversion ? 'true' : undefined}
       data-aim-disruption={run.pendingAimDisruption || undefined}
+      data-wind-direction={windField.direction > 0 ? 'right' : 'left'}
       data-obstacle-effect={lastEvent?.obstacleEffect?.kind || undefined} aria-describedby="aim-instructions"
       onPointerDown={controller.onPointerDown} onPointerMove={controller.onPointerMove} onPointerUp={controller.onPointerUp}
       onPointerCancel={controller.onPointerCancel} onLostPointerCapture={controller.onLostPointerCapture}
@@ -211,6 +218,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       <div ref={worldRef} className="arena-world" data-layout-key={layout.key}
         style={{ width: layout.width, height: layout.height }}>
         <BattlefieldBackdrop area={run.area} layout={layout} motionPaused={Boolean(run.terminal)} />
+        <WindWeather area={run.area} field={windField} paused={Boolean(run.terminal)} />
         {(!activeSplit || activeSplit.stage === 'impact') && <ArenaScenery ref={sceneryRef} layout={layout} area={run.area} toppledObstacleIds={scenery.toppledObstacleIds || []}
           visualContacts={activeSplit ? [] : visualContacts} visualWobbles={visualAbilities.filter(cue => cue.kind === 'wobble')}
           flight={activeSplit ? null : flight} forestLogDebris={scenery.forestLogDebris || []}

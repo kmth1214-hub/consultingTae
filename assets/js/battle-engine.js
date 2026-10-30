@@ -167,6 +167,7 @@
       zeroRollsThisRound: 0,
       enemyTurnIndex: 0,
       turnNumber: 0,
+      playerShotsFired: 0,
       terminal: null,
       enemies: createRoundEnemies(area, round, { rng: config.rng,
         studioMonsterPrototype: config.studioMonsterPrototype }),
@@ -484,6 +485,7 @@
     const enemy = state.enemies[index];
     state.enemyTurnIndex = (index + 1) % size;
     state.turnNumber += 1;
+    state.playerShotsFired = (state.playerShotsFired || 0) + 1;
 
     const sourceRng = typeof rng === 'function' ? rng : Math.random;
     let special = null, attackKind = enemy.kind, fusionAttack = null;

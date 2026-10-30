@@ -1,5 +1,6 @@
 import { BATTLEFIELD, getDragDraw, getLaunchSpeed } from './battlefieldModel.js';
 import { simulateObstacleMotion, simulateRiderFall, sampleRiderMotion } from './forestLogPhysics.js';
+import { sampleWindAcceleration, crossedWindZone } from './windField.js';
 
 const EPS = 1e-6;
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -31,7 +32,8 @@ function makePath(kind, points, endKind, targetId = null) {
   let length = 0;
   const samples = points.map((p, i) => {
     if (i) length += distance(points[i - 1], p);
-    return { x: p.x, y: p.y, time: kind === 'homing' ? length / 1400 : p.time, distance: length };
+    return { x: p.x, y: p.y, time: kind === 'homing' ? length / 1400 : p.time,
+      distance: length, ...(Number.isFinite(p.vx) ? { vx: p.vx } : {}) };
   });
   return { kind, start: { x: samples[0].x, y: samples[0].y },
     end: { x: samples.at(-1).x, y: samples.at(-1).y }, samples, length,
@@ -39,14 +41,14 @@ function makePath(kind, points, endKind, targetId = null) {
     rollStartDistance: null };
 }
 
-export function getBallisticPath({ start, direction, powerRatio, layout } = {}) {
+export function getBallisticPath({ start, direction, powerRatio, layout, windField = null } = {}) {
   const u = unit(direction);
   if (!point(start) || !u || !Number.isFinite(powerRatio) || !validLayout(layout)) return null;
   const speed = getLaunchSpeed(powerRatio);
-  return ballisticFromVelocity(start, { x: u.x * speed, y: u.y * speed }, layout);
+  return ballisticFromVelocity(start, { x: u.x * speed, y: u.y * speed }, layout, windField);
 }
 
-function ballisticFromVelocity(start, velocity, layout) {
+function ballisticFromVelocity(start, velocity, layout, windField = null) {
   if (!point(start) || !point(velocity) || !validLayout(layout)) return null;
   const ground = layout.groundY - layout.candyRadius;
   if (start.y > ground + EPS) return null;
@@ -62,9 +64,27 @@ function ballisticFromVelocity(start, velocity, layout) {
   // Camera bounds describe the artwork, not invisible walls for a flying candy.
   const at = time => ({ x: start.x + vx * time,
     y: start.y + vy * time + .5 * g * time * time, time });
-  const points = [at(0)];
-  for (let i = 1; i * BATTLEFIELD.sampleStep < endTime; i++) points.push(at(i * BATTLEFIELD.sampleStep));
-  if (endTime > 0) points.push(at(endTime));
+  let points;
+  if (windField) {
+    points = [{ ...at(0), vx }];
+    let x = start.x, currentVx = vx, previousTime = 0;
+    const stepCount = Math.ceil(endTime / BATTLEFIELD.sampleStep);
+    for (let i = 1; i <= stepCount; i++) {
+      const time = i === stepCount ? endTime : i * BATTLEFIELD.sampleStep;
+      const dt = time - previousTime;
+      if (dt <= 0) continue;
+      const y = start.y + vy * previousTime + .5 * g * previousTime * previousTime;
+      const acceleration = sampleWindAcceleration(windField, { x, y });
+      x += currentVx * dt + .5 * acceleration * dt * dt;
+      currentVx += acceleration * dt;
+      points.push({ x, y: start.y + vy * time + .5 * g * time * time, time, vx: currentVx });
+      previousTime = time;
+    }
+  } else {
+    points = [at(0)];
+    for (let i = 1; i * BATTLEFIELD.sampleStep < endTime; i++) points.push(at(i * BATTLEFIELD.sampleStep));
+    if (endTime > 0) points.push(at(endTime));
+  }
   const end = points.at(-1);
   if (endKind === 'ground' && (end.x < -layout.candyRadius || end.x > layout.width + layout.candyRadius)) {
     endKind = 'bounds'; // No floor or ground roll beyond the authored battlefield.
@@ -143,7 +163,8 @@ function sampleUnchecked(path, requested) {
   const b = samples[low];
   if (low === 0) return { ...b };
   const a = samples[low - 1], t = (d - a.distance) / (b.distance - a.distance);
-  return { ...lerp(a, b, t), time: a.time + (b.time - a.time) * t, distance: d };
+  return { ...lerp(a, b, t), time: a.time + (b.time - a.time) * t, distance: d,
+    ...(Number.isFinite(a.vx) && Number.isFinite(b.vx) ? { vx: a.vx + (b.vx - a.vx) * t } : {}) };
 }
 
 export function sampleAtDistance(path, requested) {
@@ -160,7 +181,8 @@ export function sampleAtTime(path, requested) {
   while (low < high) { const mid = (low + high) >>> 1; if (samples[mid].time < time) low = mid + 1; else high = mid; }
   if (!low) return { ...samples[0] };
   const a = samples[low - 1], b = samples[low], t = (time - a.time) / (b.time - a.time);
-  return { ...lerp(a, b, t), time, distance: a.distance + (b.distance - a.distance) * t };
+  return { ...lerp(a, b, t), time, distance: a.distance + (b.distance - a.distance) * t,
+    ...(Number.isFinite(a.vx) && Number.isFinite(b.vx) ? { vx: a.vx + (b.vx - a.vx) * t } : {}) };
 }
 
 export function pathPrefixD(path, requested) {
@@ -351,7 +373,7 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
 
 function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false,
   abilityKind = null, previewFraction = .30, maxRollDiameters = BATTLEFIELD.maxRollDiameters,
-  flightStartMs = 0 }) {
+  flightStartMs = 0, windField = null }) {
   const initialSpeed = getLaunchSpeed(powerRatio);
   let velocity = { x: direction.x * initialSpeed, y: direction.y * initialSpeed };
   let position = start, rolling = false;
@@ -418,12 +440,12 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
   for (let iteration = 0; iteration <= layout.obstacles.length + 2; iteration++) {
     let segment = rolling
       ? makePath('ballistic', [{ ...position, time: 0 }], 'ground')
-      : ballisticFromVelocity(position, velocity, layout);
+      : ballisticFromVelocity(position, velocity, layout, windField);
     if (!segment) return null;
     const landingTime = segment.endKind === 'ground' ? elapsed + segment.durationSeconds : null;
     let localRollStart = rolling ? 0 : null;
     if (segment.endKind === 'ground' && rollBudget > 0 && (abilityKind !== 'bounce' || bounced)) {
-      const extended = appendGroundRoll(segment, velocity.x, layout, rollBudget);
+      const extended = appendGroundRoll(segment, segment.samples.at(-1).vx ?? velocity.x, layout, rollBudget);
       segment = extended.path;
       if (extended.rollDistance > 0 && !rolling) localRollStart = extended.rollStartDistance;
     }
@@ -469,9 +491,9 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
       const obstacle = remaining.find(item => item.id === barrier.id);
       if (firstContactDistance === null) firstContactDistance = traveled;
       const impactVelocity = isRolling ? {
-        x: Math.sign(velocity.x) * Math.sqrt(Math.max(0, velocity.x ** 2
+        x: Math.sign(hitPoint.vx ?? velocity.x) * Math.sqrt(Math.max(0, (hitPoint.vx ?? velocity.x) ** 2
           - 2 * BATTLEFIELD.groundRollDeceleration * (endDistance - localRollStart))), y: 0 }
-        : { x: velocity.x, y: velocity.y + BATTLEFIELD.gravity * hitPoint.time };
+        : { x: hitPoint.vx ?? velocity.x, y: velocity.y + BATTLEFIELD.gravity * hitPoint.time };
       activate(obstacle, hitPoint, impactVelocity, elapsed, isRolling);
       const speed = Math.hypot(impactVelocity.x, impactVelocity.y);
       if (isRolling) {
@@ -548,7 +570,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     durationMs: clamp(simulationSeconds * 1000, 420, 4500) };
 }
 
-function withWizardSplit(solution, { layout, start, direction, powerRatio, living, flightStartMs = 0 }) {
+function withWizardSplit(solution, { layout, start, direction, powerRatio, living, flightStartMs = 0, windField = null }) {
   if (!solution?.path || solution.path.kind !== 'ballistic') return solution;
   const speed = getLaunchSpeed(powerRatio), vx = direction.x * speed, vy = direction.y * speed;
   const firstContactTime = Math.min(solution.path.durationSeconds,
@@ -568,7 +590,7 @@ function withWizardSplit(solution, { layout, start, direction, powerRatio, livin
     const child = ballisticFromVelocity(splitPoint, {
       x: dx * Math.cos(angle) - dy * Math.sin(angle),
       y: dx * Math.sin(angle) + dy * Math.cos(angle)
-    }, layout);
+    }, layout, windField);
     if (!child) continue;
     const limit = BATTLEFIELD.maxSeconds - splitTime;
     const capped = child.durationSeconds > limit ? makePath('ballistic', [
@@ -611,7 +633,7 @@ export function shotDisruptionOptions(run) {
 export function planShot({ layout, pull, enemies, windAvailable = false,
   toppledObstacleIds = [], piercing = false, loadedCandyId = null, prototype = null,
   maxPowerRatio = 1, previewFraction = .30,
-  maxRollDiameters = BATTLEFIELD.maxRollDiameters, flightStartMs = 0 } = {}) {
+  maxRollDiameters = BATTLEFIELD.maxRollDiameters, flightStartMs = 0, windField = null } = {}) {
   if (!validLayout(layout) || !validObstacles(layout.obstacles)
     || !Array.isArray(layout.enemies) || !layout.enemies.every(e => validCircle(e?.collider))
     || !point(layout.launcher) || !Array.isArray(enemies) || !pull?.ready
@@ -627,7 +649,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     ? ({ 'adventurer-candy': 'bounce', 'alchemist-candy': 'splash', 'wizard-orb': 'split' })[loadedCandyId] || null : null;
   const direction = unit(pull.direction), draw = getDragDraw({ ...pull, direction }, true, layout.worldScale ?? 1);
   const start = { x: layout.launcher.x + draw.pouch.x, y: layout.launcher.y + draw.pouch.y };
-  const ballistic = getBallisticPath({ start, direction, powerRatio: pull.powerRatio, layout: activeLayout });
+  const ballistic = getBallisticPath({ start, direction, powerRatio: pull.powerRatio, layout: activeLayout, windField });
   if (!ballistic) return null;
   const alive = new Set(enemies.filter(e => e && e.alive === true && Number.isFinite(e.hp) && e.hp > 0).map(e => e.id));
   const living = layout.enemies.filter(e => alive.has(e.id));
@@ -652,9 +674,9 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   }
   if (!target && (activeLayout.obstacles.some(item => item.kind) || abilityKind)) {
     const solution = planStackedShot({ layout: activeLayout, start, direction,
-      powerRatio: pull.powerRatio, living, piercing, abilityKind, previewFraction, maxRollDiameters, flightStartMs });
+      powerRatio: pull.powerRatio, living, piercing, abilityKind, previewFraction, maxRollDiameters, flightStartMs, windField });
     return abilityKind === 'split' ? withWizardSplit(solution, { layout: activeLayout, start,
-      direction, powerRatio: pull.powerRatio, living, flightStartMs }) : solution;
+      direction, powerRatio: pull.powerRatio, living, flightStartMs, windField }) : solution;
   }
   const hitsFor = candidate => target ? [{ id: target.id, distance: candidate.length }]
     : living.map(e => ({ id: e.id, distance: findPatrolContact(candidate, e, flightStartMs, 0, layout.candyRadius) }))
@@ -669,7 +691,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   // Only an unobstructed ballistic landing may continue into a ground roll.
   if (!target && path.kind === 'ballistic' && path.endKind === 'ground' && !barrier && (!first || piercing)) {
     const speed = getLaunchSpeed(pull.powerRatio);
-    const rolling = appendGroundRoll(path, direction.x * speed, layout,
+    const rolling = appendGroundRoll(path, path.samples.at(-1).vx ?? direction.x * speed, layout,
       layout.candyRadius * 2 * maxRollDiameters);
     path = rolling.path;
     rollDistance = rolling.rollDistance;

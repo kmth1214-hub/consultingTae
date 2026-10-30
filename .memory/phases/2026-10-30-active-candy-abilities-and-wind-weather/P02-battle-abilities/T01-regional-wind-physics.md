@@ -1,6 +1,6 @@
 # Task: T01 네 지역의 보이는 바람과 실제 궤도
 
-## Status: pending
+## Status: done
 
 ## Goal
 숲·눈·도시·혼돈의 두 바람 구간과 날씨가 보이고, 구간을 지나는 모든 플레이어 스톤의 미리보기·비행·충돌에 같은 약한 바람이 적용된다.
@@ -58,6 +58,6 @@ Task: T01-regional-wind-physics
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

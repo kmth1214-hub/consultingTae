@@ -312,6 +312,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         && new Set(contacts.map(contact => contact.obstacleId)).size === contacts.length);
       if (shotMeta !== undefined && (!shotMeta || !['enemy', 'obstacle', 'ground', 'bounds', 'timeout'].includes(shotMeta.impactKind)
         || typeof shotMeta.reverse !== 'boolean' || typeof shotMeta.rolling !== 'boolean'
+        || (shotMeta.windCrossed !== undefined && typeof shotMeta.windCrossed !== 'boolean')
         || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')
         || new Set(shotMeta.obstacleTargetIds).size !== shotMeta.obstacleTargetIds.length
         || !validContacts || !validEnemyContacts || !validRiderFalls || !validAbilityContacts || !validChildren

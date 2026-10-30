@@ -8,6 +8,13 @@ async function readyArt(page) {
 }
 
 for (const area of ['forest', 'snow', 'city', 'chaos']) {
+  test(`${area} shows two wind bands behind the projectiles and monsters`, async ({ page }) => {
+    await installGame(page, { initial: { area, round: 1 } });
+    await start(page);
+    await expect(page.locator(`.wind-weather[data-weather-area="${area}"] [data-wind-zone]`)).toHaveCount(2);
+    expect(await page.locator('.wind-weather').evaluate(node =>
+      +getComputedStyle(node).zIndex)).toBeLessThan(6);
+  });
   test(`${area} has proportional independent depth layers and visible original art through aim/flight/response`, async ({ page }) => {
     await installGame(page, { initial: { area, round: 1 } });
     await start(page); await readyArt(page);
