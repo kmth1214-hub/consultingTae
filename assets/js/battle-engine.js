@@ -251,6 +251,10 @@
     return WEAPON_CATALOG.filter(weapon => !weapon.requiresSnowClear
       || state.snowRewardsUnlocked === true || state.snowAreaCleared === true);
   }
+  function unlockedSlotStoneIds(state) {
+    return availableRewardWeapons(state).filter(weapon => weapon.id !== 'basic-stone')
+      .map(weapon => weapon.id);
+  }
   function drawRewardChoices(state,rng) {
     if(!state||state.terminal!=='round-clear')return null;
     if (state.slotReward?.context === 'round') return state.rewardChoices;
@@ -286,7 +290,12 @@
     const winningLine=SLOT_LINES.find(line=>line.every(index=>cells[index]===cells[line[0]]))||null;
     let prizeId=null, instanceId;
     if (kind==='stone') {
-      prizeId=winningLine?CHARACTER_WEAPONS[state.characterId]:'basic-stone';
+      if (winningLine) {
+        const pool=unlockedSlotStoneIds(state);
+        const sample=Number(sourceRng());
+        if (!Number.isFinite(sample) || sample<0 || sample>=1) throw new RangeError('Invalid slot RNG');
+        prizeId=pool[Math.floor(sample*pool.length)];
+      } else prizeId='basic-stone';
       const source=WEAPON_CATALOG.find(item=>item.id===prizeId);
       const granted=grantWeapon(state,source,'C',{mergeDuplicate:false});
       if (!granted.accepted) return granted;

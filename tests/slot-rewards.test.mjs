@@ -30,12 +30,39 @@ test('horizontal and diagonal matches award one exclusive stone, vertical alone 
   assert.equal(loser.result.prizeId, 'basic-stone');
 });
 
-test('an unlocked cookie may always win its own exclusive stone', () => {
+test('winning reward samples every unlocked stone uniformly, including other cookies', () => {
+  const firstThree = ['adventurer-candy', 'alchemist-candy', 'wizard-orb'];
+  for (let index = 0; index < firstThree.length; index++) {
+    const state = ready();
+    const result = BattleEngine.spinRewardSlot(state, 'stone', sequence([...win, (index + .5) / 3]));
+    assert.equal(result.result.prizeId, firstThree[index]);
+    assert.equal(state.weapons.at(-1).grade, 'C');
+  }
+  const allFive = [...firstThree, 'milk-candy', 'wind-candy'];
+  for (let index = 0; index < allFive.length; index++) {
+    const state = BattleEngine.createRunState({ characterId: 'adventurer', area: 'forest', rng: () => .5,
+      snowRewardsUnlocked: true, inventory: {} });
+    state.terminal = 'round-clear';
+    BattleEngine.drawRewardChoices(state, () => .5);
+    const result = BattleEngine.spinRewardSlot(state, 'stone', sequence([...win, (index + .5) / 5]));
+    assert.equal(result.result.prizeId, allFive[index]);
+    assert.equal(state.weapons.at(-1).id, allFive[index]);
+  }
+});
+
+test('a borrowed stone is one new instance and invalid prize RNG grants nothing', () => {
   const state = BattleEngine.createRunState({ characterId: 'milk', area: 'forest', rng: () => .5,
     snowRewardsUnlocked: true, inventory: {} });
   state.terminal = 'round-clear';
   BattleEngine.drawRewardChoices(state, () => .5);
-  assert.equal(BattleEngine.spinRewardSlot(state, 'stone', sequence(win)).result.prizeId, 'milk-candy');
+  const before = state.weapons.length;
+  assert.throws(() => BattleEngine.spinRewardSlot(state, 'stone', sequence([...win, 1])), /Invalid slot RNG/);
+  assert.equal(state.weapons.length, before);
+  assert.equal(state.slotReward.stoneSpinsRemaining, 1);
+  const result = BattleEngine.spinRewardSlot(state, 'stone', sequence([...win, .99]));
+  assert.equal(result.result.prizeId, 'wind-candy');
+  assert.equal(state.weapons.length, before + 1);
+  assert.equal(state.weapons.at(-1).grade, 'C');
 });
 
 test('slot stone is permanent and the next round refills the expanded deck', () => {

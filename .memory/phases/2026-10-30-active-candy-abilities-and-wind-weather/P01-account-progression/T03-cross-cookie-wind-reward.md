@@ -1,6 +1,6 @@
 # Task: T03 해금 스톤 풀에서 슬롯 당첨 보상 지급
 
-## Status: pending
+## Status: done
 
 ## Goal
 슬롯 당첨 시 현재 해금된 전용 스톤 풀에서 종류 하나를 균등 무작위로 뽑아 지급한다. 선택한 쿠키와 다른 전용 스톤도 획득할 수 있다.
@@ -52,6 +52,6 @@ Task: T03-cross-cookie-wind-reward
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

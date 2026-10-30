@@ -17,7 +17,7 @@ export default function RewardScreen({ session }) {
       <p>{session.profileStatus === 'save-error' ? '눈 지역 해금 기록을 저장하지 못했어요. 저장 후 다음 지역으로 이동할 수 있어요.' : '눈 지역 해금 기록을 계정에 저장하는 중이에요…'}</p>
       {session.profileStatus === 'save-error' && <button className="secondary-button" onClick={session.retryProfileSave}>저장 다시 시도</button>}
     </div>}
-    <p className="screen-intro">스톤 슬롯을 돌려 보상을 확인하세요. 당첨은 전용 스톤, 빗나가면 기본 스톤입니다.</p>
+    <p className="screen-intro">스톤 슬롯을 돌려 보상을 확인하세요. 당첨은 해금된 쿠키 중 하나의 전용 스톤, 빗나가면 기본 스톤입니다.</p>
     <SlotMachine kind="stone" remaining={slot.stoneSpinsRemaining} results={slot.stoneResults}
       onSpin={() => session.spinRewardSlot('stone')} disabled={slotSpinning}
       onSpinningChange={setSlotSpinning} />
