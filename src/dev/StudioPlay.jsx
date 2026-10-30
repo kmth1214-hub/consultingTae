@@ -34,6 +34,10 @@ export default function StudioPlay({ config, onRestart, onExit }) {
         <label>쿠키<select aria-label="플레이 쿠키" value={draft.characterId} onChange={event => select({ characterId: event.target.value })}>
           {CHARACTERS.map(character => <option key={character.id} value={character.id}>{character.name}</option>)}
         </select></label>
+        <label>시작 스톤 등급<select aria-label="플레이 스톤 등급" value={draft.weaponGrade ?? 'C'}
+          onChange={event => select({ weaponGrade: event.target.value })}>
+          {['C', 'B', 'A'].map(grade => <option key={grade} value={grade}>{grade}등급</option>)}
+        </select></label>
         <label className="studio-play-special"><input type="checkbox" checked={draft.bossSpecial} disabled={draft.round !== 3}
           onChange={event => select({ bossSpecial: event.target.checked })} />보스 특수 공격부터 확인</label>
         <button type="submit" className="studio-play-primary">선택한 전투 시작</button>
@@ -44,7 +48,7 @@ export default function StudioPlay({ config, onRestart, onExit }) {
         </button>
       </form>
       <p className="studio-play-condition">{REGIONS[config.area].name} {config.round}라운드 · {CHARACTERS.find(c => c.id === config.characterId).name}
-        {' · '}소모품 각 3개 · 배치 {config.seed}{config.round === 3 && config.bossSpecial ? ' · 다음 보스 공격은 특수 공격' : ''}</p>
+        {' · '}시작 스톤 {config.weaponGrade ?? 'C'}등급 · 소모품 각 3개 · 배치 {config.seed}{config.round === 3 && config.bossSpecial ? ' · 다음 보스 공격은 특수 공격' : ''}</p>
     </header>
     <div className="studio-play-game">
       {!finished ? <BattleScreen session={session} music={music} /> : <section className="studio-play-result" role="status">

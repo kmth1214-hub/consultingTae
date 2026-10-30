@@ -68,6 +68,21 @@ test('every cookie can be tested, even locked cookies, without reading or writin
   }
 });
 
+test('studio grade selection changes all three starting stones without changing the public starter grade', () => {
+  for (const grade of ['C', 'B', 'A']) {
+    const config = { area: 'forest', round: 2, characterId: 'adventurer', weaponGrade: grade, seed: 17 };
+    const scenario = createStudioScenario(config);
+    const run = createStudioSession(config, options).getSnapshot().run;
+    assert.equal(scenario.weaponGrade, grade);
+    assert.deepEqual(run.weapons.map(weapon => weapon.grade), [grade, grade, grade]);
+    assert.equal(run.weapons.find(weapon => weapon.id === 'adventurer-candy').grade, grade);
+    assert.deepEqual(scenario.run.weapons, run.weapons);
+    assert.equal(BattleEngine.getWeaponDamageRange(grade).max, ({ C: 4, B: 6, A: 10 })[grade]);
+  }
+  assert.deepEqual(BattleEngine.createRunState({ area: 'forest', round: 1, rng: options.rng })
+    .weapons.map(weapon => weapon.grade), ['C', 'C', 'C']);
+});
+
 test('boss special setup triggers the real third response; ordinary rounds and independent sessions stay fresh', () => {
   for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breath'], ['city', 'oven-overheat'], ['chaos', 'frozen-breath']]) {
     const config = { area, round: 3, bossSpecial: true, seed: 0xffffffff }, before = structuredClone(config);
@@ -91,7 +106,7 @@ test('invalid studio settings fail before the engine is called and do not modify
   let calls = 0;
   const engine = { ...BattleEngine, createRunState() { calls++; throw new Error('should not run'); } };
   for (const patch of [{ area: 'missing' }, { round: 0 }, { round: 4 }, { round: 1.5 }, { characterId: 'missing' },
-    { seed: -1 }, { seed: 0x100000000 }, { seed: NaN }, { bossSpecial: 'yes' }]) {
+    { seed: -1 }, { seed: 0x100000000 }, { seed: NaN }, { bossSpecial: 'yes' }, { weaponGrade: 'S' }]) {
     assert.throws(() => createStudioSession({ area: 'forest', round: 1, ...patch }, { engine }), RangeError);
   }
   assert.equal(calls, 0);

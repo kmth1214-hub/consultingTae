@@ -30,6 +30,7 @@ function ErrorScreen() {
 export default function MapStudio() {
   const [area, setArea] = useState('forest');
   const [round, setRound] = useState(1), [characterId, setCharacterId] = useState('adventurer');
+  const [weaponGrade, setWeaponGrade] = useState('C');
   const [seed, setSeed] = useState(0);
   const [bossSpecial, setBossSpecial] = useState(false), [play, setPlay] = useState(null);
   const playId = useRef(0);
@@ -41,9 +42,9 @@ export default function MapStudio() {
   const [dragging, setDragging] = useState(false);
   const viewportRef = useRef(null), worldRef = useRef(null), dragRef = useRef(null);
   const preview = useMemo(() => {
-    try { return { scenario: createStudioScenario({ area, round, characterId, bossSpecial, seed }), error: null }; }
+    try { return { scenario: createStudioScenario({ area, round, characterId, weaponGrade, bossSpecial, seed }), error: null }; }
     catch (error) { return { scenario: null, error: error.message }; }
-  }, [area, round, characterId, bossSpecial, seed]);
+  }, [area, round, characterId, weaponGrade, bossSpecial, seed]);
   const scenario = preview.scenario, layout = scenario?.layout;
   const pose = getStudioPose({ viewport, camera });
 
@@ -125,13 +126,14 @@ export default function MapStudio() {
   function changeArea(nextArea) {
     cancelDrag(); setCamera(RESET_CAMERA); setArea(nextArea);
   }
-  function launchPlay(config = { area, round, characterId, bossSpecial, seed }, newLayout = false) {
+  function launchPlay(config = { area, round, characterId, weaponGrade, bossSpecial, seed }, newLayout = false) {
     cancelDrag();
     if (config.area !== area) changeArea(config.area);
-    setRound(config.round); setCharacterId(config.characterId); setBossSpecial(config.bossSpecial);
+    setRound(config.round); setCharacterId(config.characterId); setWeaponGrade(config.weaponGrade ?? 'C'); setBossSpecial(config.bossSpecial);
     const nextSeed = newLayout ? randomSeed(config.seed) : config.seed;
     setSeed(nextSeed);
     setPlay({ area: config.area, round: config.round, characterId: config.characterId,
+      weaponGrade: config.weaponGrade ?? 'C',
       bossSpecial: config.bossSpecial && config.round === 3, seed: nextSeed, id: ++playId.current });
   }
 
@@ -174,6 +176,10 @@ export default function MapStudio() {
           </select></label>
           <label className="studio-play-field">쿠키<select aria-label="테스트 쿠키" value={characterId} onChange={event => setCharacterId(event.target.value)}>
             {CHARACTERS.map(character => <option key={character.id} value={character.id}>{character.name}</option>)}
+          </select></label>
+          <label className="studio-play-field">시작 스톤 등급<select aria-label="테스트 스톤 등급" value={weaponGrade}
+            onChange={event => setWeaponGrade(event.target.value)}>
+            {['C', 'B', 'A'].map(grade => <option key={grade} value={grade}>{grade}등급</option>)}
           </select></label>
           <label className="studio-check"><input type="checkbox" checked={bossSpecial} disabled={round !== 3}
             onChange={event => setBossSpecial(event.target.checked)} />보스 특수 공격부터 확인</label>

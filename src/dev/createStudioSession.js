@@ -4,10 +4,12 @@ import { createGameSession } from '../game/gameSession.js';
 import { buildPlayableBattlefield } from '../game/battlefieldPlacement.js';
 
 /** A development-only entry into the real session, with no browser persistence. */
-export function createStudioScenario({ area, round, characterId = 'adventurer', bossSpecial = false, seed = 0 } = {},
+export function createStudioScenario({ area, round, characterId = 'adventurer', weaponGrade = 'C',
+  bossSpecial = false, seed = 0 } = {},
   { engine = BattleEngine, runOptions = {} } = {}) {
   if (!Object.hasOwn(REGIONS, area) || !Number.isInteger(round) || round < 1 || round > 3
-    || !CHARACTERS.some(c => c.id === characterId) || typeof bossSpecial !== 'boolean'
+    || !CHARACTERS.some(c => c.id === characterId) || !['C', 'B', 'A'].includes(weaponGrade)
+    || typeof bossSpecial !== 'boolean'
     || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) throw new RangeError('Invalid studio battle settings');
   let rosterSeed = seed;
   const rosterRng = () => {
@@ -17,6 +19,7 @@ export function createStudioScenario({ area, round, characterId = 'adventurer', 
   const run = engine.createRunState({ ...runOptions, area, round, characterId, playerHp: 100, ammo: 9, rng: rosterRng,
     studioMonsterPrototype: area !== 'forest' ? 'regional-monsters-v1' : null,
     inventory: { fireball: 3, spear: 3, defense: 3, heal: 3 } });
+  run.weapons.forEach(weapon => { weapon.grade = weaponGrade; });
   run.studioWorldScale = 1.5;
   run.studioPrototype = area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1';
   run.studioDepthPreview = true;
@@ -25,7 +28,7 @@ export function createStudioScenario({ area, round, characterId = 'adventurer', 
   run.layoutSeed = seed;
   const layout = buildPlayableBattlefield({ area, round, enemies: run.enemies, seed,
     prototype: run.studioPrototype ?? null, worldScale: run.studioWorldScale });
-  return { area, round, characterId, bossSpecial, seed, prototype: run.studioPrototype ?? null,
+  return { area, round, characterId, weaponGrade, bossSpecial, seed, prototype: run.studioPrototype ?? null,
     enemies: structuredClone(run.enemies), layout, run };
 }
 
