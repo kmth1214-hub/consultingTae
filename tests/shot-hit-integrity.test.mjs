@@ -62,7 +62,7 @@ test('a reserved studio shot topples the support, scores only actual rider fall 
  assert.equal(reservation.accepted,true);
  const event=session.actions.fireShot({shotId:reservation.shotId,encounterId:reservation.encounterId,
   shotMeta:{riderFalls:[{enemyId:'forged',fallDamage:999}]}});
- assert.equal(event.accepted,true);
+ assert.equal(event.accepted,true,JSON.stringify(event));
  const fallHit=event.hits.find(hit=>hit.source==='rider-fall');
  assert.equal(fallHit?.id,support.supportsEnemyId);
  assert.equal(fallHit.damage,contact.riderMotion.fallDamage);
@@ -76,7 +76,7 @@ test('a reserved studio shot topples the support, scores only actual rider fall 
  assert.ok(after.toppledObstacleIds.includes(support.id));
 });
 
-test('only a reserved Alchemist impact can supply splash contacts; Spear replaces that ability', () => {
+test('only a reserved Alchemist activation can supply explosion contacts; Spear replaces that ability', () => {
  const session=createStudioSession({area:'forest',round:2,characterId:'alchemist',seed:0},{rng:()=>.5,now:()=>1000});
  const run=session.getSnapshot().run;
  const exclusive=run.weapons.find(weapon=>weapon.id==='alchemist-candy');
@@ -96,17 +96,76 @@ test('only a reserved Alchemist impact can supply splash contacts; Spear replace
  assert.equal(session.actions.fireShot({shotMeta:{abilityContacts:[{targetIds:run.enemies.map(e=>e.id)}]}}).accepted,false);
  const reserved=session.actions.beginShot({launchId:1,pull:chosen});
  assert.equal(reserved.accepted,true);
- assert.ok(reserved.flight.abilityContacts.length);
+ assert.equal(reserved.flight.abilityContacts,undefined);
+ const activated=session.actions.activateFlightAbility({shotId:reserved.shotId,encounterId:reserved.encounterId,
+  simulationTime:Math.min(.12,(reserved.flight.abilityDeadlineTime??.24)/2),source:'space'});
+ assert.equal(activated.accepted,true);
+ assert.equal(activated.flight.abilityContacts.length,1);
+ assert.equal(session.actions.activateFlightAbility({shotId:reserved.shotId,encounterId:reserved.encounterId,
+  simulationTime:.13,source:'click'}).accepted,false);
  const event=session.actions.fireShot({shotId:reserved.shotId,encounterId:reserved.encounterId,
   shotMeta:{abilityContacts:[{targetIds:run.enemies.map(e=>e.id),radius:999}]}});
- assert.equal(event.accepted,true);
+ assert.equal(event.accepted,true,JSON.stringify(event));
  assert.ok(event.shotMeta.abilityContacts.length);
- assert.equal(event.shotMeta.abilityContacts.every(c=>c.radius===180),true);
+ assert.equal(event.shotMeta.abilityContacts.every(c=>c.radius===300),true);
  const spearSession=createStudioSession({area:'forest',round:2,characterId:'alchemist',seed:0},{rng:()=>.5});
  assert.equal(spearSession.actions.useConsumable('spear').accepted,true);
  const spear=spearSession.actions.beginShot({launchId:2,pull:chosen});
  assert.equal(spear.accepted,true);
  assert.equal(spear.flight.abilityContacts,undefined);
+});
+
+test('Alchemist activation consumes the stone at its actual point, with one grade roll', () => {
+ for (const [roll, success] of [[.1, true], [.9, false]]) {
+  let draws = 0;
+  const session = createStudioSession({area:'forest',round:1,characterId:'alchemist',seed:0},
+   {rng:()=>{draws++;return roll;},now:()=>1000});
+  const run = session.getSnapshot().run;
+  const exclusive = run.weapons.find(weapon=>weapon.id==='alchemist-candy');
+  run.weaponQueue=[exclusive.instanceId,...run.weaponQueue.filter(id=>id!==exclusive.instanceId)];
+  run.currentWeaponId=exclusive.instanceId;
+  const angle=40*Math.PI/180;
+  const reserved=session.actions.beginShot({launchId:25,pull:{ready:true,powerRatio:.7,
+   direction:{x:Math.cos(angle),y:-Math.sin(angle)}}});
+  assert.equal(reserved.accepted,true);
+  const time=Math.min(.2,(reserved.flight.abilityDeadlineTime??.4)/2);
+  const before=draws;
+  const activated=session.actions.activateFlightAbility({shotId:reserved.shotId,
+   encounterId:reserved.encounterId,simulationTime:time,source:'click'});
+  assert.equal(activated.accepted,true);
+  assert.equal(draws,before+1);
+  assert.equal(activated.flight.abilityActivation.success,success);
+  assert.equal(activated.flight.abilityActivation.radius,300);
+  assert.equal(activated.flight.abilityContacts[0].success,success);
+  assert.equal(activated.flight.impactKind,'explosion');
+  assert.equal(activated.flight.path.durationSeconds,time);
+  assert.deepEqual(activated.flight.hitIds,[]);
+  assert.equal(session.actions.activateFlightAbility({shotId:reserved.shotId,
+   encounterId:reserved.encounterId,simulationTime:time,source:'space'}).accepted,false);
+ }
+});
+
+test('Alchemist auto contact and delayed ground activation obey the reserved deadline', () => {
+ const session=createStudioSession({area:'forest',round:1,characterId:'alchemist',seed:0},{rng:()=>.9});
+ const run=session.getSnapshot().run;
+ const exclusive=run.weapons.find(weapon=>weapon.id==='alchemist-candy');
+ run.weaponQueue=[exclusive.instanceId,...run.weaponQueue.filter(id=>id!==exclusive.instanceId)];
+ run.currentWeaponId=exclusive.instanceId;
+ const angle=20*Math.PI/180;
+ const reservation=session.actions.beginShot({launchId:26,pull:{ready:true,powerRatio:.5,
+  direction:{x:Math.cos(angle),y:-Math.sin(angle)}}});
+ assert.equal(reservation.accepted,true);
+ const base=reservation.flight;
+ if(base.impactKind==='ground') {
+  assert.equal(base.abilityDeadlineTime,base.path.durationSeconds+.5);
+  assert.equal(session.actions.activateFlightAbility({shotId:reservation.shotId,
+   encounterId:reservation.encounterId,simulationTime:base.abilityDeadlineTime+.01,source:'click'}).accepted,false);
+ }
+ const event=session.actions.fireShot({shotId:reservation.shotId,encounterId:reservation.encounterId});
+ assert.equal(event.accepted,true);
+ assert.equal(event.shotMeta.abilityContacts[0].kind,'explosion');
+ assert.equal(event.shotMeta.abilityContacts[0].success,false);
+ assert.deepEqual(event.shotMeta.abilityContacts[0].targetIds,[]);
 });
 
 test('a reserved Wizard shot owns its two child trajectories and rejects fabricated child metadata', () => {
@@ -119,13 +178,17 @@ test('a reserved Wizard shot owns its two child trajectories and rejects fabrica
   direction:{x:Math.cos(angle),y:-Math.sin(angle)}};
  const reservation=session.actions.beginShot({launchId:3,pull});
  assert.equal(reservation.accepted,true);
- assert.equal(reservation.flight.splitOrbs?.children.length,2);
+ assert.equal(reservation.flight.splitOrbs,undefined);
+ const activated=session.actions.activateFlightAbility({shotId:reservation.shotId,encounterId:reservation.encounterId,
+  simulationTime:Math.min(.2,(reservation.flight.abilityDeadlineTime??.4)/2),source:'click'});
+ assert.equal(activated.accepted,true);
+ assert.equal(activated.flight.splitOrbs?.children.length,2);
  const event=session.actions.fireShot({shotId:reservation.shotId,encounterId:reservation.encounterId,
   shotMeta:{childHits:[{orbId:'left',enemyId:'fake',time:0}]}});
  assert.equal(event.accepted,true);
  assert.equal(event.shotMeta.childHits.length,
-  reservation.flight.splitOrbs.children.filter(child=>child.hit).length);
- assert.equal(event.shotMeta.splitTime,reservation.flight.splitOrbs.splitTime);
+  activated.flight.splitOrbs.children.filter(child=>child.hit).length);
+ assert.equal(event.shotMeta.splitTime,activated.flight.splitOrbs.splitTime);
  assert.deepEqual(session.getSnapshot().run.toppledObstacleIds,
-  reservation.flight.contacts.map(contact=>contact.obstacleId));
+  activated.flight.contacts.map(contact=>contact.obstacleId));
 });

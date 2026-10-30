@@ -501,3 +501,7 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .wind-weather.is-active .wind-weather__particle { animation: wind-drift 4.2s linear infinite; animation-delay: var(--wind-delay); }
 @keyframes wind-drift { from { transform: translate(0, -14px); opacity: 0; } 30% { opacity: .65; } to { transform: translate(var(--wind-shift), 85px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .wind-weather__particle { display: none; } }
+.alchemist-explosion { transform-box: fill-box; transform-origin: center; animation: alchemist-burst .5s ease-out both; }
+.alchemist-explosion.is-failure { opacity: .55; }
+@keyframes alchemist-burst { from { opacity: .95; scale: .12; } to { opacity: 0; scale: 1.3; } }
+@media (prefers-reduced-motion: reduce) { .alchemist-explosion { animation: none; opacity: .75; } }

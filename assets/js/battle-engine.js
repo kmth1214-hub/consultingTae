@@ -33,7 +33,7 @@
   const WEAPON_CATALOG = Object.freeze([
     { id:'basic-stone',name:'기본 스톤',grade:'C',effect:'공통 피해와 장애물 상호작용' },
     { id:'adventurer-candy',name:'모험가의 마법사탕',grade:'C',effect:'첫 착지에서 한 번 튀어 오름' },
-    { id:'alchemist-candy',name:'연금술사의 마법사탕',grade:'C',effect:'충돌 지점에 물약 파동' },
+    { id:'alchemist-candy',name:'연금술사의 마법사탕',grade:'C',effect:'추가 입력으로 폭발 · 등급별 확률과 범위' },
     { id:'wizard-orb',name:'마력 구슬',grade:'C',effect:'세 번째 명중 피해 +1' },
     { id:'milk-candy',name:'우유맛 마법사탕',grade:'C',effect:'세 번째 명중마다 체력 회복',requiresSnowClear:true },
     { id:'wind-candy',name:'바람궁수 마법사탕',grade:'C',effect:'라운드당 유도 사격',requiresSnowClear:true }
@@ -797,7 +797,7 @@
         target.alive = target.hp > 0;
         const scoreDelta = GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1;
         addScore(state, scoreDelta);
-        hits.push({ id: target.id, kind: target.kind, source: 'alchemist-splash', damage: 1,
+        hits.push({ id: target.id, kind: target.kind, source: splash.kind === 'explosion' ? 'alchemist-explosion' : 'alchemist-splash', damage: 1,
           remainingHp: target.hp, defeated: !target.alive, scoreDelta });
       }
     } });

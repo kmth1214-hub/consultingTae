@@ -1,7 +1,7 @@
 import { BattleEngine } from './battleEngine.js';
 import { CHARACTERS } from './gameData.js';
 import { loadProfile, markSnowCleared, saveProfile } from './profileStore.js';
-import { preparePhysicalFlight, flightResultPayload } from './shotResolution.js';
+import { preparePhysicalFlight, activatePhysicalFlight, flightResultPayload } from './shotResolution.js';
 
 const initialAim = () => ({ angle: 0, power: 0, phase: 'idle', selectedTargetId: null });
 const defaultLayoutRng = () => globalThis.crypto?.getRandomValues
@@ -93,6 +93,36 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       void actions.retryProfileSave();
     return event;
   }
+  function activatePendingAbility({ shotId, encounterId, simulationTime, source }) {
+    const pending = pendingShot;
+    if (!pending || pending.shotId !== shotId || pending.encounterId !== encounterId
+      || state.run.encounterId !== encounterId) return { accepted: false, reason: 'stale-shot' };
+    const base = pending.baseFlight;
+    if (!base?.abilityKindPending || pending.abilityActivated) return { accepted: false, reason: 'invalid-state' };
+    if (!['click', 'space', 'auto-contact', 'auto-ground'].includes(source)
+      || !Number.isFinite(simulationTime) || simulationTime < 0
+      || simulationTime > base.path.durationSeconds + .5 + 1e-6
+      || (base.abilityDeadlineTime !== null && simulationTime > base.abilityDeadlineTime + 1e-6))
+      return { accepted: false, reason: 'invalid-state' };
+    if (source === 'auto-contact' && (base.abilityDeadlineTime === null
+      || Math.abs(simulationTime - base.abilityDeadlineTime) > 1e-3))
+      return { accepted: false, reason: 'invalid-state' };
+    if (source === 'auto-ground' && (base.impactKind !== 'ground'
+      || Math.abs(simulationTime - base.path.durationSeconds - .5) > 1e-3))
+      return { accepted: false, reason: 'invalid-state' };
+    let success = false;
+    if (base.abilityKindPending === 'explosion') {
+      const chance = ({ C: .2, B: .45, A: .7 })[base.weaponGrade] ?? .2;
+      const sample = Number(rng());
+      if (!Number.isFinite(sample) || sample < 0 || sample >= 1) return { accepted: false, reason: 'invalid-state' };
+      success = sample < chance;
+    }
+    const flight = activatePhysicalFlight(state.run, base, { time: simulationTime, source, success });
+    if (!flight) return { accepted: false, reason: 'invalid-state' };
+    pending.flight = flight;
+    pending.abilityActivated = true;
+    return { accepted: true, flight: structuredClone(flight) };
+  }
   const actions = {
     loadAccountProfile() {
       if (!profileClient) return Promise.resolve({ accepted: true, profile: state.profile });
@@ -167,7 +197,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       try { flight = preparePhysicalFlight(state.run, pull, launchId, shotId); }
       catch { return reject('invalid-state'); }
       if (!flight) return reject('invalid-state');
-      pendingShot = {shotId,encounterId:state.run.encounterId,flight};
+      pendingShot = {shotId,encounterId:state.run.encounterId,baseFlight:flight,flight,abilityActivated:false};
       publish({aim:{...state.aim,phase:'launching'},notification:null});
       // Callers can animate their copy without modifying the committed collision result.
       return {accepted:true,shotId,encounterId:state.run.encounterId,flight:structuredClone(flight)};
@@ -176,6 +206,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       if (!pendingShot || pendingShot.shotId !== shotId) return;
       pendingShot = null; publish({aim:initialAim()});
     },
+    activateFlightAbility: activatePendingAbility,
     advanceEnemyResponse(id, stage) {
       if (state.shotReview) return;
       const response = state.enemyResponse;
@@ -209,6 +240,15 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       if (shotId !== undefined || encounterId !== undefined) {
         if (!pendingShot || shotId !== pendingShot.shotId || encounterId !== pendingShot.encounterId
           || encounterId !== state.run.encounterId) return reject('stale-shot');
+        if (pendingShot.baseFlight.abilityKindPending && !pendingShot.abilityActivated
+          && pendingShot.baseFlight.abilityDeadlineTime !== null) {
+          const base = pendingShot.baseFlight;
+          const source = base.impactKind === 'ground' && base.abilityDeadlineTime > base.path.durationSeconds
+            ? 'auto-ground' : 'auto-contact';
+          const activated = activatePendingAbility({ shotId, encounterId,
+            simulationTime: base.abilityDeadlineTime, source });
+          if (!activated.accepted) return reject(activated.reason);
+        }
         ({hitIds,selectedTargetId,shotMeta}=flightResultPayload(pendingShot.flight));
       } else if (pendingShot) return reject('flight-pending');
       else if (shotMeta !== undefined) return reject('invalid-state');
@@ -226,7 +266,14 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const validAbilityContacts = abilityContacts === undefined || (
         !state.run.spearArmed && loadedCandy?.id === 'alchemist-candy'
         && Array.isArray(abilityContacts)
-        && new Set(abilityContacts.map(contact => `${contact?.trigger}:${contact?.sourceId}`)).size === abilityContacts.length
+        && (abilityContacts.length === 1 && abilityContacts[0]?.kind === 'explosion'
+          ? Number.isFinite(abilityContacts[0].time)
+            && [300, 375, 450].includes(abilityContacts[0].radius)
+            && typeof abilityContacts[0].success === 'boolean'
+            && Array.isArray(abilityContacts[0].targetIds)
+            && abilityContacts[0].targetIds.every(id => state.run.enemies.some(enemy => enemy.id === id))
+            && new Set(abilityContacts[0].targetIds).size === abilityContacts[0].targetIds.length
+          : new Set(abilityContacts.map(contact => `${contact?.trigger}:${contact?.sourceId}`)).size === abilityContacts.length
         && abilityContacts.every((contact, index) => contact?.kind === 'splash'
           && contact.radius === 180 && ['enemy', 'obstacle'].includes(contact.trigger)
           && typeof contact.sourceId === 'string'
@@ -239,7 +286,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
               && Math.abs(hit.time - contact.time) < 1e-6)
             : hitIds.includes(contact.sourceId)
               && Math.abs(shotMeta.directHitTime - contact.time) < 1e-6)
-          && (!index || abilityContacts[index - 1].time <= contact.time)));
+          && (!index || abilityContacts[index - 1].time <= contact.time))));
       const childHits = shotMeta?.childHits, childWobbles = shotMeta?.childWobbles;
       const validChildren = childHits === undefined && childWobbles === undefined && shotMeta?.splitTime === undefined
         || (!state.run.spearArmed && loadedCandy?.id === 'wizard-orb'
@@ -310,7 +357,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
           && (!index || (contact.distance >= contacts[index - 1].distance
             && contact.time >= contacts[index - 1].time)))
         && new Set(contacts.map(contact => contact.obstacleId)).size === contacts.length);
-      if (shotMeta !== undefined && (!shotMeta || !['enemy', 'obstacle', 'ground', 'bounds', 'timeout'].includes(shotMeta.impactKind)
+      if (shotMeta !== undefined && (!shotMeta || !['enemy', 'obstacle', 'ground', 'bounds', 'timeout', 'explosion'].includes(shotMeta.impactKind)
         || typeof shotMeta.reverse !== 'boolean' || typeof shotMeta.rolling !== 'boolean'
         || (shotMeta.windCrossed !== undefined && typeof shotMeta.windCrossed !== 'boolean')
         || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')

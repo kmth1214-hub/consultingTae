@@ -60,4 +60,4 @@ Task: T01-regional-wind-physics
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: 1c87689

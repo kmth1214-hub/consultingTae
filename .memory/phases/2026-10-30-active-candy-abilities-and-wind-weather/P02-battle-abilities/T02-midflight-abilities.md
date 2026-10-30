@@ -1,6 +1,6 @@
 # Task: T02 마법사 분열과 연금술사 폭발의 추가 입력
 
-## Status: pending
+## Status: done
 
 ## Goal
 마법사·연금술사 전용 스톤 비행 중 추가 클릭/Space 한 번으로 현재 위치에서 실제 분열/폭발을 실행하고, 무입력 자동 발동도 화면과 피해가 일치한다.
@@ -60,6 +60,6 @@ Task: T02-midflight-abilities
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

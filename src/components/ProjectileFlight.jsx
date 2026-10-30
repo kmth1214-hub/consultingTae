@@ -17,32 +17,48 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
   const childRefs = useRef(new Map()), bounceRef = useRef(null);
   const complete = useRef(onComplete);
   complete.current = { onComplete, onProgress, onFailure };
+  const flightRef = useRef(flight);
+  flightRef.current = flight;
   useEffect(() => {
     let frame = null;
     let canceled = false;
     let done = false;
     const started = performance.now();
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const clock = createProjectilePlayback(flight, { reducedMotion: reduced });
+    let clock = createProjectilePlayback(flight, { reducedMotion: reduced });
+    let playbackOffset = 0, clockFlight = flight;
     const rollStart = Number.isFinite(flight.rollStartDistance) ? sampleAtDistance(flight.path, flight.rollStartDistance) : null;
     function tick(time) {
       if (canceled || done) return;
+      const flight = flightRef.current;
       const elapsed = time - started;
+      if (flight !== clockFlight) {
+        const previousTime = clock.sampleTime(Math.max(0, elapsed - playbackOffset));
+        clock = createProjectilePlayback(flight, { reducedMotion: reduced });
+        let low = 0, high = clock.durationMs;
+        for (let i = 0; i < 24; i++) {
+          const mid = (low + high) / 2;
+          if (clock.sampleTime(mid) < previousTime) low = mid; else high = mid;
+        }
+        playbackOffset = elapsed - (low + high) / 2;
+        clockFlight = flight;
+      }
       if (!flight.path || !candyRef.current?.isConnected) {
         done = true; complete.current.onFailure?.(); return;
       }
       try {
         const candyTime = flight.directHitTime ?? sampleAtDistance(flight.path, flight.impactDistance).time;
-        const simulationTime = clock.sampleTime(elapsed);
+        const simulationTime = clock.sampleTime(Math.max(0, elapsed - playbackOffset));
         const point = sampleAtTime(flight.path, simulationTime);
         const distance = Math.min(flight.impactDistance, point.distance);
-        const candyFinished = simulationTime > candyTime;
+        const candyFinished = !flight.abilityKindPending && simulationTime > candyTime;
         const rolling = Number.isFinite(flight.rollStartDistance) && distance > flight.rollStartDistance;
         const activeChild = flight.splitOrbs?.children.find(child => simulationTime >= flight.splitOrbs.splitTime
           && simulationTime <= child.impactTime);
         const focusPoint = candyFinished && activeChild
           ? sampleAtTime(activeChild.path, simulationTime - flight.splitOrbs.splitTime) : point;
-        complete.current.onProgress?.({ id: flight.id, point, focusPoint, distance, time: simulationTime });
+        const activation = complete.current.onProgress?.({ id: flight.id, point, focusPoint, distance, time: simulationTime });
+        if (activation?.flight) flightRef.current = activation.flight;
         candyRef.current.style.visibility = candyFinished ? 'hidden' : '';
         if (trailRef.current) trailRef.current.style.visibility = candyFinished ? 'hidden' : '';
         if (trailGlowRef.current) trailGlowRef.current.style.visibility = candyFinished ? 'hidden' : '';
@@ -88,7 +104,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
             gradientRef.current?.setAttribute(key, value);
         }
       } catch { done = true; complete.current.onFailure?.(); return; }
-      if (elapsed >= clock.durationMs) {
+      if (elapsed - playbackOffset >= clock.durationMs && flightRef.current === flight) {
         done = true;
         candyRef.current.dataset.rolling = 'false';
         candyRef.current.dataset.flightStage = 'settled';
@@ -109,7 +125,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
     }
     frame = requestAnimationFrame(tick);
     return () => { canceled = true; if (frame !== null) cancelAnimationFrame(frame); };
-  }, [flight]);
+  }, [flight.shotId]);
   return <>
     <defs>
       <linearGradient ref={gradientRef} id={`${id}-trail`} gradientUnits="userSpaceOnUse">

@@ -570,23 +570,28 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     durationMs: clamp(simulationSeconds * 1000, 420, 4500) };
 }
 
-function withWizardSplit(solution, { layout, start, direction, powerRatio, living, flightStartMs = 0, windField = null }) {
+function withWizardSplit(solution, { layout, start, direction, powerRatio, living, flightStartMs = 0, windField = null,
+  activationTime = null }) {
   if (!solution?.path || solution.path.kind !== 'ballistic') return solution;
   const speed = getLaunchSpeed(powerRatio), vx = direction.x * speed, vy = direction.y * speed;
   const firstContactTime = Math.min(solution.path.durationSeconds,
     ...solution.contacts.filter(contact => contact.trigger === 'candy').map(contact => contact.time));
   const apex = vy < -60 ? -vy / BATTLEFIELD.gravity : null;
-  const marker = apex !== null && apex < firstContactTime - EPS
+  const marker = activationTime === null ? apex !== null && apex < firstContactTime - EPS
     ? sampleAtTime(solution.path, apex)
-    : sampleAtDistance(solution.path, sampleAtTime(solution.path, firstContactTime).distance / 3);
-  const splitTime = marker.time;
-  if (!Number.isFinite(splitTime) || splitTime <= EPS || splitTime >= firstContactTime - EPS
-    || splitTime >= BATTLEFIELD.maxSeconds || marker.y >= layout.groundY - layout.candyRadius - EPS
+    : sampleAtDistance(solution.path, sampleAtTime(solution.path, firstContactTime).distance / 3)
+    : sampleAtTime(solution.path, Math.min(activationTime, solution.path.durationSeconds));
+  const splitTime = activationTime === null ? marker.time : activationTime;
+  if (!Number.isFinite(splitTime) || splitTime <= EPS
+    || (activationTime === null && splitTime >= firstContactTime - EPS)
+    || splitTime >= BATTLEFIELD.maxSeconds || marker.y > layout.groundY - layout.candyRadius + EPS
     || marker.x < 0 || marker.x > layout.width) return solution;
-  const splitPoint = { x: marker.x, y: marker.y };
+  const splitPoint = { x: marker.x, y: Math.min(marker.y, layout.groundY - layout.candyRadius - 1) };
   const children = [];
   for (const [id, sign] of [['left', -1], ['right', 1]]) {
-    const angle = sign * .19, dx = vx * .7, dy = (vy + BATTLEFIELD.gravity * splitTime) * .7;
+    const angle = sign * .19, dx = (marker.vx ?? vx) * .7,
+      dy = marker.y >= layout.groundY - layout.candyRadius - 2
+        ? -440 : (vy + BATTLEFIELD.gravity * Math.min(splitTime, solution.path.durationSeconds)) * .7;
     const child = ballisticFromVelocity(splitPoint, {
       x: dx * Math.cos(angle) - dy * Math.sin(angle),
       y: dx * Math.sin(angle) + dy * Math.cos(angle)
@@ -633,7 +638,8 @@ export function shotDisruptionOptions(run) {
 export function planShot({ layout, pull, enemies, windAvailable = false,
   toppledObstacleIds = [], piercing = false, loadedCandyId = null, prototype = null,
   maxPowerRatio = 1, previewFraction = .30,
-  maxRollDiameters = BATTLEFIELD.maxRollDiameters, flightStartMs = 0, windField = null } = {}) {
+  maxRollDiameters = BATTLEFIELD.maxRollDiameters, flightStartMs = 0, windField = null,
+  deferAbility = false } = {}) {
   if (!validLayout(layout) || !validObstacles(layout.obstacles)
     || !Array.isArray(layout.enemies) || !layout.enemies.every(e => validCircle(e?.collider))
     || !point(layout.launcher) || !Array.isArray(enemies) || !pull?.ready
@@ -645,7 +651,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   pull = { ...pull, powerRatio: Math.min(pull.powerRatio, maxPowerRatio) };
   const activeLayout = { ...layout, obstacles: layout.obstacles.filter(item =>
     !toppledObstacleIds.includes(item.id)) };
-  const abilityKind = !piercing
+  const abilityKind = !piercing && !deferAbility
     ? ({ 'adventurer-candy': 'bounce', 'alchemist-candy': 'splash', 'wizard-orb': 'split' })[loadedCandyId] || null : null;
   const direction = unit(pull.direction), draw = getDragDraw({ ...pull, direction }, true, layout.worldScale ?? 1);
   const start = { x: layout.launcher.x + draw.pouch.x, y: layout.launcher.y + draw.pouch.y };
@@ -726,4 +732,55 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     directHitTime: sampleUnchecked(path, impactDistance).time,
     simulationSeconds: sampleUnchecked(path, impactDistance).time,
     durationMs: clamp(sampleUnchecked(path, impactDistance).time * 1000, 420, 3200) };
+}
+
+/** Rebuild the reserved physical result at the one player-selected activation point. */
+export function activatePlannedAbility({ baseFlight, layout, enemies, kind, time, grade = 'C',
+  success = false, source = 'click' } = {}) {
+  if (!baseFlight?.path || !validLayout(layout) || !Array.isArray(enemies)
+    || !['split', 'explosion'].includes(kind) || !Number.isFinite(time)
+    || time < 0 || time > baseFlight.path.durationSeconds + .5 + EPS) return null;
+  const boundedTime = Math.min(time, baseFlight.path.durationSeconds);
+  const marker = sampleAtTime(baseFlight.path, boundedTime);
+  const activation = { kind, time, point: { x: marker.x, y: marker.y }, source };
+  if (kind === 'split') {
+    const beginning = baseFlight.path.samples[0];
+    const next = baseFlight.path.samples.find(sample => sample.time > .02) || baseFlight.path.samples.at(-1);
+    const direction = unit({ x: next.x - beginning.x, y: next.y - beginning.y }) || { x: 1, y: -1 };
+    const living = layout.enemies.filter(slot => enemies.some(enemy => enemy.id === slot.id && enemy.alive && enemy.hp > 0));
+    const revised = withWizardSplit(baseFlight, { layout, start: baseFlight.path.start,
+      direction, powerRatio: baseFlight.powerRatio ?? .7, living,
+      flightStartMs: baseFlight.flightStartMs ?? 0, windField: baseFlight.windField,
+      activationTime: time });
+    return { ...revised, abilityActivation: activation,
+      simulationSeconds: Math.max(revised.simulationSeconds, time),
+      durationMs: Math.max(revised.durationMs, Math.round(time * 1000)) };
+  }
+  const radius = ({ C: 300, B: 375, A: 450 })[grade] ?? 300;
+  const directHit = baseFlight.hitIds.length && time >= baseFlight.directHitTime - EPS;
+  const priorContacts = (baseFlight.contacts || []).filter(contact => contact.time <= time + EPS);
+  const points = [...baseFlight.path.samples.filter(sample => sample.time < boundedTime - EPS), marker];
+  const path = points.length > 1 ? makePath('ballistic', points, 'explosion')
+    : makePath('ballistic', [baseFlight.path.samples[0],
+      { ...marker, time: Math.max(.001, boundedTime) }], 'explosion');
+  const targets = success ? layout.enemies.filter(slot => enemies.some(enemy => enemy.id === slot.id && enemy.alive && enemy.hp > 0))
+    .filter(slot => {
+      const position = slot.patrol ? { ...slot.collider,
+        x: patrolX(slot.patrol, (baseFlight.flightStartMs ?? 0) + time * 1000) } : slot.collider;
+      return distance(position, marker) <= radius + slot.collider.radius;
+    }).map(slot => slot.id) : [];
+  return { ...baseFlight, path, hitIds: directHit ? baseFlight.hitIds : [],
+    contacts: priorContacts,
+    ...(directHit && baseFlight.enemyContacts ? { enemyContacts: baseFlight.enemyContacts } : {}),
+    impactKind: 'explosion', impactDistance: path.length, directHitTime: boundedTime,
+    rollStartDistance: null, rollDistance: 0,
+    obstacleId: priorContacts[0]?.obstacleId ?? null,
+    obstacleKind: priorContacts[0]?.obstacleKind ?? null,
+    obstacleTargetIds: priorContacts[0]?.obstacleTargetIds ?? [],
+    simulationSeconds: time, durationMs: Math.max(100, Math.round(time * 1000)),
+    abilityContacts: [{ kind: 'explosion', time, point: activation.point,
+      trigger: source === 'auto-contact' ? baseFlight.hitIds.length ? 'enemy' : 'obstacle' : 'manual',
+      sourceId: directHit ? baseFlight.hitIds[0] : null, radius, success, targetIds: targets }],
+    abilityActivation: { ...activation, radius, success },
+    previewD: pathPrefixD(path, Math.min(path.length * .3, path.length)) };
 }

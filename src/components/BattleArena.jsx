@@ -30,7 +30,7 @@ const INSTRUCTIONS = {
 
 export default function BattleArena({ run, lastEvent, enemyResponse, shotReview, onReviewComplete, bossTransition,
   onBossImpact, onBossComplete,
-  onBeginShot, onCancelShot,
+  onBeginShot, onCancelShot, onActivateFlightAbility,
   onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef }) {
   const worldRef = useRef(null), launcherRef = useRef(null), enemyGroupRef = useRef(null), focusRef = useRef(null);
   const sceneryRef = useRef(null);
@@ -65,6 +65,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   const triggeredEnemies = useRef(new Set());
   const chaosCues = useMemo(() => activeSplit ? [] : getChaosObstacleCues({ area: run.area, layout, event: lastEvent }), [run.area, layout, lastEvent, activeSplit]);
   const activeFlight = useRef(null), triggeredContacts = useRef(new Set());
+  const flightTimeRef = useRef(0);
   const reviewId = shotReview?.id;
   useEffect(() => {
     if (reviewId == null) return;
@@ -78,7 +79,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   }, [activeSplit?.id]);
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
     flightStartMs: Date.now(),
-    windField,
+    windField,deferAbility:true,
     ...shotDisruptionOptions(run),
     prototype: run.battlefieldPrototype ?? run.studioPrototype ?? null,
     loadedCandyId: run.weapons.find(weapon => weapon.instanceId ===
@@ -89,7 +90,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id === 'wind-candy' && !run.roundEffects.windHomingUsed });
   function clearFlight() {
     if (activeFlight.current) onCancelShot(activeFlight.current.shotId);
-    activeFlight.current = null; crowTimeRef.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]);
+    activeFlight.current = null; flightTimeRef.current = 0; crowTimeRef.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]);
     setVisualAbilities([]); triggeredAbilities.current.clear();
     triggeredContacts.current.clear(); triggeredEnemies.current.clear();
   }
@@ -100,6 +101,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     if (!reservation.accepted) { failLaunch(); return; }
     const shot = reservation.flight;
     activeFlight.current = shot;
+    flightTimeRef.current = 0;
     crowTimeRef.current = shot.flightStartMs;
     triggeredContacts.current.clear();
     triggeredEnemies.current.clear(); setVisualEnemyContacts([]);
@@ -108,6 +110,28 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     focusRef.current = shot.path.start;
     setFlight(shot);
   }
+  function activateAbility(source, simulationTime = flightTimeRef.current) {
+    const shot = activeFlight.current;
+    if (!shot?.abilityKindPending) return null;
+    const result = onActivateFlightAbility({ shotId: shot.shotId, encounterId: shot.encounterId,
+      simulationTime, source });
+    if (!result?.accepted) return null;
+    activeFlight.current = result.flight;
+    setFlight(result.flight);
+    return result;
+  }
+  useEffect(() => {
+    const onSpace = event => {
+      if (event.code !== 'Space' || event.repeat || event.ctrlKey || event.metaKey || event.altKey
+        || /INPUT|TEXTAREA|SELECT|BUTTON/.test(event.target?.tagName)) return;
+      if (activeFlight.current?.abilityKindPending) {
+        event.preventDefault();
+        activateAbility('space');
+      }
+    };
+    window.addEventListener('keydown', onSpace);
+    return () => window.removeEventListener('keydown', onSpace);
+  }, [onActivateFlightAbility]);
   const controller = useAimController({ arenaRef, ammo: run.ammo, invertDirection: run.pendingAimInversion,
     maxPowerRatio: shotDisruptionOptions(run).maxPowerRatio,
     disabled: Boolean(run.terminal || enemyResponse || shotReview || bossTransition), onLaunch: startFlight, onCancel: clearFlight,
@@ -165,7 +189,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   function showAbilityContacts(shot, progressTime) {
     const cues = [
       ...(shot.abilityContacts || []).map((contact, index) => ({ ...contact,
-        kind: 'splash', id: `${shot.id}-splash-${index}` })),
+        id: `${shot.id}-ability-${index}` })),
       ...(shot.splitOrbs?.children || []).flatMap(child => [
         ...child.wobbles.map((wobble, index) => ({ ...wobble, kind: 'wobble',
           id: `${shot.id}-${child.id}-wobble-${index}` })),
@@ -212,7 +236,13 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       data-aim-disruption={run.pendingAimDisruption || undefined}
       data-wind-direction={windField.direction > 0 ? 'right' : 'left'}
       data-obstacle-effect={lastEvent?.obstacleEffect?.kind || undefined} aria-describedby="aim-instructions"
-      onPointerDown={controller.onPointerDown} onPointerMove={controller.onPointerMove} onPointerUp={controller.onPointerUp}
+      onPointerDown={event => {
+        if (activeFlight.current?.abilityKindPending) {
+          if (event.button === 0 && !event.target.closest('button, input, a')) activateAbility('click');
+          return;
+        }
+        controller.onPointerDown(event);
+      }} onPointerMove={controller.onPointerMove} onPointerUp={controller.onPointerUp}
       onPointerCancel={controller.onPointerCancel} onLostPointerCapture={controller.onLostPointerCapture}
       onContextMenu={controller.onContextMenu} onKeyDown={controller.onKeyDown}>
       <div ref={worldRef} className="arena-world" data-layout-key={layout.key}
@@ -237,6 +267,14 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} onFailure={failLaunch}
             onProgress={({ id, point, focusPoint, time }) => {
               if (activeFlight.current?.id !== id) return;
+              flightTimeRef.current = time;
+              const live = activeFlight.current;
+              if (live.abilityKindPending && live.abilityDeadlineTime !== null
+                && time >= live.abilityDeadlineTime - 1e-4) {
+                const ground = live.impactKind === 'ground' && live.abilityDeadlineTime > live.path.durationSeconds;
+                const activation = activateAbility(ground ? 'auto-ground' : 'auto-contact', live.abilityDeadlineTime);
+                if (activation) return activation;
+              }
               crowTimeRef.current = flight.flightStartMs + time * 1000;
               const logFocus = sceneryRef.current?.advance(time);
               focusRef.current = time > flight.directHitTime && logFocus ? logFocus : focusPoint || point;
@@ -257,10 +295,10 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           {visualContacts.map(contact => <ContactEffect key={contact.id} impact={{
             id: contact.id, point: contact.point, obstacleId: contact.obstacleId }}
             obstacles={layout.obstacles} />)}
-          {visualAbilities.filter(cue => cue.kind === 'splash').map(cue => <g key={cue.id}
-            data-testid="alchemist-splash" className="alchemist-splash" transform={`translate(${cue.point.x} ${cue.point.y})`}>
-            <circle r="180" fill="none" stroke="#b8ffcb" strokeWidth="12" />
-            <circle r="22" fill="#b8ffcb" opacity=".38" />
+      {visualAbilities.filter(cue => cue.kind === 'explosion' || cue.kind === 'splash').map(cue => <g key={cue.id}
+            data-testid="alchemist-explosion" className={`alchemist-explosion ${cue.success ? 'is-success' : 'is-failure'}`} transform={`translate(${cue.point.x} ${cue.point.y})`}>
+            <circle r={cue.radius} fill="none" stroke={cue.success ? '#ffd378' : '#c6a9e4'} strokeWidth="17" />
+            <circle r="38" fill={cue.success ? '#ffe3a2' : '#c7abd9'} opacity=".55" />
           </g>)}
           {visualAbilities.filter(cue => cue.kind === 'child-hit').map(cue => <g key={cue.id}
             data-testid="wizard-child-hit" className="wizard-child-hit" transform={`translate(${cue.point.x} ${cue.point.y})`}>

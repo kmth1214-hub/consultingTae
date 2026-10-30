@@ -72,6 +72,7 @@ export default function BattleScreen({ session, music }) {
       shotReview={session.shotReview} onReviewComplete={session.completeShotReview}
       bossTransition={bossTransition} onBossImpact={session.advanceBossTransition} onBossComplete={session.completeBossTransition}
       onBeginShot={session.beginShot} onCancelShot={session.cancelShot}
+      onActivateFlightAbility={session.activateFlightAbility}
       onFire={session.fireShot} onConsumable={session.useConsumable} arenaRef={arenaRef} />
     <div className="battle-status" role="status" aria-live="polite">{session.shotReview
       ? `결과 확인 중 · ${combatMessage({ ...session.lastEvent, enemyAttack: null, bossSplit: null }, run.area)}` : bossTransition
