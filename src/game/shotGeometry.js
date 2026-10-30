@@ -248,6 +248,31 @@ function circleContact(path, circle, radius) {
   return null;
 }
 
+/** The crow's world x at a wall-clock time, shared by preview, playback and collision. */
+export function patrolX(patrol, elapsedMs) {
+  return patrol.centerX + patrol.range * Math.sin(2 * Math.PI * (elapsedMs / patrol.periodMs + patrol.phase));
+}
+
+export function findPatrolContact(path, slot, flightStartMs, elapsedSeconds, candyRadius) {
+  if (!slot.patrol) return circleContact(path, slot.collider, candyRadius);
+  const radius = slot.collider.radius + candyRadius;
+  const samples = path.samples;
+  for (let i = 1; i < samples.length; i++) {
+    const a = samples[i - 1], b = samples[i];
+    const ax = patrolX(slot.patrol, flightStartMs + (elapsedSeconds + a.time) * 1000);
+    const bx = patrolX(slot.patrol, flightStartMs + (elapsedSeconds + b.time) * 1000);
+    const dx = a.x - ax, dy = a.y - slot.collider.y;
+    const vx = (b.x - bx) - dx, vy = (b.y - slot.collider.y) - dy;
+    if (dx * dx + dy * dy <= radius * radius) return a.distance;
+    const aa = vx * vx + vy * vy, bb = 2 * (dx * vx + dy * vy);
+    const cc = dx * dx + dy * dy - radius * radius, disc = bb * bb - 4 * aa * cc;
+    if (aa <= EPS || disc < 0) continue;
+    const fraction = (-bb - Math.sqrt(disc)) / (2 * aa);
+    if (fraction >= 0 && fraction <= 1) return a.distance + (b.distance - a.distance) * fraction;
+  }
+  return null;
+}
+
 /** First swept contact against a rider whose collider follows a falling log's clock. */
 export function findMovingRiderContact(path, slot, motion, elapsed, candyRadius) {
   const samples = path.samples, radius = slot.collider.radius + candyRadius;
@@ -325,7 +350,8 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
 }
 
 function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false,
-  abilityKind = null, previewFraction = .30, maxRollDiameters = BATTLEFIELD.maxRollDiameters }) {
+  abilityKind = null, previewFraction = .30, maxRollDiameters = BATTLEFIELD.maxRollDiameters,
+  flightStartMs = 0 }) {
   const initialSpeed = getLaunchSpeed(powerRatio);
   let velocity = { x: direction.x * initialSpeed, y: direction.y * initialSpeed };
   let position = start, rolling = false;
@@ -409,7 +435,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
         const riderMotion = contacts.find(contact => contact.riderMotion?.enemyId === item.id)?.riderMotion;
         return { id: item.id, distance: riderMotion
           ? findMovingRiderContact(segment, item, riderMotion, elapsed, layout.candyRadius)
-          : circleContact(segment, item.collider, layout.candyRadius) };
+          : findPatrolContact(segment, item, flightStartMs, elapsed, layout.candyRadius) };
       }).filter(hit => hit.distance !== null).sort((a, b) => a.distance - b.distance);
       enemy = piercing ? enemyHits[3 - enemyContacts.length - 1] : enemyHits[0];
       remaining = layout.obstacles.filter(item => !ignored.has(item.id));
@@ -502,7 +528,8 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
   ].sort((a, b) => a.time - b.time).map(contact => ({ ...contact, targetIds: living.filter(item => {
     const motion = contacts.find(hit => hit.riderMotion?.enemyId === item.id)?.riderMotion;
     const location = motion && contact.time >= motion.startTime
-      ? sampleRiderMotion(motion, contact.time) : item.collider;
+      ? sampleRiderMotion(motion, contact.time) : item.patrol
+        ? { ...item.collider, x: patrolX(item.patrol, flightStartMs + contact.time * 1000) } : item.collider;
     return distance(location, contact.point) <= 180 + item.collider.radius;
   }).map(item => item.id) })) : [];
   const simulationSeconds = Math.max(path.durationSeconds, ...contacts.map(c => Math.max(
@@ -521,7 +548,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     durationMs: clamp(simulationSeconds * 1000, 420, 4500) };
 }
 
-function withWizardSplit(solution, { layout, start, direction, powerRatio, living }) {
+function withWizardSplit(solution, { layout, start, direction, powerRatio, living, flightStartMs = 0 }) {
   if (!solution?.path || solution.path.kind !== 'ballistic') return solution;
   const speed = getLaunchSpeed(powerRatio), vx = direction.x * speed, vy = direction.y * speed;
   const firstContactTime = Math.min(solution.path.durationSeconds,
@@ -551,7 +578,7 @@ function withWizardSplit(solution, { layout, start, direction, powerRatio, livin
       const motion = solution.contacts.find(contact => contact.riderMotion?.enemyId === item.id)?.riderMotion;
       return { id: item.id, distance: motion
         ? findMovingRiderContact(relative, item, motion, splitTime, layout.candyRadius * .62)
-        : circleContact(relative, item.collider, layout.candyRadius * .62) };
+        : findPatrolContact(relative, item, flightStartMs, splitTime, layout.candyRadius * .62) };
     }).filter(hit => hit.distance !== null).sort((a, b) => a.distance - b.distance)[0];
     const impactDistance = enemy?.distance ?? relative.length;
     const impact = sampleUnchecked(relative, impactDistance);
@@ -584,7 +611,7 @@ export function shotDisruptionOptions(run) {
 export function planShot({ layout, pull, enemies, windAvailable = false,
   toppledObstacleIds = [], piercing = false, loadedCandyId = null, prototype = null,
   maxPowerRatio = 1, previewFraction = .30,
-  maxRollDiameters = BATTLEFIELD.maxRollDiameters } = {}) {
+  maxRollDiameters = BATTLEFIELD.maxRollDiameters, flightStartMs = 0 } = {}) {
   if (!validLayout(layout) || !validObstacles(layout.obstacles)
     || !Array.isArray(layout.enemies) || !layout.enemies.every(e => validCircle(e?.collider))
     || !point(layout.launcher) || !Array.isArray(enemies) || !pull?.ready
@@ -592,7 +619,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     || !Number.isFinite(maxPowerRatio) || maxPowerRatio <= 0 || maxPowerRatio > 1
     || !Number.isFinite(previewFraction) || previewFraction < 0 || previewFraction > 1
     || !Number.isFinite(maxRollDiameters) || maxRollDiameters < 0
-    || !Array.isArray(toppledObstacleIds)) return null;
+    || !Array.isArray(toppledObstacleIds) || !Number.isFinite(flightStartMs)) return null;
   pull = { ...pull, powerRatio: Math.min(pull.powerRatio, maxPowerRatio) };
   const activeLayout = { ...layout, obstacles: layout.obstacles.filter(item =>
     !toppledObstacleIds.includes(item.id)) };
@@ -611,18 +638,26 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     candidates.sort((a, b) => Math.abs(a.collider.x - ballistic.end.x) - Math.abs(b.collider.x - ballistic.end.x));
     target = candidates[0] ?? null;
     if (target) {
-      path = getHomingPath({ start, target: target.collider, obstacles: activeLayout.obstacles, layout });
+      let destination = target.collider;
+      for (let i = 0; i < (target.patrol ? 3 : 1); i++) {
+        path = getHomingPath({ start, target: destination, obstacles: activeLayout.obstacles, layout });
+        if (!path) return null;
+        if (target.patrol) destination = { ...target.collider,
+          x: patrolX(target.patrol, flightStartMs + path.durationSeconds * 1000) };
+      }
+      if (target.patrol) path = getHomingPath({ start, target: destination,
+        obstacles: activeLayout.obstacles, layout });
       if (!path) return null;
     }
   }
   if (!target && (activeLayout.obstacles.some(item => item.kind) || abilityKind)) {
     const solution = planStackedShot({ layout: activeLayout, start, direction,
-      powerRatio: pull.powerRatio, living, piercing, abilityKind, previewFraction, maxRollDiameters });
+      powerRatio: pull.powerRatio, living, piercing, abilityKind, previewFraction, maxRollDiameters, flightStartMs });
     return abilityKind === 'split' ? withWizardSplit(solution, { layout: activeLayout, start,
-      direction, powerRatio: pull.powerRatio, living }) : solution;
+      direction, powerRatio: pull.powerRatio, living, flightStartMs }) : solution;
   }
   const hitsFor = candidate => target ? [{ id: target.id, distance: candidate.length }]
-    : living.map(e => ({ id: e.id, distance: circleContact(candidate, e.collider, layout.candyRadius) }))
+    : living.map(e => ({ id: e.id, distance: findPatrolContact(candidate, e, flightStartMs, 0, layout.candyRadius) }))
       .filter(h => h.distance !== null)
       .sort((a, b) => a.distance - b.distance);
   let barrier = findObstacleContact(path, activeLayout.obstacles, layout.candyRadius);

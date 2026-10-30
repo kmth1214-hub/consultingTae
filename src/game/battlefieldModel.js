@@ -85,12 +85,14 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     const x = Math.round(nominal + (random() * 2 - 1) * jitter);
     const size = (kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60) * worldScale;
     const y = kind === 'clockwork-crow' ? 900 - 240 - (i % 2) * 80 : 900;
-    return { id, kind, isBoss, x, y, size,
+    const patrol = kind === 'clockwork-crow' ? { centerX: x, range: 75 * worldScale,
+      periodMs: 2100 + i % 3 * 300, phase: random() } : null;
+    return { id, kind, isBoss, x, y, size, ...(patrol ? { patrol } : {}),
       collider: { id, x, y: y - size * .52, radius: size * .42 } };
   });
   let free = [[560, 3240]];
-  for (const enemy of placements) free = subtract(free, enemy.x - enemy.size / 2 - 8,
-    enemy.x + enemy.size / 2 + 8);
+  for (const enemy of placements) free = subtract(free, enemy.x - enemy.size / 2 - (enemy.patrol?.range || 0) - 8,
+    enemy.x + enemy.size / 2 + (enemy.patrol?.range || 0) + 8);
   let centers = free.map(([a, b]) => [a + stackWidth / 2 + 8, b - stackWidth / 2 - 8])
     .filter(([a, b]) => a <= b);
   const obstacles = [];

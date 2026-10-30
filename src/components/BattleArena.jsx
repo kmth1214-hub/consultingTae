@@ -32,6 +32,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef }) {
   const worldRef = useRef(null), launcherRef = useRef(null), enemyGroupRef = useRef(null), focusRef = useRef(null);
   const sceneryRef = useRef(null);
+  const crowTimeRef = useRef(null);
   const reviewingSplit = Boolean(bossTransition && shotReview);
   const activeSplit = bossTransition && !shotReview ? bossTransition : null;
   const roster = reviewingSplit ? [bossTransition.split.fromEnemy] : run.enemies;
@@ -62,7 +63,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   const reviewId = shotReview?.id;
   useEffect(() => {
     if (reviewId == null) return;
-    const timer = setTimeout(() => { setFlight(null); onReviewComplete(reviewId); }, 2000);
+    const timer = setTimeout(() => { crowTimeRef.current = null; setFlight(null); onReviewComplete(reviewId); }, 2000);
     return () => clearTimeout(timer);
   }, [reviewId, onReviewComplete]);
   const activeResponse = shotReview ? null : enemyResponse;
@@ -71,6 +72,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     clearFlight(); setImpact(null);
   }, [activeSplit?.id]);
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
+    flightStartMs: Date.now(),
     ...shotDisruptionOptions(run),
     prototype: run.battlefieldPrototype ?? run.studioPrototype ?? null,
     loadedCandyId: run.weapons.find(weapon => weapon.instanceId ===
@@ -81,7 +83,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id === 'wind-candy' && !run.roundEffects.windHomingUsed });
   function clearFlight() {
     if (activeFlight.current) onCancelShot(activeFlight.current.shotId);
-    activeFlight.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]);
+    activeFlight.current = null; crowTimeRef.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]);
     setVisualAbilities([]); triggeredAbilities.current.clear();
     triggeredContacts.current.clear(); triggeredEnemies.current.clear();
   }
@@ -92,6 +94,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     if (!reservation.accepted) { failLaunch(); return; }
     const shot = reservation.flight;
     activeFlight.current = shot;
+    crowTimeRef.current = shot.flightStartMs;
     triggeredContacts.current.clear();
     triggeredEnemies.current.clear(); setVisualEnemyContacts([]);
     triggeredAbilities.current.clear(); setVisualAbilities([]);
@@ -129,6 +132,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     const motionEnd = shot.simulationSeconds > shot.directHitTime ? lastMotion?.samples.at(-1) : null;
     focusRef.current = motionEnd || sampleAtDistance(shot.path, shot.impactDistance);
     activeFlight.current = null;
+    crowTimeRef.current = null;
     controller.completeLaunch(shot.id, () => {
       setImpact(shot.contacts?.length && shot.impactKind !== 'enemy' ? null
         : { id: shot.id, point: sampleAtDistance(shot.path, shot.impactDistance), kind: shot.impactKind,
@@ -225,6 +229,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} onFailure={failLaunch}
             onProgress={({ id, point, focusPoint, time }) => {
               if (activeFlight.current?.id !== id) return;
+              crowTimeRef.current = flight.flightStartMs + time * 1000;
               const logFocus = sceneryRef.current?.advance(time);
               focusRef.current = time > flight.directHitTime && logFocus ? logFocus : focusPoint || point;
               showFlightContacts(flight, time);
@@ -261,6 +266,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           {lastImpact && <ContactEffect key={lastImpact.id} impact={lastImpact} effect={lastEvent?.obstacleEffect} obstacles={layout.obstacles} />}
         </svg>
         {!activeSplit && <MonsterGroup groupRef={enemyGroupRef} enemies={visibleEnemies} placements={layout.enemies} layout={layout} travelMs={travelMs}
+          patrolTimeRef={crowTimeRef}
           hitEffectsEnabled={hitEffectsEnabled} showDefeatedHit={Boolean(shotReview)}
           studioMonsterPrototype={run.studioMonsterPrototype}
           lastEvent={lastEvent} response={activeResponse} selectedTargetId={solution?.selectedTargetId || flight?.selectedTargetId} />}

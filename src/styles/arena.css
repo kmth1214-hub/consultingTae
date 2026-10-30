@@ -206,6 +206,12 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .monster--crow .monster-shadow { opacity: .25; }
 .monster--crow .monster-body { filter: drop-shadow(0 4px 5px #261b2a7a); }
 .monster--crow .monster-art { object-fit: contain; }
+.monster--crow[data-attack-phase="windup"] .monster-body { animation: crow-windup 340ms ease-out both; }
+.monster.monster--crow[data-attack-phase="travel"] .monster-body { animation: crow-dive var(--attack-travel, 520ms) cubic-bezier(.35,.1,.7,1) both; }
+.monster.monster--crow[data-attack-phase="impact"] .monster-body { animation: crow-return 360ms ease-out both; }
+@keyframes crow-windup { to { transform: translateY(-16%) rotate(-10deg) scale(1.08); filter: brightness(1.18); } }
+@keyframes crow-dive { 0% { transform: translateY(-16%) rotate(-10deg) scale(1.08); } 100% { transform: translate(var(--strike-x), var(--strike-y)) rotate(-28deg) scale(.85); } }
+@keyframes crow-return { from { transform: translate(var(--strike-x), var(--strike-y)) rotate(-28deg) scale(.85); } to { transform: none; } }
 .hit-effect { position: absolute; inset: 0; display: grid; place-items: center; color: #fff6d3; text-shadow: 0 2px 3px #602f26; font-size: clamp(15px, 3cqw, 32px); font-weight: 900; animation: hit-rise 850ms ease-out both; pointer-events: none; }
 .hit-effect--spear { color: #e0f2ff; }
 .hit-effect--fireball { color: #ffce64; }

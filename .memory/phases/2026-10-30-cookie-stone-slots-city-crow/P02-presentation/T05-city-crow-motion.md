@@ -1,6 +1,6 @@
 # Task: T05 태엽 까마귀 순찰과 급강하 반격
 
-## Status: pending
+## Status: done
 
 ## Goal
 까마귀가 공중에서 좌우로 순찰하고 스톤이 실제 위치에 닿을 때만 피해를 받으며, 반격할 때 쿠키 쪽으로 급강하한 뒤 돌아오게 한다.
@@ -37,9 +37,9 @@
   - `tests/e2e/city-crow.spec.cjs` :: 공중 그림·왕복·급강하 시각 스모크; new.
 
 ## Acceptance Criteria
-- [ ] 공중 위치가 조준·비행·피격에서 일치한다.
-- [ ] 고정 지점으로 허공을 쏴도 움직인 까마귀를 맞힌 것으로 처리하지 않는다.
-- [ ] 급강하 뒤 복귀하며 피해는 한 번만 발생한다.
+- [x] 공중 위치가 조준·비행·피격에서 일치한다.
+- [x] 고정 지점으로 허공을 쏴도 움직인 까마귀를 맞힌 것으로 처리하지 않는다.
+- [x] 급강하 뒤 복귀하며 피해는 한 번만 발생한다.
 
 ## Validation
 - `node --test tests/city-crow.test.mjs`
@@ -59,6 +59,6 @@ Task: T05-city-crow-motion
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: T05 완료 커밋

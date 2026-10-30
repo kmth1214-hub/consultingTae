@@ -4,6 +4,7 @@ import { MONSTER_NAMES } from '../game/gameData.js';
 import AssetImage from './AssetImage.jsx';
 import { attackStyle } from './EnemyResponse.jsx';
 import EnemyProjectileArt from './EnemyProjectileArt.jsx';
+import { patrolX } from '../game/shotGeometry.js';
 
 function BossArmor({ kind }) {
   return <svg className="boss-armor" viewBox="0 0 100 100" aria-hidden="true" data-testid="boss-armor" data-kind={kind}>
@@ -86,7 +87,26 @@ function MonsterArt({ enemy, studioMonsterPrototype }) {
 }
 
 export default function MonsterGroup({ enemies, placements, selectedTargetId, lastEvent, response, groupRef, layout, travelMs,
-  hitEffectsEnabled = false, showDefeatedHit = false, studioMonsterPrototype = null }) {
+  hitEffectsEnabled = false, showDefeatedHit = false, studioMonsterPrototype = null, patrolTimeRef = null }) {
+  React.useEffect(() => {
+    const birds = placements.filter(slot => slot.patrol);
+    if (!birds.length) return undefined;
+    let frame;
+    const tick = () => {
+      const time = patrolTimeRef?.current ?? Date.now();
+      for (const bird of birds) {
+        const node = [...(groupRef.current?.querySelectorAll('[data-enemy-id]') || [])]
+          .find(item => item.dataset.enemyId === bird.id);
+        if (!node) continue;
+        const x = patrolX(bird.patrol, time);
+        node.style.left = `${x}px`;
+        node.style.setProperty('--strike-x', `${(layout.player.contact.x - x) / bird.size * 100}%`);
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [placements, layout.player.contact.x, groupRef, patrolTimeRef]);
   return <div ref={groupRef} className="monster-group" role="group" aria-label={`몬스터 ${enemies.filter(enemy => enemy.alive).length}마리`}>
     {placements.map(placement => {
       const live = enemies.find(e => e.id === placement.id);

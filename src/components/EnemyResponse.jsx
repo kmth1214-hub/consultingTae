@@ -10,6 +10,7 @@ export function attackStyle(attack) {
   if (special === 'boar-charge') return { label: '가시 돌진', color: '#ef8950', melee: true };
   if (special === 'frozen-breath') return { label: '얼음 숨결', color: '#a2e9ff', breath: true };
   if (special === 'oven-overheat') return { label: '오븐 과열', color: '#ff9853', flame: true };
+  if (kind === 'clockwork-crow') return { label: '태엽 급강하', color: '#c7a164', melee: true };
   if (attack.fusionAttack) {
     if (attack.kind === 'frost-gear-snake') return attack.fusionAttack === 'base'
       ? { label: '젤리 톱니탄', color: '#9ce79e', thrown: true, ammo: 'jelly' }

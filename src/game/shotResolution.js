@@ -2,7 +2,7 @@ import {buildPlayableBattlefield} from './battlefieldPlacement.js';
 import {planShot,shotDisruptionOptions} from './shotGeometry.js';
 
 /** One canonical solution is shared by visible playback and combat resolution. */
-export function preparePhysicalFlight(run, pull, launchId, shotId) {
+export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs = Date.now()) {
   const layout=buildPlayableBattlefield({area:run.area,round:run.round,enemies:run.enemies,
     seed:run.layoutSeed??0,encounterPhase:run.chaosBossPhase==='split'?'split':null,
     prototype:run.battlefieldPrototype??run.studioPrototype??null,
@@ -10,11 +10,12 @@ export function preparePhysicalFlight(run, pull, launchId, shotId) {
     worldScale:run.studioWorldScale??run.battlefieldWorldScale??1});
   const loaded=run.weapons.find(weapon=>weapon.instanceId===(run.weaponQueue?.[0]??run.currentWeaponId));
   const solution=planShot({layout,pull,enemies:run.enemies,piercing:run.spearArmed===true,
+    flightStartMs,
     ...shotDisruptionOptions(run),
     loadedCandyId:loaded?.id??null,prototype:run.battlefieldPrototype??run.studioPrototype??null,
     toppledObstacleIds:run.toppledObstacleIds||[],
     windAvailable:loaded?.id==='wind-candy'&&!run.roundEffects.windHomingUsed});
-  return solution ? {...solution,id:launchId,shotId,encounterId:run.encounterId,
+  return solution ? {...solution,id:launchId,shotId,encounterId:run.encounterId,flightStartMs,
     loadedStoneId:loaded?.id??'basic-stone',
     candyRadius:layout.candyRadius,
     fireball:run.fireballArmed,projectileKind:run.spearArmed?'spear':run.fireballArmed?'fireball':'normal'} : null;

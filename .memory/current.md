@@ -4,13 +4,13 @@
 [쿠키 스톤 슬롯과 도시 까마귀](./plans/2026-10-30-cookie-stone-slots-city-crow.md)
 
 ## Active Phase
-[P02 화면과 도시 공중 적](./phases/2026-10-30-cookie-stone-slots-city-crow/P02-presentation/phase.md)
+[P03 검증과 배포](./phases/2026-10-30-cookie-stone-slots-city-crow/P03-release/phase.md)
 
 ## Active Task
-[T04 도시 태엽 까마귀 그림과 공중 배치](./phases/2026-10-30-cookie-stone-slots-city-crow/P02-presentation/T04-city-crow-art-placement.md)
+[T06 회귀 검증과 배포](./phases/2026-10-30-cookie-stone-slots-city-crow/P03-release/T06-validation-release.md)
 
 ## Status
-- T03 완료(e35aa60). T04 진행 중
+- T05 완료. T06 진행 중
 
 ## Next Step (IMPORTANT)
-T04 청사진을 읽고 태엽 까마귀 그림과 도시 배치를 구현한다.
+T06 청사진을 읽고 전체 회귀 검증, Azure 빌드, 배포와 점수판 초기화를 진행한다.
