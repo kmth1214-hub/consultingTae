@@ -192,8 +192,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const loadedCandy = state.run.weapons.find(item => item.instanceId ===
         (state.run.weaponQueue?.[0] ?? state.run.currentWeaponId));
       const validAbilityContacts = abilityContacts === undefined || (
-        state.run.studioPrototype === 'forest-elevated-v1' && state.run.area === 'forest'
-        && !state.run.spearArmed && loadedCandy?.id === 'alchemist-candy'
+        !state.run.spearArmed && loadedCandy?.id === 'alchemist-candy'
         && Array.isArray(abilityContacts)
         && new Set(abilityContacts.map(contact => `${contact?.trigger}:${contact?.sourceId}`)).size === abilityContacts.length
         && abilityContacts.every((contact, index) => contact?.kind === 'splash'
@@ -211,8 +210,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
           && (!index || abilityContacts[index - 1].time <= contact.time)));
       const childHits = shotMeta?.childHits, childWobbles = shotMeta?.childWobbles;
       const validChildren = childHits === undefined && childWobbles === undefined && shotMeta?.splitTime === undefined
-        || (state.run.studioPrototype === 'forest-elevated-v1' && state.run.area === 'forest'
-          && !state.run.spearArmed && loadedCandy?.id === 'wizard-orb'
+        || (!state.run.spearArmed && loadedCandy?.id === 'wizard-orb'
           && pendingShot?.flight?.splitOrbs && Number.isFinite(shotMeta.splitTime)
           && Math.abs(shotMeta.splitTime - pendingShot.flight.splitOrbs.splitTime) < 1e-6
           && Array.isArray(childHits) && childHits.length <= 2

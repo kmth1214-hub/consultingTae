@@ -1,16 +1,16 @@
 # Current Context
 
 ## Active Plan
-[숲 보스 기계 눈](./plans/2026-10-29-boar-boss-cyber-eye.md)
+[쿠키 스톤 슬롯과 도시 까마귀](./plans/2026-10-30-cookie-stone-slots-city-crow.md)
 
 ## Active Phase
-[P01 숲 보스 얼굴](./phases/2026-10-29-boar-boss-cyber-eye/P01-visual/phase.md)
+[P01 스톤 규칙](./phases/2026-10-30-cookie-stone-slots-city-crow/P01-stones/phase.md)
 
 ## Active Task
-없음 — [T01 숲 보스 기계 눈](./phases/2026-10-29-boar-boss-cyber-eye/P01-visual/T01-cyber-eye.md) 완료.
+[T01 3발 스톤 덱과 쿠키 능력](./phases/2026-10-30-cookie-stone-slots-city-crow/P01-stones/T01-stone-combat.md)
 
 ## Status
-- T01 완료. 빌드 및 숲 보스 브라우저 확인 통과.
+- T01 구현 시작 준비 완료
 
 ## Next Step (IMPORTANT)
-계획 완료. 추가 Task 없음.
+T01 청사진을 읽고 `assets/js/battle-engine.js`의 시작 덱과 전용 스톤 능력부터 구현한다.

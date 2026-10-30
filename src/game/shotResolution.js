@@ -11,9 +11,9 @@ export function preparePhysicalFlight(run, pull, launchId, shotId) {
   const loaded=run.weapons.find(weapon=>weapon.instanceId===(run.weaponQueue?.[0]??run.currentWeaponId));
   const solution=planShot({layout,pull,enemies:run.enemies,piercing:run.spearArmed===true,
     ...shotDisruptionOptions(run),
-    loadedCandyId:loaded?.id??null,prototype:run.studioPrototype??null,
+    loadedCandyId:loaded?.id??null,prototype:run.battlefieldPrototype??run.studioPrototype??null,
     toppledObstacleIds:run.toppledObstacleIds||[],
-    windAvailable:run.weapons.some(w=>w.id==='wind-candy')&&!run.roundEffects.windHomingUsed});
+    windAvailable:loaded?.id==='wind-candy'&&!run.roundEffects.windHomingUsed});
   return solution ? {...solution,id:launchId,shotId,encounterId:run.encounterId,
     candyRadius:layout.candyRadius,
     fireball:run.fireballArmed,projectileKind:run.spearArmed?'spear':run.fireballArmed?'fireball':'normal'} : null;

@@ -1,6 +1,6 @@
 export const CHARACTERS = Object.freeze([
-  { id: 'adventurer', name: '모험가맛 쿠키', weaponId: 'adventurer-candy', asset: 'adventurer', note: '세 번째 명중마다 점수 +10' },
-  { id: 'alchemist', name: '연금술사맛 쿠키', weaponId: 'alchemist-candy', asset: 'alchemist', note: '소모품을 사용할 때마다 점수 +10' },
+  { id: 'adventurer', name: '모험가맛 쿠키', weaponId: 'adventurer-candy', asset: 'adventurer', note: '전용 스톤이 첫 착지에서 한 번 튀어 오름' },
+  { id: 'alchemist', name: '연금술사맛 쿠키', weaponId: 'alchemist-candy', asset: 'alchemist', note: '전용 스톤 충돌 지점에 물약 파동' },
   { id: 'wizard', name: '마법사맛 쿠키', weaponId: 'wizard-orb', asset: 'wizard', note: '세 번째 명중에 추가 피해 +1' },
   { id: 'milk', name: '우유맛 쿠키', weaponId: 'milk-candy', asset: 'milk', note: '세 번째 명중에 회복 · 첫 보스 공격 방어', locked: true },
   { id: 'wind', name: '바람궁수 쿠키', weaponId: 'wind-candy', asset: 'wind', note: '라운드당 한 번 선택한 적으로 유도', locked: true }

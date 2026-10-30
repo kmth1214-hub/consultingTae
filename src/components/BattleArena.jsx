@@ -72,12 +72,13 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   }, [activeSplit?.id]);
   const makeSolution = pull => planShot({ layout, pull, enemies: run.enemies,
     ...shotDisruptionOptions(run),
-    prototype: run.studioPrototype ?? null,
+    prototype: run.battlefieldPrototype ?? run.studioPrototype ?? null,
     loadedCandyId: run.weapons.find(weapon => weapon.instanceId ===
       (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id ?? null,
     piercing: run.spearArmed === true,
     toppledObstacleIds: run.toppledObstacleIds || [],
-    windAvailable: run.weapons.some(w => w.id === 'wind-candy') && !run.roundEffects.windHomingUsed });
+    windAvailable: run.weapons.find(weapon => weapon.instanceId ===
+      (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id === 'wind-candy' && !run.roundEffects.windHomingUsed });
   function clearFlight() {
     if (activeFlight.current) onCancelShot(activeFlight.current.shotId);
     activeFlight.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]);

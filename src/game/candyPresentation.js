@@ -13,24 +13,23 @@ export function getCandyDetails(run) {
   const range = run.spearArmed ? { min: 2, max: 5 } : BattleEngine.getWeaponDamageRange(weapon.grade, run.zeroRollsThisRound || 0);
   const buffs = [];
   let currentAbility = null;
-  if (run.studioPrototype === 'forest-elevated-v1' && run.area === 'forest') {
-    if (run.spearArmed) currentAbility = '이번 발은 창 관통으로 대체됩니다.';
-    else if (weapon.id === 'adventurer-candy') currentAbility = '첫 바닥 착지에서 한 번 튀고, 두 번째 착지 후 굴러갑니다.';
-    else if (weapon.id === 'alchemist-candy') currentAbility = '적·장애물 충돌 지점에서 반경 180 물약 파동: 범위 안 적마다 피해 1.';
-    else if (weapon.id === 'wizard-orb') currentAbility = '비행 중 작은 구슬 2개로 갈라집니다. 각 구슬이 실제 적에게 닿으면 피해 1.';
-  }
-  if (run.fireballArmed) buffs.push(run.studioPrototype === 'forest-elevated-v1' && run.area === 'forest'
-    ? `불공 · 큰 사탕 직접 피해 ×2 (${range.min * 2}–${range.max * 2}), 파동·작은 구슬 피해는 그대로`
-    : `불공 · 이번 사탕 피해 ×2 (${range.min * 2}–${range.max * 2}, 조건부 추가 피해도 2배)`);
+  if (run.spearArmed) currentAbility = '이번 발은 창 관통으로 대체됩니다.';
+  else if (weapon.id === 'basic-stone') currentAbility = '공통 피해와 장애물 상호작용만 적용됩니다.';
+  else if (weapon.id === 'adventurer-candy') currentAbility = '첫 바닥 착지에서 한 번 튀고, 두 번째 착지 후 굴러갑니다.';
+  else if (weapon.id === 'alchemist-candy') currentAbility = '적·장애물 충돌 지점에서 반경 180 물약 파동: 범위 안 적마다 피해 1.';
+  else if (weapon.id === 'wizard-orb') currentAbility = '비행 중 작은 구슬 2개로 갈라집니다. 각 구슬이 실제 적에게 닿으면 피해 1.';
+  else if (weapon.id === 'milk-candy') currentAbility = '세 번째 전용 스톤 명중마다 체력을 1 회복합니다.';
+  else if (weapon.id === 'wind-candy') currentAbility = '라운드당 한 번 선택한 적을 유도해 명중합니다.';
+  if (run.fireballArmed) buffs.push(`불공 · 큰 스톤 직접 피해 ×2 (${range.min * 2}–${range.max * 2}), 파동·작은 구슬 피해는 그대로`);
   if (run.spearArmed) buffs.push('창 · 실제 닿은 적 최대 3마리 관통 · 관통마다 피해 1 감소 · 이번 발사는 창 피해만 적용');
   if (run.pendingAimInversion) buffs.push('혼돈의 역풍 · 다음 한 발 조작 반전');
   if (run.defenseArmed) buffs.push('보호막 · 다음 적 공격 차단');
   if (run.nextAttackDamageMultiplier === .5) buffs.push('얼음 보호 · 다음 적 공격 피해 50% 감소');
   const counters = run.effectCounters || {}, effects = run.roundEffects || {};
-  const collision = progress(counters.projectileCollisions), permanent = progress(counters.permanentWeaponHits);
+  const collision = progress(counters.projectileCollisions);
   const descriptions = {
-    'adventurer-candy': `영구 사탕 명중 3회마다 점수 +10 · 현재 ${permanent}/3`,
-    'alchemist-candy': '소모품 사용마다 점수 +10',
+    'adventurer-candy': '전용 스톤의 첫 착지에서 한 번 튀어 오릅니다.',
+    'alchemist-candy': '전용 스톤의 충돌 지점에 물약 파동이 퍼집니다.',
     'wizard-orb': `사탕이 적에게 3회 닿을 때마다 추가 피해 +1 · 현재 ${collision}/3`,
     'milk-candy': `사탕이 적에게 3회 닿을 때마다 체력 +1 · 현재 ${collision}/3. 라운드당 보스 공격 1회 차단 · ${effects.milkBossBlockUsed ? '사용 완료' : '대기 중'}`,
     'wind-candy': `라운드당 유도 사격 1회 · ${effects.windHomingUsed ? '사용 완료' : '사용 가능'}. 유도 사탕이 보스에 명중하면 추가 피해 +1`

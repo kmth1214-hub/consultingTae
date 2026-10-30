@@ -31,8 +31,9 @@
     'frost-gear-snake': 'pull', 'oven-snow-boar': 'preview', 'jelly-cloud-robot': 'roll'
   });
   const WEAPON_CATALOG = Object.freeze([
-    { id:'adventurer-candy',name:'모험가의 마법사탕',grade:'C',effect:'세 번째 영구 무기 명중마다 점수 +10' },
-    { id:'alchemist-candy',name:'연금술사의 마법사탕',grade:'C',effect:'소모품 사용마다 점수 +10' },
+    { id:'basic-stone',name:'기본 스톤',grade:'C',effect:'공통 피해와 장애물 상호작용' },
+    { id:'adventurer-candy',name:'모험가의 마법사탕',grade:'C',effect:'첫 착지에서 한 번 튀어 오름' },
+    { id:'alchemist-candy',name:'연금술사의 마법사탕',grade:'C',effect:'충돌 지점에 물약 파동' },
     { id:'wizard-orb',name:'마력 구슬',grade:'C',effect:'세 번째 명중 피해 +1' },
     { id:'milk-candy',name:'우유맛 마법사탕',grade:'C',effect:'세 번째 명중마다 체력 회복',requiresSnowClear:true },
     { id:'wind-candy',name:'바람궁수 마법사탕',grade:'C',effect:'라운드당 유도 사격',requiresSnowClear:true }
@@ -65,7 +66,7 @@
   }
 
   function roundAmmoCapacity(weapons) {
-    return 9 + Math.max(0, weapons.length - 1);
+    return weapons.length;
   }
   function createBoss(boss, area, bonus) {
     const hp = bonus ? Math.ceil(boss.hp * 1.5) : boss.hp;
@@ -138,7 +139,8 @@
     const characterId = config.characterId || 'adventurer';
     if (!Object.prototype.hasOwnProperty.call(CHARACTER_WEAPONS, characterId)) throw new RangeError(`Unknown character: ${characterId}`);
     const starter = WEAPON_CATALOG.find(weapon => weapon.id === CHARACTER_WEAPONS[characterId]);
-    const initialWeapons = config.weapons || [starter];
+    const basic = WEAPON_CATALOG.find(weapon => weapon.id === 'basic-stone');
+    const initialWeapons = config.weapons || [starter, basic, basic];
     const maxAmmo = roundAmmoCapacity(initialWeapons);
     const state = {
       area,
@@ -562,7 +564,7 @@
     const seen = new Set();
     const hitIds = Array.isArray(config.hitIds) ? config.hitIds.slice() : [];
     let homingTarget = null;
-    if (permanent && hasEffect(state, 'wind-candy') && !state.roundEffects.windHomingUsed) {
+    if (permanent && usedWeapon?.id === 'wind-candy' && !state.roundEffects.windHomingUsed) {
       homingTarget = state.enemies.find(enemy => enemy.id === config.selectedTargetId && enemy.alive && enemy.hp > 0) || null;
       if (homingTarget) {
         hitIds.unshift(homingTarget.id);
@@ -577,11 +579,9 @@
     const riderFalls = (['forest-elevated-v1', 'regional-elevated-v1'].includes(state.battlefieldPrototype)
       || ['forest-elevated-v1', 'regional-elevated-v1'].includes(state.studioPrototype))
       && Array.isArray(shotMeta?.riderFalls) ? shotMeta.riderFalls : [];
-    const splashes = state.studioPrototype === 'forest-elevated-v1' && state.area === 'forest'
-      && !spear && usedWeapon?.id === 'alchemist-candy' && Array.isArray(shotMeta?.abilityContacts)
+    const splashes = !spear && usedWeapon?.id === 'alchemist-candy' && Array.isArray(shotMeta?.abilityContacts)
       ? shotMeta.abilityContacts : [];
-    const childHits = state.studioPrototype === 'forest-elevated-v1' && state.area === 'forest'
-      && !spear && usedWeapon?.id === 'wizard-orb' && Array.isArray(shotMeta?.childHits)
+    const childHits = !spear && usedWeapon?.id === 'wizard-orb' && Array.isArray(shotMeta?.childHits)
       ? shotMeta.childHits : [];
     const hasContactStream = Array.isArray(shotMeta?.contacts);
     const contacts = hasContactStream ? shotMeta.contacts
@@ -610,11 +610,12 @@
         const enemy = state.enemies.find(candidate => candidate.id === id && candidate.alive && candidate.hp > 0);
         if (!enemy) continue;
         if (permanent) {
-          state.effectCounters.projectileCollisions++;
+          if (usedWeapon?.id === 'wizard-orb' || usedWeapon?.id === 'milk-candy')
+            state.effectCounters.projectileCollisions++;
           let extra = homingTarget === enemy && enemy.isBoss ? 1 : 0;
           if (state.effectCounters.projectileCollisions % 3 === 0) {
-            if (hasEffect(state, 'wizard-orb')) extra++;
-            if (hasEffect(state, 'milk-candy')) {
+            if (usedWeapon?.id === 'wizard-orb') extra++;
+            if (usedWeapon?.id === 'milk-candy') {
               const before = state.playerHp;
               state.playerHp = Math.min(state.maxPlayerHp, state.playerHp + 1);
               healedPlayer += state.playerHp - before;
@@ -763,7 +764,6 @@
     timeline.sort((a, b) => a.time - b.time || a.order - b.order).forEach(action => action.apply());
     if (permanent && directHitCount) {
       state.effectCounters.permanentWeaponHits++;
-      if (hasEffect(state, 'adventurer-candy') && state.effectCounters.permanentWeaponHits % 3 === 0) addScore(state, 10);
     }
     const event = {
       accepted: true, source: config.source || 'weapon', weaponId: usedWeaponId,
@@ -806,7 +806,6 @@
     state.inventory[key] -= 1;
     state.consumableUsedSinceShot = true;
     state.effectCounters.consumablesUsed++;
-    if (hasEffect(state, 'alchemist-candy')) addScore(state, 10);
     event.accepted = true;
     if (key === 'heal') {
       const before = state.playerHp;
