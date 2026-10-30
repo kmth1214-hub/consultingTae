@@ -42,6 +42,15 @@ main:focus { outline: none; }
 .candy-symbol { display: grid; place-items: center; background: #f5ead6; color: #ac7849; width: 38px; height: 38px; border-radius: 12px; font-size: 1.5rem; }
 .item-art { width: 40px; height: 40px; object-fit: contain; }
 .continue-button { display: block; margin: 32px 0 0 auto; }
+.slot-machine { width: min(100%, 520px); margin-top: 30px; padding: 22px; border: 1px solid #d9c9a8; border-radius: 20px; background: #fffaf0; }
+.slot-machine__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.slot-machine__head h2 { font-size: 1.15rem; }
+.slot-machine__head span { color: #806549; font-size: .8rem; }
+.slot-machine__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0; }
+.slot-machine__cell { display: grid; place-items: center; aspect-ratio: 1.3; border: 1px solid #ddc79d; border-radius: 12px; background: #f5e8cc; color: #836039; font-size: clamp(1.5rem, 4vw, 2.3rem); }
+.slot-machine__cell.is-winning { background: #f6da85; border-color: #ab7e26; box-shadow: 0 0 0 2px #ffedaf inset; }
+.slot-machine__result { margin: 8px 0; color: #425f46; font-weight: 750; }
+.slot-machine .secondary-button { margin-top: 12px; }
 .fusion-choice { padding: 22px; margin-top: 24px; border: 2px solid #b7a36d; border-radius: 18px; background: #fff8df; }
 .fusion-choice h2 { font-size: 1rem; }
 .fusion-choice p { margin-top: 10px; font-size: .85rem; }

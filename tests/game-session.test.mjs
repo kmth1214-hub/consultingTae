@@ -26,13 +26,16 @@ function clear(session) {
   const ids = session.getSnapshot().run.enemies.filter(enemy => enemy.alive).map(enemy => enemy.id);
   assert.equal(session.actions.fireShot({ hitIds: ids }).accepted, true);
 }
-function rewards(session, merge = false) {
+function rewards(session) {
   const { actions } = session;
   let state = session.getSnapshot();
-  actions.selectReward('weapon', state.run.rewardChoices.weapons[0].choiceId);
-  if (session.getSnapshot().fusion) actions.resolveFusion(merge);
+  assert.equal(actions.spinRewardSlot('stone').accepted, true);
   state = session.getSnapshot();
-  if (!state.run.selectedRewards.consumable) actions.selectReward('consumable', state.run.rewardChoices.consumables[0].choiceId);
+  if (state.run.area === 'chaos') {
+    if (state.run.slotReward.consumableSpinsRemaining) assert.equal(actions.spinRewardSlot('consumable').accepted, true);
+  } else if (!state.run.selectedRewards.consumable) {
+    assert.equal(actions.selectReward('consumable', state.run.rewardChoices.consumables[0].choiceId).accepted, true);
+  }
   assert.equal(actions.continueAfterReward().accepted, true);
 }
 
@@ -40,7 +43,7 @@ test('shot review commits one result immediately and blocks inputs and enemy pla
   const session = start();
   session.actions.fireShot({ reviewResult: true });
   const held = session.getSnapshot(), id = held.shotReview.id;
-  assert.equal(held.run.ammo, 8);
+  assert.equal(held.run.ammo, 2);
   assert.equal(held.screen, 'battle');
   assert.equal(held.enemyResponse.stage, 'windup');
   assert.equal(session.actions.fireShot().reason, 'reviewing');
@@ -117,8 +120,8 @@ test('home selection enforces character locks and publishes fresh snapshots with
   let calls = 0;
   const unsubscribe = session.subscribe(() => calls++);
   session.actions.fireShot();
-  assert.equal(session.getSnapshot().run.ammo, 8);
-  assert.equal(before.run.ammo, 9);
+  assert.equal(session.getSnapshot().run.ammo, 2);
+  assert.equal(before.run.ammo, 3);
   assert.notEqual(session.getSnapshot().run, before.run);
   assert.equal(calls, 1);
   unsubscribe();
@@ -126,70 +129,57 @@ test('home selection enforces character locks and publishes fresh snapshots with
   assert.equal(calls, 1);
 });
 
-test('reward fusion blocks progression, resolves explicitly, and rejects repeated reward clicks', () => {
+test('reward slot blocks progression until spun, and duplicate spins cannot regrant', () => {
   const session = start({ engine: clearingEngine });
   clear(session);
   const { actions } = session;
-  const choice = session.getSnapshot().run.rewardChoices.weapons.find(item => item.id === 'adventurer-candy');
   assert.equal(session.getSnapshot().screen, 'reward');
   assert.equal(actions.continueAfterReward().reason, 'rewards-incomplete');
-  assert.equal(actions.selectReward('weapon', choice.choiceId).reason, 'fusion-decision-required');
-  assert.equal(session.getSnapshot().run.weapons[0].grade, 'C');
+  assert.equal(actions.selectReward('weapon', 'old').accepted, false);
+  assert.equal(actions.spinRewardSlot('stone').accepted, true);
+  assert.equal(session.getSnapshot().run.weapons.length, 4);
+  assert.equal(actions.spinRewardSlot('stone').reason, 'already-selected');
   assert.equal(actions.continueAfterReward().accepted, false);
-  assert.equal(actions.resolveFusion(true).accepted, true);
-  assert.equal(session.getSnapshot().run.weapons[0].grade, 'B');
-  assert.equal(actions.selectReward('weapon', choice.choiceId).reason, 'already-selected');
   actions.selectReward('consumable', session.getSnapshot().run.rewardChoices.consumables[0].choiceId);
-  actions.continueAfterReward();
+  assert.equal(actions.continueAfterReward().accepted, true);
   assert.equal(session.getSnapshot().screen, 'battle');
   assert.equal(session.getSnapshot().run.round, 2);
+  assert.equal(session.getSnapshot().run.ammo, 4);
   assert.equal(actions.continueAfterReward().reason, 'invalid-state');
 });
 
-test('camp weapon queue survives multiple fusion prompts without rerolling or allowing a switch', () => {
+test('camp stone choice offers exactly two spins before next region', () => {
   let rolls = 0;
   const session = start({ engine: clearingEngine, rng: () => { rolls++; return .999; } });
   for (let i = 0; i < 3; i++) { clear(session); rewards(session); }
   assert.equal(session.getSnapshot().screen, 'camp');
-  session.actions.chooseCampReward('weapon');
-  assert.equal(session.getSnapshot().fusion.source, 'camp');
-  const pending = structuredClone(session.getSnapshot().run.pendingCampReward);
-  const rollsAtPrompt = rolls;
+  assert.equal(session.actions.chooseCampReward('weapon').accepted, true);
+  assert.equal(session.getSnapshot().screen, 'camp-slot');
   assert.equal(session.actions.chooseCampReward('heal').accepted, false);
-  assert.deepEqual(session.getSnapshot().run.pendingCampReward, pending);
-  session.actions.resolveFusion(false);
-  assert.equal(session.getSnapshot().fusion.source, 'camp');
-  assert.equal(rolls, rollsAtPrompt);
-  session.actions.resolveFusion(true);
-  assert.equal(session.getSnapshot().screen, 'camp-reward');
-  assert.equal(session.getSnapshot().run.area, 'snow');
-  const reveal = session.getSnapshot().campRewardReveal;
-  assert.equal(reveal.items.length, 2);
-  assert.ok(reveal.items.every(item => item.name && item.effect && item.weaponId && item.instanceId));
-  assert.equal(reveal.items[1].fused, true);
-  const beforeConfirm = structuredClone(session.getSnapshot().run), rollsBeforeConfirm = rolls;
-  assert.equal(session.actions.continueAfterCampReward().accepted, true);
+  assert.equal(session.actions.continueAfterCampSlot().accepted, false);
+  assert.equal(session.actions.spinRewardSlot('stone').accepted, true);
+  assert.equal(session.actions.spinRewardSlot('stone').accepted, true);
+  assert.equal(session.actions.spinRewardSlot('stone').accepted, false);
+  const beforeConfirm = session.getSnapshot().run.weapons.length, rollsBeforeConfirm = rolls;
+  assert.equal(session.actions.continueAfterCampSlot().accepted, true);
   assert.equal(session.getSnapshot().screen, 'battle');
-  assert.equal(session.getSnapshot().campRewardReveal, null);
-  assert.equal(session.actions.continueAfterCampReward().accepted, false);
-  assert.deepEqual(session.getSnapshot().run, beforeConfirm);
-  assert.equal(rolls, rollsBeforeConfirm);
+  assert.equal(session.getSnapshot().run.area, 'snow');
+  assert.equal(session.getSnapshot().run.ammo, beforeConfirm);
+  assert.ok(rolls > rollsBeforeConfirm);
+  const rollsAfterEntry = rolls;
+  assert.equal(session.actions.continueAfterCampSlot().accepted, false);
+  assert.equal(rolls, rollsAfterEntry);
 });
 
-test('single B-grade camp reward is revealed once before battle without regranting on confirm', () => {
+test('camp healing enters the next region without extra stone spins', () => {
   const session = start({ engine: clearingEngine, rng: () => 0 });
   for (let i = 0; i < 3; i++) { clear(session); rewards(session); }
-  session.actions.chooseCampReward('weapon');
-  while (session.getSnapshot().fusion) session.actions.resolveFusion(false);
-  const state = session.getSnapshot();
-  assert.equal(state.screen, 'camp-reward');
-  assert.equal(state.campRewardReveal.items.length, 1);
-  assert.equal(state.campRewardReveal.items[0].grade, 'B');
-  assert.equal(session.actions.chooseCampReward('weapon').accepted, false);
-  const before = structuredClone(state.run);
-  session.actions.continueAfterCampReward();
-  assert.deepEqual(session.getSnapshot().run, before);
+  const before = session.getSnapshot().run.weapons.length;
+  assert.equal(session.actions.chooseCampReward('heal').accepted, true);
   assert.equal(session.getSnapshot().screen, 'battle');
+  assert.equal(session.getSnapshot().run.area, 'snow');
+  assert.equal(session.getSnapshot().run.weapons.length, before);
+  assert.equal(session.actions.chooseCampReward('weapon').accepted, false);
 });
 
 test('9 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bonus rounds follow screen routing', () => {
@@ -209,7 +199,7 @@ test('9 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bonu
       reload.actions.startCharacterSelect();
       assert.equal(reload.actions.startRun('wind').accepted, true);
     }
-    rewards(session, true);
+    rewards(session);
     if (session.getSnapshot().screen === 'camp') { camps++; session.actions.chooseCampReward('heal'); }
   }
   assert.equal(rewardScreens, 9);
@@ -226,7 +216,8 @@ test('9 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bonu
   for (let i = 1; i <= 3; i++) {
     assert.equal(session.getSnapshot().run.round, i);
     clear(session);
-    assert.equal(session.getSnapshot().screen, i === 3 ? 'bonus-results' : 'battle');
+    assert.equal(session.getSnapshot().screen, i === 3 ? 'bonus-results' : 'reward');
+    if (i < 3) rewards(session);
   }
   assert.equal(session.getSnapshot().summary.finalScore, finalScore);
   assert.ok(session.getSnapshot().summary.bonusScore > 0);
@@ -235,7 +226,7 @@ test('9 main rounds, two camps, immediate Snow unlock, frozen result, and 3 bonu
   assert.equal(session.actions.selectReward('weapon', 'old').accepted, false);
 });
 
-test('empty/aiming items reject without spending turns; nine misses route to defeat and can start afresh', () => {
+test('empty/aiming items reject without spending turns; three misses route to defeat and can start afresh', () => {
   const session = start();
   const { actions } = session;
   assert.equal(actions.useConsumable('spear').reason, 'empty');
@@ -246,7 +237,7 @@ test('empty/aiming items reject without spending turns; nine misses route to def
   assert.equal(actions.useConsumable('heal').reason, 'aiming');
   assert.equal(session.getSnapshot().run.turnNumber, 0);
   actions.resetAim();
-  for (let i = 0; i < 9; i++) { actions.fireShot(); finishResponse(session); }
+  for (let i = 0; i < 3; i++) { actions.fireShot(); finishResponse(session); }
   assert.equal(session.getSnapshot().screen, 'main-results');
   assert.equal(session.getSnapshot().outcome, 'defeat');
   const resultRun = structuredClone(session.getSnapshot().run);
@@ -262,7 +253,7 @@ test('empty/aiming items reject without spending turns; nine misses route to def
   assert.equal(session.getSnapshot().run.ammo, 0);
   actions.startCharacterSelect();
   actions.startRun('wizard');
-  assert.equal(session.getSnapshot().run.ammo, 9);
+  assert.equal(session.getSnapshot().run.ammo, 3);
   assert.equal(session.getSnapshot().run.weapons[0].id, 'wizard-orb');
 });
 
@@ -341,7 +332,7 @@ test('session supports full-vector angles and only the new phases; invalid metad
 
 test('explicit null and reverse override a stale Wind target without consuming homing, then forward Wind works once', () => {
   const engine = { ...BattleEngine, createRunState: options => BattleEngine.createRunState({ ...options,
-    weapons: [{ id: 'wind-candy', grade: 'C' }] }) };
+    weapons: Array.from({ length: 4 }, () => ({ id: 'wind-candy', grade: 'C' })) }) };
   const session = start({ engine, rng: () => .5 });
   const { actions } = session, target = session.getSnapshot().run.enemies[0].id;
   actions.setAim({ selectedTargetId: target });
@@ -405,7 +396,7 @@ test('a physical chain after candy settlement is accepted, but orphan/duplicate/
   assert.equal(commitFlight(session,physical,{reviewResult:true}).accepted,true);
   const state = session.getSnapshot();
   assert.equal(state.run.enemies[0].hp,1);
-  assert.equal(state.run.ammo, 8);
+  assert.equal(state.run.ammo, 2);
   assert.deepEqual(state.run.toppledObstacleIds, physical.flight.contacts.map(c=>c.obstacleId));
   assert.ok(state.shotReview);
 });

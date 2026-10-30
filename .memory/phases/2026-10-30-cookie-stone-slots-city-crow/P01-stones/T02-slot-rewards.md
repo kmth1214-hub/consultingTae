@@ -1,6 +1,6 @@
 # Task: T02 라운드·야영지·혼돈 슬롯 보상
 
-## Status: pending
+## Status: done
 
 ## Goal
 전투 후 3×3 슬롯을 한 번씩 돌리고 결과에 따라 전용 또는 기본 스톤을 영구 지급한다. 야영지는 스톤 2회, 혼돈은 스톤·소모품 각 1회다.
@@ -63,6 +63,6 @@ Task: T02-slot-rewards
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: T02 커밋

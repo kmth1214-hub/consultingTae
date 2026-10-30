@@ -17,7 +17,7 @@ const REASONS = {
   empty: '이 소모품을 모두 사용했어요.', blocked: '얼음 숨결 때문에 이번 턴에는 소모품을 쓸 수 없어요.',
   aiming: '조준을 마친 뒤 소모품을 사용하세요.', 'combat-ended': '이미 전투가 끝났어요.',
   'inventory-full': '이 소모품은 최대 3개까지 보유할 수 있어요.', 'already-selected': '이미 선택한 보상이에요.',
-  'rewards-incomplete': '무기와 소모품을 하나씩 선택하세요.', 'camp-choice-locked': '시작한 무기 보상을 먼저 마무리하세요.',
+  'rewards-incomplete': '슬롯과 소모품 보상을 모두 마무리하세요.', 'camp-choice-locked': '시작한 슬롯 보상을 먼저 마무리하세요.',
   locked: '눈 지역을 클리어하면 이 쿠키가 해금돼요.', 'invalid-state': '지금은 이 동작을 할 수 없어요.',
   'candy-locked': '눈 지역을 클리어하면 이 마법사탕이 해금돼요.'
 };
@@ -67,14 +67,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       screen: 'bonus-results', outcome: 'bonus-clear', summary: engine.getRunSummary(run, now())
     });
     else if (run.terminal === 'round-clear') {
-      if (run.bonusMode) {
-        engine.advanceRound(run, { rng, now: now() });
-        if (!run.terminal) assignLayoutSeed(run);
-        patch.aim = initialAim();
-      } else {
-        engine.drawRewardChoices(run, rng);
-        patch.screen = 'reward';
-      }
+      engine.drawRewardChoices(run, rng);
+      patch.screen = 'reward';
     }
     return patch;
   }
@@ -324,6 +318,16 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       publish({ run, fusion: null, notification: null });
       return event;
     },
+    spinRewardSlot(kind) {
+      if (!['reward', 'camp-slot'].includes(state.screen)) return reject('invalid-state');
+      const run = structuredClone(state.run);
+      let event;
+      try { event = engine.spinRewardSlot(run, kind, rng); }
+      catch { return reject('invalid-state'); }
+      if (!event.accepted) return reject(event.reason);
+      publish({ run, notification: null });
+      return event;
+    },
     continueAfterReward() {
       if (state.screen !== 'reward' || state.fusion) return reject('invalid-state');
       const run = structuredClone(state.run);
@@ -342,11 +346,17 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const event = engine.chooseCampReward(run, choice, { rng, now: now(), mergeDuplicate });
       if (!event.accepted) return reject(event.reason);
       if (!event.pendingCamp) assignLayoutSeed(run);
-      const reveal = !event.pendingCamp && choice === 'weapon'
-        ? { items: structuredClone(event.effect.weapons), area: run.area } : null;
-      publish({ run, fusion: event.requiresFusionChoice ? { ...event.fusionCandidate, source: 'camp' } : null,
-        screen: event.pendingCamp ? 'camp' : reveal ? 'camp-reward' : 'battle',
-        campRewardReveal: reveal, aim: initialAim(), lastEvent: null, enemyResponse: null });
+      publish({ run, fusion: null, screen: event.pendingCamp ? 'camp-slot' : 'battle',
+        campRewardReveal: null, aim: initialAim(), lastEvent: null, enemyResponse: null });
+      return event;
+    },
+    continueAfterCampSlot() {
+      if (state.screen !== 'camp-slot') return reject('invalid-state');
+      const run = structuredClone(state.run);
+      const event = engine.finishCampSlot(run, { rng, now: now() });
+      if (!event.accepted) return reject(event.reason);
+      assignLayoutSeed(run);
+      publish({ run, screen: 'battle', aim: initialAim(), lastEvent: null, notification: null });
       return event;
     },
     continueAfterCampReward() {

@@ -48,6 +48,8 @@
     adventurer: 'adventurer-candy', alchemist: 'alchemist-candy', wizard: 'wizard-orb',
     milk: 'milk-candy', wind: 'wind-candy'
   });
+  const SLOT_SYMBOLS = Object.freeze(['star', 'leaf', 'moon', 'crown']);
+  const SLOT_LINES = Object.freeze([[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 4, 8], [2, 4, 6]]);
 
   function timestamp(value) { return Number.isFinite(value) ? value : Date.now(); }
   function hasEffect(state, id) { return state.weapons.some(weapon => weapon.id === id); }
@@ -172,7 +174,8 @@
       consumableUsedSinceShot: false,
       inventory: createInventory(config.inventory, rng),
       weapons: initialWeapons.map((weapon,index)=>Object.assign({instanceId:'weapon-'+(index+1),ammoType:'magic-candy'},weapon)),
-      weaponQueue: [], currentWeaponId:null, rewardChoices:null, selectedRewards:{weapon:null,consumable:null},
+      weaponQueue: [], currentWeaponId:null, rewardChoices:null, slotReward:null,
+      selectedRewards:{weapon:null,consumable:null},
       furthestArea:area, playStartedAt:timestamp(config.now), roundStartedAt:timestamp(config.now), pendingCamp:false,
       pendingCampReward: null,
       defenseArmed: false,
@@ -202,7 +205,9 @@
     return grade === 'A' ? null : state.weapons.find(item => item.id === source.id && item.grade === grade);
   }
   function grantWeapon(state, source, grade, options) {
-    if (!availableRewardWeapons(state).some(weapon => weapon.id === source.id)) return { accepted: false, reason: 'candy-locked' };
+    if (source.id !== 'basic-stone' && source.id !== CHARACTER_WEAPONS[state.characterId]
+      && !availableRewardWeapons(state).some(weapon => weapon.id === source.id))
+      return { accepted: false, reason: 'candy-locked' };
     const requestedGrade = grade || source.grade || 'C';
     if (!Object.prototype.hasOwnProperty.call(GRADE_MULTIPLIER, requestedGrade)) throw new RangeError(`Unknown weapon grade: ${requestedGrade}`);
     const match = fusionWeapon(state, source, requestedGrade);
@@ -245,13 +250,57 @@
       || state.snowRewardsUnlocked === true || state.snowAreaCleared === true);
   }
   function drawRewardChoices(state,rng) {
-    if(!state||state.terminal!=='round-clear'||state.area==='chaos')return null;
+    if(!state||state.terminal!=='round-clear')return null;
+    if (state.slotReward?.context === 'round') return state.rewardChoices;
     const sourceRng=typeof rng==='function'?rng:Math.random;
-    const weapons=shuffle(availableRewardWeapons(state),sourceRng).slice(0,3).map(item=>Object.assign({},item,{choiceId:'weapon:'+item.id}));
-    const consumables=shuffle(CONSUMABLE_CATALOG.filter(item=>getConsumableCount(state,item.id)<3),sourceRng).slice(0,3).map(item=>Object.assign({},item,{choiceId:'consumable:'+item.id}));
-    state.rewardChoices={weapons,consumables};
-    state.selectedRewards={weapon:null,consumable:consumables.length?null:'skip'};
+    const available=CONSUMABLE_CATALOG.filter(item=>getConsumableCount(state,item.id)<3);
+    const consumables=state.area==='chaos' ? [] : shuffle(available,sourceRng).slice(0,3)
+      .map(item=>Object.assign({},item,{choiceId:'consumable:'+item.id}));
+    state.rewardChoices={weapons:[],consumables};
+    state.slotReward={context:'round',stoneSpinsRemaining:1,
+      consumableSpinsRemaining:state.area==='chaos'&&available.length?1:0,
+      stoneResults:[],consumableResults:[]};
+    state.selectedRewards={weapon:null,consumable:available.length?null:'skip'};
     return state.rewardChoices;
+  }
+
+  function spinRewardSlot(state,kind,rng) {
+    if (!state?.slotReward || !['stone','consumable'].includes(kind)
+      || (state.slotReward.context === 'round' && state.terminal !== 'round-clear')
+      || (state.slotReward.context === 'camp' && !state.pendingCamp)
+      || (state.slotReward.context === 'camp' && kind !== 'stone'))
+      return {accepted:false,reason:'no-reward'};
+    const slot=state.slotReward, remainingKey=kind==='stone'?'stoneSpinsRemaining':'consumableSpinsRemaining';
+    if (slot[remainingKey] <= 0) return {accepted:false,reason:'already-selected'};
+    const symbols=kind==='stone'?SLOT_SYMBOLS:
+      CONSUMABLE_CATALOG.filter(item=>getConsumableCount(state,item.id)<3).map(item=>item.id);
+    if (!symbols.length) return {accepted:false,reason:'inventory-full'};
+    const sourceRng=typeof rng==='function'?rng:Math.random;
+    const cells=Array.from({length:9},()=>{
+      const sample=Number(sourceRng());
+      if (!Number.isFinite(sample) || sample<0 || sample>=1) throw new RangeError('Invalid slot RNG');
+      return symbols[Math.floor(sample*symbols.length)];
+    });
+    const winningLine=SLOT_LINES.find(line=>line.every(index=>cells[index]===cells[line[0]]))||null;
+    let prizeId=null, instanceId;
+    if (kind==='stone') {
+      prizeId=winningLine?CHARACTER_WEAPONS[state.characterId]:'basic-stone';
+      const source=WEAPON_CATALOG.find(item=>item.id===prizeId);
+      const granted=grantWeapon(state,source,'C',{mergeDuplicate:false});
+      if (!granted.accepted) return granted;
+      instanceId=granted.weapon.instanceId;
+      slot.stoneResults.push({symbols:cells,winningLine,prizeId,instanceId});
+      if (slot.context==='round') state.selectedRewards.weapon='slot';
+    } else {
+      if (winningLine) {
+        prizeId=cells[winningLine[0]];
+        if(addConsumable(state,prizeId,1)!==1)return {accepted:false,reason:'inventory-full'};
+      }
+      slot.consumableResults.push({symbols:cells,winningLine,prizeId});
+      state.selectedRewards.consumable='slot';
+    }
+    slot[remainingKey]--;
+    return {accepted:true,result:kind==='stone'?slot.stoneResults.at(-1):slot.consumableResults.at(-1)};
   }
 
   // Endpoints of the same monotone roll rule used by combat; no random source is consumed.
@@ -261,15 +310,11 @@
   }
   function applyRewardChoice(state,category,choiceId,options) {
     if(!state||state.area==='chaos'||state.terminal!=='round-clear'||!state.rewardChoices)return {accepted:false,reason:'no-reward'};
-    if(!['weapon','consumable'].includes(category)||state.selectedRewards[category])return {accepted:false,reason:'already-selected'};
-    const choices=category==='weapon'?state.rewardChoices.weapons:state.rewardChoices.consumables;
+    if(category!=='consumable'||state.selectedRewards[category])return {accepted:false,reason:'already-selected'};
+    const choices=state.rewardChoices.consumables;
     const choice=choices.find(item=>item.choiceId===choiceId);
     if(!choice)return {accepted:false,reason:'invalid-choice'};
-    if(category==='weapon'){
-      const granted=grantWeapon(state,choice,choice.grade,options);
-      if (!granted.accepted) return granted;
-      choice.fused=granted.fused;
-    }else if(addConsumable(state,choice.id,1)!==1)return {accepted:false,reason:'inventory-full'};
+    if(addConsumable(state,choice.id,1)!==1)return {accepted:false,reason:'inventory-full'};
     state.selectedRewards[category]=choiceId;
     return {accepted:true,choice};
   }
@@ -299,12 +344,16 @@
     state.consumableUsedSinceShot=false;
     if (state.studioMonsterPrototype === 'regional-monsters-v1') state.pendingAimDisruption = null;
     state.spearArmed=false;
-    state.rewardChoices=null;state.selectedRewards={weapon:null,consumable:null};
+    state.rewardChoices=null;state.slotReward=null;state.selectedRewards={weapon:null,consumable:null};
     if(AREAS.indexOf(state.area)>AREAS.indexOf(state.furthestArea))state.furthestArea=state.area;
     refillWeaponQueue(state,config.rng);
   }
   function advanceRound(state,options) {
     if(!state||state.terminal!=='round-clear')return {accepted:false,reason:'round-not-cleared'};
+    if(!state.slotReward || state.slotReward.context!=='round'
+      || state.slotReward.stoneSpinsRemaining || state.slotReward.consumableSpinsRemaining
+      || !state.selectedRewards.weapon || !state.selectedRewards.consumable)
+      return {accepted:false,reason:'rewards-incomplete'};
     if (state.area === 'chaos') {
       if (state.round < 1 || state.round > 3) return {accepted:false,reason:'invalid-round'};
       if (state.round === 3) { state.terminal='bonus-clear'; return {accepted:true,terminal:'bonus-clear',summary:getRunSummary(state,options&&options.now)}; }
@@ -313,7 +362,6 @@
     if (!Number.isInteger(state.round) || state.round < 1 || state.round > MAIN_REGION_ROUND_COUNT) {
       return {accepted:false,reason:'invalid-round'};
     }
-    if(!state.selectedRewards.weapon||!state.selectedRewards.consumable)return {accepted:false,reason:'rewards-incomplete'};
     if(state.area==='city'&&state.round===MAIN_REGION_ROUND_COUNT){
       state.terminal='clear';
       state.mainRunSummary=Object.freeze(getRunSummary(state,options&&options.now));
@@ -325,33 +373,22 @@
   function chooseCampReward(state,choice,options) {
     if(!state||!state.pendingCamp)return {accepted:false,reason:'camp-not-ready'};
     const config=options||{};let effect;
-    if (state.pendingCampReward && choice !== 'weapon') return {accepted:false,reason:'camp-choice-locked'};
+    if (state.slotReward?.context==='camp') return {accepted:false,reason:'camp-choice-locked'};
     if(choice==='heal'){const before=state.playerHp;state.playerHp=Math.min(state.maxPlayerHp,state.playerHp+60);effect={healed:state.playerHp-before};}
     else if(choice==='weapon'){
-      const rng=typeof config.rng==='function'?config.rng:Math.random;
-      if (!state.pendingCampReward) {
-        const grade=randomInt(rng,0,9)===0?'B':'C',count=grade==='B'?1:2;
-        state.pendingCampReward={grade,items:Array.from({length:count},()=>({...shuffle(availableRewardWeapons(state),rng)[0],grade})),index:0,grants:[]};
-      }
-      const pending=state.pendingCampReward;
-      let mergeDuplicate=config.mergeDuplicate;
-      while (pending.index < pending.items.length) {
-        const item=pending.items[pending.index];
-        const duplicate=fusionWeapon(state,item,item.grade);
-        const result=grantWeapon(state,item,item.grade,{mergeDuplicate});
-        if (!result.accepted && result.reason !== 'fusion-decision-required') return result;
-        if (!result.accepted) return {accepted:true,pendingCamp:true,requiresFusionChoice:true,fusionCandidate:result.fusionCandidate};
-        pending.grants.push({weaponId:result.weapon.id,instanceId:result.weapon.instanceId,
-          name:result.weapon.name,grade:result.weapon.grade,effect:result.weapon.effect || item.effect,fused:result.fused});
-        pending.index++;
-        if (duplicate) mergeDuplicate=undefined;
-      }
-      effect={weapons:pending.grants.map(grant=>({...grant,
-        grade:state.weapons.find(weapon=>weapon.instanceId===grant.instanceId)?.grade || grant.grade})),grade:pending.grade};
+      state.slotReward={context:'camp',stoneSpinsRemaining:2,consumableSpinsRemaining:0,
+        stoneResults:[],consumableResults:[]};
+      return {accepted:true,pendingCamp:true,slotReady:true};
     }
     else return {accepted:false,reason:'invalid-choice'};
     state.area=state.area==='forest'?'snow':'city';state.round=1;enterRound(state,config);
     return {accepted:true,effect,area:state.area,round:state.round};
+  }
+  function finishCampSlot(state,options) {
+    if (!state?.pendingCamp || state.slotReward?.context!=='camp'
+      || state.slotReward.stoneSpinsRemaining) return {accepted:false,reason:'rewards-incomplete'};
+    state.area=state.area==='forest'?'snow':'city';state.round=1;enterRound(state,options);
+    return {accepted:true,area:state.area,round:state.round};
   }
   function startBonusRoute(state, options) {
     if (!state || state.terminal !== 'clear' || state.area !== 'city'
@@ -837,9 +874,11 @@
     getCurrentWeapon,
     grantWeapon,
     drawRewardChoices,
+    spinRewardSlot,
     applyRewardChoice,
     advanceRound,
     chooseCampReward,
+    finishCampSlot,
     startBonusRoute,
     getRunSummary,
     skipConsumableReward,

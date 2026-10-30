@@ -7,10 +7,10 @@
 [P01 스톤 규칙](./phases/2026-10-30-cookie-stone-slots-city-crow/P01-stones/phase.md)
 
 ## Active Task
-[T01 3발 스톤 덱과 쿠키 능력](./phases/2026-10-30-cookie-stone-slots-city-crow/P01-stones/T01-stone-combat.md)
+[T02 라운드·야영지·혼돈 슬롯 보상](./phases/2026-10-30-cookie-stone-slots-city-crow/P01-stones/T02-slot-rewards.md)
 
 ## Status
-- T01 구현 시작 준비 완료
+- T01 완료(a69f168). T02 진행 중
 
 ## Next Step (IMPORTANT)
-T01 청사진을 읽고 `assets/js/battle-engine.js`의 시작 덱과 전용 스톤 능력부터 구현한다.
+T02 청사진을 읽고 `assets/js/battle-engine.js`의 슬롯 보상 상태와 세션/화면을 구현한다.
