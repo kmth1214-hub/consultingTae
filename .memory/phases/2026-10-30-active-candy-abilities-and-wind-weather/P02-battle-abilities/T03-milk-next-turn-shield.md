@@ -1,6 +1,6 @@
 # Task: T03 우유 전용 스톤의 즉시 회복과 다음 턴 보호막
 
-## Status: pending
+## Status: done
 
 ## Goal
 우유 스톤이 적에게 실제로 직접 닿으면 체력 5가 즉시 회복되고 다음 **플레이어 발사 턴**의 적 공격 한 번만 막는다.
@@ -54,6 +54,6 @@ Task: T03-milk-next-turn-shield
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

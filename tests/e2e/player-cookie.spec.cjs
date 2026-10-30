@@ -30,7 +30,7 @@ test('a real heal item lights the selected cookie during safe preparation', asyn
   await page.keyboard.press('4');
   await expect(page.getByTestId('enemy-attack')).toHaveCount(0);
   await expect(page.getByTestId('player-cookie')).toHaveAttribute('data-player-pose', 'healing');
-  await expect(page.getByTestId('player-cookie')).toContainText('✦ ＋ ✦');
+  await expect(page.getByTestId('player-cookie')).toContainText('✦ ＋25 ✦');
   await expect(page.locator('.launcher')).not.toHaveClass(/is-healing|is-hit|has-shield/);
   await page.screenshot({ path: 'tmp/wide-t04-player-adventurer-forest-healing-1440.jpg' });
   await phase(page, 'idle');

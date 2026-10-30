@@ -258,7 +258,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           hitEffectsEnabled={hitEffectsEnabled}
           launchId={state.launchId} response={landingResponse || activeResponse} playerHp={bossTransition && bossTransition.stage !== 'impact'
             ? bossTransition.split.shock.playerHpBefore : beforeImpact
-            ? enemyResponse.attack.playerHpBefore : run.playerHp} defenseArmed={run.defenseArmed
+            ? enemyResponse.attack.playerHpBefore : run.playerHp} defenseArmed={run.defenseArmed || run.milkShieldPending || run.milkShieldActive
               || Boolean(bossTransition && bossTransition.stage !== 'impact' && bossTransition.split.shock.blockedBy === 'defense')
               || Boolean(shotReview && enemyResponse?.attack.blockedBy === 'defense')} lastEvent={lastEvent} />
         <svg className="projectile-layer" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">

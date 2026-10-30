@@ -12,7 +12,7 @@ export default function PlayerCookie({ characterId, placement, aimPhase, launchI
     if (!lastEvent || lastEvent.id === seenEvent.current) return;
     seenEvent.current = lastEvent.id;
     clearTimeout(timer.current);
-    if (lastEvent.key === 'heal' && lastEvent.effect?.healed > 0) {
+    if ((lastEvent.key === 'heal' && lastEvent.effect?.healed > 0) || lastEvent.healedPlayer > 0) {
       setHealActive(true);
       timer.current = setTimeout(() => setHealActive(false), 700);
     }
@@ -29,7 +29,7 @@ export default function PlayerCookie({ characterId, placement, aimPhase, launchI
     <span className="player-cookie-body" aria-hidden="true">
       <AssetImage src={ASSETS.characters[view.assetKey] || ASSETS.characters.adventurer} className="player-cookie-art" draggable="false" />
     </span>
-    {view.pose === 'healing' && <span className="player-heal-sign" aria-hidden="true">✦ ＋ ✦</span>}
+    {view.pose === 'healing' && <span className="player-heal-sign" aria-hidden="true">✦ ＋{lastEvent?.healedPlayer || lastEvent?.effect?.healed || 0} ✦</span>}
     {view.impactId !== null && (view.damage > 0 || view.blockedBy) && <span key={view.impactId} className={`player-hit-feedback ${view.blockedBy ? 'is-blocked' : ''}`}
       data-testid="player-hit-feedback" aria-hidden="true">{view.blockedBy ? '방어!' : view.damage ? `−${view.damage}` : ''}</span>}
     {hitEffectsEnabled && view.impactId !== null && view.damage > 0 && <span key={`crumbs-${view.impactId}`}

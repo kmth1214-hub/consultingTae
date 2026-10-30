@@ -35,7 +35,7 @@
     { id:'adventurer-candy',name:'모험가의 마법사탕',grade:'C',effect:'첫 착지에서 한 번 튀어 오름' },
     { id:'alchemist-candy',name:'연금술사의 마법사탕',grade:'C',effect:'추가 입력으로 폭발 · 등급별 확률과 범위' },
     { id:'wizard-orb',name:'마력 구슬',grade:'C',effect:'세 번째 명중 피해 +1' },
-    { id:'milk-candy',name:'우유맛 마법사탕',grade:'C',effect:'세 번째 명중마다 체력 회복',requiresSnowClear:true },
+    { id:'milk-candy',name:'우유맛 마법사탕',grade:'C',effect:'직접 명중 시 체력 5 회복·다음 발사 보호막',requiresSnowClear:true },
     { id:'wind-candy',name:'바람궁수 마법사탕',grade:'C',effect:'라운드당 유도 사격',requiresSnowClear:true }
   ]);
   const CONSUMABLE_CATALOG = Object.freeze([
@@ -163,7 +163,8 @@
       snowAreaCleared: false,
       snowRewardsUnlocked: config.snowRewardsUnlocked === true,
       effectCounters: { permanentWeaponHits: 0, projectileCollisions: 0, consumablesUsed: 0 },
-      roundEffects: { windHomingUsed: false, milkBossBlockUsed: false },
+      roundEffects: { windHomingUsed: false },
+      milkShieldPending: false, milkShieldActive: false,
       zeroRollsThisRound: 0,
       enemyTurnIndex: 0,
       turnNumber: 0,
@@ -348,7 +349,7 @@
     state.roundStartedAt=timestamp(config.now);state.enemies=createRoundEnemies(state.area,state.round,
       {rng:config.rng,studioMonsterPrototype:state.studioMonsterPrototype});
     state.chaosBossPhase = state.area === 'chaos' && state.round === 3 ? 'fused' : null;
-    state.roundEffects={windHomingUsed:false,milkBossBlockUsed:false};
+    state.roundEffects={windHomingUsed:false};
     state.toppledObstacleIds=[];state.forestLogDebris=[];state.obstacleDebris=[];
     if (['forest-elevated-v1', 'regional-elevated-v1'].includes(state.battlefieldPrototype)
       || ['forest-elevated-v1', 'regional-elevated-v1'].includes(state.studioPrototype)) state.enemyLandingPositions = {};
@@ -467,6 +468,7 @@
         if (state.playerHp <= 0) state.terminal = 'defeat';
       } else event.enemyAttack = resolveEnemyTurn(state, rng);
     }
+    state.milkShieldActive = false;
     event.snowAreaCleared = state.snowAreaCleared;
     event.runDefeated = state.terminal === 'defeat';
     return event;
@@ -553,10 +555,10 @@
   // Both counterattacks and the single landing shock consume the same protection.
   function applyIncomingDamage(state, attack, rng, minDamage, maxDamage, isBoss = true) {
     let blockedBy = state.defenseArmed ? 'defense' : null;
-    if (!blockedBy && isBoss && hasEffect(state, 'milk-candy') && !state.roundEffects.milkBossBlockUsed) {
+    if (!blockedBy && state.milkShieldActive) {
       blockedBy = 'milk';
-      state.roundEffects.milkBossBlockUsed = true;
     }
+    if (blockedBy === 'milk') state.milkShieldActive = false;
     const blocked = blockedBy !== null;
     state.defenseArmed = false;
     const damageMultiplier = state.nextAttackDamageMultiplier === null ? 1 : state.nextAttackDamageMultiplier;
@@ -586,6 +588,8 @@
       return { accepted: false, reason: 'no-ammo', hits: [], enemyAttack: null, roundCleared: false, runDefeated: true };
     }
     const scoreBefore = activeScore(state);
+    state.milkShieldActive = Boolean(state.milkShieldPending);
+    state.milkShieldPending = false;
     const spear = state.spearArmed === true;
     const permanent = config.source !== 'spear' && !spear;
     state.consumableUsedSinceShot = false;
@@ -621,7 +625,7 @@
         state.roundEffects.windHomingUsed = true;
       }
     }
-    let healedPlayer = 0;
+    let healedPlayer = 0, milkShieldGained = false;
     // Apply the physical limit after Wind has selected its actual target too.
     if (config.shotMeta && !spear) hitIds.splice(1);
     let bonusDamage = 0;
@@ -660,16 +664,18 @@
         const enemy = state.enemies.find(candidate => candidate.id === id && candidate.alive && candidate.hp > 0);
         if (!enemy) continue;
         if (permanent) {
-          if (usedWeapon?.id === 'wizard-orb' || usedWeapon?.id === 'milk-candy')
+          if (usedWeapon?.id === 'wizard-orb')
             state.effectCounters.projectileCollisions++;
           let extra = homingTarget === enemy && enemy.isBoss ? 1 : 0;
           if (state.effectCounters.projectileCollisions % 3 === 0) {
             if (usedWeapon?.id === 'wizard-orb') extra++;
-            if (usedWeapon?.id === 'milk-candy') {
-              const before = state.playerHp;
-              state.playerHp = Math.min(state.maxPlayerHp, state.playerHp + 1);
-              healedPlayer += state.playerHp - before;
-            }
+          }
+          if (usedWeapon?.id === 'milk-candy' && directHitCount === 0) {
+            const before = state.playerHp;
+            state.playerHp = Math.min(state.maxPlayerHp, state.playerHp + 5);
+            healedPlayer += state.playerHp - before;
+            state.milkShieldPending = true;
+            milkShieldGained = true;
           }
           bonusDamage += extra * damageMultiplier;
           damage += extra * damageMultiplier;
@@ -818,7 +824,7 @@
     const event = {
       accepted: true, source: config.source || 'weapon', weaponId: usedWeaponId,
       modifier: spear ? 'spear' : fiery ? 'fireball' : null,
-      damage: rolledDamage * damageMultiplier, bonusDamage, healedPlayer,
+      damage: rolledDamage * damageMultiplier, bonusDamage, healedPlayer, milkShieldGained,
       homingTargetId: homingTarget && homingTarget.id, spillover: spear ? 0 : damage, hits,
       missed: hits.length === 0 && !obstacleEffects.some(effect =>
         ['ice-guard', 'aim-inversion'].includes(effect.kind)),

@@ -20,14 +20,14 @@ test('29 HP remains fused and 28 splits with exact 8/9/11 HP, no extra enemy tur
   const s = create();
   assert.equal(fire(s, 27).bossSplit, undefined);
   const ammo = s.ammo, score = s.bonusScore;
-  s.roundEffects.windHomingUsed = true; s.roundEffects.milkBossBlockUsed = true;
+  s.roundEffects.windHomingUsed = true;
   s.toppledObstacleIds = ['old']; s.obstacleDebris = [{obstacleId:'old'}];
   const event = fire(s, 1);
   assert.equal(s.chaosBossPhase, 'split'); assert.equal(event.enemyAttack, null);
   assert.deepEqual(s.enemies.map(e=>e.hp), [8,9,11]);
   assert.equal(s.enemies.reduce((sum,e)=>sum+e.hp,0), 28);
   assert.equal(s.ammo, ammo-1); assert.equal(s.bonusScore, score+1);
-  assert.deepEqual(s.roundEffects, {windHomingUsed:true,milkBossBlockUsed:true});
+  assert.deepEqual(s.roundEffects, {windHomingUsed:true});
   assert.deepEqual(s.toppledObstacleIds, []); assert.deepEqual(s.obstacleDebris, []);
   assert.equal(event.bossSplit.shock.damage, 1);
   assert.deepEqual(s.enemies.map(e=>e.attackCount), [0,0,0]);
@@ -79,6 +79,12 @@ test('landing shock applies once, obeys defense/Milk/ice consumption, and can be
   for (const kind of ['plain','defense','milk','ice','both']) {
     const s=kind==='milk' ? create({weapons:[{id:'milk-candy',grade:'C'},
       {id:'basic-stone',grade:'C'}, {id:'basic-stone',grade:'C'}]}) : create();
+    if(kind==='milk') {
+      s.milkShieldPending=true;
+      const milk=s.weapons.find(weapon=>weapon.id==='milk-candy');
+      s.weaponQueue=[milk.instanceId,...s.weaponQueue.filter(id=>id!==milk.instanceId)];
+      s.currentWeaponId=milk.instanceId;
+    }
     if(kind==='defense'||kind==='both') s.defenseArmed=true;
     if(kind==='ice'||kind==='both') s.nextAttackDamageMultiplier=.5;
     const event=fire(s,28,{rng:()=>.999});
@@ -88,7 +94,10 @@ test('landing shock applies once, obeys defense/Milk/ice consumption, and can be
     assert.equal(s.playerHp,100-shock.damage);
     assert.equal(event.enemyAttack,null); assert.equal(s.defenseArmed,false);
     assert.equal(s.nextAttackDamageMultiplier,null);
-    if(kind==='milk') assert.equal(s.roundEffects.milkBossBlockUsed,true);
+    if(kind==='milk') {
+      assert.equal(s.milkShieldActive,false);
+      assert.equal(s.milkShieldPending,true, 'the splitting Milk hit earns a new shield for the next shot');
+    }
   }
   const s=create({playerHp:1}); const e=fire(s,28);
   assert.equal(e.bossSplit.shock.damage,1); assert.equal(s.terminal,'defeat');

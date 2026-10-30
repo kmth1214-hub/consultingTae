@@ -35,17 +35,18 @@ test('misses advance enemy order and boss count while preserving defense, Milk a
   for(const defense of [false,true]) {
     const state=run('oven-robot',true);
     state.weapons.push({...engine.WEAPON_CATALOG.find(w=>w.id==='milk-candy'),instanceId:'milk'});
+    state.milkShieldActive=true;
     state.defenseArmed=defense; state.nextAttackDamageMultiplier=.5;
     const before=structuredClone(state), miss=engine.resolveEnemyTurn(state,()=>.96);
     assert.equal(miss.missed,true); assert.equal(state.turnNumber,before.turnNumber+1);
     assert.equal(state.enemies[0].attackCount,1);
     assert.equal(state.playerHp,before.playerHp); assert.equal(state.ammo,before.ammo);
-    assert.equal(state.defenseArmed,defense); assert.equal(state.roundEffects.milkBossBlockUsed,false);
+    assert.equal(state.defenseArmed,defense); assert.equal(state.milkShieldActive,true);
     assert.equal(state.nextAttackDamageMultiplier,.5);
     const hit=engine.resolveEnemyTurn(state,()=>.5);
     assert.equal(hit.blockedBy,defense?'defense':'milk'); assert.equal(hit.missed,false);
     assert.equal(state.defenseArmed,false); assert.equal(state.nextAttackDamageMultiplier,null);
-    assert.equal(state.roundEffects.milkBossBlockUsed,!defense);
+    assert.equal(state.milkShieldActive,defense);
   }
   const state=run();
   state.enemies.push({...state.enemies[0],id:'next'});

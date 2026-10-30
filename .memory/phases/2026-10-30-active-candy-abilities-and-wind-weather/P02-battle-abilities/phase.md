@@ -5,8 +5,8 @@
 | :--- | :--- | :--- | :--- |
 | T01 | `done` | 네 지역 바람 구간·날씨·물리 궤도 | [T01](./T01-regional-wind-physics.md) |
 | T02 | `done` | 마법사 분열·연금술사 폭발 수동 발동 | [T02](./T02-midflight-abilities.md) |
-| T03 | `pending` | 우유 명중 회복과 다음 발사 보호막 | [T03](./T03-milk-next-turn-shield.md) |
+| T03 | `done` | 우유 명중 회복과 다음 발사 보호막 | [T03](./T03-milk-next-turn-shield.md) |
 | T04 | `pending` | 바람궁수 유도 Q·연쇄 폭풍·타 쿠키 사용 | [T04](./T04-wind-q-chain-storm.md) |
 
 ## Progress
-- done: 2/4 (active: T03)
+- done: 3/4 (active: T04)

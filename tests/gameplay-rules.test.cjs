@@ -76,36 +76,36 @@ test('one projectile counts successive spillover collisions, but stops at a surv
   assert.equal(state.effectCounters.projectileCollisions, 3);
 });
 
-test('Milk heals at the third collision, caps HP, and keeps counters across area transitions', () => {
+test('Milk direct hit heals five once, caps HP, and arms the following-shot shield', () => {
   const state = create(['milk-candy', 'milk-candy', 'milk-candy'], { playerHp: 50 });
   const id = sturdyEnemy(state);
-  for (let i = 0; i < 2; i++) engine.resolveProjectile(state, { hitIds: [id], damage: 0, rng: () => 0 });
-  const third = engine.resolveProjectile(state, { hitIds: [id], damage: 0, rng: () => 0 });
+  const first = engine.resolveProjectile(state, { hitIds: [id], damage: 0, rng: () => .5 });
+  assert.equal(first.healedPlayer, 5);
+  assert.equal(first.milkShieldGained, true);
+  assert.notEqual(first.enemyAttack?.blockedBy, 'milk');
+  assert.equal(state.milkShieldPending, true);
+  const second = engine.resolveProjectile(state, { hitIds: [id], damage: 0, rng: () => .5 });
+  assert.equal(second.enemyAttack?.blockedBy, 'milk');
+  assert.equal(second.healedPlayer, 5);
+  assert.equal(state.milkShieldPending, true, 'a second Milk hit earns a fresh following-shot shield');
+  state.playerHp = 99;
+  const third = engine.resolveProjectile(state, { hitIds: [id], damage: 0, rng: () => .5 });
   assert.equal(third.healedPlayer, 1);
-  assert.equal(state.playerHp, 49);
-  state.area = 'forest'; state.round = 3; state.pendingCamp = true;
-  engine.chooseCampReward(state, 'heal', { rng: () => 0 });
-  assert.equal(state.effectCounters.projectileCollisions, 3);
-  state.effectCounters.projectileCollisions = 5;
-  assert.equal(engine.resolveProjectile(state, { hitIds: [state.enemies[0].id], damage: 0, rng: () => 0 }).healedPlayer, 0);
-  assert.equal(state.playerHp, 99);
+  assert.equal(state.playerHp, 100);
+  assert.equal(state.effectCounters.projectileCollisions, 0);
 });
 
-test('Defense takes priority over Milk boss protection; Milk cancels the next whole attack once', () => {
-  const state = create(['milk-candy', 'milk-candy'], { area: 'city', round: 3, inventory: { defense: 1 } });
-  state.enemies[0].attackCount = 2;
+test('Defense takes priority over a Milk shield and unused Milk protection expires after one shot', () => {
+  const state = create(['milk-candy', 'basic-stone', 'basic-stone'], { area: 'city', round: 3, inventory: { defense: 1 } });
+  state.milkShieldPending = true;
   const prepared = engine.useConsumable(state, 'defense', { rng: () => 0 });
   assert.equal(prepared.enemyAttack, null);
   const defense = engine.resolveProjectile(state, { hitIds: [], damage: 0, rng: () => 0 });
   assert.equal(defense.enemyAttack.blockedBy, 'defense');
-  assert.equal(state.roundEffects.milkBossBlockUsed, false);
-  state.enemies[0].attackCount = 5;
-  const passive = engine.resolveEnemyTurn(state, () => 0);
-  assert.equal(passive.blockedBy, 'milk');
-  assert.equal(passive.special, null);
-  assert.equal(passive.ammoLost, 0);
-  assert.equal(state.roundEffects.milkBossBlockUsed, true);
-  assert.equal(engine.resolveEnemyTurn(state, () => 0).blocked, false);
+  assert.equal(state.milkShieldActive, false);
+  assert.equal(state.milkShieldPending, false);
+  const next = engine.resolveProjectile(state, { hitIds: [], damage: 0, rng: () => 0 });
+  assert.equal(next.enemyAttack?.blockedBy, null);
 });
 
 test('Wind guarantees the selected boss first once per round and carries its damage onward', () => {
@@ -123,17 +123,18 @@ test('Wind guarantees the selected boss first once per round and carries its dam
   assert.equal(state.bonusScore, scoreBefore + 4);
 });
 
-test('round transitions reset Wind and Milk flags but retain run effect counters', () => {
+test('round transitions reset Wind but preserve the next-shot Milk shield', () => {
   const state = create(['wind-candy', 'milk-candy']);
   state.roundEffects.windHomingUsed = true;
-  state.roundEffects.milkBossBlockUsed = true;
+  state.milkShieldPending = true;
   state.effectCounters.permanentWeaponHits = 8;
   state.terminal = 'round-clear';
   engine.drawRewardChoices(state, () => 0);
   engine.spinRewardSlot(state, 'stone', () => 0);
   engine.applyRewardChoice(state, 'consumable', state.rewardChoices.consumables[0].choiceId);
   engine.advanceRound(state, { rng: () => 0 });
-  assert.deepEqual(state.roundEffects, { windHomingUsed: false, milkBossBlockUsed: false });
+  assert.deepEqual(state.roundEffects, { windHomingUsed: false });
+  assert.equal(state.milkShieldPending, true);
   assert.equal(state.effectCounters.permanentWeaponHits, 8);
 });
 

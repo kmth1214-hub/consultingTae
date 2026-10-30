@@ -53,7 +53,7 @@ test('owned passive abilities are deduplicated with actual counters and availabl
   state.weapons = [...BattleEngine.WEAPON_CATALOG, BattleEngine.WEAPON_CATALOG[0]].map((w, i) => ({ ...w, instanceId: String(i) }));
   state.currentWeaponId = '1'; state.weaponQueue = ['1', '3'];
   state.effectCounters = { permanentWeaponHits: 5, projectileCollisions: 8 };
-  state.roundEffects = { milkBossBlockUsed: true, windHomingUsed: true };
+  state.roundEffects = { windHomingUsed: true };
   state.pendingAimInversion = true; state.defenseArmed = true; state.nextAttackDamageMultiplier = .5;
   const before = structuredClone(state), details = getCandyDetails(state);
   assert.equal(details.passives.length, 5);
