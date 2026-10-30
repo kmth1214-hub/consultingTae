@@ -84,8 +84,9 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     const jitter = enemies.length > 10 ? 24 : enemies.length > 6 ? 42 : 135;
     const x = Math.round(nominal + (random() * 2 - 1) * jitter);
     const size = (kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60) * worldScale;
-    return { id, kind, isBoss, x, y: 900, size,
-      collider: { id, x, y: 900 - size * .52, radius: size * .42 } };
+    const y = kind === 'clockwork-crow' ? 900 - 240 - (i % 2) * 80 : 900;
+    return { id, kind, isBoss, x, y, size,
+      collider: { id, x, y: y - size * .52, radius: size * .42 } };
   });
   let free = [[560, 3240]];
   for (const enemy of placements) free = subtract(free, enemy.x - enemy.size / 2 - 8,
@@ -118,9 +119,10 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
   let lift = 0;
   if (elevated(area, prototype)) {
     const required = riderCount(area, round, placements.length);
+    const groundIndices = placements.flatMap((slot, index) => slot.kind === 'clockwork-crow' ? [] : [index]);
     const riderIndices = area === 'chaos' && required
       ? (required === 3 ? [1, Math.floor(placements.length / 2), placements.length - 2]
-        : [1, placements.length - 2]) : required ? [Math.floor(random() * placements.length)] : [];
+        : [1, placements.length - 2]) : required ? [groundIndices[Math.floor(random() * groundIndices.length)]] : [];
     const elevations = ['low', 'medium', 'high'];
     const offset = Math.floor(random() * 3);
     const supports = [];

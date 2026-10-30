@@ -42,6 +42,7 @@ const REGIONAL_MONSTER_ART = {
   snowball: ASSETS.monsters.snowballV2,
   'cowardly-snowman': ASSETS.monsters.cowardlySnowmanV2,
   'washing-robot': ASSETS.monsters.washingRobotV2,
+  'clockwork-crow': ASSETS.monsters.clockworkCrow,
   'oven-robot': ASSETS.monsters.ovenRobotV2,
   'frost-gear-snake': ASSETS.monsters.frostGearSnake,
   'oven-snow-boar': ASSETS.monsters.ovenSnowBoar,
@@ -50,7 +51,8 @@ const REGIONAL_MONSTER_ART = {
 
 function MonsterArt({ enemy, studioMonsterPrototype }) {
   const [failedSource, setFailedSource] = React.useState(null);
-  const studioArt = studioMonsterPrototype === 'regional-monsters-v1' ? REGIONAL_MONSTER_ART[enemy.kind] : null;
+  const studioArt = enemy.kind === 'clockwork-crow' ? REGIONAL_MONSTER_ART[enemy.kind]
+    : studioMonsterPrototype === 'regional-monsters-v1' ? REGIONAL_MONSTER_ART[enemy.kind] : null;
   if (studioArt && failedSource !== studioArt) return <img src={studioArt} alt="" aria-hidden="true"
     className="monster-art monster-art--regional" data-monster-art={enemy.kind}
     onError={() => setFailedSource(studioArt)} />;
@@ -99,7 +101,7 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
       const visual = attacking ? attackStyle(response.attack) : null;
       const melee = visual?.melee;
       const hp = attacking && response.stage !== 'impact' ? enemy.hp - response.attack.healedEnemy : enemy.hp;
-      return <div role="img" className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''} ${attacking ? 'is-attacking' : ''} ${hitNow ? 'is-hit' : ''} ${!enemy.alive ? 'is-defeated-hit' : ''}`}
+      return <div role="img" className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${enemy.kind === 'clockwork-crow' ? 'monster--crow' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''} ${attacking ? 'is-attacking' : ''} ${hitNow ? 'is-hit' : ''} ${!enemy.alive ? 'is-defeated-hit' : ''}`}
         data-attack-phase={attacking ? response.stage : undefined} data-melee={melee || undefined}
         data-throwing={visual?.thrown || undefined}
         data-miss-style={attacking ? response.attack.missStyle || undefined : undefined}

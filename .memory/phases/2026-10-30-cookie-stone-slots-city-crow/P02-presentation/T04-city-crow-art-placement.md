@@ -1,6 +1,6 @@
 # Task: T04 도시 태엽 까마귀 그림과 공중 배치
 
-## Status: pending
+## Status: done
 
 ## Goal
 도시 일반전의 세탁 로봇 두 마리를 태엽 까마귀로 바꾸고, 공중에서도 즉시 식별되는 그림과 배치를 제공한다.
@@ -54,6 +54,6 @@ Task: T04-city-crow-art-placement
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: T04 커밋

@@ -119,7 +119,9 @@
       : area === 'snow'
         ? ['dry-ice', ...Array.from({ length: Math.max(0, count - 1) }, () => 'snowball')]
         : area === 'city'
-          ? Array.from({ length: count }, () => 'washing-robot')
+          ? Array.from({ length: count }, (_, index) =>
+            index === Math.floor(count / 3) || index === Math.floor(count * 2 / 3)
+              ? 'clockwork-crow' : 'washing-robot')
           : Array.from({ length: count }, () => ['snake', 'boar', 'dry-ice', 'snowball', 'washing-robot'][randomInt(rng, 0, 4)]);
     return kinds.map((kind, index) => ({
       id: `${area}-r${roundNumber}-${kind}-${index + 1}`,
