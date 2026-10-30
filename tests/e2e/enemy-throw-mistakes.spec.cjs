@@ -12,7 +12,9 @@ async function launch(page) {
 }
 async function setup(page,{boss=false,random=.92,shield=false,reduced=false}={}) {
   if(reduced) { await page.setViewportSize({width:390,height:844}); await page.emulateMedia({reducedMotion:'reduce'}); }
-  await installGame(page,{initial:{area:boss?'city':'forest',round:boss?3:1,inventory:{defense:1}},random});
+  const basic={id:'basic-stone',name:'기본 스톤',grade:'C',effect:'공통 피해'};
+  await installGame(page,{initial:{area:boss?'city':'forest',round:boss?3:1,inventory:{defense:1},
+    ...(boss?{weapons:[basic,basic,basic,basic]}:{})},random});
   await start(page);
   if(shield) await page.getByRole('button',{name:'방어 사용',exact:true}).click();
   await page.clock.install({time:new Date('2026-10-26T00:00:00Z')});

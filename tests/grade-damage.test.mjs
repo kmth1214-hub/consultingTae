@@ -27,8 +27,8 @@ test('A fireball and conditional bonuses use the new damage table without changi
   const s=run([weapon('wizard-orb'),weapon('wind-candy')]);
   s.effectCounters.projectileCollisions=2;E.useConsumable(s,'fireball');
   const e=E.resolveProjectile(s,{selectedTargetId:s.enemies[0].id,hitIds:[s.enemies[0].id],rng:()=>.999});
-  assert.equal(e.damage,20);assert.equal(e.bonusDamage,4);assert.equal(e.hits[0].damage,24);
-  assert.equal(s.enemies[0].hp,32);assert.equal(e.bossSplit,undefined);
+  assert.equal(e.damage,20);assert.equal(e.bonusDamage,2);assert.equal(e.hits[0].damage,22);
+  assert.equal(s.enemies[0].hp,34);assert.equal(e.bossSplit,undefined);
 });
 
 test('arithmetic maximum chain fixture can defeat a wounded fused boss before splitting',()=>{

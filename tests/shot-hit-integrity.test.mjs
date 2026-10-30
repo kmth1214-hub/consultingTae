@@ -5,7 +5,10 @@ import {buildPlayableBattlefield} from '../src/game/battlefieldPlacement.js';
 import {planShot,sampleAtDistance} from '../src/game/shotGeometry.js';
 import {createStudioSession} from '../src/dev/createStudioSession.js';
 function fixture(piercing=false) {
- const run=E.createRunState({area:'snow',round:1,rng:()=>.5,inventory:{spear:1},weapons:[{...E.WEAPON_CATALOG[0],grade:'A'}]});
+ const run=E.createRunState({area:'snow',round:1,rng:()=>.5,inventory:{spear:1},weapons:[
+  {...E.WEAPON_CATALOG[0],grade:'A'},
+  {...E.WEAPON_CATALOG.find(w=>w.id==='basic-stone'),grade:'C'},
+  {...E.WEAPON_CATALOG.find(w=>w.id==='basic-stone'),grade:'C'}]});
  const layout=buildPlayableBattlefield({area:'snow',round:1,enemies:run.enemies,seed:0});
  run.enemies.slice(2).forEach(e=>{e.hp=0;e.alive=false;});
  run.toppledObstacleIds=layout.obstacles.map(o=>o.id);
@@ -40,7 +43,7 @@ test('Spear may hit the same second enemy only by actually continuing into its c
 });
 test('even a physical Wind override cannot introduce a second non-piercing damage target',()=>{
  const {run,shot}=fixture();
- run.weapons.push({id:'wind-candy',grade:'C'});run.enemies[0].hp=1;
+ run.weapons.push({id:'wind-candy',instanceId:'wind-test',grade:'C'});run.weaponQueue[0]='wind-test';run.currentWeaponId='wind-test';run.enemies[0].hp=1;
  E.resolveProjectile(run,{selectedTargetId:run.enemies[0].id,hitIds:[run.enemies[1].id],damage:10,shotMeta:meta(shot),rng:()=>.5});
  assert.equal(run.enemies[0].hp,0);assert.equal(run.enemies[1].hp,4);
 });
@@ -76,6 +79,9 @@ test('a reserved studio shot topples the support, scores only actual rider fall 
 test('only a reserved Alchemist impact can supply splash contacts; Spear replaces that ability', () => {
  const session=createStudioSession({area:'forest',round:2,characterId:'alchemist',seed:0},{rng:()=>.5,now:()=>1000});
  const run=session.getSnapshot().run;
+ const exclusive=run.weapons.find(weapon=>weapon.id==='alchemist-candy');
+ run.weaponQueue=[exclusive.instanceId,...run.weaponQueue.filter(id=>id!==exclusive.instanceId)];
+ run.currentWeaponId=exclusive.instanceId;
  const layout=buildPlayableBattlefield({area:'forest',round:2,enemies:run.enemies,seed:0,
   prototype:run.studioPrototype});
  let chosen;
@@ -105,6 +111,10 @@ test('only a reserved Alchemist impact can supply splash contacts; Spear replace
 
 test('a reserved Wizard shot owns its two child trajectories and rejects fabricated child metadata', () => {
  const session=createStudioSession({area:'forest',round:2,characterId:'wizard',seed:0},{rng:()=>.5});
+ const run=session.getSnapshot().run;
+ const exclusive=run.weapons.find(weapon=>weapon.id==='wizard-orb');
+ run.weaponQueue=[exclusive.instanceId,...run.weaponQueue.filter(id=>id!==exclusive.instanceId)];
+ run.currentWeaponId=exclusive.instanceId;
  const angle=40*Math.PI/180,pull={ready:true,powerRatio:.7,
   direction:{x:Math.cos(angle),y:-Math.sin(angle)}};
  const reservation=session.actions.beginShot({launchId:3,pull});

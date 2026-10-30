@@ -13,7 +13,7 @@ test('production landing and character selection start the real default engine s
   await page.getByRole('button', { name: /^모험가맛 쿠키 / }).click();
   await phase(page, 'idle');
   await expect(hp(page)).toHaveText('100');
-  await expect(ammo(page)).toHaveText('9');
+  await expect(ammo(page)).toHaveText('3');
   const { run } = await snapshot(page);
   expect(run.area).toBe('forest');
   expect(run.round).toBe(1);
@@ -37,15 +37,15 @@ test('map drag previews a live partial arc with mouse movement alone, then real 
   await page.keyboard.press('Escape');
   await page.mouse.up();
   await shoot(page, await aimedShot({ piercing: false }));
-  await expect(ammo(page)).toHaveText('8');
+  await expect(ammo(page)).toHaveText('2');
   await expect(hp(page)).toHaveText('95');
   let trace = await snapshot(page);
-  expect(trace.run.ammo).toBe(8);
+  expect(trace.run.ammo).toBe(2);
   expect(trace.lastEvent.hits[0].damage).toBe(2);
   expect(trace.run.enemies[0].hp).toBe(2);
   expect(trace.events.filter(event => event.name === 'resolveProjectile')).toHaveLength(1);
   await shoot(page, { short: true });
-  await expect(ammo(page)).toHaveText('7');
+  await expect(ammo(page)).toHaveText('1');
   await expect(hp(page)).toHaveText('90');
   trace = await snapshot(page);
   expect(trace.lastEvent.missed).toBe(true);
@@ -62,6 +62,6 @@ test('last-ammo miss enters defeat, excludes bonus entry, and retry creates a fr
   await page.getByRole('button', { name: '새 원정 시작' }).click();
   await page.getByRole('button', { name: /^모험가맛 쿠키 / }).click();
   await phase(page, 'idle');
-  await expect(ammo(page)).toHaveText('9');
+  await expect(ammo(page)).toHaveText('3');
   await expect(hp(page)).toHaveText('100');
 });

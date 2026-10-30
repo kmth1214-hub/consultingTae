@@ -14,7 +14,7 @@ for (const mobile of [false, true]) test(`${mobile ? 'phone reduced motion' : 'd
   await expect(page.locator('.item-lockout')).toHaveText('사용 완료 · 사탕 발사 후 다시 사용');
   const prepared = (await snapshot(page)).run;
   expect(prepared.turnNumber).toBe(0);
-  expect(prepared.ammo).toBe(9);
+  expect(prepared.ammo).toBe(3);
   expect(prepared.consumableUsedSinceShot).toBe(true);
   for (const name of ['불공', '창', '방어', '회복'])
     await expect(page.getByRole('button', { name: `${name} 사용`, exact: true })).toBeDisabled();
@@ -50,8 +50,8 @@ test('a prepared Spear requires a real hit to clear the round and the next round
   await start(page);
   await page.keyboard.press('2');
   expect((await snapshot(page)).run.enemies[0].hp).toBe(4);
-  await shoot(page, { ...await aimedShot(), finalHeading: '다음 한 발을 위한 선물' });
-  await expect(page.getByRole('heading', { name: '다음 한 발을 위한 선물', exact: true })).toBeVisible();
+  await shoot(page, { ...await aimedShot(), finalHeading: '다음 전투의 보상' });
+  await expect(page.getByRole('heading', { name: '다음 전투의 보상', exact: true })).toBeVisible();
   const cleared = await snapshot(page);
   expect(cleared.events.find(event => event.name === 'useConsumable').result.enemyAttack).toBeNull();
   expect(cleared.run.consumableUsedSinceShot).toBe(false);

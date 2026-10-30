@@ -77,10 +77,12 @@ test('fused normal throwing retains misses while specials cannot miss', () => {
 
 test('landing shock applies once, obeys defense/Milk/ice consumption, and can be fatal', () => {
   for (const kind of ['plain','defense','milk','ice','both']) {
-    const s=create({weapons:kind==='milk'?[{id:'milk-candy',grade:'C'}]:[]});
+    const s=kind==='milk' ? create({weapons:[{id:'milk-candy',grade:'C'},
+      {id:'basic-stone',grade:'C'}, {id:'basic-stone',grade:'C'}]}) : create();
     if(kind==='defense'||kind==='both') s.defenseArmed=true;
     if(kind==='ice'||kind==='both') s.nextAttackDamageMultiplier=.5;
     const event=fire(s,28,{rng:()=>.999});
+    assert.ok(event.bossSplit, `expected split for ${kind}: ${event.reason || s.terminal || 'none'}`);
     const shock=event.bossSplit.shock;
     assert.equal(shock.damage,kind==='plain'?3:kind==='ice'?1:0);
     assert.equal(s.playerHp,100-shock.damage);

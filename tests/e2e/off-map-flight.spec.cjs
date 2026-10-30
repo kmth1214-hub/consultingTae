@@ -61,7 +61,7 @@ for (const reverse of [false, true]) test(`${reverse ? 'reverse' : 'forward'} ov
   const committed = await snapshot(page);
   expect(committed.lastEvent.missed).toBe(true);
   expect(committed.lastEvent.hits).toEqual([]); expect(committed.lastEvent.obstacleEffects).toEqual([]);
-  expect(committed.run.ammo).toBe(8); expect(committed.run.round).toBe(1);
+  expect(committed.run.ammo).toBe(2); expect(committed.run.round).toBe(1);
   await expect(arena(page)).toHaveAttribute('data-impact-kind', 'bounds');
   await page.clock.runFor(4000); await phase(page, 'idle');
   const settled = await snapshot(page);
@@ -77,13 +77,13 @@ test('portrait reduced-motion overdraw keeps the same off-map result and cancell
   await installGame(page); await start(page); await pause(page);
   await dragPull(page, { angleDeg: 45, powerRatio: 1 }); await page.keyboard.press('Escape');
   await page.mouse.up(); await phase(page, 'idle');
-  expect((await snapshot(page)).run.ammo).toBe(9);
+  expect((await snapshot(page)).run.ammo).toBe(3);
   await dragPull(page, { angleDeg: 45, powerRatio: 1 }); await page.mouse.up();
   await page.clock.runFor(100); await phase(page, 'reviewing');
   await expect(arena(page)).toHaveAttribute('data-camera-mode', 'overview');
   await expect(arena(page)).toHaveAttribute('data-impact-kind', 'bounds');
   await page.clock.runFor(4000); await phase(page, 'idle');
   const state = await snapshot(page);
-  expect(state.run.ammo).toBe(8); expect(state.lastEvent.hits).toEqual([]);
+  expect(state.run.ammo).toBe(2); expect(state.lastEvent.hits).toEqual([]);
   expect(state.events.filter(e => e.name === 'resolveProjectile')).toHaveLength(1);
 });

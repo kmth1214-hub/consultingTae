@@ -154,7 +154,7 @@ for (const [area, name] of [['forest', '숲'], ['snow', '눈'], ['city', '도시
     await expect(page.getByTestId('enemy-attack')).toBeVisible({ timeout: 10000 });
     await phase(page, 'idle');
     const after = await snapshot(page);
-    expect(after.run.ammo).toBe(8);
+    expect(after.run.ammo).toBe(2);
     expect(after.run.playerHp).toBeLessThan(100);
     expect(after.events.filter(e => e.name === 'resolveProjectile')).toHaveLength(1);
   });
@@ -205,7 +205,7 @@ test('changing the selected region during flight discards old callbacks and star
   await page.waitForTimeout(3000);
   const state = await snapshot(page);
   expect(state.run.area).toBe('city'); expect(state.run.round).toBe(3);
-  expect(state.run.ammo).toBe(9); expect(state.run.playerHp).toBe(100);
+  expect(state.run.ammo).toBe(3); expect(state.run.playerHp).toBe(100);
   expect(state.events.filter(e => e.name === 'resolveProjectile')).toHaveLength(0);
   await expect(page.getByTestId('enemy-attack')).toHaveCount(0);
 });
@@ -260,7 +260,7 @@ for (const area of ['snow', 'chaos']) test(`a cleared ${area} test stops at a st
   expect(requests).toEqual([]);
   await page.getByRole('button', { name: '같은 배치 다시 플레이', exact: true }).click();
   await phase(page, 'idle');
-  expect((await snapshot(page)).run.ammo).toBe(9);
+  expect((await snapshot(page)).run.ammo).toBe(3);
 });
 
 test('phone play supports locked cookies, real controls and a visible return without horizontal overflow', async ({ page }) => {

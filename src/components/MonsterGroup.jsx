@@ -95,7 +95,7 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
     const tick = () => {
       const time = patrolTimeRef?.current ?? Date.now();
       for (const bird of birds) {
-        const node = [...(groupRef.current?.querySelectorAll('[data-enemy-id]') || [])]
+        const node = [...(groupRef?.current?.querySelectorAll('[data-enemy-id]') || [])]
           .find(item => item.dataset.enemyId === bird.id);
         if (!node) continue;
         const x = patrolX(bird.patrol, time);

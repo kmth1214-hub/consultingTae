@@ -1,5 +1,5 @@
 const { test, expect, installGame, start, phase, dragPull, snapshot } = require('./support.cjs');
-const card = page => page.getByRole('complementary', { name: '장전된 마법사탕' });
+const card = page => page.getByRole('complementary', { name: '장전된 스톤' });
 
 test('current and known next candy match the real queue, with owned abilities and Fireball stated separately', async ({ page }) => {
   await installGame(page, { allWeapons: true, enemyHp: 20, initial: { inventory: { fireball: 1 } } });
@@ -11,7 +11,7 @@ test('current and known next candy match the real queue, with owned abilities an
   await expect(card(page).locator('.next-candy')).toContainText(weapon(initial.weaponQueue[1]).name);
   await card(page).locator('summary').click();
   await expect(card(page).locator('.owned-passives li')).toHaveCount(5);
-  await expect(card(page)).toContainText('보유한 사탕의 능력이 함께 적용돼요.');
+  await expect(card(page)).toContainText('전용 능력은 해당 스톤을 발사할 때 적용돼요.');
   await page.screenshot({ path: 'tmp/candy-details-expanded.png' });
   await page.keyboard.press('1'); await phase(page, 'idle');
   await expect(card(page).locator('.candy-buffs')).toContainText('×2 (0–8');
@@ -29,7 +29,9 @@ test('phone candy details disclose all passives without overflow and unknown nex
   await installGame(page, { stateOverride: { zeroRollsThisRound: 2, fireballArmed: true, pendingAimInversion: true } });
   await start(page);
   await expect(card(page).locator('.candy-damage')).toContainText('1–4');
-  await expect(card(page).locator('.next-candy')).toContainText('다음 사탕 미정');
+  const run = (await snapshot(page)).run;
+  const next = run.weapons.find(weapon => weapon.instanceId === run.weaponQueue[1]);
+  await expect(card(page).locator('.next-candy')).toContainText(next.name);
   await expect(card(page).locator('.candy-status-chips')).toContainText('불공 ×2');
   await card(page).locator('summary').click();
   await expect(card(page).locator('.candy-buffs')).toContainText('×2 (2–8');

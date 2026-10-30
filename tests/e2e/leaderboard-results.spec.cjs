@@ -1,4 +1,4 @@
-const { test, expect, installGame, phase, start, shoot, dragPull } = require('./support.cjs');
+const { test, expect, installGame, phase, start, shoot, dragPull, selectRewards } = require('./support.cjs');
 
 function boardPayload(entries = [{ rank: 1, displayName: 'Top Player', cookieId: 'wind', score: 900,
   furthestArea: 'city', round: 5, durationMs: 1234 }], personalBest = null) {
@@ -70,17 +70,18 @@ test('main clear submits once and the optional bonus result never submits bonus 
   await dragPull(page, { powerRatio: .08 });
   await page.mouse.up();
   await expect(page.locator('.reward-screen')).toBeVisible();
-  await page.locator('.reward-section').nth(0).getByRole('button').first().click();
-  if (await page.locator('.fusion-choice').isVisible()) await page.locator('.fusion-choice .secondary-button').click();
-  await page.locator('.reward-section').nth(1).getByRole('button').first().click();
-  await page.locator('.continue-button').click();
+  await selectRewards(page);
   await expect(page.locator('.results-screen h1')).toBeVisible();
   await expect(page.locator('.record-save-status--saved')).toBeVisible();
   const mainScore = submitted.score;
   await page.locator('.results-screen .primary-button').click();
   await phase(page, 'idle');
   for (let round = 1; round <= 3; round++) {
-    if (round < 3) await shoot(page, { short: true });
+    if (round < 3) {
+      await shoot(page, { short: true, finalHeading: '다음 전투의 보상' });
+      await selectRewards(page);
+      await phase(page, 'idle');
+    }
     else {
       await dragPull(page, { powerRatio: .08 });
       await page.mouse.up();

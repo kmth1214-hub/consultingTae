@@ -19,7 +19,7 @@ test('the same real completed miss cannot spend ammo, roll damage or cause a sec
  assert.equal(commit(s,r).accepted,false);settle(s);
  const before=structuredClone(s.getSnapshot().run),calls=draws;
  assert.equal(commit(s,r).reason,'stale-shot');assert.deepEqual(s.getSnapshot().run,before);assert.equal(draws,calls);
- assert.equal(before.playerHp,95);assert.equal(before.ammo,8);
+ assert.equal(before.playerHp,95);assert.equal(before.ammo,2);
 });
 test('cancelled or old flights cannot resolve/cancel the next pending shot',()=>{
  const s=make(),a=launch(s);s.actions.cancelShot(a.shotId);
@@ -27,7 +27,7 @@ test('cancelled or old flights cannot resolve/cancel the next pending shot',()=>
  assert.equal(commit(s,a).accepted,false);s.actions.cancelShot(a.shotId);
  assert.equal(s.actions.useConsumable('heal').reason,'flight-pending');
  assert.equal(s.actions.fireShot().reason,'flight-pending');assert.deepEqual(s.getSnapshot().run,before);
- assert.equal(commit(s,b).accepted,true);assert.equal(s.getSnapshot().run.ammo,8);
+ assert.equal(commit(s,b).accepted,true);assert.equal(s.getSnapshot().run.ammo,2);
 });
 test('caller copies and fabricated hits cannot alter the reserved physical collision result',()=>{
  const s=make(),r=launch(s);assert.deepEqual(r.flight.hitIds,[]);
@@ -58,7 +58,7 @@ test('a previous clearing flight cannot affect the next round after reward progr
  const opportunity=findForestLogOpportunity(layout),r=launch(s,opportunity.pull);
  const event=commit(s,r);assert.equal(event.roundCleared,true);settle(s);
  const choice=s.getSnapshot().run.rewardChoices;
- s.actions.selectReward('weapon',choice.weapons.find(w=>w.id!=='adventurer-candy').choiceId);
+ s.actions.spinRewardSlot('stone');
  s.actions.selectReward('consumable',choice.consumables[0].choiceId);s.actions.continueAfterReward();
  const before=structuredClone(s.getSnapshot().run);assert.equal(before.round,2);
  assert.equal(commit(s,r).accepted,false);assert.deepEqual(s.getSnapshot().run,before);

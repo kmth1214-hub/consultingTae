@@ -1,7 +1,7 @@
 const { test, expect, installGame, phase, start, dragPull } = require('./support.cjs');
 
 for (const scenario of [{ name: 'forward', angleDeg: -5, powerRatio: .6 },
-  { name: 'reverse', angleDeg: 185, powerRatio: .25 }]) test(`${scenario.name} grounded candy visibly rolls with dust following before combat completes`, async ({ page }) => {
+  { name: 'reverse', angleDeg: 255, powerRatio: .6 }]) test(`${scenario.name} grounded candy visibly rolls with dust following before combat completes`, async ({ page }) => {
   await installGame(page, { layoutSeed: 4927 });
   await start(page);
   await dragPull(page, scenario);
@@ -26,7 +26,8 @@ for (const scenario of [{ name: 'forward', angleDeg: -5, powerRatio: .6 },
   await page.mouse.up();
   for (let i = 0; i < 100; i++) {
     await page.clock.runFor(16);
-    if (await page.getByTestId('projectile').getAttribute('data-rolling') === 'true') break;
+    if (await page.getByTestId('projectile').count()
+      && await page.getByTestId('projectile').getAttribute('data-rolling') === 'true') break;
   }
   await page.clock.runFor(80);
   await expect(page.getByTestId('roll-shadow')).toBeVisible();

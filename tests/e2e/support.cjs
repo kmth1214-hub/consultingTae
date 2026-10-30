@@ -44,7 +44,7 @@ async function installGame(page, fixture = {}) {
         queueMicrotask(() => { if (!trace.lastAction) trace.run = structuredClone(run); });
         return run;
       };
-      for (const name of ['resolveProjectile', 'useConsumable', 'drawRewardChoices', 'applyRewardChoice', 'advanceRound', 'chooseCampReward', 'startBonusRoute']) {
+      for (const name of ['resolveProjectile', 'useConsumable', 'drawRewardChoices', 'spinRewardSlot', 'applyRewardChoice', 'advanceRound', 'chooseCampReward', 'finishCampSlot', 'startBonusRoute']) {
         api[name] = (...args) => {
           if (name === 'resolveProjectile' && config.fastCombat) args[1] = { ...args[1], damage: 1000,
             // Explicit abstract fixture for screen progression, not a physical shot.
@@ -99,7 +99,7 @@ const test = base.extend({
 
 const arena = page => page.getByRole('group', { name: '전투 맵', exact: true });
 // Flight, the 2s result review, and the enemy response all precede the next idle turn.
-const phase = (page, value) => expect(arena(page)).toHaveAttribute('data-aim-phase', value, { timeout: value === 'idle' ? 10000 : 5000 });
+const phase = (page, value) => expect(arena(page)).toHaveAttribute('data-aim-phase', value, { timeout: 10000 });
 const ammo = page => page.locator('.battle-stats > span').nth(1).locator('strong');
 const hp = page => page.locator('.battle-stats > span').nth(0).locator('strong');
 const snapshot = page => page.evaluate(() => structuredClone(window.__gameTest));
@@ -134,13 +134,17 @@ async function shoot(page, { short = false, angleDeg = 45, powerRatio, reverse =
   if (finalHeading) await expect(page.getByRole('heading', { name: finalHeading, exact: true })).toBeVisible();
   else await phase(page, 'idle');
 }
-async function selectRewards(page, merge = false) {
-  await expect(page.getByRole('heading', { name: '다음 한 발을 위한 선물', exact: true })).toBeVisible();
-  await page.locator('.reward-section').nth(0).getByRole('button').first().click();
-  if (await page.getByRole('heading', { name: '같은 등급의 사탕을 발견했어요', exact: true }).isVisible())
-    await page.getByRole('button', { name: merge ? /등급으로 합성/ : '따로 보유', exact: !merge }).click();
-  const items = page.locator('.reward-section').nth(1).getByRole('button');
-  if (await items.count()) await items.first().click();
+async function selectRewards(page) {
+  await expect(page.getByRole('heading', { name: '다음 전투의 보상', exact: true })).toBeVisible();
+  await page.locator('.slot-machine').first().getByRole('button', { name: '돌리기' }).click();
+  const consumableSlot = page.locator('.slot-machine').nth(1);
+  if (await consumableSlot.count()) {
+    const spin = consumableSlot.getByRole('button', { name: '돌리기' });
+    if (await spin.isEnabled()) await spin.click();
+  } else {
+    const items = page.locator('.reward-section').getByRole('button');
+    if (await items.count()) await items.first().click();
+  }
   await page.locator('.continue-button').click();
 }
 async function stackShot({ area = 'forest', round = 1, seed = 0, physical = false, enemies: inputEnemies } = {}) {

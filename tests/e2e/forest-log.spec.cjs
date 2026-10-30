@@ -31,7 +31,7 @@ test('a thrown Forest log that misses has no remote damage or score', async ({ p
   expect(trace.run.score).toBe(0);
   expect(trace.lastEvent.obstacleEffects.length).toBeGreaterThan(0);
   expect(trace.lastEvent.obstacleEffects.flatMap(effect => effect.hits)).toEqual([]);
-  expect(trace.run.ammo).toBe(8);
+  expect(trace.run.ammo).toBe(2);
 });
 
 test('physical Forest hit remains functional at a reduced-motion phone viewport', async ({ page }) => {

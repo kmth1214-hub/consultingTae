@@ -27,7 +27,7 @@ test('Heal gives its full benefit without retaliation and the next shot reopens 
   await page.keyboard.press('4');
   await expect(page.getByText('이 소모품을 모두 사용했어요.', { exact: true })).toBeVisible();
   expect((await snapshot(page)).run).toEqual(trace.run);
-  await expect(ammo(page)).toHaveText('8');
+  await expect(ammo(page)).toHaveText('2');
 });
 
 test('Defense blocks damage, Fireball arms/doubles the next shot, and both counts/visual effects follow the engine', async ({ page }) => {
@@ -57,20 +57,20 @@ test('Defense blocks damage, Fireball arms/doubles the next shot, and both count
   await expect(page.locator('.hit-effect--fireball')).toHaveText('−4');
 });
 
-test('Spear prepares safely, then only its actual Snow path targets take damage and Alchemist receives item-use points', async ({ page }) => {
+test('Spear prepares safely, then only its actual Snow path targets take damage without cookie score bonus', async ({ page }) => {
   await installGame(page, { initial: { area: 'snow', playerHp: 60, inventory } });
   await start(page, '연금술사맛 쿠키');
   const before = (await snapshot(page)).run.enemies;
   await page.keyboard.press('2');
   expect((await snapshot(page)).run.enemies).toEqual(before);
-  expect((await snapshot(page)).run.score).toBe(10);
+  expect((await snapshot(page)).run.score).toBe(0);
   const aimed = await aimedShot({ area: 'snow' });
   await shoot(page, aimed);
   const trace = await snapshot(page);
   expect(trace.lastEvent.hits.map(hit => hit.id)).toEqual(aimed.shot.hitIds);
   expect(trace.lastEvent.hits.map(hit => hit.damage)).toEqual(aimed.shot.hitIds.map((_, i) => 4 - i));
   expect(trace.run.inventory.spear).toBe(0);
-  expect(trace.run.score).toBe(10 + trace.lastEvent.hits.reduce((sum, hit) => sum + hit.damage, 0));
+  expect(trace.run.score).toBe(trace.lastEvent.hits.reduce((sum, hit) => sum + hit.damage, 0));
   expect(trace.run.enemies.filter(enemy => !aimed.shot.hitIds.includes(enemy.id)).map(enemy => enemy.hp)).toEqual(before.filter(enemy => !aimed.shot.hitIds.includes(enemy.id)).map(enemy => enemy.hp));
   await expect(hp(page)).toHaveText(String(trace.run.playerHp));
   await expect(page.locator('.hit-effect--spear')).toHaveCount(trace.lastEvent.hits.filter(hit => !hit.defeated).length);
@@ -95,39 +95,32 @@ test('frozen and aiming item lockout cannot spend an item or a turn', async ({ p
   await page.mouse.up();
 });
 
-for (const merge of [false, true]) {
-  test(`reward gating and explicit fusion ${merge ? 'confirmation' : 'decline'} preserve engine progression`, async ({ page }) => {
-    await installGame(page, { allWeapons: true, fastCombat: true });
-    await start(page);
-    await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
-    const before = (await snapshot(page)).run;
-    await expect(page.locator('.reward-screen .eyebrow')).toContainText('1 / 3');
-    await expect(page.locator('.continue-button')).toHaveText('다음 라운드 →');
-    await expect(page.locator('.continue-button')).toBeDisabled();
-    await page.locator('.reward-section').nth(0).getByRole('button').first().click();
-    await expect(page.getByRole('heading', { name: '같은 등급의 사탕을 발견했어요', exact: true })).toBeVisible();
-    expect((await snapshot(page)).run.weapons).toEqual(before.weapons);
-    await expect(page.locator('.continue-button')).toBeDisabled();
-    await page.getByRole('button', { name: merge ? /등급으로 합성/ : '따로 보유', exact: !merge }).click();
-    let trace = await snapshot(page);
-    expect(trace.run.weapons.length).toBe(before.weapons.length + (merge ? 0 : 1));
-    expect(trace.run.weapons.some(weapon => weapon.grade === 'B')).toBe(merge);
-    await expect(page.locator('.continue-button')).toBeDisabled();
-    await page.locator('.reward-section').nth(1).getByRole('button').first().click();
-    await page.locator('.continue-button').click();
-    await phase(page, 'idle');
-    await expect(page.getByRole('heading', { name: '숲 지역 2 / 3', exact: true })).toBeVisible();
-    trace = await snapshot(page);
-    expect(trace.run.maxAmmo).toBe(before.maxAmmo + (merge ? 0 : 1));
-    expect(trace.run.ammo).toBe(trace.run.maxAmmo);
-    await expect(ammo(page)).toHaveText(String(trace.run.maxAmmo));
-  });
-}
+test('round reward requires one stone slot spin and a consumable choice, then adds one C stone', async ({ page }) => {
+  await installGame(page, { fastCombat: true });
+  await start(page);
+  await shoot(page, { short: true, finalHeading: '다음 전투의 보상' });
+  const before = (await snapshot(page)).run;
+  await expect(page.locator('.reward-screen .eyebrow')).toContainText('1 / 3');
+  await expect(page.locator('.continue-button')).toBeDisabled();
+  await page.locator('.slot-machine').first().getByRole('button', { name: '돌리기' }).click();
+  const afterSpin = (await snapshot(page)).run;
+  expect(afterSpin.weapons).toHaveLength(before.weapons.length + 1);
+  expect(afterSpin.weapons.at(-1).grade).toBe('C');
+  await expect(page.locator('.continue-button')).toBeDisabled();
+  await page.locator('.reward-section').getByRole('button').first().click();
+  await page.locator('.continue-button').click();
+  await phase(page, 'idle');
+  const next = (await snapshot(page)).run;
+  expect(next.round).toBe(2);
+  expect(next.maxAmmo).toBe(before.maxAmmo + 1);
+  expect(next.ammo).toBe(next.maxAmmo);
+  await expect(ammo(page)).toHaveText(String(next.maxAmmo));
+});
 
 test('Forest boss rewards lead to camp; healing continues to Snow with refreshed ammo', async ({ page }) => {
   await installGame(page, { initial: { area: 'forest', round: 3, playerHp: 30 }, allWeapons: true, fastCombat: true });
   await start(page);
-  await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
+  await shoot(page, { short: true, finalHeading: '다음 전투의 보상' });
   await expect(page.locator('.reward-screen .eyebrow')).toContainText('3 / 3');
   await expect(page.locator('.continue-button')).toHaveText('야영지로 이동');
   await selectRewards(page);
@@ -139,57 +132,51 @@ test('Forest boss rewards lead to camp; healing continues to Snow with refreshed
   expect(run.round).toBe(1);
   expect(run.playerHp).toBe(90);
   await expect(hp(page)).toHaveText('90');
-  expect(run.maxAmmo).toBe(9 + Math.max(0, run.weapons.length - 1));
+  expect(run.maxAmmo).toBe(run.weapons.length);
   expect(run.ammo).toBe(run.maxAmmo);
   await expect(ammo(page)).toHaveText(String(run.maxAmmo));
 });
 
-test('camp weapon rewards can finish two consecutive fusion decisions without switching rewards', async ({ page }) => {
-  await installGame(page, { initial: { area: 'forest', round: 3 }, allWeapons: true, fastCombat: true });
+test('camp stone option requires two spins and carries both stones into Snow', async ({ page }) => {
+  await installGame(page, { initial: { area: 'forest', round: 3 }, fastCombat: true });
   await start(page);
-  await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
-  await expect(page.locator('.reward-screen .eyebrow')).toContainText('3 / 3');
-  await expect(page.locator('.continue-button')).toHaveText('야영지로 이동');
+  await shoot(page, { short: true, finalHeading: '다음 전투의 보상' });
   await selectRewards(page);
-  await page.getByRole('button', { name: /새로운 마법사탕/ }).click();
-  await expect(page.getByRole('heading', { name: '같은 등급의 사탕을 발견했어요', exact: true })).toBeVisible();
-  const pending = (await snapshot(page)).run.pendingCampReward;
-  expect(pending.items).toHaveLength(2);
-  await expect(page.getByRole('button', { name: /따뜻한 휴식/ })).toBeDisabled();
-  await page.getByRole('button', { name: '따로 보유', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '같은 등급의 사탕을 발견했어요', exact: true })).toBeVisible();
-  expect((await snapshot(page)).run.pendingCampReward.items).toEqual(pending.items);
-  await page.getByRole('button', { name: /등급으로 합성/ }).click();
-  await expect(page.getByRole('heading', { name: '새로운 사탕을 얻었어요', exact: true })).toBeVisible();
-  await expect(page.locator('.camp-grant')).toHaveCount(2);
-  await expect(page.locator('.camp-grant').nth(1)).toContainText('합성 완료');
-  await page.screenshot({ path: 'tmp/camp-reward-pair.png' });
+  const before = (await snapshot(page)).run.weapons.length;
+  await page.getByRole('button', { name: /스톤 슬롯 두 번/ }).click();
+  await expect(page.getByRole('heading', { name: '스톤 슬롯 두 번' })).toBeVisible();
+  const spin = page.locator('.slot-machine').getByRole('button', { name: '돌리기' });
+  await expect(page.locator('.continue-button')).toBeDisabled();
+  await spin.click();
+  await expect(page.locator('.continue-button')).toBeDisabled();
+  await spin.click();
   const granted = (await snapshot(page)).run.weapons;
+  expect(granted).toHaveLength(before + 2);
+  expect(granted.slice(-2).every(weapon => weapon.grade === 'C')).toBe(true);
   await page.getByRole('button', { name: '다음 지역으로 →', exact: true }).click();
   await phase(page, 'idle');
   expect((await snapshot(page)).run.area).toBe('snow');
   expect((await snapshot(page)).run.weapons).toEqual(granted);
   const { run } = await snapshot(page);
-  expect(run.maxAmmo).toBe(9 + Math.max(0, granted.length - 1));
+  expect(run.maxAmmo).toBe(granted.length);
   await expect(ammo(page)).toHaveText(String(run.maxAmmo));
 });
 
-test('single B-grade camp result fits a phone and waits for confirmation before the next region', async ({ page }) => {
+test('two-spin camp result fits a phone and waits for both spins', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await installGame(page, { random: 0, initial: { area: 'forest', round: 3 }, allWeapons: true, fastCombat: true });
+  await installGame(page, { random: 0, initial: { area: 'forest', round: 3 }, fastCombat: true });
   await start(page);
-  await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
+  await shoot(page, { short: true, finalHeading: '다음 전투의 보상' });
   await selectRewards(page);
-  await page.getByRole('button', { name: /새로운 마법사탕/ }).click();
-  if (await page.getByRole('heading', { name: '같은 등급의 사탕을 발견했어요', exact: true }).isVisible())
-    await page.getByRole('button', { name: '따로 보유', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '새로운 사탕을 얻었어요', exact: true })).toBeVisible();
-  await expect(page.locator('.camp-grant')).toHaveCount(1);
-  await expect(page.locator('.camp-grant')).toContainText('B 등급');
-  await expect(page.locator('.camp-grant strong')).not.toHaveText('');
+  await page.getByRole('button', { name: /스톤 슬롯 두 번/ }).click();
+  await expect(page.locator('.continue-button')).toBeDisabled();
+  const spin = page.locator('.slot-machine').getByRole('button', { name: '돌리기' });
+  await spin.click();
+  await expect(page.locator('.continue-button')).toBeDisabled();
+  await spin.click();
+  await expect(page.locator('.slot-machine__result')).toHaveCount(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await page.screenshot({ path: 'tmp/camp-reward-mobile.png' });
   await page.getByRole('button', { name: '다음 지역으로 →', exact: true }).click();
   await phase(page, 'idle');
   expect((await snapshot(page)).run.area).toBe('snow');
@@ -198,7 +185,7 @@ test('single B-grade camp result fits a phone and waits for confirmation before 
 test('Snow boss unlock persists immediately across refresh without restoring the active run', async ({ page }) => {
   await installGame(page, { initial: { area: 'snow', round: 3 }, allWeapons: true, fastCombat: true });
   await start(page);
-  await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
+  await shoot(page, { short: true, finalHeading: '다음 전투의 보상' });
   expect((await snapshot(page)).run.snowAreaCleared).toBe(true);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('cookie-roguelike.profile.v1')))).toEqual({ version: 1, snowAreaCleared: true });
   await page.reload();
@@ -208,10 +195,10 @@ test('Snow boss unlock persists immediately across refresh without restoring the
   await expect(page.getByRole('button', { name: /^바람궁수 쿠키/ })).toBeEnabled();
 });
 
-test('City clear offers optional Chaos; three rounds bypass rewards and display independent bonus/main scores', async ({ page }) => {
+test('City clear offers optional Chaos; its first two rounds use both reward slots and keep scores separate', async ({ page }) => {
   await installGame(page, { initial: { area: 'city', round: 3, playerHp: 80, inventory }, allWeapons: true, fastCombat: true });
   await start(page);
-  await shoot(page, { short: true, finalHeading: '다음 한 발을 위한 선물' });
+  await shoot(page, { short: true, finalHeading: '다음 전투의 보상' });
   await expect(page.locator('.reward-screen .eyebrow')).toContainText('3 / 3');
   await expect(page.locator('.continue-button')).toHaveText('원정 결과 보기');
   await selectRewards(page);
@@ -220,14 +207,18 @@ test('City clear offers optional Chaos; three rounds bypass rewards and display 
   await page.getByRole('button', { name: '혼돈 지역 도전 →', exact: true }).click();
   await phase(page, 'idle');
   await page.keyboard.press('4');
-  const rewardCalls = (await snapshot(page)).events.filter(event => event.name === 'drawRewardChoices').length;
   for (let round = 1; round <= 3; round++) {
     await expect(page.getByRole('heading', { name: `혼돈 지역 ${round} / 3`, exact: true })).toBeVisible();
-    await shoot(page, { short: true, finalHeading: round === 3 ? '혼돈까지 정복!' : undefined });
+    await shoot(page, { short: true, finalHeading: round === 3 ? '혼돈까지 정복!' : '다음 전투의 보상' });
+    if (round < 3) {
+      await expect(page.locator('.slot-machine')).toHaveCount(2);
+      await selectRewards(page);
+      await phase(page, 'idle');
+    }
   }
   const trace = await snapshot(page);
   expect(trace.run.terminal).toBe('bonus-clear');
-  expect(trace.events.filter(event => event.name === 'drawRewardChoices')).toHaveLength(rewardCalls);
+  expect(trace.events.filter(event => event.name === 'spinRewardSlot')).toHaveLength(5);
   expect(trace.run.mainRunSummary.finalScore).toBe(main.finalScore);
   expect(trace.run.bonusScore).toBeGreaterThan(0);
   await expect(page.locator('.result-stats > div').filter({ has: page.getByText('본편 최종 점수', { exact: true }) }).locator('dd')).toHaveText(main.finalScore.toLocaleString());

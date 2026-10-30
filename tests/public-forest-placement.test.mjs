@@ -19,7 +19,7 @@ const layoutFor = run => buildPlayableBattlefield({ area: run.area, round: run.r
   enemyLandingPositions: run.enemyLandingPositions ?? null,
   worldScale: run.studioWorldScale ?? run.battlefieldWorldScale ?? 1 });
 
-test('public Forest elevates one regular enemy only in round two and keeps studio abilities private', () => {
+test('public Forest elevates one regular enemy only in round two and shows the loaded stone ability', () => {
   for (const round of [1, 2, 3]) for (const seed of [0, 1, 4, 4927]) {
     const run = make('forest', round, seed).getSnapshot().run;
     const layout = layoutFor(run);
@@ -41,7 +41,7 @@ test('public Forest elevates one regular enemy only in round two and keeps studi
     }
     if (round === 3) assert.ok(layout.enemies.every(enemy => enemy.isBoss && enemy.y === layout.groundY));
     assert.equal(layout.player.contact.y, layout.launcher.contact.y);
-    assert.equal(getCandyDetails(run).currentAbility, null);
+    assert.ok(getCandyDetails(run).currentAbility);
     assert.deepEqual(layoutFor(run), layout);
   }
   const first = layoutFor(make('forest', 2, 0).getSnapshot().run);
@@ -87,7 +87,8 @@ test('other regions use their own public elevated mode', () => {
     const layout = layoutFor(run);
     assert.equal(layout.prototype, 'regional-elevated-v1');
     const expected = round === 3 ? 0 : area === 'chaos' ? layout.enemies.length > 10 ? 3 : 2 : round === 2 ? 1 : 0;
-    assert.equal(layout.enemies.filter(enemy => enemy.y < layout.groundY).length, expected);
+    assert.equal(layout.enemies.filter(enemy => enemy.y < layout.groundY).length,
+      expected + (area === 'city' && round < 3 ? 2 : 0));
   }
 });
 
@@ -102,9 +103,7 @@ test('leaving Forest resets its landing coordinates before Snow builds a new bat
   const boss = session.getSnapshot().run.enemies[0];
   assert.equal(session.actions.fireShot({ hitIds: [boss.id] }).accepted, true);
   const choices = session.getSnapshot().run.rewardChoices;
-  const weapon = choices.weapons.find(item => item.id !== 'adventurer-candy') || choices.weapons[0];
-  session.actions.selectReward('weapon', weapon.choiceId);
-  if (session.getSnapshot().fusion) session.actions.resolveFusion(false);
+  session.actions.spinRewardSlot('stone');
   session.actions.selectReward('consumable', choices.consumables[0].choiceId);
   assert.equal(session.actions.continueAfterReward().accepted, true);
   assert.equal(session.getSnapshot().screen, 'camp');

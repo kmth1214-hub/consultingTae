@@ -13,7 +13,7 @@ test('selecting Spear only prepares the next candy, without damage, damage RNG o
   const event=engine.useConsumable(run,'spear',{rng:()=>{draws++;return .5;}});
   assert.deepEqual(run.enemies,before.enemies,'Selecting Spear must not damage enemies before launch');
   assert.deepEqual(event.hits,[]);assert.equal(draws,0);assert.equal(event.enemyAttack,null);
-  assert.equal(run.spearArmed,true);assert.equal(run.ammo,9);assert.equal(run.inventory.spear,0);
+  assert.equal(run.spearArmed,true);assert.equal(run.ammo,3);assert.equal(run.inventory.spear,0);
 });
 
 function fixture({stacked=false,rolling=false}={}) {
@@ -49,7 +49,7 @@ test('piercing follows swept contacts in path order, passes living targets and s
     const event=engine.resolveProjectile(run,{damage:4,hitIds:shot.hitIds,shotMeta:shot,rng:()=>.5});
     assert.deepEqual(event.hits.map(h=>h.damage),[4,3,2]);
     assert.deepEqual(run.enemies.map(e=>e.hp),[16,17,18,20]);
-    assert.equal(event.modifier,'spear');assert.equal(run.spearArmed,false);assert.equal(run.ammo,8);
+    assert.equal(event.modifier,'spear');assert.equal(run.spearArmed,false);assert.equal(run.ammo,2);
   }
 });
 

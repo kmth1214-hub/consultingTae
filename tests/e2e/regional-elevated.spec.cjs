@@ -15,8 +15,9 @@ for (const [area, round, expected] of [
   const supports = page.locator('.battle-arena [data-supports-enemy]');
   await expect(supports).toHaveCount(expected);
   const y = await page.locator('.battle-arena .monster').evaluateAll(nodes => nodes.map(node => Number.parseFloat(node.style.top)));
-  expect(y.filter(value => value < 900)).toHaveLength(expected);
-  expect(y.filter(value => value === 900)).toHaveLength(y.length - expected);
+  const flyers = area === 'city' && round <= 2 ? 2 : 0;
+  expect(y.filter(value => value < 900)).toHaveLength(expected + flyers);
+  expect(y.filter(value => value === 900)).toHaveLength(y.length - expected - flyers);
   await expect(page.locator('.minimap-enemy')).toHaveCount(y.length);
   if (area === 'snow' || area === 'city') await expect(supports.locator('.supported-stack-top')).toHaveCount(expected);
 });

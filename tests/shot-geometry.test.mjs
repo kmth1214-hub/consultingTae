@@ -29,7 +29,7 @@ test('scaled studio shot starts at the visibly scaled pouch and keeps five-diame
   assert.ok(shot.rollDistance <= 5 * layout.candyRadius * 2 + 1e-7);
 });
 
-test('prototype Adventurer candy bounces once before rolling; ordinary and Spear shots do not', () => {
+test('Adventurer exclusive stone bounces once in every region; basic stone and Spear do not', () => {
   const layout = empty(), pull = pullAt(24, .6);
   const input = { layout, pull, enemies: [], prototype: 'forest-elevated-v1',
     loadedCandyId: 'adventurer-candy' };
@@ -41,11 +41,12 @@ test('prototype Adventurer candy bounces once before rolling; ordinary and Spear
     && sample.time < bounced.bounce.secondLandingTime && sample.y < bounced.bounce.firstLanding.y));
   assert.ok(bounced.rollStartDistance > 0);
   assert.ok(bounced.rollDistance <= layout.candyRadius * 10);
-  assert.equal(planShot({ ...input, prototype: null }).bounce, undefined);
+  assert.ok(planShot({ ...input, prototype: null }).bounce);
+  assert.equal(planShot({ ...input, loadedCandyId: 'basic-stone' }).bounce, undefined);
   assert.equal(planShot({ ...input, piercing: true }).bounce, undefined);
 });
 
-test('prototype Alchemist splash is anchored to the first real candy collision', () => {
+test('Alchemist splash is anchored to the first real candy collision in every region', () => {
   const layout = empty(), pull = pullAt(30, .55);
   const baseline = planShot({ layout, pull, enemies: [] });
   const contact = sampleAtDistance(baseline.path, baseline.path.length * .35);
@@ -57,10 +58,12 @@ test('prototype Alchemist splash is anchored to the first real candy collision',
   assert.equal(shot.abilityContacts[0].sourceId, 'near');
   assert.deepEqual(shot.abilityContacts[0].targetIds, ['near']);
   assert.equal(planShot({ layout, pull, enemies: living(['near', 'far']),
-    prototype: null, loadedCandyId: 'alchemist-candy' }).abilityContacts, undefined);
+    prototype: null, loadedCandyId: 'alchemist-candy' }).abilityContacts.length, 1);
+  assert.equal(planShot({ layout, pull, enemies: living(['near', 'far']),
+    loadedCandyId: 'basic-stone' }).abilityContacts, undefined);
 });
 
-test('prototype Wizard candy splits into two deterministic paths at the apex and never changes the large path', () => {
+test('Wizard exclusive stone splits into two paths at the apex in every region', () => {
   const layout = empty(), pull = pullAt(45, .55);
   const input = { layout, pull, enemies: [] };
   const ordinary = planShot(input);
@@ -76,7 +79,9 @@ test('prototype Wizard candy splits into two deterministic paths at the apex and
   const struck = planShot({ ...input, prototype: 'forest-elevated-v1', loadedCandyId: 'wizard-orb',
     enemies: living(['child-target']) });
   assert.ok(struck.splitOrbs.children.some(orb => orb.hit?.enemyId === 'child-target'));
-  assert.equal(planShot({ ...input, prototype: null, loadedCandyId: 'wizard-orb',
+  assert.ok(planShot({ ...input, prototype: null, loadedCandyId: 'wizard-orb',
+    enemies: living(['child-target']) }).splitOrbs);
+  assert.equal(planShot({ ...input, loadedCandyId: 'basic-stone',
     enemies: living(['child-target']) }).splitOrbs, undefined);
   assert.equal(planShot({ ...input, prototype: 'forest-elevated-v1', loadedCandyId: 'wizard-orb',
     enemies: living(['child-target']), piercing: true }).splitOrbs, undefined);
@@ -321,7 +326,7 @@ test('a grounded candy can start a three-stack chain after its own motion ends, 
     shotMeta: { contacts: shot.contacts, directHitTime: shot.directHitTime } });
   assert.deepEqual(event.hits.map(h => [h.id, h.damage]), [['target', 3]]);
   assert.equal(state.score, 3);
-  assert.equal(state.ammo, 8);
+  assert.equal(state.ammo, 2);
   assert.deepEqual(state.toppledObstacleIds, ['a', 'b', 'c']);
   assert.deepEqual(options, before);
   assert.deepEqual(planShot(options), shot, 'planning is deterministic and consumes no randomness');

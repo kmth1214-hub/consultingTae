@@ -14,12 +14,21 @@ for (const [area, round, expected] of [['snow', 2, 1], ['city', 2, 1],
     const before = await preview.locator('.monster').evaluateAll(nodes => nodes.map(node => ({
       id: node.dataset.enemyId, x: node.style.left, y: node.style.top
     })));
-    expect(before.filter(item => Number.parseFloat(item.y) < 900)).toHaveLength(supportCount);
+    const flyers = area === 'city' ? 2 : 0;
+    expect(before.filter(item => Number.parseFloat(item.y) < 900)).toHaveLength(supportCount + flyers);
     await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
     await expect(page.locator('[data-dev-tool="studio-battle-play"]')).toBeVisible();
     await expect(page.locator('.battle-arena [data-supports-enemy]')).toHaveCount(supportCount);
     const after = await page.locator('.battle-arena .monster').evaluateAll(nodes => nodes.map(node => ({
       id: node.dataset.enemyId, x: node.style.left, y: node.style.top
     })));
+    if (area === 'city') {
+      for (const [index, actor] of before.entries()) {
+        if (actor.id.includes('clockwork-crow')) {
+          expect(Math.abs(Number.parseFloat(after[index].x) - Number.parseFloat(actor.x))).toBeLessThanOrEqual(113);
+          after[index].x = actor.x;
+        }
+      }
+    }
     expect(after).toEqual(before);
   });

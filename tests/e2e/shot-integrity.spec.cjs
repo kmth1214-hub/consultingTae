@@ -20,7 +20,9 @@ test('after all stacks fall, a visible first impact cannot remotely kill the las
  const enemies=BattleEngine.createRoundEnemies('snow',1,{rng:()=>.5});
  const layout=buildPlayableBattlefield({area:'snow',round:1,enemies,seed:0});
  enemies.forEach((e,i)=>{e.hp=i<2?1:0;e.alive=i<2;});
- await installGame(page,{initial:{area:'snow',weapons:[{...BattleEngine.WEAPON_CATALOG[0],grade:'A'}]},
+ await installGame(page,{initial:{area:'snow',weapons:[{...BattleEngine.WEAPON_CATALOG[0],grade:'A'},
+  {...BattleEngine.WEAPON_CATALOG.find(w=>w.id==='basic-stone'),grade:'C'},
+  {...BattleEngine.WEAPON_CATALOG.find(w=>w.id==='basic-stone'),grade:'C'}]},
   stateOverride:{enemies,toppledObstacleIds:layout.obstacles.map(o=>o.id)}});
  await start(page);await pause(page);
  await shootReview(page,{angleDeg:7.5,powerRatio:.88});
@@ -42,7 +44,7 @@ for(const area of ['forest','snow','city','chaos'])test(`a full-power long ${are
  const after=await snapshot(page);
  expect(after.lastEvent.hits).toEqual([]);expect(after.lastEvent.obstacleEffects).toEqual([]);
  expect(after.run.enemies).toEqual(before.run.enemies);expect(after.run.round).toBe(1);
- expect(after.run.ammo).toBe(8);expect(after.lastEvent.enemyAttack).not.toBe(null);
+  expect(after.run.ammo).toBe(2);expect(after.lastEvent.enemyAttack).not.toBe(null);
  await page.clock.runFor(4000);await phase(page,'idle');
  const settled=await snapshot(page);expect(settled.events.filter(e=>e.name==='resolveProjectile')).toHaveLength(1);
  await page.clock.runFor(5000);
@@ -54,7 +56,7 @@ test('resize cancels one flight; duplicate pointer-up and late old frames cannot
  await page.keyboard.press('1');
  await dragPull(page,{angleDeg:45,powerRatio:1});await page.mouse.up();await page.clock.runFor(150);
  await page.setViewportSize({width:1430,height:900});await phase(page,'idle');
- let trace=await snapshot(page);expect(trace.run.ammo).toBe(9);expect(trace.run.fireballArmed).toBe(true);
+  let trace=await snapshot(page);expect(trace.run.ammo).toBe(3);expect(trace.run.fireballArmed).toBe(true);
  expect(trace.events.filter(e=>e.name==='resolveProjectile')).toHaveLength(0);
  await page.clock.runFor(5000);
  await dragPull(page,{angleDeg:45,powerRatio:1});await page.mouse.up();
@@ -62,7 +64,7 @@ test('resize cancels one flight; duplicate pointer-up and late old frames cannot
  await until(page,async()=>await arena(page).getAttribute('data-aim-phase')==='reviewing');
  await page.clock.runFor(5000);await phase(page,'idle');
  trace=await snapshot(page);expect(trace.events.filter(e=>e.name==='resolveProjectile')).toHaveLength(1);
- expect(trace.run.ammo).toBe(8);expect(trace.run.fireballArmed).toBe(false);
+  expect(trace.run.ammo).toBe(2);expect(trace.run.fireballArmed).toBe(false);
 });
 
 test('a cancelled hidden flight cannot revive when a fresh round starts after a real clearing shot',async({page})=>{
@@ -73,9 +75,9 @@ test('a cancelled hidden flight cannot revive when a fresh round starts after a 
  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'));});
  const pull=await aimedShot({piercing:false});
  await shootReview(page,pull);await page.clock.runFor(2100);
- await expect(page.getByRole('heading',{name:'다음 한 발을 위한 선물',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'다음 전투의 보상',exact:true})).toBeVisible();
  await selectRewards(page);await phase(page,'idle');
- const next=await snapshot(page);expect(next.run.round).toBe(2);expect(next.run.maxAmmo).toBe(10);expect(next.run.ammo).toBe(next.run.maxAmmo);
+ const next=await snapshot(page);expect(next.run.round).toBe(2);expect(next.run.maxAmmo).toBe(4);expect(next.run.ammo).toBe(next.run.maxAmmo);
  await page.clock.runFor(8000);
  expect((await snapshot(page)).run).toEqual(next.run);
  expect((await snapshot(page)).events.filter(e=>e.name==='resolveProjectile')).toHaveLength(1);

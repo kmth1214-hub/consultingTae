@@ -37,7 +37,7 @@ for(const setting of ['shield','phone-ice','milk','fatal']) test(`actual shot re
   expect(event.bossSplit.remainingHp).toBe(27);expect(event.enemyAttack).toBe(null);
   await expect(page.locator('.monster--boss')).toHaveCount(1);await expect(arena(page)).toHaveAttribute('data-boss-phase','fused');
   await expect(hp(page)).toHaveText(setting==='fatal'?'1':'100');
-  await expect(ammo(page)).toHaveText('8');
+  await expect(ammo(page)).toHaveText('2');
   await advanceUntil(page,async()=>await page.getByTestId('boss-split-transition').count()>0);
   await expect(arena(page)).toHaveAttribute('data-aim-phase','splitting');
   const calls=(await snapshot(page)).events.length;

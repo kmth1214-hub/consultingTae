@@ -45,7 +45,9 @@ test('ordinary candy topples a stack while Wind homing flies to its enemy withou
   const browserErrors = [];
   windPage.on('pageerror', error => browserErrors.push(error.message));
   windPage.on('console', message => { if (message.type() === 'error') browserErrors.push(message.text()); });
-  await installGame(windPage, { allWeapons: true, layoutSeed: 4927 });
+  const wind = { id: 'wind-candy', name: '바람궁수의 사탕', grade: 'C' };
+  const basic = { id: 'basic-stone', name: '기본 스톤', grade: 'C' };
+  await installGame(windPage, { initial: { weapons: [wind, basic, basic] }, layoutSeed: 4927 });
   await windPage.addInitScript(() => localStorage.setItem('cookie-roguelike.profile.v1', JSON.stringify({ version: 1, snowAreaCleared: true })));
   await start(windPage, '바람궁수 쿠키');
   await dragPull(windPage, { angleDeg: 0, powerRatio: 1 });

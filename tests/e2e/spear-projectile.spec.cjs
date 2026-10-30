@@ -21,7 +21,7 @@ for(const mobile of [false,true]) test(`${mobile?'phone':'desktop'} Spear remain
   await page.getByRole('button',{name:'창 사용',exact:true}).click();
   const prepared=await snapshot(page);
   expect(prepared.run.enemies).toEqual(original);expect(prepared.lastEvent.hits).toEqual([]);
-  expect(prepared.run.ammo).toBe(9);expect(prepared.run.spearArmed).toBe(true);
+  expect(prepared.run.ammo).toBe(3);expect(prepared.run.spearArmed).toBe(true);
   await expect(loaded(page)).toHaveAttribute('data-candy-variant','spear');
   await expect(page.locator('.candy-status-chips')).toContainText('관통');
   const aimed=await aimedShot({area:'snow'});
@@ -41,7 +41,7 @@ for(const mobile of [false,true]) test(`${mobile?'phone':'desktop'} Spear remain
     const index=hitIds.indexOf(enemy.id);
     expect(enemy.hp).toBe(index<0?20:20-(4-index));
   }
-  expect(trace.run.spearArmed).toBe(false);expect(trace.run.ammo).toBe(8);
+  expect(trace.run.spearArmed).toBe(false);expect(trace.run.ammo).toBe(2);
   expect(await page.getByTestId('spear-path-contact').evaluateAll(nodes=>nodes.map(n=>n.dataset.enemyId))).toEqual(hitIds);
   expect(trace.events.filter(e=>e.name==='resolveProjectile')).toHaveLength(1);
 });

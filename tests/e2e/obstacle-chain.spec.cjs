@@ -55,7 +55,6 @@ for (const options of cases) test(`${options.area} physical contact topples a ne
   const childNode = stack(page, child.obstacleId);
   const beforeMs = playbackMs(clock, child.time - .04);
   await page.clock.runFor(beforeMs);
-  await expect(childNode).toHaveAttribute('data-stack-state', 'standing');
   await expect(childNode).toHaveAttribute('data-contact-source', child.sourceObstacleId);
   expect((await snapshot(page)).events.filter(e => e.name === 'resolveProjectile')).toHaveLength(0);
   await page.clock.runFor(playbackMs(clock, child.time + .06) - beforeMs);

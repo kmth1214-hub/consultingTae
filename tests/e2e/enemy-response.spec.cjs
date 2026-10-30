@@ -133,7 +133,8 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
   for (const blocked of [false, true]) {
     test(`${area} boss third response visibly ${blocked ? 'hits the shield and suppresses' : 'executes'} ${special}`, async ({ page }) => {
       test.setTimeout(60000);
-      await installGame(page, { initial: { area, round: 3, inventory } });
+      const basic = { id: 'basic-stone', name: '기본 스톤', grade: 'C', effect: '공통 피해' };
+      await installGame(page, { initial: { area, round: 3, inventory, weapons: [basic, basic, basic, basic] } });
       await start(page);
       for (let turn = 0; turn < 2; turn++) {
         await page.keyboard.press('4');
@@ -168,12 +169,17 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
       await expect(hp(page)).toHaveText(String(event.playerHpAfter));
       await page.screenshot({ path: `tmp/react-t06-${area}-${blocked ? 'blocked' : 'special'}.jpg` });
       if (area === 'city') await page.clock.runFor(1000);
-      await phase(page, 'idle');
+      if (area === 'city' && !blocked) {
+        await expect(page.getByRole('heading', { name: '다음엔 조금 더 멀리' })).toBeVisible();
+      } else {
+        await phase(page, 'idle');
+      }
       expect((await snapshot(page)).run).toEqual(trace.run);
       if (special === 'frozen-breath') expect(trace.run.consumablesBlocked).toBe(!blocked);
       if (special === 'oven-overheat') {
         expect(event.ammoLost).toBe(blocked ? 0 : 1);
-        await expect(ammo(page)).toHaveText(blocked ? '6' : '5');
+        if (blocked) await expect(ammo(page)).toHaveText('1');
+        else expect((await snapshot(page)).run.ammo).toBe(0);
       }
     });
   }

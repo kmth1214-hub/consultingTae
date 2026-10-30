@@ -30,7 +30,7 @@ test('all twelve regional rounds enter the real battle immediately with a fresh 
     assert.equal(snapshot.screen, 'battle');
     assert.equal(run.area, area); assert.equal(run.round, round);
     assert.equal(run.bonusMode, area === 'chaos');
-    assert.equal(run.playerHp, 100); assert.equal(run.ammo, 9);
+    assert.equal(run.playerHp, 100); assert.equal(run.ammo, 3);
     assert.equal(run.layoutSeed, 4927);
     assert.equal(run.studioWorldScale, 1.5);
     const preview = createStudioScenario({ area, round, seed: 4927 });
@@ -58,7 +58,7 @@ test('every cookie can be tested, even locked cookies, without reading or writin
       assert.equal(session.getSnapshot().selectedCharacter.id, character.id);
       const target = session.getSnapshot().run.enemies[0].id;
       session.actions.fireShot({ hitIds: [target] });
-      assert.equal(session.getSnapshot().run.ammo, 8);
+      assert.equal(session.getSnapshot().run.ammo, 2);
     }
   } finally {
     if (descriptor) Object.defineProperty(globalThis, 'localStorage', descriptor);
@@ -75,7 +75,7 @@ test('boss special setup triggers the real third response; ordinary rounds and i
     assert.equal(event.enemyAttack.attemptedSpecial, special);
     assert.ok(session.getSnapshot().enemyResponse);
     const again = createStudioSession(config, options);
-    assert.equal(again.getSnapshot().run.ammo, 9);
+    assert.equal(again.getSnapshot().run.ammo, 3);
     assert.equal(again.getSnapshot().run.layoutSeed, 0xffffffff);
     assert.equal(again.getSnapshot().enemyResponse, null);
     assert.deepEqual(config, before);

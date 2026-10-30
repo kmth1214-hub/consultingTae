@@ -86,6 +86,7 @@ test('public physical flights use the same enlarged bodies and launch anchor in 
       assert.equal(enemy.collider.radius, original.enemies[index].collider.radius * 1.5);
       if (enemy.isBoss) assert.equal(enemy.size / (92 * 1.5), enemy.kind === 'chaos-fused-boss' ? 4.5 : 3);
     }
-    for (const obstacle of layout.obstacles) assert.equal(obstacle.width, original.obstacles.find(item => item.id === obstacle.id).width * 1.5);
+    for (const obstacle of layout.obstacles) assert.equal(obstacle.width,
+      (obstacle.supportsEnemyId ? 128 : 80) * 1.5);
   }
 });

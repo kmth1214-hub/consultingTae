@@ -3,9 +3,13 @@ const assert = require('node:assert/strict');
 const engine = require('../assets/js/battle-engine.js');
 
 const weapon = (id, grade = 'C') => ({ ...engine.WEAPON_CATALOG.find(item => item.id === id), grade });
-const create = (ids = ['adventurer-candy'], options = {}) => engine.createRunState({
-  weapons: ids.map(id => weapon(id)), inventory: {}, rng: () => 0, ...options
-});
+const create = (ids = ['adventurer-candy'], options = {}) => {
+  const deck = [...ids, ...Array(Math.max(0, 3 - ids.length)).fill('basic-stone')];
+  const state = engine.createRunState({ weapons: deck.map(id => weapon(id)), inventory: {}, rng: () => 0, ...options });
+  state.weaponQueue = state.weapons.map(item => item.instanceId);
+  state.currentWeaponId = state.weaponQueue[0];
+  return state;
+};
 function sturdyEnemy(state) {
   state.enemies[0].hp = state.enemies[0].maxHp = 100;
   return state.enemies[0].id;
@@ -14,7 +18,7 @@ function clearCity() {
   const state = create(['adventurer-candy'], { area: 'city', round: 3, score: 100, now: 0 });
   state.terminal = 'round-clear';
   const rewards = engine.drawRewardChoices(state, () => 0.5);
-  engine.applyRewardChoice(state, 'weapon', rewards.weapons[0].choiceId, { mergeDuplicate: false });
+  engine.spinRewardSlot(state, 'stone', () => .5);
   engine.applyRewardChoice(state, 'consumable', rewards.consumables[0].choiceId);
   engine.advanceRound(state, { now: 1000 });
   return state;
@@ -42,19 +46,19 @@ test('explicit inventories are independent, integer capped, and exclude unknown 
   assert.notEqual(state.inventory, input);
 });
 
-test('Adventurer awards one +10 per third colliding projectile despite duplicate owned copies', () => {
+test('Adventurer direct hits score only damage and no cookie-specific point bonus', () => {
   const state = create(['adventurer-candy', 'adventurer-candy']);
   const id = sturdyEnemy(state);
   let result;
   for (let i = 0; i < 3; i++) result = engine.resolveProjectile(state, { hitIds: [id, id], damage: 1, rng: () => 0 });
-  assert.equal(state.score, 13);
-  assert.equal(result.scoreDelta, 11);
+  assert.equal(state.score, 3);
+  assert.equal(result.scoreDelta, 1);
   assert.equal(state.effectCounters.permanentWeaponHits, 3);
-  assert.equal(state.effectCounters.projectileCollisions, 3);
+  assert.equal(state.effectCounters.projectileCollisions, 0);
 });
 
 test('zero damage counts as a collision and Wizard boosts the third collision without stacking', () => {
-  const state = create(['wizard-orb', 'wizard-orb']);
+  const state = create(['wizard-orb', 'wizard-orb', 'wizard-orb']);
   const id = sturdyEnemy(state);
   const damage = Array.from({ length: 3 }, () => engine.resolveProjectile(state, { hitIds: [id], damage: 0, rng: () => 0 }).hits[0].damage);
   assert.deepEqual(damage, [0, 0, 1]);
@@ -73,12 +77,12 @@ test('one projectile counts successive spillover collisions, but stops at a surv
 });
 
 test('Milk heals at the third collision, caps HP, and keeps counters across area transitions', () => {
-  const state = create(['milk-candy'], { playerHp: 50 });
+  const state = create(['milk-candy', 'milk-candy', 'milk-candy'], { playerHp: 50 });
   const id = sturdyEnemy(state);
   for (let i = 0; i < 2; i++) engine.resolveProjectile(state, { hitIds: [id], damage: 0, rng: () => 0 });
   const third = engine.resolveProjectile(state, { hitIds: [id], damage: 0, rng: () => 0 });
   assert.equal(third.healedPlayer, 1);
-  assert.equal(state.playerHp, 48);
+  assert.equal(state.playerHp, 49);
   state.area = 'forest'; state.round = 3; state.pendingCamp = true;
   engine.chooseCampReward(state, 'heal', { rng: () => 0 });
   assert.equal(state.effectCounters.projectileCollisions, 3);
@@ -105,7 +109,7 @@ test('Defense takes priority over Milk boss protection; Milk cancels the next wh
 });
 
 test('Wind guarantees the selected boss first once per round and carries its damage onward', () => {
-  const state = create(['wind-candy'], { area: 'chaos', round: 3 });
+  const state = create(['wind-candy', 'wind-candy', 'wind-candy'], { area: 'chaos', round: 3 });
   engine.resolveProjectile(state, {hitIds:[state.enemies[0].id],damage:28,rng:()=>0});
   const scoreBefore = state.bonusScore;
   const [boar, , robot] = state.enemies;
@@ -125,25 +129,27 @@ test('round transitions reset Wind and Milk flags but retain run effect counters
   state.roundEffects.milkBossBlockUsed = true;
   state.effectCounters.permanentWeaponHits = 8;
   state.terminal = 'round-clear';
-  state.selectedRewards = { weapon: 'done', consumable: 'done' };
+  engine.drawRewardChoices(state, () => 0);
+  engine.spinRewardSlot(state, 'stone', () => 0);
+  engine.applyRewardChoice(state, 'consumable', state.rewardChoices.consumables[0].choiceId);
   engine.advanceRound(state, { rng: () => 0 });
   assert.deepEqual(state.roundEffects, { windHomingUsed: false, milkBossBlockUsed: false });
   assert.equal(state.effectCounters.permanentWeaponHits, 8);
 });
 
-test('Spear gets Alchemist use points but no permanent collision, Wizard, Milk heal, or Wind effect', () => {
+test('Spear gets no cookie score bonus or permanent stone abilities', () => {
   const state = create(engine.WEAPON_CATALOG.map(w => w.id), { area: 'city', round: 2, inventory: { spear: 1 }, playerHp: 50 });
   state.enemies.forEach(e => { e.hp = e.maxHp = 10; });
   state.effectCounters.permanentWeaponHits = 2;
   state.effectCounters.projectileCollisions = 2;
   const prepared = engine.useConsumable(state, 'spear', { rng: () => 0.5 });
   assert.deepEqual(prepared.hits, []);
-  assert.equal(prepared.scoreDelta, 10);
+  assert.equal(prepared.scoreDelta, 0);
   assert.equal(state.playerHp, 50);
   const event = engine.resolveProjectile(state, { hitIds: state.enemies.slice(0, 3).map(e => e.id), rng: () => 0.5 });
   assert.deepEqual(event.hits.map(e => e.damage), [4, 3, 2]);
   assert.equal(event.scoreDelta, 9);
-  assert.equal(state.score, 19);
+  assert.equal(state.score, 9);
   assert.equal(state.ammo, state.maxAmmo - 1);
   assert.deepEqual(state.effectCounters, { permanentWeaponHits: 2, projectileCollisions: 2, consumablesUsed: 1 });
   assert.equal(state.roundEffects.windHomingUsed, false);
@@ -161,72 +167,61 @@ test('rejected consumable and missed projectile do not award Alchemist or Advent
 });
 
 test('engine-owned random rolls cap zero damage at two per round', () => {
-  const state = create(['wizard-orb']);
+  const state = create(['wizard-orb', 'wizard-orb', 'wizard-orb', 'wizard-orb']);
   const id = sturdyEnemy(state);
   const rolls = Array.from({ length: 4 }, () => engine.resolveProjectile(state, { hitIds: [id], rng: () => 0 }).damage);
   assert.deepEqual(rolls, [0, 0, 1, 1]);
   assert.equal(state.zeroRollsThisRound, 2);
 });
 
-test('fusion prompts have no side effects; declining keeps copies; C cannot merge with B', () => {
+test('legacy weapon choice cannot bypass the slot and a winning copy stays C-grade', () => {
   const state = create();
   state.terminal = 'round-clear';
   const choice = { ...weapon('adventurer-candy'), choiceId: 'weapon:test' };
-  state.rewardChoices = { weapons: [choice], consumables: [] };
+  engine.drawRewardChoices(state, () => 0);
   const before = structuredClone(state);
   const prompt = engine.applyRewardChoice(state, 'weapon', choice.choiceId);
-  assert.equal(prompt.reason, 'fusion-decision-required');
-  assert.equal(prompt.fusionCandidate.grade, 'C');
+  assert.equal(prompt.accepted, false);
   assert.deepEqual(state, before);
-  assert.equal(engine.applyRewardChoice(state, 'weapon', choice.choiceId, { mergeDuplicate: false }).accepted, true);
-  assert.deepEqual(state.weapons.map(w => w.grade), ['C', 'C']);
-  const other = create([], { weapons: [weapon('adventurer-candy', 'B')] });
-  const added = engine.grantWeapon(other, weapon('adventurer-candy', 'C'));
-  assert.equal(added.fused, false);
-  assert.deepEqual(other.weapons.map(w => w.grade), ['B', 'C']);
+  assert.equal(engine.spinRewardSlot(state, 'stone', () => 0).result.prizeId, 'adventurer-candy');
+  assert.equal(state.weapons.filter(item => item.id === 'adventurer-candy').length, 2);
+  assert.ok(state.weapons.every(item => item.grade === 'C'));
 });
 
-test('separately owned candy adds one shot starting next round, while fusion keeps the shot count', () => {
+test('each round slot adds one persistent stone and one shot from the next round', () => {
   const separate = create();
-  assert.deepEqual([separate.ammo, separate.maxAmmo], [9, 9]);
-  for (const [index, id] of ['wizard-orb', 'alchemist-candy'].entries()) {
+  assert.deepEqual([separate.ammo, separate.maxAmmo], [3, 3]);
+  for (const index of [0, 1]) {
     separate.terminal = 'round-clear';
-    separate.rewardChoices = { weapons: [{ ...weapon(id), choiceId: `weapon:${id}` }], consumables: [] };
-    separate.selectedRewards = { weapon: null, consumable: 'skip' };
-    assert.equal(engine.applyRewardChoice(separate, 'weapon', `weapon:${id}`).accepted, true);
-    assert.deepEqual([separate.ammo, separate.maxAmmo], [9 + index, 9 + index]);
+    engine.drawRewardChoices(separate, () => 0);
+    assert.equal(engine.spinRewardSlot(separate, 'stone', () => 0).accepted, true);
+    engine.applyRewardChoice(separate, 'consumable', separate.rewardChoices.consumables[0].choiceId);
+    assert.deepEqual([separate.ammo, separate.maxAmmo], [3 + index, 3 + index]);
     assert.equal(engine.advanceRound(separate, { rng: () => 0 }).accepted, true);
-    assert.deepEqual([separate.ammo, separate.maxAmmo], [10 + index, 10 + index]);
+    assert.deepEqual([separate.ammo, separate.maxAmmo], [4 + index, 4 + index]);
   }
   const target = sturdyEnemy(separate);
   engine.resolveProjectile(separate, { hitIds: [target], damage: 1, rng: () => 0 });
-  assert.equal(separate.ammo, 10);
-
-  const fused = create();
-  fused.terminal = 'round-clear';
-  fused.rewardChoices = { weapons: [{ ...weapon('adventurer-candy'), choiceId: 'weapon:adventurer-candy' }], consumables: [] };
-  fused.selectedRewards.consumable = 'skip';
-  assert.equal(engine.applyRewardChoice(fused, 'weapon', 'weapon:adventurer-candy', { mergeDuplicate: true }).choice.fused, true);
-  assert.equal(engine.advanceRound(fused, { rng: () => 0 }).accepted, true);
-  assert.deepEqual([fused.ammo, fused.maxAmmo], [9, 9]);
+  assert.equal(separate.ammo, 4);
+  assert.equal(separate.weapons.length, 5);
 });
 
-test('camp duplicate offers a stable fusion choice without rerolling or silently upgrading', () => {
+test('camp weapon choice locks healing and grants two separate C-grade slot stones', () => {
   const state = create(['alchemist-candy']);
   state.area = 'forest'; state.round = 3; state.pendingCamp = true;
   const first = engine.chooseCampReward(state, 'weapon', { rng: () => 0.5 });
   assert.equal(first.pendingCamp, true);
-  assert.equal(first.requiresFusionChoice, true);
+  assert.equal(first.slotReady, true);
   assert.equal(state.weapons[0].grade, 'C');
-  const plannedNames = state.pendingCampReward.items.map(item => item.name);
   const beforeRejectedChoice = structuredClone(state);
   assert.equal(engine.chooseCampReward(state, 'heal').reason, 'camp-choice-locked');
   assert.deepEqual(state, beforeRejectedChoice);
-  let result = engine.chooseCampReward(state, 'weapon', { mergeDuplicate: true, rng: () => 0 });
-  if (result.requiresFusionChoice) result = engine.chooseCampReward(state, 'weapon', { mergeDuplicate: false, rng: () => 0 });
+  engine.spinRewardSlot(state, 'stone', () => 0);
+  engine.spinRewardSlot(state, 'stone', () => 0);
+  const result = engine.finishCampSlot(state, { rng: () => 0 });
   assert.equal(result.area, 'snow');
-  assert.equal(state.weapons.some(w => w.grade === 'B'), true);
-  assert.deepEqual(result.effect.weapons.map(item => item.name), plannedNames);
+  assert.equal(state.weapons.length, 5);
+  assert.ok(state.weapons.every(item => item.grade === 'C'));
 });
 
 test('Chaos waves use 9–13 regular monsters and round three starts with one fused boss', () => {
@@ -244,6 +239,7 @@ test('Chaos waves use 9–13 regular monsters and round three starts with one fu
 test('Chaos bosses use their own third-attack specials and Oven Robot heals only to 26', () => {
   const state = create(['adventurer-candy'], { area: 'chaos', round: 3 });
   engine.resolveProjectile(state, {hitIds:[state.enemies[0].id],damage:28,rng:()=>0});
+  state.ammo = 8; // Isolate the nine enemy actions from the three-stone deck.
   const attacks = Array.from({ length: 9 }, () => engine.resolveEnemyTurn(state, () => 0));
   assert.deepEqual(attacks.slice(6).map(e => e.special), ['boar-charge', 'frozen-breath', 'oven-overheat']);
   assert.deepEqual(state.enemies.map(e => e.attackCount), [3, 3, 3]);
@@ -275,7 +271,8 @@ test('bonus entry rejects invalid/repeated calls and freezes main final score be
 });
 
 test('Chaos projectile and item damage use normal scoring in bonusScore only', () => {
-  const state = create([], { area: 'chaos', round: 1, score: 50, weapons: [weapon('wizard-orb', 'B')], inventory: { spear: 1 } });
+  const state = create([], { area: 'chaos', round: 1, score: 50,
+    weapons: [weapon('wizard-orb', 'B'), weapon('basic-stone'), weapon('basic-stone')], inventory: { spear: 1 } });
   const shot = engine.resolveProjectile(state, { hitIds: [state.enemies[0].id], damage: 3, rng: () => 0 });
   assert.equal(shot.scoreDelta, 6);
   assert.equal(state.bonusScore, 6);
@@ -285,15 +282,19 @@ test('Chaos projectile and item damage use normal scoring in bonusScore only', (
   assert.equal(state.score, 50);
 });
 
-test('Chaos transitions bypass every reward/camp, refresh ammo, and end at bonus-clear', () => {
+test('Chaos transitions use two slots, refresh ammo, and end at bonus-clear', () => {
   const state = create([], { area: 'chaos', round: 1 });
   const inventoryBefore = { ...state.inventory };
   const weaponsBefore = structuredClone(state.weapons);
   for (let round = 1; round <= 2; round++) {
     state.terminal = 'round-clear'; state.ammo = 1;
-    assert.equal(engine.drawRewardChoices(state, () => 0), null);
+    assert.deepEqual(engine.drawRewardChoices(state, () => 0), { weapons: [], consumables: [] });
+    engine.spinRewardSlot(state, 'stone', () => 0);
+    const misses = [0, .25, .5, .75, .5, .25, .25, .75, 0];
+    let index = 0;
+    engine.spinRewardSlot(state, 'consumable', () => misses[index++]);
     assert.equal(engine.advanceRound(state, { rng: () => 0 }).round, round + 1);
-    assert.equal(state.ammo, 9);
+    assert.equal(state.ammo, state.weapons.length);
     assert.equal(state.pendingCamp, false);
     assert.equal(state.rewardChoices, null);
   }
@@ -303,7 +304,7 @@ test('Chaos transitions bypass every reward/camp, refresh ammo, and end at bonus
   assert.equal(engine.drawRewardChoices(state), null);
   assert.equal(engine.resolveProjectile(state, { damage: 1 }).accepted, false);
   assert.deepEqual(state.inventory, inventoryBefore);
-  assert.deepEqual(state.weapons, weaponsBefore);
+  assert.equal(state.weapons.length, weaponsBefore.length + 2);
 });
 
 test('Snow boss clear emits an unlock flag for projectile and Spear, but Forest does not', () => {
@@ -320,11 +321,11 @@ test('Snow boss clear emits an unlock flag for projectile and Spear, but Forest 
   assert.equal(forest.snowAreaCleared, false);
 });
 
-test('duplicate Alchemist effects award +10 once per accepted item even if it heals zero', () => {
+test('duplicate Alchemist stones do not award cookie-specific item points', () => {
   const state = create(['alchemist-candy', 'alchemist-candy'], { inventory: { heal: 1 } });
   const result = engine.useConsumable(state, 'heal', { rng: () => 0 });
   assert.equal(result.effect.healed, 0);
-  assert.equal(result.scoreDelta, 10);
+  assert.equal(result.scoreDelta, 0);
   assert.equal(state.effectCounters.consumablesUsed, 1);
 });
 
@@ -374,7 +375,7 @@ test('bonus waves can contain all five species and reject stale standard reward 
   assert.deepEqual(state, before);
 });
 
-test('a complete main run can choose rewards, clear both camps, and finish bonus without adding rewards', () => {
+test('a complete main run spins rewards, clears both camps, and finishes Chaos', () => {
   const state = create(['adventurer-candy'], { inventory: { heal: 1 }, now: 0 });
   const visited = [];
   for (let action = 0; action < 9; action++) {
@@ -382,7 +383,7 @@ test('a complete main run can choose rewards, clear both camps, and finish bonus
     const shot = engine.resolveProjectile(state, { damage: 100, hitIds: state.enemies.map(e => e.id), rng: () => 0 });
     assert.equal(shot.roundCleared, true);
     const rewards = engine.drawRewardChoices(state, () => 0.5);
-    assert.equal(engine.applyRewardChoice(state, 'weapon', rewards.weapons[0].choiceId, { mergeDuplicate: false }).accepted, true);
+    assert.equal(engine.spinRewardSlot(state, 'stone', () => 0.5).accepted, true);
     if (rewards.consumables.length) {
       assert.equal(engine.applyRewardChoice(state, 'consumable', rewards.consumables[0].choiceId).accepted, true);
     }
@@ -401,11 +402,18 @@ test('a complete main run can choose rewards, clear both camps, and finish bonus
   for (let round = 1; round <= 3; round++) {
     const result = engine.resolveProjectile(state, { damage: 100, hitIds: state.enemies.map(e => e.id), rng: () => 0 });
     assert.equal(result.roundCleared, true);
-    if (round < 3) assert.equal(engine.advanceRound(state, { rng: () => 0 }).accepted, true);
+    if (round < 3) {
+      engine.drawRewardChoices(state, () => 0);
+      engine.spinRewardSlot(state, 'stone', () => 0);
+      const misses = [0, .25, .5, .75, .5, .25, .25, .75, 0];
+      let index = 0;
+      engine.spinRewardSlot(state, 'consumable', () => misses[index++]);
+      assert.equal(engine.advanceRound(state, { rng: () => 0 }).accepted, true);
+    }
   }
   assert.equal(state.terminal, 'bonus-clear');
   assert.equal(engine.getRunSummary(state).finalScore, main.finalScore);
   assert.ok(state.bonusScore > 0);
-  assert.deepEqual(state.inventory, items);
-  assert.deepEqual(state.weapons, weapons);
+  assert.ok(Object.keys(items).every(key => state.inventory[key] >= items[key]));
+  assert.equal(state.weapons.length, weapons.length + 2);
 });
