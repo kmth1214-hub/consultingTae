@@ -1,6 +1,6 @@
 # Task: T01 계정별 플레이어 프로필 API
 
-## Status: pending
+## Status: done
 
 ## Goal
 회사 로그인 사용자가 `PlayerProfiles` Azure Table에서 눈 지역 해금을 조회하고 한 방향으로 저장할 수 있다. 기존 리더보드 저장소·순위는 변경하지 않는다.
@@ -62,6 +62,6 @@ Task: T01-player-profile-api
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
