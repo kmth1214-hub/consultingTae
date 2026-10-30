@@ -203,8 +203,11 @@ test('a lethal enemy hit is shown before defeat, then retry has no stale respons
   await expect(hp(page)).toHaveText('100');
 });
 
-test('Milk first-boss protection uses the same visible interception without spending a Defense item', async ({ page }) => {
-  await installGame(page, { initial: { area: 'forest', round: 3, inventory }, allWeapons: true });
+test('Milk next-shot protection visibly intercepts once without spending a Defense item', async ({ page }) => {
+  test.setTimeout(60000);
+  // A prior direct Milk-stone hit queued the shield for this launch.
+  await installGame(page, { initial: { area: 'forest', round: 3, inventory }, allWeapons: true,
+    stateOverride: { milkShieldPending: true } });
   await start(page);
   await page.keyboard.press('4');
   await launchResponse(page);

@@ -3,12 +3,13 @@ const { BattleEngine } = require('../../src/game/battleEngine.js');
 const { buildPlayableBattlefield } = require('../../src/game/battlefieldPlacement.js');
 const { planShot } = require('../../src/game/shotGeometry.js');
 const { createProjectilePlayback } = require('../../src/game/projectilePlayback.js');
+const { buildWindField } = require('../../src/game/windField.js');
 
 const cases = [
-  { area: 'forest', seed: 5, angleDeg: 20, powerRatio: .825 },
-  { area: 'snow', seed: 36, angleDeg: 25, powerRatio: .875 },
-  { area: 'city', seed: 7, angleDeg: 35, powerRatio: .85 },
-  { area: 'chaos', seed: 5, angleDeg: -5, powerRatio: .875 },
+  { area: 'forest', seed: 5, angleDeg: 7, powerRatio: .995 },
+  { area: 'snow', seed: 36, angleDeg: -4, powerRatio: .94 },
+  { area: 'city', seed: 7, angleDeg: 17, powerRatio: .95 },
+  { area: 'chaos', seed: 5, angleDeg: -10, powerRatio: .88 },
 ];
 async function begin(page, options) {
   const enemies = BattleEngine.createRoundEnemies(options.area, 1, { rng: () => .5 });
@@ -20,7 +21,8 @@ async function begin(page, options) {
   const layout = buildPlayableBattlefield({ area: options.area, round: 1, enemies, seed: options.seed,
     worldScale: 1.5, prototype: options.area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1' });
   const radians = options.angleDeg * Math.PI / 180;
-  const shot = planShot({ layout, enemies, pull: { ready: true, powerRatio: options.powerRatio,
+  const windField = buildWindField({ area: options.area, round: 1, layoutSeed: options.seed, shotOrdinal: 0, layout });
+  const shot = planShot({ layout, enemies, windField, pull: { ready: true, powerRatio: options.powerRatio,
     direction: { x: Math.cos(radians), y: -Math.sin(radians) } } });
   expect(shot.contacts.some(c => c.trigger === 'obstacle')).toBe(true);
   await installGame(page, { layoutSeed: options.seed, stateOverride: { area: options.area, round: 1, enemies } });

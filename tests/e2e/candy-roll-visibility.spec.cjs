@@ -32,6 +32,10 @@ for (const scenario of [{ name: 'forward', angleDeg: -5, powerRatio: .6 },
   await page.clock.runFor(80);
   await expect(page.getByTestId('roll-shadow')).toBeVisible();
   await page.screenshot({ path: `tmp/candy-roll-${scenario.name}.png` });
+  // Advance the fake clock in frame steps; a large jump may skip rAF callbacks on CI.
+  for (let frame = 0; frame < 60 && await page.getByTestId('projectile').count(); frame++) {
+    await page.clock.runFor(16);
+  }
   await page.clock.runFor(5000);
   await expect(page.getByTestId('projectile')).toHaveCount(0);
   await phase(page, 'idle');
