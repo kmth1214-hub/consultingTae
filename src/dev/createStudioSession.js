@@ -19,6 +19,7 @@ export function createStudioScenario({ area, round, characterId = 'adventurer', 
     inventory: { fireball: 3, spear: 3, defense: 3, heal: 3 } });
   run.studioWorldScale = 1.5;
   run.studioPrototype = area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1';
+  run.studioDepthPreview = true;
   run.enemyLandingPositions = {};
   if (round === 3 && bossSpecial) for (const enemy of run.enemies) if (enemy.isBoss) enemy.attackCount = 2;
   run.layoutSeed = seed;

@@ -21,6 +21,7 @@ import BossSplitTransition from './BossSplitTransition.jsx';
 import { sampleRiderMotion } from '../game/forestLogPhysics.js';
 import { buildWindField } from '../game/windField.js';
 import WindWeather from './WindWeather.jsx';
+import StudioDepthScene from './StudioDepthScene.jsx';
 
 const INSTRUCTIONS = {
   idle: '맵 어디든 누르고 뒤로 당긴 뒤 놓으세요. 당긴 반대 방향으로 발사됩니다.',
@@ -248,6 +249,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       <div ref={worldRef} className="arena-world" data-layout-key={layout.key}
         style={{ width: layout.width, height: layout.height }}>
         <BattlefieldBackdrop area={run.area} layout={layout} motionPaused={Boolean(run.terminal)} />
+        {run.studioDepthPreview === true && <StudioDepthScene area={run.area} layout={layout}
+          toppledObstacleIds={scenery.toppledObstacleIds || []} />}
         <WindWeather area={run.area} field={windField} paused={Boolean(run.terminal)} />
         {(!activeSplit || activeSplit.stage === 'impact') && <ArenaScenery ref={sceneryRef} layout={layout} area={run.area} toppledObstacleIds={scenery.toppledObstacleIds || []}
           visualContacts={activeSplit ? [] : visualContacts} visualWobbles={visualAbilities.filter(cue => cue.kind === 'wobble')}

@@ -33,6 +33,7 @@ test('all twelve regional rounds enter the real battle immediately with a fresh 
     assert.equal(run.playerHp, 100); assert.equal(run.ammo, 3);
     assert.equal(run.layoutSeed, 4927);
     assert.equal(run.studioWorldScale, 1.5);
+    assert.equal(run.studioDepthPreview, true);
     const preview = createStudioScenario({ area, round, seed: 4927 });
     assert.equal(preview.layout.worldScale, 1.5);
     assert.equal(preview.layout.candyRadius, 15);
@@ -46,6 +47,7 @@ test('all twelve regional rounds enter the real battle immediately with a fresh 
       BattleEngine.createRoundEnemies(area, round, { rng: options.rng }).map(e => [e.kind, e.isBoss, e.hp]));
     assert.deepEqual(run.toppledObstacleIds, []);
   }
+  assert.equal(BattleEngine.createRunState({ area: 'forest', round: 1, rng: options.rng }).studioDepthPreview, undefined);
 });
 
 test('every cookie can be tested, even locked cookies, without reading or writing browser storage', () => {
