@@ -19,7 +19,7 @@ jobs:
     env:
       ENTRA_TENANT_ID: ${{ vars.ENTRA_TENANT_ID }}
       AZURE_DEPLOY_ENABLED: ${{ vars.AZURE_DEPLOY_ENABLED }}
-      VITE_ENABLE_BGM: 'false'
+      VITE_ENABLE_BGM: 'true'
     steps:
       - name: Check out source
         uses: actions/checkout@v4
