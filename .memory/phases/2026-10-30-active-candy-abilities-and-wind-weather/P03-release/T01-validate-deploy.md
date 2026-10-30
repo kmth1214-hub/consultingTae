@@ -1,6 +1,6 @@
 # Task: T01 전체 회귀 검증과 Azure 배포
 
-## Status: pending
+## Status: done
 
 ## Goal
 계정 프로필, 슬롯 보상, 바람·날씨, 네 쿠키 능력의 실제 게임 흐름을 검증하고 검증된 `main`을 Azure Static Web Apps에 배포한다.
@@ -27,9 +27,9 @@
 - **Execution Flow / Logic**: Commit this Task with the exact message below after local checks. Push the verified `main` using the configured remote; monitor GitHub Actions until both `verify` and `deploy` jobs show success. Fix concrete CI failures and create additional Korean commits linked to this Plan before retrying. Confirm `https://calm-flower-0764f6d00.3.azurestaticapps.net/` responds with company login redirect, and profile endpoint requires auth. If a company-authenticated browser session is available, verify account profile load and Snow unlock across refresh; never claim that authenticated check if it was not performed. Do not use or print `out.json` credentials. Existing old `GLOBAL` leaderboard record reset is unrelated and remains separately tracked.
 
 ## Acceptance Criteria
-- [ ] Local unit/API tests, game E2E, studio E2E, and Azure artifact build pass.
-- [ ] GitHub Actions `verify` and `deploy` jobs succeed on the release commit.
-- [ ] Live site responds through company authentication and no new secret is committed.
+- [x] Local unit/API tests, focused game E2E, studio E2E, and Azure artifact build pass; CI completed the full game E2E suite.
+- [x] GitHub Actions `verify` and `deploy` jobs succeeded on `982f8a4` ([run 41091694690](https://github.com/kmth1214-hub/consultingTae/actions/runs/41091694690)).
+- [x] Live site and `/api/profile` redirect anonymous requests to company authentication; no new secret was committed.
 
 ## Validation
 - `npm test` — all unit/API tests pass
@@ -52,6 +52,8 @@ Task: T01-validate-deploy
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: 8b2b230 (release), 982f8a4 (CI fixes)
+- deployment: `verify` and `deploy` success; 194 game browser tests and 40 studio browser tests passed
+- authenticated profile read/write: not verified in a signed-in browser session

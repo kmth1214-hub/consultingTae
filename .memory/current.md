@@ -7,10 +7,11 @@
 [P03 릴리스](./phases/2026-10-30-active-candy-abilities-and-wind-weather/P03-release/phase.md)
 
 ## Active Task
-[T01 전체 회귀 검증과 Azure 배포](./phases/2026-10-30-active-candy-abilities-and-wind-weather/P03-release/T01-validate-deploy.md)
+없음 — `active-candy-abilities-and-wind-weather` 계획 완료
 
 ## Status
-- P02-T04 완료; P03-T01 배포 검증 시작 준비 완료
+- P01 3/3, P02 4/4, P03 1/1 완료
+- Azure Static Web Apps 배포 성공: [검증·배포 실행](https://github.com/kmth1214-hub/consultingTae/actions/runs/41091694690)
 
 ## Next Step (IMPORTANT)
-P03-T01 청사진을 읽고 전체 회귀 검증 후 Azure에 배포
+새 작업은 결정 문서와 계획을 만든 뒤 첫 Task를 지정

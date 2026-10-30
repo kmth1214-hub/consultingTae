@@ -12,7 +12,7 @@
 | :--- | :--- | :--- | :--- |
 | P01 | `done` | 계정 프로필 API·게임 진입·슬롯 보상 | [P01](../phases/2026-10-30-active-candy-abilities-and-wind-weather/P01-account-progression/phase.md) |
 | P02 | `done` | 지역 바람, 수동 전용 스톤, 우유·Q 전투 규칙 | [P02](../phases/2026-10-30-active-candy-abilities-and-wind-weather/P02-battle-abilities/phase.md) |
-| P03 | `in_progress` | 전체 흐름 회귀 검증과 Azure 배포 | [P03](../phases/2026-10-30-active-candy-abilities-and-wind-weather/P03-release/phase.md) |
+| P03 | `done` | 전체 흐름 회귀 검증과 Azure 배포 | [P03](../phases/2026-10-30-active-candy-abilities-and-wind-weather/P03-release/phase.md) |
 
 ## Completion
 - 각 Task는 지정 파일만 구현·검증 후 한국어 커밋으로 완료하고 포인터를 전진한다.
