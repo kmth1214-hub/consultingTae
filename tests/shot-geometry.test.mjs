@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { BattleEngine } from '../src/game/battleEngine.js';
 import { BATTLEFIELD, buildBattlefield, getDragDraw, getLaunchSpeed } from '../src/game/battlefieldModel.js';
 import { buildPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
-import { getPull, getBallisticPath, getHomingPath, sampleAtDistance, pathPrefixD,
+import { getPull, getBallisticPath, getHomingPath, sampleAtDistance, sampleAtTime, pathPrefixD,
   appendGroundRoll, findObstacleContact, planShot } from '../src/game/shotGeometry.js';
 import { findMovingRiderContact } from '../src/game/shotGeometry.js';
 import { simulateRiderFall, sampleRiderMotion } from '../src/game/forestLogPhysics.js';
@@ -44,6 +44,39 @@ test('Adventurer exclusive stone bounces once in every region; basic stone and S
   assert.ok(planShot({ ...input, prototype: null }).bounce);
   assert.equal(planShot({ ...input, loadedCandyId: 'basic-stone' }).bounce, undefined);
   assert.equal(planShot({ ...input, piercing: true }).bounce, undefined);
+});
+
+test('Adventurer stone rebounds once after a direct monster hit', () => {
+  const layout = empty(), pull = pullAt(30, .55);
+  const original = planShot({ layout, pull, enemies: [] });
+  const point = sampleAtDistance(original.path, original.path.length * .35);
+  layout.enemies = [circle('first', point, 20)];
+  const shot = planShot({ layout, pull, enemies: living(['first']), loadedCandyId: 'adventurer-candy' });
+  assert.deepEqual(shot.hitIds, ['first']);
+  assert.ok(shot.bounce, 'a direct enemy collision should start the one rebound');
+  assert.ok(shot.path.durationSeconds > shot.bounce.firstLandingTime);
+  assert.ok(shot.path.samples.some(sample => sample.time > shot.bounce.firstLandingTime
+    && sample.y < shot.bounce.firstLanding.y));
+});
+
+test('Adventurer grades rebound one, two, or three times and only hit actual later contacts', () => {
+  const layout = empty(), pull = pullAt(30, .55);
+  const original = planShot({ layout, pull, enemies: [] });
+  const first = sampleAtDistance(original.path, original.path.length * .35);
+  layout.enemies = [circle('first', first, 20)];
+  const one = planShot({ layout, pull, enemies: living(['first']),
+    loadedCandyId: 'adventurer-candy', loadedCandyGrade: 'C' });
+  const second = sampleAtTime(one.path, one.bounces[0].time + .18);
+  layout.enemies.push(circle('second', second, 20));
+  for (const [grade, count] of [['C', 1], ['B', 2], ['A', 3]]) {
+    const shot = planShot({ layout, pull, enemies: living(['first', 'second']),
+      loadedCandyId: 'adventurer-candy', loadedCandyGrade: grade });
+    assert.deepEqual(shot.hitIds, ['first', 'second']);
+    assert.equal(shot.bounces.length, count);
+    assert.deepEqual(shot.enemyContacts.map(contact => contact.id), shot.hitIds);
+    assert.ok(shot.enemyContacts[1].time > shot.bounces[0].time);
+    assert.ok(shot.enemyContacts[1].distance > shot.enemyContacts[0].distance);
+  }
 });
 
 test('Alchemist splash is anchored to the first real candy collision in every region', () => {

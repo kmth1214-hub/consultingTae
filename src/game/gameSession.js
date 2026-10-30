@@ -331,8 +331,11 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
           && [fall.startTime, fall.landingTime, fall.landing?.x, fall.landing?.y].every(Number.isFinite)
           && fall.startTime >= 0 && fall.landingTime > fall.startTime
           && fall.landing.x >= 0 && fall.landing.x <= 3600 && fall.landing.y === 900));
-      const validEnemyContacts = enemyContacts === undefined || (state.run.spearArmed === true
-        && Array.isArray(hitIds) && Array.isArray(enemyContacts) && enemyContacts.length <= 3
+      const reboundLimit = loadedCandy?.id === 'adventurer-candy' && !state.run.spearArmed
+        ? ({ C: 2, B: 3, A: 4 })[loadedCandy.grade] ?? 2 : 0;
+      const validEnemyContacts = enemyContacts === undefined || ((state.run.spearArmed === true || reboundLimit > 0)
+        && Array.isArray(hitIds) && Array.isArray(enemyContacts)
+        && enemyContacts.length <= (state.run.spearArmed ? 3 : reboundLimit)
         && enemyContacts.length === hitIds.length
         && new Set(enemyContacts.map(hit => hit?.id)).size === enemyContacts.length
         && enemyContacts.every((hit, index) => hit && hit.id === hitIds[index]

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {BattleEngine as E} from '../src/game/battleEngine.js';
 import {buildPlayableBattlefield} from '../src/game/battlefieldPlacement.js';
 import {planShot,sampleAtDistance} from '../src/game/shotGeometry.js';
+import {buildBattlefield} from '../src/game/battlefieldModel.js';
 import {createStudioSession} from '../src/dev/createStudioSession.js';
 function fixture(piercing=false) {
  const run=E.createRunState({area:'snow',round:1,rng:()=>.5,inventory:{spear:1},weapons:[
@@ -32,6 +33,29 @@ test('the physical engine boundary also rejects extra ordinary targets beyond th
  const {run,shot}=fixture();
  E.resolveProjectile(run,{hitIds:run.enemies.slice(0,2).map(e=>e.id),shotMeta:meta(shot),rng:()=>.999});
  assert.equal(run.enemies[1].hp,4);
+});
+test('Adventurer rebound independently rolls damage for each monster it physically touches',()=>{
+ const run=E.createRunState({area:'forest',round:2,rng:()=>.5,weapons:[
+  {...E.WEAPON_CATALOG.find(w=>w.id==='adventurer-candy'),grade:'A'}]});
+ const layout=buildBattlefield({area:'forest',round:2,enemies:[]});
+ const rad=30*Math.PI/180,pull={ready:true,powerRatio:.55,
+  direction:{x:Math.cos(rad),y:-Math.sin(rad)}};
+ const open=planShot({layout,pull,enemies:[]});
+ const first=sampleAtDistance(open.path,open.path.length*.35);
+ layout.enemies=[{id:run.enemies[0].id,collider:{id:run.enemies[0].id,x:first.x,y:first.y,radius:20}}];
+ const firstShot=planShot({layout,pull,enemies:run.enemies,loadedCandyId:'adventurer-candy',loadedCandyGrade:'A'});
+ const second=firstShot.path.samples.find(point=>point.time>=firstShot.bounces[0].time+.18);
+ layout.enemies.push({id:run.enemies[1].id,collider:{id:run.enemies[1].id,x:second.x,y:second.y,radius:20}});
+ const shot=planShot({layout,pull,enemies:run.enemies,loadedCandyId:'adventurer-candy',loadedCandyGrade:'A'});
+ assert.equal(shot.hitIds.length,2);
+ run.enemies.slice(0,2).forEach(enemy=>{enemy.hp=20;enemy.maxHp=20;});
+ run.enemies.slice(2).forEach(enemy=>{enemy.hp=0;enemy.alive=false;});
+ let draws=0;
+ const event=E.resolveProjectile(run,{hitIds:shot.hitIds,shotMeta:meta(shot),
+  rng:()=>draws++===0?.5:.999});
+ assert.deepEqual(event.hits.map(hit=>hit.damage),[6,10]);
+ assert.equal(run.enemies[0].hp,14);assert.equal(run.enemies[1].hp,10);
+ assert.equal(draws,2);
 });
 test('Spear may hit the same second enemy only by actually continuing into its collider',()=>{
  const {run,layout,shot}=fixture(true);E.useConsumable(run,'spear');

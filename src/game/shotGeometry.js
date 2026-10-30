@@ -374,7 +374,7 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
 
 function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false,
   abilityKind = null, previewFraction = .30, maxRollDiameters = BATTLEFIELD.maxRollDiameters,
-  flightStartMs = 0, windField = null }) {
+  flightStartMs = 0, windField = null, maxBounces = 1 }) {
   const initialSpeed = getLaunchSpeed(powerRatio);
   let velocity = { x: direction.x * initialSpeed, y: direction.y * initialSpeed };
   let position = start, rolling = false;
@@ -385,7 +385,8 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
   const contacts = [], ignored = new Set(), pending = [];
   const enemyContacts = [], pierced = new Set();
   let firstContactDistance = null, terminal = 'timeout', targetId = null;
-  let bounce = null, bounced = false, obstacleTouched = false;
+  let bounce = null, bounceExhausted = false, obstacleTouched = false;
+  const bounces = [];
 
   const activate = (obstacle, hitPoint, impactVelocity, time, isRolling, source = null) => {
     if (ignored.has(obstacle.id)) return;
@@ -438,14 +439,15 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     position = { x: samples.at(-1).x, y: samples.at(-1).y };
   };
 
-  for (let iteration = 0; iteration <= layout.obstacles.length + 2; iteration++) {
+  for (let iteration = 0; iteration <= layout.obstacles.length + maxBounces + 2; iteration++) {
     let segment = rolling
       ? makePath('ballistic', [{ ...position, time: 0 }], 'ground')
       : ballisticFromVelocity(position, velocity, layout, windField);
     if (!segment) return null;
     const landingTime = segment.endKind === 'ground' ? elapsed + segment.durationSeconds : null;
     let localRollStart = rolling ? 0 : null;
-    if (segment.endKind === 'ground' && rollBudget > 0 && (abilityKind !== 'bounce' || bounced)) {
+    if (segment.endKind === 'ground' && rollBudget > 0
+      && (abilityKind !== 'bounce' || bounces.length >= maxBounces || bounceExhausted)) {
       const extended = appendGroundRoll(segment, segment.samples.at(-1).vx ?? velocity.x, layout, rollBudget);
       segment = extended.path;
       if (extended.rollDistance > 0 && !rolling) localRollStart = extended.rollStartDistance;
@@ -510,24 +512,26 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
       }
       continue;
     }
-    if (!enemy && !obstacleTouched && segment.endKind === 'ground' && abilityKind === 'bounce' && !bounced
-      && Math.abs(velocity.x) >= 30 && elapsed < BATTLEFIELD.maxSeconds - .5
+    if (abilityKind === 'bounce' && bounces.length < maxBounces
+      && (enemy || (!obstacleTouched && segment.endKind === 'ground'))
+      && Math.abs(hitPoint.vx ?? velocity.x) >= 30 && elapsed < BATTLEFIELD.maxSeconds - .5
       && position.x > -layout.candyRadius && position.x < layout.width + layout.candyRadius) {
       const impactVy = velocity.y + BATTLEFIELD.gravity * hitPoint.time;
       const reboundVy = -clamp(Math.abs(impactVy) * .42, 280, 660);
       if (elapsed + (-2 * reboundVy / BATTLEFIELD.gravity) <= BATTLEFIELD.maxSeconds) {
-        bounce = { firstLandingTime: elapsed, firstLanding: { ...position }, secondLandingTime: null };
-        bounced = true;
+        bounces.push({ time: elapsed, point: { ...position }, trigger: enemy ? 'enemy' : 'ground' });
+        if (!bounce) bounce = { firstLandingTime: elapsed, firstLanding: { ...position }, secondLandingTime: null };
         rolling = false;
-        velocity = { x: velocity.x * .78, y: reboundVy };
+        velocity = { x: (hitPoint.vx ?? velocity.x) * .78, y: reboundVy };
         continue;
       }
     }
     if (bounce && bounce.secondLandingTime === null && landingTime !== null && !enemy)
       bounce.secondLandingTime = landingTime;
-    if (!enemy && segment.endKind === 'ground' && abilityKind === 'bounce' && !bounced
+    if (!enemy && segment.endKind === 'ground' && abilityKind === 'bounce'
+      && bounces.length < maxBounces && !bounceExhausted
       && rollBudget > 0) {
-      bounced = true;
+      bounceExhausted = true;
       rolling = true;
       velocity = { x: velocity.x, y: 0 };
       continue;
@@ -558,15 +562,15 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
   const simulationSeconds = Math.max(path.durationSeconds, ...contacts.map(c => Math.max(
     c.obstacleMotion ? c.obstacleMotion.startTime + c.obstacleMotion.durationSeconds : 0,
     c.riderMotion ? c.riderMotion.startTime + c.riderMotion.durationSeconds : 0)));
-  return { path, hitIds: piercing ? enemyContacts.map(hit => hit.id) : targetId ? [targetId] : [], selectedTargetId: null,
-    ...(piercing ? { enemyContacts } : {}),
+  return { path, hitIds: piercing || abilityKind === 'bounce' ? enemyContacts.map(hit => hit.id) : targetId ? [targetId] : [], selectedTargetId: null,
+    ...(piercing || abilityKind === 'bounce' ? { enemyContacts } : {}),
     impactKind: terminal, impactDistance: path.length,
     obstacleId: first?.obstacleId ?? null, obstacleKind: first?.obstacleKind ?? null,
     obstacleTargetIds: first?.obstacleTargetIds ?? [], contacts,
     rollStartDistance, rollDistance, blockerDistance: firstContactDistance,
     previewD: pathPrefixD(path, Math.min(previewFraction * path.length, firstContactDistance ?? Infinity)),
     reverse: direction.x < 0, directHitTime: path.durationSeconds, simulationSeconds,
-    ...(abilityKind ? { abilityKind, ...(bounce ? { bounce } : {}),
+    ...(abilityKind ? { abilityKind, ...(bounce ? { bounce, bounces } : {}),
       ...(abilityContacts.length ? { abilityContacts } : {}) } : {}),
     durationMs: clamp(simulationSeconds * 1000, 420, 4500) };
 }
@@ -637,7 +641,7 @@ export function shotDisruptionOptions(run) {
 }
 
 export function planShot({ layout, pull, enemies, windAvailable = false,
-  toppledObstacleIds = [], piercing = false, loadedCandyId = null, prototype = null,
+  toppledObstacleIds = [], piercing = false, loadedCandyId = null, loadedCandyGrade = 'C', prototype = null,
   maxPowerRatio = 1, previewFraction = .30,
   maxRollDiameters = BATTLEFIELD.maxRollDiameters, flightStartMs = 0, windField = null,
   deferAbility = false } = {}) {
@@ -654,6 +658,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     !toppledObstacleIds.includes(item.id)) };
   const abilityKind = !piercing && !deferAbility
     ? ({ 'adventurer-candy': 'bounce', 'alchemist-candy': 'splash', 'wizard-orb': 'split' })[loadedCandyId] || null : null;
+  const maxBounces = abilityKind === 'bounce' ? ({ C: 1, B: 2, A: 3 })[loadedCandyGrade] ?? 1 : 0;
   const direction = unit(pull.direction), draw = getDragDraw({ ...pull, direction }, true, layout.worldScale ?? 1);
   const start = { x: layout.launcher.x + draw.pouch.x, y: layout.launcher.y + draw.pouch.y };
   const ballistic = getBallisticPath({ start, direction, powerRatio: pull.powerRatio, layout: activeLayout, windField });
@@ -681,7 +686,8 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   }
   if (!target && (activeLayout.obstacles.some(item => item.kind) || abilityKind)) {
     const solution = planStackedShot({ layout: activeLayout, start, direction,
-      powerRatio: pull.powerRatio, living, piercing, abilityKind, previewFraction, maxRollDiameters, flightStartMs, windField });
+      powerRatio: pull.powerRatio, living, piercing, abilityKind, previewFraction, maxRollDiameters,
+      flightStartMs, windField, maxBounces });
     return abilityKind === 'split' ? withWizardSplit(solution, { layout: activeLayout, start,
       direction, powerRatio: pull.powerRatio, living, flightStartMs, windField }) : solution;
   }

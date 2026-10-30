@@ -647,7 +647,9 @@
     }
     let healedPlayer = 0, milkShieldGained = false;
     // Apply the physical limit after Wind has selected its actual target too.
-    if (config.shotMeta && !spear) hitIds.splice(1);
+    const rebounding = !spear && usedWeapon?.id === 'adventurer-candy'
+      && Array.isArray(config.shotMeta?.enemyContacts);
+    if (config.shotMeta && !spear && !rebounding) hitIds.splice(1);
     let bonusDamage = 0;
     const shotMeta = config.shotMeta;
     const windOrder = Array.isArray(shotMeta?.enemyOrder) ? shotMeta.enemyOrder
@@ -676,6 +678,23 @@
       enemy.hp -= removed; enemy.alive = enemy.hp > 0;
       addScore(state, removed);
       hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp, defeated: !enemy.alive, scoreDelta: removed });
+      directHitCount++; lastDirectHitId = enemy.id;
+    };
+    const applyBounceHit = (id, index) => {
+      if (index > ({ C: 1, B: 2, A: 3 })[String(grade).toUpperCase()] || seen.has(id)) return;
+      seen.add(id);
+      const enemy = state.enemies.find(candidate => candidate.id === id && candidate.alive && candidate.hp > 0);
+      if (!enemy) return;
+      const base = index === 0 ? rolledDamage : config.damage === undefined
+        ? rollWeaponDamage(typeof config.rng === 'function' ? config.rng : Math.random, grade, state.zeroRollsThisRound)
+        : Math.max(0, Math.floor(Number(config.damage) || 0));
+      if (index > 0 && config.damage === undefined && base === 0) state.zeroRollsThisRound++;
+      const removed = Math.min(enemy.hp, base * damageMultiplier);
+      enemy.hp -= removed; enemy.alive = enemy.hp > 0;
+      const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+      addScore(state, scoreDelta);
+      hits.push({ id: enemy.id, kind: enemy.kind, damage: removed, remainingHp: enemy.hp,
+        defeated: !enemy.alive, scoreDelta });
       directHitCount++; lastDirectHitId = enemy.id;
     };
     const applyDirectHits = () => {
@@ -810,10 +829,12 @@
       } });
     }
     if (hasContactStream) {
-      if (spear && Array.isArray(shotMeta.enemyContacts)) {
+      if ((spear || rebounding) && Array.isArray(shotMeta.enemyContacts)) {
         const geometricIds = new Set(hitIds);
-        shotMeta.enemyContacts.slice(0, 3).forEach((contact, index) => {
-          if (geometricIds.has(contact.id)) timeline.push({ time: contact.time, order: 2, apply: () => applySpearHit(contact.id, index) });
+        const maxContacts = spear ? 3 : ({ C: 2, B: 3, A: 4 })[String(grade).toUpperCase()];
+        shotMeta.enemyContacts.slice(0, maxContacts).forEach((contact, index) => {
+          if (geometricIds.has(contact.id)) timeline.push({ time: contact.time, order: 2,
+            apply: () => (spear ? applySpearHit : applyBounceHit)(contact.id, index) });
         });
       } else timeline.push({ time: Number.isFinite(shotMeta.directHitTime) ? shotMeta.directHitTime : Infinity,
         order: 2, apply: applyDirectHits });

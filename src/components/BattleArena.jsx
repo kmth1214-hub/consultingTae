@@ -85,6 +85,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     prototype: run.battlefieldPrototype ?? run.studioPrototype ?? null,
     loadedCandyId: run.weapons.find(weapon => weapon.instanceId ===
       (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id ?? null,
+    loadedCandyGrade: run.weapons.find(weapon => weapon.instanceId ===
+      (run.weaponQueue?.[0] ?? run.currentWeaponId))?.grade ?? 'C',
     piercing: run.spearArmed === true,
     toppledObstacleIds: run.toppledObstacleIds || [],
     windAvailable: run.weapons.find(weapon => weapon.instanceId ===

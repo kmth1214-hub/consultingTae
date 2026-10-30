@@ -18,7 +18,7 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
     flightStartMs,
     windField,deferAbility:Boolean(abilityKind),
     ...shotDisruptionOptions(run),
-    loadedCandyId:loaded?.id??null,prototype:run.battlefieldPrototype??run.studioPrototype??null,
+    loadedCandyId:loaded?.id??null,loadedCandyGrade:loaded?.grade??'C',prototype:run.battlefieldPrototype??run.studioPrototype??null,
     toppledObstacleIds:run.toppledObstacleIds||[],
     windAvailable:loaded?.id==='wind-candy'&&run.windArmedMode==='homing'});
   const firstContact=solution && Math.min(...(solution.contacts||[])
