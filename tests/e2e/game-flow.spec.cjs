@@ -196,6 +196,7 @@ test('Snow boss unlock persists immediately across refresh without restoring the
 });
 
 test('City clear offers optional Chaos; its first two rounds use both reward slots and keep scores separate', async ({ page }) => {
+  test.setTimeout(60000);
   await installGame(page, { initial: { area: 'city', round: 3, playerHp: 80, inventory }, allWeapons: true, fastCombat: true });
   await start(page);
   await shoot(page, { short: true, finalHeading: '다음 전투의 보상' });

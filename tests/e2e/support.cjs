@@ -140,7 +140,10 @@ async function selectRewards(page) {
   const consumableSlot = page.locator('.slot-machine').nth(1);
   if (await consumableSlot.count()) {
     const spin = consumableSlot.getByRole('button', { name: '돌리기' });
-    if (await spin.isEnabled()) await spin.click();
+    if ((await snapshot(page)).run.slotReward.consumableSpinsRemaining > 0) {
+      await expect(spin).toBeEnabled();
+      await spin.click();
+    }
   } else {
     const items = page.locator('.reward-section').getByRole('button');
     if (await items.count()) await items.first().click();
