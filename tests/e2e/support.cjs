@@ -134,15 +134,17 @@ async function shoot(page, { short = false, angleDeg = 45, powerRatio, reverse =
   if (finalHeading) await expect(page.getByRole('heading', { name: finalHeading, exact: true })).toBeVisible();
   else await phase(page, 'idle');
 }
-async function selectRewards(page) {
+async function selectRewards(page, { advanceClock = false } = {}) {
   await expect(page.getByRole('heading', { name: '다음 전투의 보상', exact: true })).toBeVisible();
   await page.locator('.slot-machine').first().getByRole('button', { name: '돌리기' }).click();
+  if (advanceClock) await page.clock.runFor(2600);
   const consumableSlot = page.locator('.slot-machine').nth(1);
   if (await consumableSlot.count()) {
     const spin = consumableSlot.getByRole('button', { name: '돌리기' });
     if ((await snapshot(page)).run.slotReward.consumableSpinsRemaining > 0) {
       await expect(spin).toBeEnabled();
       await spin.click();
+      if (advanceClock) await page.clock.runFor(2600);
     }
   } else {
     const items = page.locator('.reward-section').getByRole('button');

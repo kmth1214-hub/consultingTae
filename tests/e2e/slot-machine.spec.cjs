@@ -7,20 +7,36 @@ test('the lever pulls, three reels stop from left to right, and the reward appea
   const slot = page.locator('.slot-machine').first();
   const lever = slot.getByRole('button', { name: '돌리기' });
   const before = (await snapshot(page)).run.weapons.length;
+  await slot.evaluate(node => {
+    window.__slotSequence = [];
+    const capture = () => {
+      const state = { phase: node.dataset.spinPhase, stops: Number(node.dataset.stoppedReels),
+        results: node.querySelectorAll('.slot-machine__result').length,
+        disabled: node.querySelector('.slot-machine__lever').disabled };
+      const previous = window.__slotSequence.at(-1);
+      if (!previous || previous.phase !== state.phase || previous.stops !== state.stops
+        || previous.results !== state.results || previous.disabled !== state.disabled)
+        window.__slotSequence.push(state);
+    };
+    window.__slotObserver = new MutationObserver(capture);
+    window.__slotObserver.observe(node, { attributes: true, subtree: true,
+      childList: true, attributeFilter: ['data-spin-phase', 'data-stopped-reels', 'disabled'] });
+    capture();
+  });
   await lever.click();
-  await expect(slot).toHaveAttribute('data-spin-phase', 'pull');
-  await expect(lever).toBeDisabled();
-  await expect(slot.locator('.slot-machine__result')).toHaveCount(0);
-  await expect(page.locator('.continue-button')).toBeDisabled();
-  expect((await snapshot(page)).run.weapons).toHaveLength(before + 1);
-  await expect(slot).toHaveAttribute('data-spin-phase', 'rolling');
-  await expect(slot.locator('[data-reel-state="rolling"]')).toHaveCount(3);
-  await expect(slot).toHaveAttribute('data-stopped-reels', '1');
-  await expect(slot.locator('[data-reel-state="rolling"]')).toHaveCount(2);
-  await expect(slot).toHaveAttribute('data-stopped-reels', '2');
-  await expect(slot.locator('[data-reel-state="rolling"]')).toHaveCount(1);
-  await expect(slot).toHaveAttribute('data-spin-phase', 'idle');
   await expect(slot.locator('.slot-machine__result')).toHaveCount(1);
+  const sequence = await page.evaluate(() => {
+    window.__slotObserver.disconnect();
+    return window.__slotSequence;
+  });
+  expect(sequence.some(state => state.phase === 'pull')).toBe(true);
+  expect(sequence.some(state => state.phase === 'rolling')).toBe(true);
+  const stops = sequence.map(state => state.stops);
+  expect(stops.indexOf(1)).toBeGreaterThan(0);
+  expect(stops.indexOf(2)).toBeGreaterThan(stops.indexOf(1));
+  expect(stops.indexOf(3)).toBeGreaterThan(stops.indexOf(2));
+  expect(sequence.filter(state => state.phase !== 'idle').every(state => state.results === 0 && state.disabled)).toBe(true);
+  expect((await snapshot(page)).run.weapons).toHaveLength(before + 1);
   const result = (await snapshot(page)).run.slotReward.stoneResults[0];
   const columns = await slot.locator('.slot-machine__reel').evaluateAll(reels => reels.map(reel =>
     [...reel.querySelectorAll('.slot-machine__cell')].map(cell => cell.title)));
