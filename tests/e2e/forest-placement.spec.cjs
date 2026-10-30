@@ -13,7 +13,8 @@ test('public Forest round two shows one rider on a log above the ground enemy', 
   expect(heights.filter(y => y < 900)).toHaveLength(1);
   expect(heights.filter(y => y === 900)).toHaveLength(1);
   await expect(page.locator('.minimap-enemy')).toHaveCount(2);
-  await expect(page.locator('.battle-bgm-controls')).toHaveCount(0);
+  await expect(page.locator('.battle-bgm-controls'))
+    .toHaveCount(process.env.VITE_ENABLE_BGM === 'true' ? 1 : 0);
   await dragPull(page, { angleDeg: 40, powerRatio: .5 });
   await expect(page.getByTestId('trajectory-preview')).toBeVisible();
   await page.mouse.up();
