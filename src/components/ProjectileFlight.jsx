@@ -124,9 +124,9 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
     <ellipse ref={rollShadowRef} data-testid="roll-shadow" rx={13 * worldScale} ry={3 * worldScale}
       fill="#664729" opacity=".3" style={{ display: 'none' }} />
     <g ref={candyRef} data-testid="projectile" className={flight.fireball ? 'projectile-candy is-fiery' : 'projectile-candy'}
-    data-projectile-kind={variant}
+    data-projectile-kind={variant} data-stone-id={flight.loadedStoneId || 'basic-stone'}
     transform={`translate(${flight.path?.start.x || 0} ${flight.path?.start.y || 0})`}>
-      <g transform={`scale(${worldScale})`}><CandyProjectileArt variant={variant} /></g>
+      <g transform={`scale(${worldScale})`}><CandyProjectileArt variant={variant} stoneId={flight.loadedStoneId} /></g>
     </g>
     <g ref={rollDustRef} data-testid="roll-dust" aria-hidden="true" style={{ display: 'none' }}>
       <g ref={dustDirectionRef}><g className="roll-dust" transform={`scale(${worldScale})`}>

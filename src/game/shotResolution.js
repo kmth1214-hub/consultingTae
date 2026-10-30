@@ -15,6 +15,7 @@ export function preparePhysicalFlight(run, pull, launchId, shotId) {
     toppledObstacleIds:run.toppledObstacleIds||[],
     windAvailable:loaded?.id==='wind-candy'&&!run.roundEffects.windHomingUsed});
   return solution ? {...solution,id:launchId,shotId,encounterId:run.encounterId,
+    loadedStoneId:loaded?.id??'basic-stone',
     candyRadius:layout.candyRadius,
     fireball:run.fireballArmed,projectileKind:run.spearArmed?'spear':run.fireballArmed?'fireball':'normal'} : null;
 }

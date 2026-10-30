@@ -9,8 +9,8 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 스톤 덱·능력·슬롯 규칙 | [P01](../phases/2026-10-30-cookie-stone-slots-city-crow/P01-stones/phase.md) |
-| P02 | `pending` | 슬롯·장전 화면과 태엽 까마귀 전투 | [P02](../phases/2026-10-30-cookie-stone-slots-city-crow/P02-presentation/phase.md) |
+| P01 | `done ✅` | 스톤 덱·능력·슬롯 규칙 | [P01](../phases/2026-10-30-cookie-stone-slots-city-crow/P01-stones/phase.md) |
+| P02 | `in_progress` | 슬롯·장전 화면과 태엽 까마귀 전투 | [P02](../phases/2026-10-30-cookie-stone-slots-city-crow/P02-presentation/phase.md) |
 | P03 | `pending` | 회귀 검증·Azure 게시·기존 리더보드 삭제 | [P03](../phases/2026-10-30-cookie-stone-slots-city-crow/P03-release/phase.md) |
 
 ## Constraints

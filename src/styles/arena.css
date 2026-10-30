@@ -62,7 +62,7 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .grade { border-radius: 6px; background: #f0dc9b; color: #78521e; padding: 4px 7px; font-size: .64rem; font-weight: 850; }
 .candy-hud h2 { font-size: .9rem; }
 .candy-hud p { margin-top: 8px; font-size: .72rem; color: #806d56; line-height: 1.6; word-break: keep-all; }
-.ammo-dots { display: flex; gap: 5px; margin-top: 12px; }
+.ammo-dots { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
 .ammo-dots i { width: 11px; height: 11px; border-radius: 50%; background: #e18a43; border: 1px solid #c67735; }
 .ammo-dots .is-spent { background: #ede5d4; border-color: #d8cbb6; }
 .candy-hud .weapon-count { font-size: .62rem; color: #96846a; }

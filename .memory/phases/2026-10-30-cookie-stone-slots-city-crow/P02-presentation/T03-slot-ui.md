@@ -1,6 +1,6 @@
 # Task: T03 스톤 발사체와 전투 HUD
 
-## Status: pending
+## Status: done
 
 ## Goal
 기본 스톤과 선택 쿠키의 전용 스톤을 장전·비행·HUD에서 구분할 수 있게 한다.
@@ -60,6 +60,6 @@ Task: T03-slot-ui
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: T03 커밋

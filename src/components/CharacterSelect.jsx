@@ -6,7 +6,7 @@ import AssetImage from './AssetImage.jsx';
 export default function CharacterSelect({ session }) {
   return <section className="screen-shell" aria-labelledby="characters-title">
     <p className="eyebrow">원정 준비</p><h1 id="characters-title">함께 떠날 쿠키</h1>
-    <p className="screen-intro">쿠키를 고르면 숲에서 모험이 시작돼요. 마법사탕의 능력은 보유하는 동안 함께 적용됩니다.</p>
+    <p className="screen-intro">쿠키를 고르면 전용 스톤 1개와 기본 스톤 2개로 숲에서 시작합니다. 전용 능력은 해당 스톤을 던질 때 발동합니다.</p>
     <div className="character-grid">{CHARACTERS.map(character => {
       const locked = character.locked && !session.profile.snowAreaCleared;
       return <button className={`character-card ${locked ? 'is-locked' : ''}`} key={character.id}
@@ -16,7 +16,7 @@ export default function CharacterSelect({ session }) {
         <span className="card-action">{locked ? '눈 지역 클리어 후 해금' : '이 쿠키로 출발 →'}</span>
       </button>;
     })}</div>
-    {!session.profile.snowAreaCleared && <p className="muted">눈 지역을 클리어하면 우유맛·바람궁수 쿠키와 두 마법사탕이 함께 해금돼요. 해금 전 보상은 기본 3종 사탕에서 나와요.</p>}
+    {!session.profile.snowAreaCleared && <p className="muted">눈 지역을 클리어하면 우유맛·바람궁수 쿠키가 해금돼요. 라운드 슬롯 당첨에는 선택한 쿠키의 전용 스톤만 나옵니다.</p>}
     <p className="muted footnote">해금 기록은 현재 브라우저에 저장됩니다. 진행 중인 전투는 새로고침하면 초기화돼요.</p>
   </section>;
 }
