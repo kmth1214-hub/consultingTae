@@ -5,6 +5,8 @@ import { BattleEngine } from '../src/game/battleEngine.js';
 import { CHARACTERS } from '../src/game/gameData.js';
 import { preparePhysicalFlight } from '../src/game/shotResolution.js';
 import { planShot } from '../src/game/shotGeometry.js';
+import { buildPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
+import { buildWindField } from '../src/game/windField.js';
 
 const options = { rng: () => .5, now: () => 1000 };
 test('map preview and playable studio session share the exact seeded enemy and support layout', () => {
@@ -81,6 +83,38 @@ test('studio grade selection changes all three starting stones without changing 
   }
   assert.deepEqual(BattleEngine.createRunState({ area: 'forest', round: 1, rng: options.rng })
     .weapons.map(weapon => weapon.grade), ['C', 'C', 'C']);
+});
+
+test('studio City monsters alone gain a further 1.5 scale with matching hit colliders', () => {
+  for (const round of [1, 2, 3]) {
+    const config = { area: 'city', round, seed: 4927 };
+    const { layout } = createStudioScenario(config);
+    const run = createStudioSession(config, options).getSnapshot().run;
+    const publicLayout = buildPlayableBattlefield({ area: 'city', round, seed: 4927,
+      enemies: run.enemies, prototype: 'regional-elevated-v1', worldScale: 1.5 });
+    assert.equal(run.studioEnemyScale, 1.5);
+    assert.equal(layout.enemyScale, 1.5);
+    assert.equal(layout.candyRadius, publicLayout.candyRadius);
+    assert.equal(layout.launcher.width, publicLayout.launcher.width);
+    for (const slot of layout.enemies) {
+      const ordinary = publicLayout.enemies.find(item => item.id === slot.id);
+      assert.equal(slot.size, ordinary.size * 1.5);
+      assert.equal(slot.collider.radius, slot.size * .42);
+      assert.equal(slot.collider.y, slot.y - slot.size * .52);
+    }
+    const pull = { direction: { x: .8, y: -.6 }, powerRatio: .65, ready: true };
+    const loaded = run.weapons.find(weapon => weapon.instanceId === run.weaponQueue[0]);
+    const windField = buildWindField({ area: 'city', round, layoutSeed: run.layoutSeed,
+      shotOrdinal: run.playerShotsFired, layout });
+    const expected = planShot({ layout, pull, enemies: run.enemies, flightStartMs: 1000,
+      windField, deferAbility: true, prototype: run.studioPrototype,
+      loadedCandyId: loaded.id, loadedCandyGrade: loaded.grade });
+    const flight = preparePhysicalFlight(run, pull, 1, 1, 1000);
+    assert.deepEqual(flight.path, expected.path);
+    assert.deepEqual(flight.hitIds, expected.hitIds);
+  }
+  assert.equal(createStudioScenario({ area: 'snow', round: 1 }).layout.enemyScale, 1);
+  assert.equal(BattleEngine.createRunState({ area: 'city', round: 1 }).studioEnemyScale, undefined);
 });
 
 test('boss special setup triggers the real third response; ordinary rounds and independent sessions stay fresh', () => {

@@ -6,4 +6,4 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 관리자 전투 설정과 도시 전장 배율 | [P01](../phases/2026-10-31-studio-weapon-grade-city-monsters/P01-studio-combat/phase.md) |
+| P01 | `done` | 관리자 전투 설정과 도시 전장 배율 | [P01](../phases/2026-10-31-studio-weapon-grade-city-monsters/P01-studio-combat/phase.md) |

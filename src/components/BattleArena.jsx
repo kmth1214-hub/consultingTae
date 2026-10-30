@@ -47,14 +47,16 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     seed: run.layoutSeed ?? 0, encounterPhase,
     prototype: run.battlefieldPrototype ?? run.studioPrototype ?? null,
     worldScale: run.studioWorldScale ?? run.battlefieldWorldScale ?? 1,
+    enemyScale: run.studioEnemyScale ?? 1,
     enemyLandingPositions: run.enemyLandingPositions ?? null,
     enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss, alive: true, hp: 1 })) }),
   [run.area, run.round, run.layoutSeed, run.battlefieldPrototype, run.studioPrototype,
-    run.studioWorldScale, run.battlefieldWorldScale, slotKey, encounterPhase, landingKey]);
+    run.studioWorldScale, run.battlefieldWorldScale, run.studioEnemyScale, slotKey, encounterPhase, landingKey]);
   const splitSource = useMemo(() => bossTransition ? buildPlayableBattlefield({ area: run.area, round: run.round,
     seed: run.layoutSeed ?? 0, enemies: [bossTransition.split.fromEnemy],
-    worldScale: run.studioWorldScale ?? run.battlefieldWorldScale ?? 1 }).enemies[0] : null,
-  [bossTransition?.id, run.area, run.round, run.layoutSeed, run.studioWorldScale, run.battlefieldWorldScale]);
+    worldScale: run.studioWorldScale ?? run.battlefieldWorldScale ?? 1,
+    enemyScale: run.studioEnemyScale ?? 1 }).enemies[0] : null,
+  [bossTransition?.id, run.area, run.round, run.layoutSeed, run.studioWorldScale, run.battlefieldWorldScale, run.studioEnemyScale]);
   const windField = useMemo(() => buildWindField({ area: run.area, round: run.round,
     layoutSeed: run.layoutSeed ?? 0, shotOrdinal: run.playerShotsFired ?? 0, layout }),
   [run.area, run.round, run.layoutSeed, run.playerShotsFired, layout]);

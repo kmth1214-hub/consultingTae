@@ -8,7 +8,8 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
     seed:run.layoutSeed??0,encounterPhase:run.chaosBossPhase==='split'?'split':null,
     prototype:run.battlefieldPrototype??run.studioPrototype??null,
     enemyLandingPositions:run.enemyLandingPositions??null,
-    worldScale:run.studioWorldScale??run.battlefieldWorldScale??1});
+    worldScale:run.studioWorldScale??run.battlefieldWorldScale??1,
+    enemyScale:run.studioEnemyScale??1});
   const loaded=run.weapons.find(weapon=>weapon.instanceId===(run.weaponQueue?.[0]??run.currentWeaponId));
   const abilityKind=!run.spearArmed && loaded?.id==='wizard-orb'?'split'
     :!run.spearArmed && loaded?.id==='alchemist-candy'?'explosion':null;
@@ -45,7 +46,8 @@ export function activatePhysicalFlight(run, baseFlight, { time, source, success 
     seed:run.layoutSeed??0,encounterPhase:run.chaosBossPhase==='split'?'split':null,
     prototype:run.battlefieldPrototype??run.studioPrototype??null,
     enemyLandingPositions:run.enemyLandingPositions??null,
-    worldScale:run.studioWorldScale??run.battlefieldWorldScale??1});
+    worldScale:run.studioWorldScale??run.battlefieldWorldScale??1,
+    enemyScale:run.studioEnemyScale??1});
   const revised=activatePlannedAbility({baseFlight,layout,enemies:run.enemies,
     kind:baseFlight.abilityKindPending,time,grade:baseFlight.weaponGrade,success,source});
   return revised ? {...revised,windCrossed:crossedWindZone(revised.path,revised.windField,revised.impactDistance),

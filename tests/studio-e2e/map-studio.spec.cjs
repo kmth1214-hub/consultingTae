@@ -56,6 +56,21 @@ test('all four studio regions preview the enlarged bodies and reuse them in play
   }
 });
 
+test('City preview and test play share enlarged monsters while grade selection survives restart', async ({ page }) => {
+  await page.goto('/__dev/maps');
+  await page.getByLabel('지역 선택').selectOption('city');
+  await page.getByLabel('테스트 라운드').selectOption('2');
+  await page.getByLabel('테스트 스톤 등급').selectOption('A');
+  await expect(page.locator('.studio-viewport .monster').first()).toHaveCSS('width', '135px');
+  await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
+  await expect(page.getByLabel('플레이 스톤 등급')).toHaveValue('A');
+  await expect(page.locator('.battle-arena .monster').first()).toHaveCSS('width', '135px');
+  await page.getByLabel('플레이 스톤 등급').selectOption('B');
+  await page.getByRole('button', { name: '선택한 전투 시작' }).click();
+  await expect(page.getByLabel('플레이 스톤 등급')).toHaveValue('B');
+  await expect(page.locator('.battle-arena .monster').first()).toHaveCSS('width', '135px');
+});
+
 test('narrow studio opens near the launcher with readable enemies and offers a true full-map reset', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 700 });
   await page.goto('/__dev/maps');

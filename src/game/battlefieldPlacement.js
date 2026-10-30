@@ -91,21 +91,21 @@ export function isPlayableBattlefield(layout, enemies) {
 
 /** All attempts derive from one round seed, so rerenders cannot shuffle the battlefield. */
 export function buildPlayableBattlefield({ area, round, enemies, seed = 0, encounterPhase = null,
-  prototype = null, enemyLandingPositions = null, worldScale = 1 } = {}) {
+  prototype = null, enemyLandingPositions = null, worldScale = 1, enemyScale = 1 } = {}) {
   if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) {
     throw new TypeError('Invalid battlefield seed');
   }
   for (let attempt = 0; attempt < 32; attempt++) {
     const candidateSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
-    const layout = buildBattlefield({ area, round, enemies, seed: candidateSeed, encounterPhase, prototype, worldScale });
+    const layout = buildBattlefield({ area, round, enemies, seed: candidateSeed, encounterPhase, prototype, worldScale, enemyScale });
     if (isPlayableBattlefield(layout, enemies)) return enemyLandingPositions
-      ? buildBattlefield({ area, round, enemies, seed: candidateSeed, encounterPhase, prototype, enemyLandingPositions, worldScale })
+      ? buildBattlefield({ area, round, enemies, seed: candidateSeed, encounterPhase, prototype, enemyLandingPositions, worldScale, enemyScale })
       : layout;
   }
   // A deliberately placed two-stack layout is still verified before use.
-  const fallback = buildBattlefield({ area, round, enemies, seed: 0, encounterPhase, prototype, worldScale });
+  const fallback = buildBattlefield({ area, round, enemies, seed: 0, encounterPhase, prototype, worldScale, enemyScale });
   if (isPlayableBattlefield(fallback, enemies)) return enemyLandingPositions
-    ? buildBattlefield({ area, round, enemies, seed: 0, encounterPhase, prototype, enemyLandingPositions, worldScale })
+    ? buildBattlefield({ area, round, enemies, seed: 0, encounterPhase, prototype, enemyLandingPositions, worldScale, enemyScale })
     : fallback;
   throw new Error('Could not place a playable battlefield');
 }

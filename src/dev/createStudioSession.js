@@ -21,13 +21,15 @@ export function createStudioScenario({ area, round, characterId = 'adventurer', 
     inventory: { fireball: 3, spear: 3, defense: 3, heal: 3 } });
   run.weapons.forEach(weapon => { weapon.grade = weaponGrade; });
   run.studioWorldScale = 1.5;
+  run.studioEnemyScale = area === 'city' ? 1.5 : 1;
   run.studioPrototype = area === 'forest' ? 'forest-elevated-v1' : 'regional-elevated-v1';
   run.studioDepthPreview = true;
   run.enemyLandingPositions = {};
   if (round === 3 && bossSpecial) for (const enemy of run.enemies) if (enemy.isBoss) enemy.attackCount = 2;
   run.layoutSeed = seed;
   const layout = buildPlayableBattlefield({ area, round, enemies: run.enemies, seed,
-    prototype: run.studioPrototype ?? null, worldScale: run.studioWorldScale });
+    prototype: run.studioPrototype ?? null, worldScale: run.studioWorldScale,
+    enemyScale: run.studioEnemyScale });
   return { area, round, characterId, weaponGrade, bossSpecial, seed, prototype: run.studioPrototype ?? null,
     enemies: structuredClone(run.enemies), layout, run };
 }

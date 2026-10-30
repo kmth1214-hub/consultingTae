@@ -48,10 +48,11 @@ function subtract(intervals, low, high) {
 }
 
 export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhase = null,
-  prototype = null, enemyLandingPositions = null, worldScale = 1 } = {}) {
+  prototype = null, enemyLandingPositions = null, worldScale = 1, enemyScale = 1 } = {}) {
   if (!['forest', 'snow', 'city', 'chaos'].includes(area) || !Number.isFinite(round)
     || !Array.isArray(enemies) || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff
-    || ![1, 1.5].includes(worldScale)
+    || ![1, 1.5].includes(worldScale) || ![1, 1.5].includes(enemyScale)
+    || (enemyScale !== 1 && area !== 'city')
     || (enemyLandingPositions !== null && (!elevated(area, prototype)
       || !enemyLandingPositions || Array.isArray(enemyLandingPositions)
       || typeof enemyLandingPositions !== 'object'))
@@ -83,7 +84,7 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
         ? 760 + i * 2470 / (enemies.length - 1) : 1000 + i * 1860 / (enemies.length - 1);
     const jitter = enemies.length > 10 ? 24 : enemies.length > 6 ? 42 : 135;
     const x = Math.round(nominal + (random() * 2 - 1) * jitter);
-    const size = (kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60) * worldScale;
+    const size = (kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60) * worldScale * enemyScale;
     const y = kind === 'clockwork-crow' ? 900 - 240 - (i % 2) * 80 : 900;
     const patrol = kind === 'clockwork-crow' ? { centerX: x, range: 75 * worldScale,
       periodMs: 2100 + i % 3 * 300, phase: random() } : null;
@@ -165,10 +166,10 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     slot.collider = { ...slot.collider, x: landing.x, y: landing.y - slot.size * .52 };
   }
   const playerX = 44, launcherX = 220 + (worldScale - 1) * 160;
-  return { ...BATTLEFIELD, candyRadius: BATTLEFIELD.candyRadius * worldScale, worldScale,
+  return { ...BATTLEFIELD, candyRadius: BATTLEFIELD.candyRadius * worldScale, worldScale, enemyScale,
     encounterPhase, key: JSON.stringify([area, round, seed, encounterPhase,
     enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss]), ...(prototype ? [prototype] : []),
-    ...(worldScale !== 1 ? [worldScale] : []),
+    ...(worldScale !== 1 ? [worldScale] : []), ...(enemyScale !== 1 ? [{ enemyScale }] : []),
     ...(enemyLandingPositions && Object.keys(enemyLandingPositions).length
       ? [Object.entries(enemyLandingPositions).sort(([a], [b]) => a.localeCompare(b))] : [])]), area, round,
   ...(prototype ? { prototype, launcherPlatform } : {}),
