@@ -9,10 +9,14 @@ export default function RewardScreen({ session }) {
   const { run } = session;
   const slot = run.slotReward;
   const ready = Boolean(slot && !slot.stoneSpinsRemaining && !slot.consumableSpinsRemaining
-    && run.selectedRewards.consumable && !slotSpinning);
+    && run.selectedRewards.consumable && !slotSpinning && !session.profileSaveRequired);
   return <section className="screen-shell reward-screen" aria-labelledby="reward-title">
     <p className="eyebrow">{REGIONS[run.area].name} · {run.round} / 3 클리어</p>
     <h1 id="reward-title">다음 전투의 보상</h1>
+    {session.profileSaveRequired && <div role={session.profileStatus === 'save-error' ? 'alert' : 'status'}>
+      <p>{session.profileStatus === 'save-error' ? '눈 지역 해금 기록을 저장하지 못했어요. 저장 후 다음 지역으로 이동할 수 있어요.' : '눈 지역 해금 기록을 계정에 저장하는 중이에요…'}</p>
+      {session.profileStatus === 'save-error' && <button className="secondary-button" onClick={session.retryProfileSave}>저장 다시 시도</button>}
+    </div>}
     <p className="screen-intro">스톤 슬롯을 돌려 보상을 확인하세요. 당첨은 전용 스톤, 빗나가면 기본 스톤입니다.</p>
     <SlotMachine kind="stone" remaining={slot.stoneSpinsRemaining} results={slot.stoneResults}
       onSpin={() => session.spinRewardSlot('stone')} disabled={slotSpinning}

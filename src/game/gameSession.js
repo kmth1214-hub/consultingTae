@@ -19,13 +19,14 @@ const REASONS = {
   'inventory-full': '이 소모품은 최대 3개까지 보유할 수 있어요.', 'already-selected': '이미 선택한 보상이에요.',
   'rewards-incomplete': '슬롯과 소모품 보상을 모두 마무리하세요.', 'camp-choice-locked': '시작한 슬롯 보상을 먼저 마무리하세요.',
   locked: '눈 지역을 클리어하면 이 쿠키가 해금돼요.', 'invalid-state': '지금은 이 동작을 할 수 없어요.',
-  'candy-locked': '눈 지역을 클리어하면 이 마법사탕이 해금돼요.'
+  'candy-locked': '눈 지역을 클리어하면 이 마법사탕이 해금돼요.',
+  'profile-unavailable': '계정 기록을 확인하거나 저장하고 있어요. 잠시 후 다시 시도해 주세요.'
 };
 
 // Engine actions mutate a private draft. Subscribers only receive completed snapshots.
 // Keeping this controller outside React also makes full screen-flow tests deterministic.
 export function createGameSession({ rng = Math.random, layoutRng = defaultLayoutRng,
-  now = Date.now, storage, engine = BattleEngine } = {}) {
+  now = Date.now, storage, engine = BattleEngine, profileClient = null } = {}) {
   let encounterSequence = 0, pendingShot = null;
   const assignLayoutSeed = run => {
     const draw = layoutRng();
@@ -39,7 +40,10 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     pendingShot = null;
   };
   let sequence = 0;
-  let state = { screen: 'home', profile: loadProfile(storage), selectedCharacter: null, run: null,
+  let profileLoad = null, profileSave = null;
+  let state = { screen: 'home', profile: profileClient ? { version: 1, snowAreaCleared: false } : loadProfile(storage),
+    profileStatus: profileClient ? 'loading' : 'ready', profileSaveRequired: false,
+    selectedCharacter: null, run: null,
     aim: initialAim(), notification: null, outcome: null, summary: null, fusion: null, lastEvent: null, enemyResponse: null,
     leaderboardReturnScreen: null, campRewardReveal: null, shotReview: null, bossTransition: null };
   const listeners = new Set();
@@ -53,6 +57,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
   };
   function persistUnlock(run) {
     if (!run.snowAreaCleared || state.profile.snowAreaCleared) return {};
+    if (profileClient) return state.profileSaveRequired ? {}
+      : { profileStatus: 'saving', profileSaveRequired: true };
     const profile = markSnowCleared();
     const saved = saveProfile(profile, storage);
     return { profile, notification: { id: ++sequence, kind: 'success', message: saved
@@ -83,16 +89,48 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     // Damage resolves once in the engine. Playback only reveals that committed result.
     // Keep fatal hits on the arena until the player has seen what hit them.
     publish(reviewResult || event.enemyAttack || event.bossSplit ? patch : finishCombatRouting(run, patch));
+    if (profileClient && state.profileSaveRequired && state.profileStatus === 'saving' && !profileSave)
+      void actions.retryProfileSave();
     return event;
   }
   const actions = {
+    loadAccountProfile() {
+      if (!profileClient) return Promise.resolve({ accepted: true, profile: state.profile });
+      if (profileLoad) return profileLoad;
+      publish({ profileStatus: 'loading' });
+      profileLoad = profileClient.get().then(profile => {
+        publish({ profile, profileStatus: 'ready' });
+        return { accepted: true, profile };
+      }).catch(() => {
+        publish({ profileStatus: 'load-error' });
+        return { accepted: false, reason: 'profile-unavailable' };
+      }).finally(() => { profileLoad = null; });
+      return profileLoad;
+    },
+    retryProfileSave() {
+      if (!profileClient || !state.profileSaveRequired) return Promise.resolve({ accepted: false, reason: 'invalid-state' });
+      if (profileSave) return profileSave;
+      publish({ profileStatus: 'saving' });
+      profileSave = profileClient.unlockSnow().then(profile => {
+        if (!profile.snowAreaCleared) throw new Error('unlock-not-confirmed');
+        publish({ profile, profileStatus: 'ready', profileSaveRequired: false,
+          notification: { id: ++sequence, kind: 'success', message: '눈 지역 클리어! 우유맛 · 바람궁수 쿠키와 마법사탕이 해금됐어요.' } });
+        return { accepted: true, profile };
+      }).catch(() => {
+        publish({ profileStatus: 'save-error' });
+        return { accepted: false, reason: 'profile-unavailable' };
+      }).finally(() => { profileSave = null; });
+      return profileSave;
+    },
     startCharacterSelect() {
+      if (state.profileStatus !== 'ready' || state.profileSaveRequired) return reject('profile-unavailable');
       pendingShot = null;
       publish({ screen: 'characters', run: null, selectedCharacter: null, fusion: null, outcome: null,
         summary: null, lastEvent: null, enemyResponse: null, aim: initialAim(), notification: null, leaderboardReturnScreen: null,
         campRewardReveal: null, shotReview: null, bossTransition: null });
     },
     startRun(characterId) {
+      if (state.profileStatus !== 'ready' || state.profileSaveRequired) return reject('profile-unavailable');
       if (state.screen !== 'characters') return reject('invalid-state');
       const character = CHARACTERS.find(item => item.id === characterId);
       if (!character) return reject('invalid-state');
@@ -329,6 +367,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       return event;
     },
     continueAfterReward() {
+      if (state.profileSaveRequired || state.profileStatus !== 'ready') return reject('profile-unavailable');
       if (state.screen !== 'reward' || state.fusion) return reject('invalid-state');
       const run = structuredClone(state.run);
       const event = engine.advanceRound(run, { rng, now: now() });
@@ -341,6 +380,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       return event;
     },
     chooseCampReward(choice, mergeDuplicate) {
+      if (state.profileSaveRequired || state.profileStatus !== 'ready') return reject('profile-unavailable');
       if (state.screen !== 'camp' || (state.fusion && mergeDuplicate === undefined)) return reject('invalid-state');
       const run = structuredClone(state.run);
       const event = engine.chooseCampReward(run, choice, { rng, now: now(), mergeDuplicate });
@@ -351,6 +391,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       return event;
     },
     continueAfterCampSlot() {
+      if (state.profileSaveRequired || state.profileStatus !== 'ready') return reject('profile-unavailable');
       if (state.screen !== 'camp-slot') return reject('invalid-state');
       const run = structuredClone(state.run);
       const event = engine.finishCampSlot(run, { rng, now: now() });
@@ -360,6 +401,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       return event;
     },
     continueAfterCampReward() {
+      if (state.profileSaveRequired || state.profileStatus !== 'ready') return reject('profile-unavailable');
       if (state.screen !== 'camp-reward' || !state.campRewardReveal) return reject('invalid-state');
       publish({ screen: 'battle', campRewardReveal: null, notification: null });
       return { accepted: true };
@@ -371,6 +413,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         : actions.selectReward(fusion.category, fusion.choiceId, mergeDuplicate);
     },
     enterBonusRoute() {
+      if (state.profileSaveRequired || state.profileStatus !== 'ready') return reject('profile-unavailable');
       if (state.screen !== 'main-results' || state.outcome !== 'clear') return reject('invalid-state');
       const run = structuredClone(state.run);
       const event = engine.startBonusRoute(run, { rng, now: now() });

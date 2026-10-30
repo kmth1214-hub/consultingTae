@@ -3,13 +3,15 @@ import { REGIONS } from '../game/gameData.js';
 
 export default function CampScreen({ session }) {
   return <section className="screen-shell compact-screen" aria-labelledby="camp-title">
+    {session.profileSaveRequired && <div role="alert">계정 해금 저장을 완료한 뒤 이동할 수 있어요.
+      <button onClick={session.retryProfileSave}>저장 다시 시도</button></div>}
     <p className="eyebrow">{REGIONS[session.run.area].name} 지역 클리어</p><h1 id="camp-title">잠깐, 모닥불 곁에서</h1>
     <p className="screen-intro">다음 지역을 향해 떠나기 전, 하나를 선택하세요.</p>
     <p className="camp-hp">현재 체력 <strong>{session.run.playerHp} / {session.run.maxPlayerHp}</strong></p>
     <div className="camp-grid">
-      <button className="reward-card" onClick={() => session.chooseCampReward('heal')}>
+      <button className="reward-card" disabled={session.profileSaveRequired} onClick={() => session.chooseCampReward('heal')}>
         <span className="camp-icon" aria-hidden="true">✚</span><strong>따뜻한 휴식</strong><span>체력 60 회복 · 최대 체력까지</span></button>
-      <button className="reward-card" onClick={() => session.chooseCampReward('weapon')}>
+      <button className="reward-card" disabled={session.profileSaveRequired} onClick={() => session.chooseCampReward('weapon')}>
         <span className="camp-icon" aria-hidden="true">✦</span><strong>스톤 슬롯 두 번</strong><span>각 회전에서 전용 또는 기본 스톤 1개씩 획득</span></button>
     </div>
   </section>;

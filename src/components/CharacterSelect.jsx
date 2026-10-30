@@ -16,7 +16,7 @@ export default function CharacterSelect({ session }) {
         <span className="card-action">{locked ? '눈 지역 클리어 후 해금' : '이 쿠키로 출발 →'}</span>
       </button>;
     })}</div>
-    {!session.profile.snowAreaCleared && <p className="muted">눈 지역을 클리어하면 우유맛·바람궁수 쿠키가 해금돼요. 라운드 슬롯 당첨에는 선택한 쿠키의 전용 스톤만 나옵니다.</p>}
-    <p className="muted footnote">해금 기록은 현재 브라우저에 저장됩니다. 진행 중인 전투는 새로고침하면 초기화돼요.</p>
+    {!session.profile.snowAreaCleared && <p className="muted">눈 지역을 클리어하면 우유맛·바람궁수 쿠키가 해금돼요. 슬롯 당첨에는 해금된 쿠키 중 하나의 전용 스톤이 나옵니다.</p>}
+    <p className="muted footnote">해금 기록은 {import.meta.env.VITE_REQUIRE_ACCOUNT_PROFILE === 'true' ? '회사 계정' : '현재 브라우저'}에 저장됩니다. 진행 중인 전투는 새로고침하면 초기화돼요.</p>
   </section>;
 }

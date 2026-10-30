@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useGameSession } from './game/useGameSession.js';
 import { useBattleBgm } from './game/useBattleBgm.js';
+import { createPlayerProfileClient } from './game/playerProfileClient.js';
 import GameHome from './components/GameHome.jsx';
 import CharacterSelect from './components/CharacterSelect.jsx';
 import BattleScreen from './components/BattleScreen.jsx';
@@ -15,6 +16,8 @@ import './styles/game.css';
 import './styles/arena.css';
 
 const BGM_ENABLED = import.meta.env.DEV || import.meta.env.VITE_ENABLE_BGM === 'true';
+const ACCOUNT_PROFILE_REQUIRED = import.meta.env.VITE_REQUIRE_ACCOUNT_PROFILE === 'true';
+const profileClient = ACCOUNT_PROFILE_REQUIRED ? createPlayerProfileClient() : null;
 
 function MusicScreen({ session, Screen }) {
   const music = useBattleBgm({ active: session.screen === 'battle',
@@ -23,9 +26,10 @@ function MusicScreen({ session, Screen }) {
 }
 
 export default function App() {
-  const session = useGameSession();
+  const session = useGameSession({ profileClient });
   const main = useRef(null);
   useEffect(() => { main.current?.focus({ preventScroll: true }); }, [session.screen]);
+  useEffect(() => { if (profileClient) void session.loadAccountProfile(); }, []);
   const screens = { home: GameHome, characters: CharacterSelect, battle: BattleScreen,
     reward: RewardScreen, camp: CampScreen, 'camp-slot': CampSlotScreen, 'camp-reward': CampRewardResult,
     'main-results': RunResults, 'bonus-results': RunResults, leaderboard: LeaderboardScreen };

@@ -9,7 +9,7 @@ export default function CampSlotScreen({ session }) {
     <p className="screen-intro">각 회전마다 스톤 한 개를 얻습니다. 당첨이면 선택 쿠키의 전용 스톤입니다.</p>
     <SlotMachine kind="stone" remaining={slot.stoneSpinsRemaining} results={slot.stoneResults}
       onSpin={() => session.spinRewardSlot('stone')} onSpinningChange={setSlotSpinning} />
-    <button className="primary-button continue-button" disabled={slot.stoneSpinsRemaining > 0 || slotSpinning}
+    <button className="primary-button continue-button" disabled={slot.stoneSpinsRemaining > 0 || slotSpinning || session.profileSaveRequired}
       onClick={session.continueAfterCampSlot}>다음 지역으로 →</button>
   </section>;
 }

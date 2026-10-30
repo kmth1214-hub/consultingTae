@@ -1,6 +1,6 @@
 # Task: T02 계정 해금 로드와 저장 재시도
 
-## Status: pending
+## Status: done
 
 ## Goal
 Azure 게임은 계정 프로필을 읽은 뒤에만 시작하고, 눈 보스 클리어를 계정에 저장할 때까지 다음 지역 이동을 막는다. 로컬 개발은 기존 브라우저 프로필을 사용한다.
@@ -62,6 +62,6 @@ Task: T02-account-unlock-client
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

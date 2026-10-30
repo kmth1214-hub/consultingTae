@@ -11,7 +11,10 @@ export default function GameHome({ session }) {
         <p className="eyebrow">작은 사탕, 커다란 모험</p>
         <h1 id="game-title">오븐 밖으로<br />더 멀리.</h1>
         <p className="hero-description">새총을 당기고, 나만의 한 발을 날려보세요.<br />숲에서 설원, 도시까지 쿠키와 함께 떠나는 원정.</p>
-        <button className="start-button" onClick={session.startCharacterSelect}>모험 시작 <span aria-hidden="true">→</span></button>
+        <button className="start-button" disabled={session.profileStatus !== 'ready'} onClick={session.startCharacterSelect}>모험 시작 <span aria-hidden="true">→</span></button>
+        {session.profileStatus === 'loading' && <p role="status">계정 기록을 불러오는 중이에요…</p>}
+        {session.profileStatus === 'load-error' && <div role="alert"><p>계정 기록을 불러오지 못했어요. 다시 시도해 주세요.</p>
+          <button className="secondary-button" onClick={session.loadAccountProfile}>다시 시도</button></div>}
         <p className="game-status">기본 9발. 새 사탕을 따로 얻으면 다음 라운드부터 1발씩 늘어요.</p>
       </div>
       <AssetImage className="hero-cookie" src={ASSETS.characters.adventurer} />

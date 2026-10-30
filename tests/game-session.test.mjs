@@ -39,6 +39,48 @@ function rewards(session) {
   assert.equal(actions.continueAfterReward().accepted, true);
 }
 
+test('account profile blocks play until loaded and never migrates a browser unlock', async () => {
+  const storage = memoryStorage();
+  storage.setItem('cookie-roguelike.profile.v1', JSON.stringify({ version: 1, snowAreaCleared: true }));
+  let reads = 0;
+  const session = createGameSession({ storage, profileClient: {
+    get: async () => { reads++; if (reads === 1) throw new Error('offline');
+      return { version: 1, snowAreaCleared: false }; },
+    unlockSnow: async () => ({ version: 1, snowAreaCleared: true })
+  } });
+  assert.equal(session.getSnapshot().profile.snowAreaCleared, false);
+  assert.equal(session.actions.startCharacterSelect().reason, 'profile-unavailable');
+  assert.equal((await session.actions.loadAccountProfile()).accepted, false);
+  assert.equal(session.getSnapshot().profileStatus, 'load-error');
+  assert.equal((await session.actions.loadAccountProfile()).accepted, true);
+  assert.equal(session.getSnapshot().profileStatus, 'ready');
+  session.actions.startCharacterSelect();
+  assert.equal(session.actions.startRun('milk').reason, 'locked');
+});
+
+test('Snow clear save failure holds next-region transition and retry unlocks without replay', async () => {
+  let writes = 0;
+  const session = createGameSession({ engine: clearingEngine, rng: () => .999, now: () => 1000,
+    profileClient: { get: async () => ({ version: 1, snowAreaCleared: false }),
+      unlockSnow: async () => { writes++; if (writes === 1) throw new Error('offline');
+        return { version: 1, snowAreaCleared: true }; } } });
+  await session.actions.loadAccountProfile();
+  session.actions.startCharacterSelect();
+  session.actions.startRun('adventurer');
+  const run = session.getSnapshot().run;
+  run.area = 'snow'; run.round = 3;
+  const ids = run.enemies.map(enemy => enemy.id);
+  session.actions.fireShot({ hitIds: ids });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(session.getSnapshot().profileStatus, 'save-error');
+  assert.equal(session.getSnapshot().profileSaveRequired, true);
+  assert.equal(session.actions.continueAfterReward().reason, 'profile-unavailable');
+  assert.equal((await session.actions.retryProfileSave()).accepted, true);
+  assert.equal(session.getSnapshot().profile.snowAreaCleared, true);
+  assert.equal(session.getSnapshot().profileSaveRequired, false);
+  assert.equal(writes, 2);
+});
+
 test('shot review commits one result immediately and blocks inputs and enemy playback until explicitly released', () => {
   const session = start();
   session.actions.fireShot({ reviewResult: true });
