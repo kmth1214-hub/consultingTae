@@ -25,7 +25,8 @@ for(const setting of ['shield','phone-ice','milk','fatal']) test(`actual shot re
   if(phone) {await page.setViewportSize({width:390,height:844});await page.emulateMedia({reducedMotion:'reduce'});}
   if(setting==='milk') await page.addInitScript(()=>localStorage.setItem('cookie-roguelike.profile.v1','{"version":1,"snowAreaCleared":true}'));
   await installGame(page,{initial:{area:'chaos',round:3,playerHp:setting==='fatal'?1:100,
-    inventory:{defense:1,spear:1}},stateOverride:{enemies:[fused(29)],...(phone?{nextAttackDamageMultiplier:.5}:{})}});
+    inventory:{defense:1,spear:1}},stateOverride:{enemies:[fused(29)],...(phone?{nextAttackDamageMultiplier:.5}:{}),
+      ...(setting==='milk'?{milkShieldPending:true}:{})}});
   await start(page,setting==='milk'?'우유맛 쿠키':'모험가맛 쿠키');await paused(page);
   await page.clock.runFor(240);
   if(phone) await page.screenshot({path:'tmp/chaos-fused-phone.png'});

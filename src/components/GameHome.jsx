@@ -15,7 +15,7 @@ export default function GameHome({ session }) {
         {session.profileStatus === 'loading' && <p role="status">계정 기록을 불러오는 중이에요…</p>}
         {session.profileStatus === 'load-error' && <div role="alert"><p>계정 기록을 불러오지 못했어요. 다시 시도해 주세요.</p>
           <button className="secondary-button" onClick={session.loadAccountProfile}>다시 시도</button></div>}
-        <p className="game-status">기본 9발. 새 사탕을 따로 얻으면 다음 라운드부터 1발씩 늘어요.</p>
+        <p className="game-status">전용 스톤 1개와 기본 스톤 2개로 시작해요. 라운드 보상 슬롯에서 스톤을 얻으면 다음 전투의 발사 횟수가 늘어요.</p>
       </div>
       <AssetImage className="hero-cookie" src={ASSETS.characters.adventurer} />
     </section>

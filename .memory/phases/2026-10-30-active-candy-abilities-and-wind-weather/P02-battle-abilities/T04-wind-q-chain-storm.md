@@ -63,4 +63,4 @@ Task: T04-wind-q-chain-storm
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: pending
+- commit: da6b7bd

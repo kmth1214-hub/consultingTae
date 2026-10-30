@@ -1,6 +1,6 @@
 # Azure Static Web Apps 배포 안내
 
-이 프로젝트는 Vite 정적 사이트와 `api/`의 Azure Functions 리더보드 API를 Azure Static Web Apps에 함께 배포합니다. 배포 사이트는 Microsoft Entra 로그인을 요구하고, 지정한 회사 테넌트의 계정만 허용하도록 구성합니다.
+이 프로젝트는 Vite 정적 사이트와 `api/`의 Azure Functions 리더보드·플레이어 기록 API를 Azure Static Web Apps에 함께 배포합니다. 배포 사이트는 Microsoft Entra 로그인을 요구하고, 지정한 회사 테넌트의 계정만 허용하도록 구성합니다.
 
 ## 리소스 생성 대상
 
@@ -11,16 +11,17 @@
 | Static Web App | `swa-cookie-expedition` | 리소스 그룹 `grill-me-edu`, Standard 플랜 |
 | Storage Account | `stcookieexpedition26` | 리소스 그룹 `grill-me-edu`, 일반용 v2·Standard·LRS |
 | Table | `LeaderboardRecords` | 위 Storage Account 내부에 생성 |
+| Table | `PlayerProfiles` | 위 Storage Account 내부에 생성; 눈 지역 클리어·쿠키 해금을 계정별로 보관 |
 | Entra 앱 등록 | `cookie-expedition-login` | 회사 Entra 디렉터리의 앱 등록에서 생성 |
 
 Storage Account 이름은 전역에서 고유해야 하므로 이미 사용 중이면 숫자 접미사를 바꿉니다. Entra 앱 등록은 리소스 그룹에 포함되는 리소스가 아니라 회사 디렉터리에서 관리합니다. 현재 구현에는 Cosmos DB와 별도 Function App이 필요하지 않습니다.
 
-포털에서 먼저 `grill-me-edu` → **만들기** → **스토리지 계정**을 선택합니다. 생성 후 해당 계정의 **데이터 스토리지 → 테이블**에서 `LeaderboardRecords`를 생성합니다. 테이블 컬럼을 미리 정의할 필요는 없습니다. 다음으로 같은 리소스 그룹에 Static Web App을 만들고, 발급된 사이트 주소를 이용해 아래 Entra 리디렉션 URI를 등록합니다.
+포털에서 먼저 `grill-me-edu` → **만들기** → **스토리지 계정**을 선택합니다. 생성 후 해당 계정의 **데이터 스토리지 → 테이블**에서 `LeaderboardRecords`와 `PlayerProfiles`를 생성합니다. 테이블 컬럼을 미리 정의할 필요는 없습니다. 다음으로 같은 리소스 그룹에 Static Web App을 만들고, 발급된 사이트 주소를 이용해 아래 Entra 리디렉션 URI를 등록합니다.
 
 ## 필요한 Azure/GitHub 설정
 
 1. Azure의 리소스 그룹 `grill-me-edu`에 프로젝트용 **Standard** Static Web App을 만듭니다. 생성 화면의 배포 원본은 **기타(Other)**를 선택합니다. 저장소 `kmth1214-hub/consultingTae`에는 이미 `.github/workflows/azure-static-web-apps.yml`이 있으므로, 이후 배포 토큰으로 해당 workflow와 `main` 브랜치를 연결합니다. 커스텀 Entra 인증은 Standard 플랜이 필요합니다.
-2. 같은 리소스 그룹의 Storage Account에 `LeaderboardRecords` Table을 준비합니다. 연결 문자열을 Static Web App의 API 환경 변수 `LEADERBOARD_STORAGE_CONNECTION_STRING`에 저장합니다. 필요하면 `LEADERBOARD_TABLE_NAME`도 지정합니다.
+2. 같은 리소스 그룹의 Storage Account에 `LeaderboardRecords`와 `PlayerProfiles` Table을 준비합니다. 연결 문자열을 Static Web App의 API 환경 변수 `LEADERBOARD_STORAGE_CONNECTION_STRING`에 저장합니다. 두 API가 같은 연결 문자열을 사용합니다. 테이블 이름을 바꾼 경우에만 `LEADERBOARD_TABLE_NAME`, `PLAYER_PROFILE_TABLE_NAME`을 지정합니다.
 3. 회사 테넌트에서 단일 조직 계정용 Entra 앱 등록을 만들고, 지원 계정 유형을 이 조직 디렉터리의 계정으로 제한합니다. 웹 리디렉션 URI를 `https://<STATIC_WEB_APP_HOST>/.auth/login/aad/callback`으로 등록합니다. 앱의 **Authentication → 설정 → 암시적 허용 및 하이브리드 흐름**에서 **ID 토큰**을 선택하고 저장합니다. 현재 SWA Entra 로그인에 필요한 설정이며, 액세스 토큰과 퍼블릭 클라이언트 흐름은 추가로 활성화하지 않습니다.
 4. Static Web App의 환경 변수에 `ENTRA_CLIENT_ID`와 `ENTRA_CLIENT_SECRET`을 등록합니다. 비밀은 Azure 환경 변수에만 저장합니다. 회사 계정으로 로그인하여 `/.auth/me`의 이름 claim이 표시 이름으로 채워지는지 확인합니다.
 5. GitHub 저장소 **Settings → Secrets and variables → Actions**에 다음 값을 등록합니다.
@@ -35,7 +36,7 @@ Storage Account 이름은 전역에서 고유해야 하므로 이미 사용 중�
 
 - Static Web App: `swa-cookie-expedition`, Standard, 리소스 그룹 `grill-me-edu`.
 - 사이트 주소: `https://calm-flower-0764f6d00.3.azurestaticapps.net`.
-- 스토리지 및 테이블: `stcookieexpedition26` / `LeaderboardRecords` 존재 확인.
+- 스토리지 및 테이블: `stcookieexpedition26` / `LeaderboardRecords` 존재 확인. `PlayerProfiles`는 2026-10-31 사용자가 생성했다고 알려줬으며, 배포 후 API 연결을 확인합니다.
 - 로그인 앱: `cookie-expedition-login`, 단일 테넌트, 실제 사이트의 Web callback 등록 확인.
 - 로그인용 클라이언트 비밀 만료일: **2027-04-25**. 만료 전에 Entra에서 새 값을 생성하고 Azure의 `ENTRA_CLIENT_SECRET`을 갱신합니다.
 - API는 key2 연결 문자열을 사용합니다. 확인 중 출력된 기존 key1은 사용자 승인 후 2026-10-27에 교체해 무효화했습니다.
@@ -49,6 +50,19 @@ Storage Account 이름은 전역에서 고유해야 하므로 이미 사용 중�
 - `ENTRA_CLIENT_SECRET` 만료 전(2027-04-25)에 새 비밀을 생성해 SWA production 환경 변수에 갱신합니다. GitHub나 React 환경 변수에는 넣지 않습니다.
 - Storage 키를 교체할 때 현재 API가 쓰는 키와 다른 키부터 교체하고, 새 연결 문자열을 저장한 뒤 실제 리더보드 조회를 확인합니다.
 - 맵 스튜디오 `/__dev/maps`는 개발 서버 전용입니다. Azure 배포에는 사용자 게임과 리더보드가 포함됩니다.
+
+### 계정별 해금 기록과 스톤 보상
+
+- Azure 빌드는 `VITE_REQUIRE_ACCOUNT_PROFILE=true`로 실행합니다. 게임 시작 시 `GET /api/profile`에서 로그인 계정의 눈 지역 클리어 기록을 불러옵니다. 불러오기 실패 시 시작 버튼을 막고 재시도를 표시합니다.
+- 눈 지역을 처음 클리어하면 `POST /api/profile/snow-clear`로 계정 기록을 저장합니다. 실패하면 결과 화면에서 재시도할 수 있고, 저장 성공 전 다음 지역으로 이동하지 않습니다. 기존 브라우저 해금 기록은 새 계정 기록으로 가져오지 않습니다.
+- 슬롯 당첨은 **현재 해금된 쿠키 중 하나의 전용 스톤**을 지급합니다. 선택한 쿠키의 스톤만 나오는 규칙이 아닙니다. 눈 지역 클리어 전에는 기본 3종, 이후에는 우유맛·바람궁수를 포함한 5종에서 나옵니다.
+- 로컬 개발 빌드는 계정 기록을 브라우저에 저장합니다. Azure의 API 및 저장소가 준비되지 않으면 운영 게임의 시작을 허용하지 않습니다.
+
+### 이번 전투 조작
+
+- 맵에서 마우스를 누른 채 당기고 놓으면 발사합니다. 마법사·연금술사 전용 스톤은 비행 중 클릭 또는 Space로 분열·폭발합니다. 적·장애물 접촉 시 자동 발동하며, 바닥 착지 후에는 잠깐의 수동 입력 기회가 있습니다.
+- 연금술사 폭발의 범위 피해 성공률은 C/B/A 순서로 20%/45%/70%입니다. 우유맛 전용 스톤의 직접 명중은 체력 5를 회복하고, 다음 발사 뒤 첫 적 공격에 보호막을 적용합니다.
+- 바람궁수는 전용 스톤 장전 중 Q로 자동 유도를 준비합니다. 바람 4점 충전 후 Q는 연쇄 폭풍을 준비합니다. 다른 쿠키도 바람궁수 스톤을 보유하고 4점을 모으면 Q 연쇄 폭풍을 쓸 수 있지만 자동 유도는 사용할 수 없습니다.
 
 ### 현재 배포의 BGM 상태
 
