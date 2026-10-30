@@ -6,4 +6,4 @@
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 물리 충돌·피해와 표현 개선 | [P01](../phases/2026-10-31-adventurer-rebound-visibility/P01-rebound-visibility/phase.md) |
+| P01 | `done` | 물리 충돌·피해와 표현 개선 | [P01](../phases/2026-10-31-adventurer-rebound-visibility/P01-rebound-visibility/phase.md) |

@@ -69,10 +69,18 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
           ? rollStart.time * 480 + (point.x - rollStart.x) / candyRadius * 180 / Math.PI
           : simulationTime * 480;
         candyRef.current.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${rotation})`);
-        if (bounceRef.current && flight.bounce) {
-          const nearLanding = Math.abs(simulationTime - flight.bounce.firstLandingTime) < .22;
-          bounceRef.current.style.display = nearLanding && !reduced ? '' : 'none';
-          bounceRef.current.setAttribute('transform', `translate(${flight.bounce.firstLanding.x} ${flight.bounce.firstLanding.y})`);
+        if (bounceRef.current) {
+          const bounce = (flight.bounces || (flight.bounce ? [{ time: flight.bounce.firstLandingTime,
+            point: flight.bounce.firstLanding, trigger: 'ground' }] : []))
+            .findLast(event => simulationTime >= event.time && simulationTime - event.time < .58);
+          bounceRef.current.style.display = bounce ? '' : 'none';
+          if (bounce) {
+            const progress = (simulationTime - bounce.time) / .58;
+            bounceRef.current.style.opacity = String(reduced ? .9 : 1 - progress);
+            bounceRef.current.style.setProperty('--bounce-scale', String(reduced ? 1 : .7 + progress * 1.5));
+            bounceRef.current.dataset.bounceTrigger = bounce.trigger;
+            bounceRef.current.setAttribute('transform', `translate(${bounce.point.x} ${bounce.point.y})`);
+          }
         }
         for (const child of flight.splitOrbs?.children || []) {
           const node = childRefs.current.get(child.id);
@@ -150,7 +158,11 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
       </g></g>
     </g>
     <g ref={bounceRef} data-testid="bounce-dust" aria-hidden="true" style={{ display: 'none' }} className="bounce-dust">
-      <g transform={`scale(${worldScale})`}><circle cx="-17" cy="-2" r="5" /><circle cy="-6" r="7" /><circle cx="19" cy="-3" r="4" /></g>
+      <g transform={`scale(${worldScale})`}><g className="bounce-dust__burst">
+        <circle className="bounce-dust__ring" r="28" />
+        <path d="M-46-5l-16-7M-30-27l-7-15M0-38l2-17M30-27l14-15M46-5l16-7" />
+        <circle cx="-18" cy="4" r="5" /><circle cx="18" cy="4" r="5" /><circle cy="-8" r="8" />
+      </g></g>
     </g>
     {flight.splitOrbs?.children.map(child => <g key={child.id} ref={node => node
       ? childRefs.current.set(child.id, node) : childRefs.current.delete(child.id)}

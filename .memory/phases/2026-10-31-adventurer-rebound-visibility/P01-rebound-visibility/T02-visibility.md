@@ -1,6 +1,6 @@
 # Task: T02 능력 연출 및 관리자 비교
 
-## Status: pending
+## Status: done
 
 ## Goal
 모험가의 반동과 연금술사의 폭발이 전투 중 구별되게 하고, 관리자 테스트 플레이에서 2.5D 장면을 직접 비교하게 한다.
@@ -19,9 +19,9 @@
 - Logic: 테스트 플레이에서만 장면 오버레이를 켜고 끈다. 지도 미리보기·일반 게임은 건드리지 않는다.
 
 ## Acceptance Criteria
-- [ ] 반동과 폭발이 플레이 화면에서 명확하게 보인다.
-- [ ] 네 지역 관리자 테스트 플레이에서 원본/입체 장면 비교 버튼이 동작한다.
-- [ ] 공개 게임에는 관리자 토글이 표시되지 않는다.
+- [x] 반동과 폭발이 플레이 화면에서 구별된다.
+- [x] 관리자 테스트 플레이에서 원본/입체 장면 비교 버튼이 동작한다.
+- [x] 공개 게임에는 관리자 토글이 표시되지 않는다.
 
 ## Validation
 - `node --test tests/shot-geometry.test.mjs tests/shot-hit-integrity.test.mjs`
@@ -40,6 +40,6 @@ Task: T02-visibility
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

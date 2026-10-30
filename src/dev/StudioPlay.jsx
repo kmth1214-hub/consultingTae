@@ -12,12 +12,14 @@ export default function StudioPlay({ config, onRestart, onExit }) {
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const session = { ...snapshot, ...store.actions };
   const [draft, setDraft] = useState(config);
+  const [depthEnabled, setDepthEnabled] = useState(true);
   const select = patch => setDraft(current => ({ ...current, ...patch }));
   const finished = snapshot.screen !== 'battle'
     || Boolean(snapshot.run.terminal && !snapshot.shotReview && !snapshot.enemyResponse && !snapshot.bossTransition);
   const music = useBattleBgm({ active: !finished, area: snapshot.run.area,
     boss: snapshot.run.round === 3 });
-  return <main className="studio-play" data-dev-tool="studio-battle-play" data-layout-seed={config.seed}>
+  return <main className="studio-play" data-dev-tool="studio-battle-play"
+    data-depth-enabled={depthEnabled} data-layout-seed={config.seed}>
     <header className="studio-play-toolbar">
       <div className="studio-play-heading"><div><strong>관리자 테스트 플레이</strong>
         <p>한 전투만 테스트합니다. 해금·순위 기록은 저장하지 않습니다.</p></div>
@@ -37,6 +39,9 @@ export default function StudioPlay({ config, onRestart, onExit }) {
         <button type="submit" className="studio-play-primary">선택한 전투 시작</button>
         <button type="button" onClick={() => onRestart(config, false)}>다시 시작</button>
         <button type="button" onClick={() => onRestart(config, true)}>새 배치로 시작</button>
+        <button type="button" aria-pressed={depthEnabled} onClick={() => setDepthEnabled(value => !value)}>
+          입체감 {depthEnabled ? '켜짐 · 원본 비교' : '꺼짐 · 다시 보기'}
+        </button>
       </form>
       <p className="studio-play-condition">{REGIONS[config.area].name} {config.round}라운드 · {CHARACTERS.find(c => c.id === config.characterId).name}
         {' · '}소모품 각 3개 · 배치 {config.seed}{config.round === 3 && config.bossSpecial ? ' · 다음 보스 공격은 특수 공격' : ''}</p>

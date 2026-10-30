@@ -2,21 +2,21 @@
 
 ## Active Plan
 
-[관리자 전투 화면의 2.5D 입체감](./plans/2026-10-31-studio-battlefield-depth.md)
+[모험가 튕김 및 능력 연출 가시성](./plans/2026-10-31-adventurer-rebound-visibility.md)
 
 ## Active Phase
 
-[P01 관리자 전투 입체감](./phases/2026-10-31-studio-battlefield-depth/P01-studio-depth/phase.md)
+[P01 모험가 튕김 및 능력 연출](./phases/2026-10-31-adventurer-rebound-visibility/P01-rebound-visibility/phase.md)
 
 ## Active Task
 
-없음 — `studio-battlefield-depth` 계획 완료
+없음 — `adventurer-rebound-visibility` 계획 완료
 
 ## Status
 
-- P01 1/1 완료
-- 관리자 테스트 플레이 전용 2.5D 장면 구현 및 검증 완료
+- P01 2/2 완료
+- 모험가 명중별 독립 피해, 능력 연출, 관리자 입체감 비교 구현 및 검증 완료
 
 ## Next Step (IMPORTANT)
 
-로컬 `/__dev/maps` 테스트 플레이에서 네 지역을 검토한 뒤 일반 게임 반영 여부를 결정한다.
+로컬 `/__dev/maps` 테스트 플레이에서 모험가 반동·연금술사 폭발과 입체감 비교를 검토한다.

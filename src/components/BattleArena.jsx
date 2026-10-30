@@ -292,8 +292,9 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
                 setVisualEnemyContacts(current => [...current, ...fresh]);
               }
             }} />}
-          {visualEnemyContacts.map(contact => <g key={contact.id} className="spear-path-contact"
-            data-testid="spear-path-contact" data-enemy-id={contact.id}
+          {visualEnemyContacts.map(contact => <g key={contact.id}
+            className={flight?.abilityKind === 'bounce' ? 'bounce-hit-contact' : 'spear-path-contact'}
+            data-testid={flight?.abilityKind === 'bounce' ? 'bounce-hit-contact' : 'spear-path-contact'} data-enemy-id={contact.id}
             transform={`translate(${contact.point.x} ${contact.point.y})`}>
             <circle r="23" /><path d="M-34 0H34M0-27V27M-22-20 22 20M-22 20 22-20" />
           </g>)}
@@ -302,8 +303,16 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
             obstacles={layout.obstacles} />)}
       {visualAbilities.filter(cue => cue.kind === 'explosion' || cue.kind === 'splash').map(cue => <g key={cue.id}
             data-testid="alchemist-explosion" className={`alchemist-explosion ${cue.success ? 'is-success' : 'is-failure'}`} transform={`translate(${cue.point.x} ${cue.point.y})`}>
-            <circle r={cue.radius} fill="none" stroke={cue.success ? '#ffd378' : '#c6a9e4'} strokeWidth="17" />
-            <circle r="38" fill={cue.success ? '#ffe3a2' : '#c7abd9'} opacity=".55" />
+            <circle className="alchemist-explosion__wash" r={cue.radius} />
+            <circle className="alchemist-explosion__ring" r={cue.radius * .78} />
+            <circle className="alchemist-explosion__inner" r={cue.radius * .36} />
+            <circle className="alchemist-explosion__core" r="48" />
+            {Array.from({ length: 10 }, (_, index) => {
+              const angle = index * Math.PI / 5;
+              const near = cue.radius * .18, far = cue.radius * .45;
+              return <path key={index} className="alchemist-explosion__spark"
+                d={`M${Math.cos(angle) * near} ${Math.sin(angle) * near}L${Math.cos(angle) * far} ${Math.sin(angle) * far}`} />;
+            })}
           </g>)}
           {visualAbilities.filter(cue => cue.kind === 'child-hit').map(cue => <g key={cue.id}
             data-testid="wizard-child-hit" className="wizard-child-hit" transform={`translate(${cue.point.x} ${cue.point.y})`}>
