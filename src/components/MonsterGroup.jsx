@@ -7,11 +7,18 @@ import EnemyProjectileArt from './EnemyProjectileArt.jsx';
 
 function BossArmor({ kind }) {
   return <svg className="boss-armor" viewBox="0 0 100 100" aria-hidden="true" data-testid="boss-armor" data-kind={kind}>
-    {kind === 'pointy-boar' ? <g stroke="#63412f" strokeWidth="1.4" strokeLinejoin="round">
-      <path d="m27 40 4-18 9 12 8-19 8 18 11-14 4 23-20 12Z" fill="#715a49" />
-      <path d="m29 28 2-16 9 22m9-5 2-22 8 24m7 0 7-18 1 27" fill="#f7e4b1" />
-      <path d="M18 62Q4 55 12 40Q7 67 29 64M67 63Q85 69 91 48Q93 77 67 72" fill="#fff2c9" />
-      <path d="m39 42 12-7 13 6-3 16-12 5-12-7Z" fill="#b88a51" /><circle cx="50" cy="47" r="4" fill="#f6c76c" />
+    {kind === 'pointy-boar' ? <g strokeLinejoin="round">
+      <path d="M54 38 51 35 54 33 58 36Q63 34 67 39L68 47 65 52 58 53 54 49Z"
+        fill="#5d4b43" stroke="#302b2c" strokeWidth="1.1" />
+      <path d="M52 35 55 38M54 49 57 52" fill="none" stroke="#d5a672" strokeWidth=".8" />
+      <ellipse cx="61" cy="44" rx="6" ry="7" transform="rotate(-12 61 44)"
+        fill="#af9475" stroke="#f2ca91" strokeWidth="1" />
+      <ellipse cx="61" cy="44" rx="4.5" ry="5.6" transform="rotate(-12 61 44)"
+        fill="#2a292e" stroke="#514342" strokeWidth=".7" />
+      <ellipse cx="61" cy="44" rx="2.7" ry="3.5" fill="#f0633b" stroke="#ffc276" strokeWidth=".7" />
+      <circle cx="60.3" cy="43" r=".9" fill="#fff1bf" />
+      <circle cx="56" cy="38" r=".8" fill="#f7d79e" />
+      <circle cx="65" cy="50" r=".8" fill="#f7d79e" />
     </g> : kind === 'cowardly-snowman' ? <g stroke="#4c88ac" strokeWidth="1.3" strokeLinejoin="round">
       <path d="m26 24-4-17 15 8 12-14 13 14 16-8-5 20Z" fill="#a6e4fa" />
       <path d="m49 4 1 19m-22-12 8 13m35-13-8 13" stroke="#f4ffff" />
