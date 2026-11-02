@@ -142,4 +142,4 @@ Task: T02-studio-preview-scene
 
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: 아래 T02 커밋 참조
+- commit: `6e47677`

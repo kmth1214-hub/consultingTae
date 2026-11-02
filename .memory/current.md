@@ -10,14 +10,15 @@
 
 ## Active Task
 
-[T02 공통 입체 장면 렌더러와 관리자 미리보기 비교](./phases/2026-11-02-studio-map-depth-reconstruction/P01-studio-map-depth/T02-studio-preview-scene.md)
+[T03 관리자 테스트 플레이 연결과 전체 회귀 검증](./phases/2026-11-02-studio-map-depth-reconstruction/P01-studio-map-depth/T03-studio-play-and-validation.md)
 
 ## Status
 
 - T01 자산·검증기 구현 및 커밋 완료 (`728b280`)
-- T02 진행 준비 완료
-- P01 1/3 완료
+- T02 관리자 미리보기 구현 및 커밋 완료 (`6e47677`)
+- T03 진행 준비 완료
+- P01 2/3 완료
 
 ## Next Step (IMPORTANT)
 
-T02 청사진을 읽고 공통 입체 장면 렌더러와 관리자 미리보기 비교 화면에 새 맵 자산 연결 시작
+T03 청사진을 읽고 관리자 테스트 플레이에 입체 맵 연결 및 전체 회귀 검증 시작
