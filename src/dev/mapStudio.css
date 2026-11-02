@@ -56,6 +56,8 @@
 .studio-viewport .scene-midground { z-index: 1; }
 .studio-viewport .scene-route { z-index: 2; }
 .studio-viewport .scene-foreground { z-index: 5; }
+.map-studio .studio-depth-scene { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; overflow: visible; pointer-events: none; }
+.studio-controls .studio-scene-compare { width: 100%; background: #e6edf5; border-color: #aebed0; }
 .studio-viewport .scene-scenery { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; }
 .studio-preview-actors { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
 .studio-preview-actors * { pointer-events: none !important; }

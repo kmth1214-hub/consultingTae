@@ -1,6 +1,6 @@
 # Task: T02 공통 2.5D 장면과 관리자 미리보기
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -140,6 +140,6 @@ Task: T02-studio-preview-scene
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: 아래 T02 커밋 참조

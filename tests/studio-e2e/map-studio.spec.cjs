@@ -6,6 +6,7 @@ async function expectedObstacleCount(area = 'forest') {
 }
 
 async function readyArt(page) {
+  await page.locator('.studio-viewport svg image').first().waitFor();
   await page.evaluate(async () => {
     const urls = [...new Set([...document.querySelectorAll('.studio-viewport svg image')].map(node => node.getAttribute('href')))];
     await Promise.all(urls.map(url => { const image = new Image(); image.src = url; return image.decode(); }));
@@ -22,12 +23,38 @@ test('development map studio is a separate, keyboard-accessible review screen wi
   await expect(page.locator('.studio-viewport .launcher')).toHaveCount(1);
   await expect(page.locator('.studio-viewport .player-cookie')).toHaveCount(1);
   await expect(page.locator('.studio-viewport')).toHaveAttribute('role', 'group');
-  await expect(page.locator('.studio-viewport [data-scene-layer]')).toHaveCount(5);
+  await expect(page.locator('.studio-viewport [data-scene-layer]:visible')).toHaveCount(5);
   await expect(page.locator('.studio-viewport .scene-scenery [data-obstacle-id]')).toHaveCount(await expectedObstacleCount());
   await expect(page.locator('.studio-viewport [data-painted-panel]')).toHaveCount(0);
+  await expect(page.locator('.studio-viewport [data-studio-painted-panel]')).toHaveCount(6);
   await expect(page.locator('.studio-viewport')).toHaveAttribute('aria-label', /숲 지역 지도 미리보기/);
   expect(await page.evaluate(() => ({ test: window.__gameTest, storage: localStorage.length })))
     .toEqual({ test: undefined, storage: 0 });
+});
+
+test('map studio compares rebuilt and original scenes without moving the camera or actors', async ({ page }) => {
+  await page.goto('/__dev/maps');
+  const world = page.locator('.studio-viewport > .arena-world');
+  const compare = page.getByRole('button', { name: '원본 맵 보기' });
+  await expect(world).toHaveAttribute('data-studio-scene', 'rebuilt');
+  await expect(compare).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: '전체 영역 보기' }).click();
+  await page.getByLabel('테스트 라운드').selectOption('2');
+  const snapshot = () => world.evaluate(node => ({
+    key: node.dataset.layoutKey, transform: node.style.transform,
+    actors: [...node.querySelectorAll('.studio-preview-actors > *')].map(actor => actor.outerHTML),
+    obstacles: [...node.querySelectorAll('[data-obstacle-id]')].map(obstacle => obstacle.getAttribute('transform'))
+  }));
+  const before = await snapshot();
+  const seed = await page.getByTestId('studio-preview-seed').textContent();
+  await compare.click();
+  await expect(world).toHaveAttribute('data-studio-scene', 'original');
+  await expect(page.getByRole('button', { name: '입체 맵 보기' })).toHaveAttribute('aria-pressed', 'false');
+  expect(await snapshot()).toEqual(before);
+  expect(await page.getByTestId('studio-preview-seed').textContent()).toBe(seed);
+  await page.getByRole('button', { name: '입체 맵 보기' }).click();
+  await expect(world).toHaveAttribute('data-studio-scene', 'rebuilt');
+  expect(await snapshot()).toEqual(before);
 });
 
 test('all four studio regions preview the enlarged bodies and reuse them in play', async ({ page }) => {
@@ -147,8 +174,19 @@ test('all four areas use their real painted layers and registered blocker placem
     await page.getByLabel('지역 선택').selectOption(area);
     const preview = page.locator('.studio-viewport');
     await expect(preview).toHaveAttribute('aria-label', new RegExp(label));
-    await expect(preview.locator('[data-scene-area]')).toHaveCount(5);
+    await expect(preview.locator('[data-scene-area]:visible')).toHaveCount(5);
     await expect(preview.locator('.scene-scenery [data-obstacle-id]')).toHaveCount(await expectedObstacleCount(area));
+    await expect(preview.locator('[data-studio-painted-panel]')).toHaveCount(6);
+    await readyArt(page);
+    const painted = await preview.locator('[data-studio-painted-panel] svg').evaluateAll(nodes => nodes.map(node => ({
+      x: node.getAttribute('x'), y: node.getAttribute('y'), width: node.getAttribute('width'), height: node.getAttribute('height')
+    })));
+    expect(painted).toEqual(Array.from({ length: 6 }, (_, i) => ({
+      x: i % 2 ? '1500' : '-600', y: '-450', width: '2700', height: '1800'
+    })));
+    await page.getByRole('button', { name: '원본 맵 보기' }).click();
+    await expect(preview.locator('.arena-world')).toHaveAttribute('data-studio-scene', 'original');
+    await expect(preview.locator('[data-studio-painted-panel]')).toHaveCount(0);
     if (area === 'forest') await expect(preview.locator('[data-painted-panel]')).toHaveCount(0);
     else await expect(preview.locator('[data-painted-panel]')).toHaveCount(8);
     if (area === 'city') {
@@ -160,6 +198,7 @@ test('all four areas use their real painted layers and registered blocker placem
       });
       expect(frameMask).toEqual([[0, 3600], [0, 450], [450, 150], [3000, 150], [3150, 450]]);
     }
+    await page.getByRole('button', { name: '입체 맵 보기' }).click();
     await page.screenshot({ path: `tmp/map-studio-${area}-overview-1440.jpg` });
   }
 });
@@ -167,10 +206,10 @@ test('all four areas use their real painted layers and registered blocker placem
 test('layer toggles and environment pause only affect the review presentation', async ({ page }) => {
   await page.goto('/__dev/maps');
   const preview = page.locator('.studio-viewport');
-  const route = preview.locator('[data-scene-layer="route"]');
+  const route = preview.locator('[data-scene-layer="route"]:visible');
   await expect(route).toBeVisible();
   await page.getByLabel('길').uncheck();
-  await expect(route).toBeHidden();
+  await expect(preview.locator('[data-scene-layer="route"]:visible')).toHaveCount(0);
   await page.getByLabel('길').check();
   await expect(route).toBeVisible();
   const pause = page.getByRole('button', { name: '환경 연출 일시 정지' });
@@ -229,7 +268,7 @@ test('region changes preserve review preferences, reset the camera, cancel captu
   await expect.poll(() => preview.evaluate(node => node.hasPointerCapture(1))).toBe(true);
   await page.locator('.studio-field select').selectOption('snow');
   await expect(page.locator('input[type="range"]')).toHaveValue('2');
-  await expect(preview.locator('[data-scene-layer="route"]')).toBeHidden();
+  await expect(preview.locator('[data-scene-layer="route"]:visible')).toHaveCount(0);
   await expect(pause).toHaveAttribute('aria-pressed', 'true');
   expect(await preview.evaluate(node => node.hasPointerCapture(1))).toBe(false);
   await page.mouse.up();

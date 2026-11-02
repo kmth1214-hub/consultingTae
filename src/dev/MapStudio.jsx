@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import ArenaScenery from '../components/ArenaScenery.jsx';
 import BattlefieldBackdrop from '../components/BattlefieldBackdrop.jsx';
+import StudioRebuiltScene from './StudioRebuiltScene.jsx';
 import MonsterGroup from '../components/MonsterGroup.jsx';
 import PlayerCookie from '../components/PlayerCookie.jsx';
 import Slingshot from '../components/Slingshot.jsx';
@@ -36,6 +37,7 @@ export default function MapStudio() {
   const playId = useRef(0);
   const [visibleLayers, setVisibleLayers] = useState(() => Object.fromEntries(LAYER_KEYS.map(key => [key, true])));
   const [motionPaused, setMotionPaused] = useState(false);
+  const [depthEnabled, setDepthEnabled] = useState(true);
   const [camera, setCamera] = useState(RESET_CAMERA);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [reducedMotion, setReducedMotion] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -157,6 +159,10 @@ export default function MapStudio() {
         <button type="button" className="studio-pause" aria-pressed={motionPaused} onClick={() => setMotionPaused(value => !value)}>
           {motionPaused ? '환경 연출 재생' : '환경 연출 일시 정지'}
         </button>
+        <button type="button" className="studio-scene-compare" aria-pressed={depthEnabled}
+          onClick={() => setDepthEnabled(value => !value)}>
+          {depthEnabled ? '원본 맵 보기' : '입체 맵 보기'}
+        </button>
         <section className="studio-zoom" aria-label="확대 설정">
           <div className="studio-zoom-heading"><strong>확대</strong><output aria-live="polite">{camera.zoom.toFixed(1)}×</output></div>
           <div className="studio-zoom-buttons">
@@ -195,8 +201,13 @@ export default function MapStudio() {
         onLostPointerCapture={() => cancelDrag(false)} onKeyDown={onKeyDown}>
         {!pose && <p className="studio-waiting" role="status">미리보기 크기를 확인하는 중…</p>}
         {preview.error && <p className="studio-waiting" role="alert">배치를 만들 수 없습니다: {preview.error}</p>}
-        {layout && <div ref={worldRef} className="arena-world" data-layout-key={layout.key} style={{ width: layout.width, height: layout.height }}>
-          <BattlefieldBackdrop area={area} visibleLayers={visibleLayers} motionPaused={motionPaused || reducedMotion || Boolean(play)} />
+        {layout && <div ref={worldRef} className="arena-world" data-layout-key={layout.key}
+          data-studio-scene={depthEnabled ? 'rebuilt' : 'original'} style={{ width: layout.width, height: layout.height }}>
+          {depthEnabled
+            ? <StudioRebuiltScene area={area} layout={layout} visibleLayers={visibleLayers}
+              motionPaused={motionPaused || reducedMotion || Boolean(play)} />
+            : <BattlefieldBackdrop area={area} visibleLayers={visibleLayers}
+              motionPaused={motionPaused || reducedMotion || Boolean(play)} />}
           <ArenaScenery layout={layout} />
           {!play && <div className="studio-preview-actors" data-testid="studio-preview-actors">
             <Slingshot aim={{ phase: 'idle', powerRatio: 0, direction: { x: 1, y: 0 }, launchId: 0 }}

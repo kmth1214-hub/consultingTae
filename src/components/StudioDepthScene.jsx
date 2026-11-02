@@ -14,7 +14,7 @@ function GroundShadow({ x, y, radius, opacity = .34 }) {
 }
 
 /** Presentation-only terrain: every contact point comes from the playable layout. */
-export default function StudioDepthScene({ area, layout, toppledObstacleIds = [] }) {
+export default function StudioDepthScene({ area, layout, toppledObstacleIds = [], renderRoad = true }) {
   const prefix = `studio-depth-${useId().replace(/:/g, '')}`;
   const palette = getSceneProfile(area).palette;
   const detail = DETAILS[area];
@@ -40,6 +40,7 @@ export default function StudioDepthScene({ area, layout, toppledObstacleIds = []
       </linearGradient>
     </defs>
 
+    {renderRoad && <>
     {/* The transparent top preserves the painted path; the dark front reads as its thickness. */}
     <path data-depth-part="road-top"
       d={`M0 ${groundY - 82} Q${width * .27} ${groundY - 91} ${width * .52} ${groundY - 82} T${width} ${groundY - 82} V${edge} H0Z`}
@@ -68,6 +69,7 @@ export default function StudioDepthScene({ area, layout, toppledObstacleIds = []
         <ellipse cx={x + 78} cy={edge + 27} rx="9" ry="4" fill={detail.seam} opacity=".5" />
       </g>;
     })}
+    </>}
 
     {/* Fixed platform and supports receive a small top plane and visible side. */}
     {layout.launcherPlatform && <g data-depth-part="launcher-platform" opacity=".82">
