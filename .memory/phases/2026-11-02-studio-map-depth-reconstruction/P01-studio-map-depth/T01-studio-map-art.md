@@ -110,4 +110,4 @@ Task: T01-studio-map-art
 
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: 아래 T01 커밋 참조
+- commit: `728b280`
