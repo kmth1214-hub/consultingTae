@@ -21,7 +21,6 @@ import BossSplitTransition from './BossSplitTransition.jsx';
 import { sampleRiderMotion } from '../game/forestLogPhysics.js';
 import { buildWindField } from '../game/windField.js';
 import WindWeather from './WindWeather.jsx';
-import StudioDepthScene from './StudioDepthScene.jsx';
 
 const INSTRUCTIONS = {
   idle: '맵 어디든 누르고 뒤로 당긴 뒤 놓으세요. 당긴 반대 방향으로 발사됩니다.',
@@ -32,7 +31,19 @@ const INSTRUCTIONS = {
 export default function BattleArena({ run, lastEvent, enemyResponse, shotReview, onReviewComplete, bossTransition,
   onBossImpact, onBossComplete,
   onBeginShot, onCancelShot, onActivateFlightAbility,
-  onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef }) {
+  onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef, studioDepthEnabled = false }) {
+  const rebuilt = import.meta.env.DEV && run.studioDepthPreview === true && studioDepthEnabled === true;
+  const [RebuiltScene, setRebuiltScene] = useState(null);
+  const [sceneLoadError, setSceneLoadError] = useState(null);
+  useEffect(() => {
+    if (!rebuilt || RebuiltScene) return undefined;
+    let active = true;
+    import('../dev/StudioRebuiltScene.jsx').then(
+      module => { if (active) setRebuiltScene(() => module.default); },
+      error => { if (active) setSceneLoadError(error); }
+    );
+    return () => { active = false; };
+  }, [rebuilt, RebuiltScene]);
   const worldRef = useRef(null), launcherRef = useRef(null), enemyGroupRef = useRef(null), focusRef = useRef(null);
   const sceneryRef = useRef(null);
   const crowTimeRef = useRef(null);
@@ -224,9 +235,11 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       }
     }
   }
+  if (rebuilt && sceneLoadError) throw sceneLoadError;
   return <>
     <div ref={arenaRef} className={`battle-arena battle-arena--${run.area}`} tabIndex={0} role="group" aria-label="전투 맵"
       data-camera-mode={camera.reducedMotion ? 'overview' : mode}
+      data-studio-scene={run.studioDepthPreview === true ? (rebuilt ? 'rebuilt' : 'original') : undefined}
       data-boss-battle={run.enemies.some(enemy => enemy.isBoss) ? 'true' : undefined}
       data-shot-review={shotReview ? 'true' : undefined}
       data-boss-phase={reviewingSplit ? 'fused' : run.chaosBossPhase || undefined}
@@ -252,9 +265,10 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       onContextMenu={controller.onContextMenu} onKeyDown={controller.onKeyDown}>
       <div ref={worldRef} className="arena-world" data-layout-key={layout.key}
         style={{ width: layout.width, height: layout.height }}>
-        <BattlefieldBackdrop area={run.area} layout={layout} motionPaused={Boolean(run.terminal)} />
-        {run.studioDepthPreview === true && <StudioDepthScene area={run.area} layout={layout}
-          toppledObstacleIds={scenery.toppledObstacleIds || []} />}
+        {rebuilt && RebuiltScene
+          ? <RebuiltScene area={run.area} layout={layout} motionPaused={Boolean(run.terminal)}
+            toppledObstacleIds={scenery.toppledObstacleIds || []} />
+          : <BattlefieldBackdrop area={run.area} motionPaused={Boolean(run.terminal)} />}
         <WindWeather area={run.area} field={windField} paused={Boolean(run.terminal)} />
         {(!activeSplit || activeSplit.stage === 'impact') && <ArenaScenery ref={sceneryRef} layout={layout} area={run.area} toppledObstacleIds={scenery.toppledObstacleIds || []}
           visualContacts={activeSplit ? [] : visualContacts} visualWobbles={visualAbilities.filter(cue => cue.kind === 'wobble')}

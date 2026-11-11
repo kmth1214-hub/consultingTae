@@ -7,12 +7,11 @@ import Toast from '../components/Toast.jsx';
 import '../styles/game.css';
 import '../styles/arena.css';
 
-export default function StudioPlay({ config, onRestart, onExit }) {
+export default function StudioPlay({ config, onRestart, onExit, depthEnabled, onDepthEnabledChange }) {
   const [store] = useState(() => createStudioSession(config));
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const session = { ...snapshot, ...store.actions };
   const [draft, setDraft] = useState(config);
-  const [depthEnabled, setDepthEnabled] = useState(true);
   const select = patch => setDraft(current => ({ ...current, ...patch }));
   const finished = snapshot.screen !== 'battle'
     || Boolean(snapshot.run.terminal && !snapshot.shotReview && !snapshot.enemyResponse && !snapshot.bossTransition);
@@ -43,7 +42,7 @@ export default function StudioPlay({ config, onRestart, onExit }) {
         <button type="submit" className="studio-play-primary">선택한 전투 시작</button>
         <button type="button" onClick={() => onRestart(config, false)}>다시 시작</button>
         <button type="button" onClick={() => onRestart(config, true)}>새 배치로 시작</button>
-        <button type="button" aria-pressed={depthEnabled} onClick={() => setDepthEnabled(value => !value)}>
+        <button type="button" aria-pressed={depthEnabled} onClick={() => onDepthEnabledChange(!depthEnabled)}>
           입체감 {depthEnabled ? '켜짐 · 원본 비교' : '꺼짐 · 다시 보기'}
         </button>
       </form>
@@ -51,7 +50,7 @@ export default function StudioPlay({ config, onRestart, onExit }) {
         {' · '}시작 스톤 {config.weaponGrade ?? 'C'}등급 · 소모품 각 3개 · 배치 {config.seed}{config.round === 3 && config.bossSpecial ? ' · 다음 보스 공격은 특수 공격' : ''}</p>
     </header>
     <div className="studio-play-game">
-      {!finished ? <BattleScreen session={session} music={music} /> : <section className="studio-play-result" role="status">
+      {!finished ? <BattleScreen session={session} music={music} studioDepthEnabled={depthEnabled} /> : <section className="studio-play-result" role="status">
         <h1>{snapshot.run.terminal === 'defeat' ? '테스트 전투 종료' : '테스트 전투 완료'}</h1>
         <p>{REGIONS[config.area].name} {config.round}라운드 · 점수 {snapshot.run.bonusMode ? snapshot.run.bonusScore : snapshot.run.score}</p>
         <p>다른 전투를 선택하거나 다시 시작해서 계속 확인하세요.</p>

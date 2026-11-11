@@ -224,7 +224,8 @@ export default function MapStudio() {
     <footer className="studio-footer">개발 환경 전용 · 테스트 플레이는 일반 게임의 프로필·순위 기록을 변경하지 않습니다.</footer>
   </main>
     {play && <Suspense fallback={<main role="status">테스트 전투를 준비하는 중…</main>}>
-      <StudioPlay key={play.id} config={play} onRestart={launchPlay} onExit={() => setPlay(null)} />
+      <StudioPlay key={play.id} config={play} onRestart={launchPlay} onExit={() => setPlay(null)}
+        depthEnabled={depthEnabled} onDepthEnabledChange={setDepthEnabled} />
     </Suspense>}
   </>;
 }

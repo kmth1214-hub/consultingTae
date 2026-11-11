@@ -28,7 +28,7 @@ function combatMessage(event, area) {
     : attack.blocked ? ' · 적 공격 차단!' : ` · 적 반격 −${attack.damage}` : ''}`;
 }
 
-export default function BattleScreen({ session, music }) {
+export default function BattleScreen({ session, music, studioDepthEnabled = false }) {
   const { run, aim, enemyResponse, bossTransition } = session;
   const beforeImpact = enemyResponse && enemyResponse.stage !== 'impact';
   const visibleHp = bossTransition && bossTransition.stage !== 'impact' ? bossTransition.split.shock.playerHpBefore
@@ -76,7 +76,8 @@ export default function BattleScreen({ session, music }) {
       bossTransition={bossTransition} onBossImpact={session.advanceBossTransition} onBossComplete={session.completeBossTransition}
       onBeginShot={session.beginShot} onCancelShot={session.cancelShot}
       onActivateFlightAbility={session.activateFlightAbility}
-      onFire={session.fireShot} onConsumable={session.useConsumable} arenaRef={arenaRef} />
+      onFire={session.fireShot} onConsumable={session.useConsumable} arenaRef={arenaRef}
+      studioDepthEnabled={studioDepthEnabled} />
     <div className="battle-status" role="status" aria-live="polite">{session.shotReview
       ? `결과 확인 중 · ${combatMessage({ ...session.lastEvent, enemyAttack: null, bossSplit: null }, run.area)}` : bossTransition
       ? bossTransition.stage === 'flight' ? '융합체가 세 보스로 분리됩니다!' : combatMessage(session.lastEvent, run.area) : enemyResponse && beforeImpact

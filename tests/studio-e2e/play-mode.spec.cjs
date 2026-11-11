@@ -168,7 +168,8 @@ for (const area of ['snow', 'city']) test(`${area} obstacles play their real reg
   await dragPull(page, shot); await page.mouse.up();
   await expect(page.getByTestId(area === 'snow' ? 'obstacle-frost' : 'city-ground-chain').first()).toBeVisible();
   await page.screenshot({ path: `tmp/studio-play-${area}-effect.png` });
-  await phase(page, 'idle');
+  if (area === 'city') await expect(page.getByRole('heading', { name: '테스트 전투 완료', exact: true })).toBeVisible({ timeout: 20000 });
+  else await phase(page, 'idle');
   const trace = await snapshot(page);
   const event = trace.events.find(e => e.name === 'resolveProjectile').result;
   expect(event.obstacleEffects.some(effect => effect.kind === (area === 'snow' ? 'ice-guard' : 'jar-burst'))).toBe(true);
@@ -239,7 +240,7 @@ test('same-layout replay, new layout and review return preserve the chosen map a
   await expect(page.locator('.map-studio')).toBeVisible();
   await expect(play).toHaveCount(0);
   await expect(page.getByLabel('확대 비율')).toHaveValue(zoom);
-  await expect(page.locator('.studio-viewport [data-scene-layer="route"]')).toBeHidden();
+  await expect(page.locator('.studio-viewport [data-scene-layer="route"]:visible')).toHaveCount(0);
   const viewport = page.locator('.studio-viewport'), world = viewport.locator('> .arena-world');
   const transform = await world.getAttribute('style');
   await viewport.focus(); await page.keyboard.press('ArrowRight');

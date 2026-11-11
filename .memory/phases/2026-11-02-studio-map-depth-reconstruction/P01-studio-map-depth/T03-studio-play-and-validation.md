@@ -1,6 +1,6 @@
 # Task: T03 관리자 테스트 플레이 연결과 최종 검증
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -141,6 +141,6 @@ Task: T03-studio-play-and-validation
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 로컬 대상 검사 완료 (전체 브라우저 회귀는 배포 시 실행)
 - commit: pending

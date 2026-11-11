@@ -13,7 +13,8 @@ function visit(directory) {
 }
 visit(root);
 const code = files.filter(file => /\.(?:js|css|html)$/.test(file));
-const markers = ['regional-map-studio-v1', 'MapStudio.jsx', 'mapStudio.css', 'map-studio-camera', '__gameTest'];
+const markers = ['regional-map-studio-v1', 'MapStudio.jsx', 'mapStudio.css', 'map-studio-camera', '__gameTest',
+  'data-studio-painted-panel', 'studio-depth-scene', 'StudioRebuiltScene'];
 const violations = [];
 for (const file of code) {
   const text = fs.readFileSync(file, 'utf8');
