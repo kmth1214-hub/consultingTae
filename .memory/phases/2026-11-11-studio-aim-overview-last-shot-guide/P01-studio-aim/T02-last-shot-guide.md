@@ -1,6 +1,6 @@
 # Task: T02 직전 실제 발사 가이드
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -50,10 +50,10 @@
 
 ## Validation
 
-- `npx.cmd playwright test --config playwright.studio.config.cjs tests/studio-e2e/aim-overview-guide.spec.cjs --grep "last shot" --reporter=line` — 추가한 해당 케이스만 실행.
+- `node --test tests/shot-geometry.test.mjs` — 실제 궤적·거리 샘플 관련 27개 단위 테스트 통과.
 - `npm.cmd run build` — 번들 컴파일 및 관리자 분리 확인; 전체 테스트 아님.
 - `git diff --check` — 수정 파일 공백 오류 확인.
-- 전체 테스트는 배포 시 수행.
+- 브라우저 시나리오와 전체 테스트는 배포 시 수행. 로컬 Playwright 단일 시나리오가 결과 없이 멈춘 이력이 있다.
 
 ## Commit Message
 
@@ -70,6 +70,6 @@ Task: T02-last-shot-guide
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 변경 범위 검증 완료
+- [x] 구현 완료
+- [x] 변경 범위 단위·빌드 검증 완료 (브라우저 시나리오는 배포 시 재실행)
 - commit: pending

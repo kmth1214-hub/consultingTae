@@ -12,7 +12,7 @@ import ProjectileFlight from './ProjectileFlight.jsx';
 import EnemyResponse, { EnemyResponseNotice, responseTravelMs } from './EnemyResponse.jsx';
 import BattlefieldMinimap from './BattlefieldMinimap.jsx';
 import { buildPlayableBattlefield } from '../game/battlefieldPlacement.js';
-import { planShot, sampleAtDistance, shotDisruptionOptions } from '../game/shotGeometry.js';
+import { pathPrefixD, planShot, sampleAtDistance, shotDisruptionOptions } from '../game/shotGeometry.js';
 import { AIM_DISRUPTION_LABELS } from '../game/gameData.js';
 import { useAimController } from '../game/useAimController.js';
 import { useBattlefieldCamera } from '../game/useBattlefieldCamera.js';
@@ -74,6 +74,9 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   [run.area, run.round, run.layoutSeed, run.playerShotsFired, layout]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
   const [overviewHeld, setOverviewHeld] = useState(false);
+  const [lastShotGuide, setLastShotGuide] = useState(null);
+  const encounterKey = `${run.area}:${run.round}:${run.layoutSeed ?? 0}:${run.chaosBossPhase ?? ''}`;
+  useEffect(() => { setLastShotGuide(null); }, [encounterKey]);
   const [visualContacts, setVisualContacts] = useState([]);
   const [visualEnemyContacts, setVisualEnemyContacts] = useState([]);
   const [visualAbilities, setVisualAbilities] = useState([]);
@@ -199,6 +202,16 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     consumablesBlocked: enemyResponse.attack.consumablesBlocked ? false : run.consumablesBlocked } : run;
   function completeFlight(shot) {
     if (activeFlight.current?.shotId !== shot.shotId) return;
+    if (studioAimEnabled && shot.path && Number.isFinite(shot.path.length) && shot.path.length > 0) {
+      const endpoints = [shot.impactDistance, shot.rollStartDistance, shot.blockerDistance,
+        ...(shot.enemyContacts || []).map(contact => contact.distance),
+        ...(shot.contacts || []).filter(contact => contact.trigger === 'candy').map(contact => contact.distance)]
+        .filter(distance => Number.isFinite(distance) && distance >= 0 && distance <= shot.path.length);
+      const distance = endpoints.length ? Math.min(...endpoints) : shot.path.length;
+      const point = sampleAtDistance(shot.path, distance);
+      setLastShotGuide({ encounterKey, path: shot.path, distance, point,
+        previewD: pathPrefixD(shot.path, distance * .8) });
+    }
     const lastMotion = shot.contacts?.map(contact => contact.obstacleMotion || contact.logMotion).filter(Boolean)
       .sort((a, b) => a.startTime + a.durationSeconds - b.startTime - b.durationSeconds).at(-1);
     const motionEnd = shot.simulationSeconds > shot.directHitTime ? lastMotion?.samples.at(-1) : null;
@@ -309,6 +322,18 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
               || Boolean(bossTransition && bossTransition.stage !== 'impact' && bossTransition.split.shock.blockedBy === 'defense')
               || Boolean(shotReview && enemyResponse?.attack.blockedBy === 'defense')} lastEvent={lastEvent} />
         <svg className="projectile-layer" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
+          {studioAimEnabled && state.phase === 'dragging' && !shotReview && !enemyResponse
+            && lastShotGuide?.encounterKey === encounterKey && <>
+              <path data-testid="last-shot-guide" className="studio-last-shot-arc" d={lastShotGuide.previewD}
+                fill="none" vectorEffect="non-scaling-stroke" />
+              {lastShotGuide.point.x >= 0 && lastShotGuide.point.x <= layout.width
+                && lastShotGuide.point.y >= 0 && lastShotGuide.point.y <= layout.height &&
+                <g data-testid="last-shot-impact" className="studio-last-shot-impact"
+                  transform={`translate(${lastShotGuide.point.x} ${lastShotGuide.point.y})`}>
+                  <circle r="19" fill="none" vectorEffect="non-scaling-stroke" />
+                  <path d="M-9 0H9M0 -9V9" vectorEffect="non-scaling-stroke" />
+                </g>}
+            </>}
           <TrajectoryPreview path={solution?.path || flight?.path} previewD={solution?.previewD}
             visible={run.windArmedMode !== 'homing' && state.phase === 'dragging' && state.hasMoved && Boolean(solution)} />
           {flight && <ProjectileFlight flight={flight} onComplete={completeFlight} onFailure={failLaunch}

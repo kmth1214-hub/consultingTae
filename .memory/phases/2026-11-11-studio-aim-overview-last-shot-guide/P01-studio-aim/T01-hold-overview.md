@@ -71,4 +71,4 @@ Task: T01-hold-overview
 
 - [x] 구현 완료
 - [x] 변경 범위 단위·빌드 검증 완료 (브라우저 시나리오는 배포 시 재실행)
-- commit: pending
+- commit: c5ed45a

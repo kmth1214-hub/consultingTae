@@ -21,3 +21,21 @@ test('hold V shows the whole map during a studio drag without changing the shot'
   await page.mouse.up();
   await expect(arena).toHaveAttribute('data-aim-phase', 'launching');
 });
+
+test('last shot guide appears only on the next studio aim and clears on restart', async ({ page }) => {
+  test.setTimeout(60000);
+  const arena = await enterStudio(page);
+  await dragPull(page, { angleDeg: -5, powerRatio: .12 });
+  await page.mouse.up();
+  await phase(page, 'idle');
+  await expect(page.getByTestId('last-shot-guide')).toHaveCount(0);
+  await dragPull(page, { angleDeg: 25, powerRatio: .3 });
+  await expect(page.getByTestId('last-shot-guide')).toBeAttached();
+  await expect(page.getByTestId('last-shot-impact')).toBeAttached();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: '다시 시작', exact: true }).click();
+  await phase(page, 'idle');
+  await dragPull(page, { angleDeg: 25, powerRatio: .3 });
+  await expect(page.getByTestId('last-shot-guide')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+});

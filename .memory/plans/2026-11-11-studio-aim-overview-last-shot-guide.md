@@ -15,4 +15,4 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | V 조망 전환과 직전 발사 가이드 | [P01](../phases/2026-11-11-studio-aim-overview-last-shot-guide/P01-studio-aim/phase.md) |
+| P01 | `done` | V 조망 전환과 직전 발사 가이드 | [P01](../phases/2026-11-11-studio-aim-overview-last-shot-guide/P01-studio-aim/phase.md) |
