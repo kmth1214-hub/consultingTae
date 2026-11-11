@@ -143,4 +143,4 @@ Task: T03-studio-play-and-validation
 
 - [x] 구현 완료
 - [x] 로컬 대상 검사 완료 (전체 브라우저 회귀는 배포 시 실행)
-- commit: pending
+- commit: 2c42b58

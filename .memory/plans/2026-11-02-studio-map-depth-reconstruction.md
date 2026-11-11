@@ -16,7 +16,7 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 네 지역 자산 제작, 개발 전용 맵 렌더링, 미리보기·테스트 플레이 연결과 검증 | [P01](../phases/2026-11-02-studio-map-depth-reconstruction/P01-studio-map-depth/phase.md) |
+| P01 | `done` | 네 지역 자산 제작, 개발 전용 맵 렌더링, 미리보기·테스트 플레이 연결과 검증 | [P01](../phases/2026-11-02-studio-map-depth-reconstruction/P01-studio-map-depth/phase.md) |
 
 ## Delivery sequence
 

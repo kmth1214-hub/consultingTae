@@ -32,6 +32,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   onBossImpact, onBossComplete,
   onBeginShot, onCancelShot, onActivateFlightAbility,
   onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef, studioDepthEnabled = false }) {
+  const studioAimEnabled = import.meta.env.DEV && run.studioDepthPreview === true;
   const rebuilt = import.meta.env.DEV && run.studioDepthPreview === true && studioDepthEnabled === true;
   const [RebuiltScene, setRebuiltScene] = useState(null);
   const [sceneLoadError, setSceneLoadError] = useState(null);
@@ -72,6 +73,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     layoutSeed: run.layoutSeed ?? 0, shotOrdinal: run.playerShotsFired ?? 0, layout }),
   [run.area, run.round, run.layoutSeed, run.playerShotsFired, layout]);
   const [flight, setFlight] = useState(null), [lastImpact, setImpact] = useState(null), [retry, setRetry] = useState('');
+  const [overviewHeld, setOverviewHeld] = useState(false);
   const [visualContacts, setVisualContacts] = useState([]);
   const [visualEnemyContacts, setVisualEnemyContacts] = useState([]);
   const [visualAbilities, setVisualAbilities] = useState([]);
@@ -156,7 +158,31 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       setAim({ phase: state.phase, angle: state.angleDeg, power: state.powerRatio * 100, selectedTargetId: null });
     } });
   const state = controller.aimState;
-  const mode = activeSplit ? 'split' : shotReview ? 'follow' : enemyResponse ? 'enemy' : flight ? 'follow' : state.phase === 'dragging' ? 'aim' : 'overview';
+  const previousAimPhase = useRef(state.phase);
+  useEffect(() => {
+    if (previousAimPhase.current === 'dragging' && state.phase !== 'dragging') setOverviewHeld(false);
+    previousAimPhase.current = state.phase;
+  }, [state.phase]);
+  useEffect(() => {
+    if (!studioAimEnabled) { setOverviewHeld(false); return undefined; }
+    const onKeyDown = event => {
+      if (event.code !== 'KeyV' || event.repeat || event.ctrlKey || event.metaKey || event.altKey
+        || /INPUT|TEXTAREA|SELECT|BUTTON/.test(event.target?.tagName)) return;
+      setOverviewHeld(true);
+    };
+    const onKeyUp = event => { if (event.code === 'KeyV') setOverviewHeld(false); };
+    const onBlur = () => setOverviewHeld(false);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, [studioAimEnabled]);
+  const mode = activeSplit ? 'split' : shotReview ? 'follow' : enemyResponse ? 'enemy' : flight ? 'follow'
+    : state.phase === 'dragging' ? studioAimEnabled && overviewHeld ? 'overview' : 'aim' : 'overview';
   const camera = useBattlefieldCamera({ arenaRef, worldRef, layout, mode, focusRef, attackerId: enemyResponse?.attack.enemyId });
   const solution = state.phase === 'dragging' && state.ready ? makeSolution(state) : null;
   const aiming = state.phase !== 'idle';
@@ -373,6 +399,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       ? '적의 반격 중 · 쉴드는 적의 공격과 특수 효과를 막아줍니다.' : retry || (run.pendingAimDisruption
         ? `${AIM_DISRUPTION_LABELS[run.pendingAimDisruption]} · ${INSTRUCTIONS[state.phase]}` : run.pendingAimInversion
         ? state.phase === 'dragging' ? '혼돈의 역풍 · 드래그 방향이 양 축 모두 반대로 적용 중 · 놓으면 발사' : '혼돈의 역풍 · 다음 한 발 조작 반전'
-        : INSTRUCTIONS[state.phase])}</p>
+        : INSTRUCTIONS[state.phase])}{studioAimEnabled && state.phase === 'dragging' && !shotReview && !enemyResponse
+        ? ' · V를 누르는 동안 전체 전장 보기' : ''}</p>
   </>;
 }
