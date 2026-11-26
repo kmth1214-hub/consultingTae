@@ -108,11 +108,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       || simulationTime > base.path.durationSeconds + .5 + 1e-6
       || (base.abilityDeadlineTime !== null && simulationTime > base.abilityDeadlineTime + 1e-6))
       return { accepted: false, reason: 'invalid-state' };
-    if (source === 'auto-contact' && (base.abilityDeadlineTime === null
+    if (source.startsWith('auto-') && (source !== base.abilityDeadlineSource
       || Math.abs(simulationTime - base.abilityDeadlineTime) > 1e-3))
-      return { accepted: false, reason: 'invalid-state' };
-    if (source === 'auto-ground' && (base.impactKind !== 'ground'
-      || Math.abs(simulationTime - base.path.durationSeconds - .5) > 1e-3))
       return { accepted: false, reason: 'invalid-state' };
     let success = false;
     if (base.abilityKindPending === 'explosion') {
@@ -258,10 +255,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         if (pendingShot.baseFlight.abilityKindPending && !pendingShot.abilityActivated
           && pendingShot.baseFlight.abilityDeadlineTime !== null) {
           const base = pendingShot.baseFlight;
-          const source = base.impactKind === 'ground' && base.abilityDeadlineTime > base.path.durationSeconds
-            ? 'auto-ground' : 'auto-contact';
           const activated = activatePendingAbility({ shotId, encounterId,
-            simulationTime: base.abilityDeadlineTime, source });
+            simulationTime: base.abilityDeadlineTime, source: base.abilityDeadlineSource });
           if (!activated.accepted) return reject(activated.reason);
         }
         ({hitIds,selectedTargetId,shotMeta}=flightResultPayload(pendingShot.flight));
@@ -279,7 +274,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const loadedCandy = state.run.weapons.find(item => item.instanceId ===
         (state.run.weaponQueue?.[0] ?? state.run.currentWeaponId));
       const signatureContactKind = ({ 'chili-slash-stone': 'slash', 'sea-wave-stone': 'ground-wave',
-        'frost-stone': 'freeze' })[loadedCandy?.id];
+        'frost-stone': 'freeze', 'cherry-bomb-stone': 'cherry-bomb' })[loadedCandy?.id];
       // shotMeta above is always copied from the pending flight, never from the caller.
       const validSignatureContacts = !state.run.spearArmed && pendingShot && signatureContactKind
         && abilityContacts?.length === 1 && abilityContacts[0].kind === signatureContactKind;

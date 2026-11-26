@@ -351,8 +351,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
               const live = activeFlight.current;
               if (live.abilityKindPending && live.abilityDeadlineTime !== null
                 && time >= live.abilityDeadlineTime - 1e-4) {
-                const ground = live.impactKind === 'ground' && live.abilityDeadlineTime > live.path.durationSeconds;
-                const activation = activateAbility(ground ? 'auto-ground' : 'auto-contact', live.abilityDeadlineTime);
+                const activation = activateAbility(live.abilityDeadlineSource, live.abilityDeadlineTime);
                 if (activation) return activation;
               }
               crowTimeRef.current = flight.flightStartMs + time * 1000;

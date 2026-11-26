@@ -864,11 +864,31 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
 export function activatePlannedAbility({ baseFlight, layout, enemies, kind, time, grade = 'C',
   success = false, source = 'click' } = {}) {
   if (!baseFlight?.path || !validLayout(layout) || !Array.isArray(enemies)
-    || !['split', 'explosion'].includes(kind) || !Number.isFinite(time)
+    || !['split', 'explosion', 'cherry-bomb'].includes(kind) || !Number.isFinite(time)
     || time < 0 || time > baseFlight.path.durationSeconds + .5 + EPS) return null;
   const boundedTime = Math.min(time, baseFlight.path.durationSeconds);
   const marker = sampleAtTime(baseFlight.path, boundedTime);
   const activation = { kind, time, point: { x: marker.x, y: marker.y }, source };
+  if (kind === 'cherry-bomb') {
+    const stone = STONE_STATS['cherry-bomb-stone'];
+    const anchor = source === 'auto-ground' && Number.isFinite(baseFlight.abilityLandingTime)
+      ? sampleAtTime(baseFlight.path, baseFlight.abilityLandingTime) : marker;
+    const point = { x: anchor.x, y: anchor.y };
+    const explodeAt = time + stone.delay;
+    const radius = stone.radius[grade] ?? stone.radius.C;
+    const alive = new Set(enemies.filter(enemy => enemy.alive && enemy.hp > 0).map(enemy => enemy.id));
+    const targetIds = layout.enemies.filter(slot => alive.has(slot.id)).map(slot => ({
+      id: slot.id, radius: slot.collider.radius,
+      distance: distance(point, enemyCenterAt(slot, baseFlight.contacts ?? [], baseFlight.flightStartMs ?? 0, explodeAt))
+    })).filter(target => target.distance <= radius + target.radius)
+      .sort((a, b) => a.distance - b.distance || a.id.localeCompare(b.id))
+      .slice(0, stone.targets).map(target => target.id);
+    const bomb = { kind, plantedAt: time, explodeAt, point, radius, targetIds };
+    return { ...baseFlight, bomb, abilityActivation: { ...activation, point },
+      abilityContacts: [{ kind, time: explodeAt, point, radius, targetIds }],
+      simulationSeconds: Math.max(baseFlight.simulationSeconds, explodeAt),
+      durationMs: Math.max(baseFlight.durationMs, Math.round(explodeAt * 1000)) };
+  }
   if (kind === 'split') {
     const beginning = baseFlight.path.samples[0];
     const next = baseFlight.path.samples.find(sample => sample.time > .02) || baseFlight.path.samples.at(-1);

@@ -13,6 +13,28 @@ const commit=(s,r,extra={})=>s.actions.fireShot({shotId:r.shotId,encounterId:r.e
 const settle=s=>{const snap=s.getSnapshot();if(snap.shotReview)s.actions.completeShotReview(snap.shotReview.id);
  if(snap.enemyResponse)s.actions.completeEnemyResponse(snap.enemyResponse.id);};
 
+test('Cherry plants one timed bomb without truncating the reserved shot', () => {
+ const s = make({ engine: { ...E, createRunState: options => {
+   const run = E.createRunState({ ...options, characterId: 'cherry' });
+   run.weaponQueue = run.weapons.map(stone => stone.instanceId);
+   run.currentWeaponId = run.weaponQueue[0];
+   return run;
+ } } });
+ const reserved = launch(s, pullAt(72, .5));
+ assert.equal(reserved.flight.abilityKindPending, 'cherry-bomb');
+ const request = { shotId: reserved.shotId, encounterId: reserved.encounterId, source: 'space', simulationTime: .2 };
+ const activated = s.actions.activateFlightAbility(request);
+ assert.equal(activated.accepted, true);
+ assert.equal(s.actions.activateFlightAbility(request).accepted, false);
+ assert.deepEqual(activated.flight.path, reserved.flight.path);
+ assert.equal(activated.flight.bomb.explodeAt, .55);
+ assert.ok(activated.flight.simulationSeconds >= activated.flight.bomb.explodeAt);
+ const event = commit(s, reserved, { shotMeta: { abilityContacts: [] } });
+ assert.equal(event.accepted, true);
+ assert.equal(event.shotMeta.abilityContacts[0].kind, 'cherry-bomb');
+ assert.equal(commit(s, reserved).accepted, false);
+});
+
 test('the same real completed miss cannot spend ammo, roll damage or cause a second counterattack',()=>{
  let draws=0;const s=make({rng:()=>{draws++;return .5;}}),r=launch(s);
  const first=commit(s,r);assert.equal(first.missed,true);assert.equal(first.enemyAttack.damage,5);

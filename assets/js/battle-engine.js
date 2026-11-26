@@ -682,6 +682,8 @@
       ? shotMeta?.abilityContacts?.find(contact => contact.kind === travelKind) : null;
     const freeze = !spear && usedWeapon?.id === 'frost-stone'
       ? shotMeta?.abilityContacts?.find(contact => contact.kind === 'freeze') : null;
+    const cherryBomb = !spear && usedWeapon?.id === 'cherry-bomb-stone'
+      ? shotMeta?.abilityContacts?.find(contact => contact.kind === 'cherry-bomb') : null;
     const frozenEnemyIds = [];
     const childHits = !spear && usedWeapon?.id === 'wizard-orb' && Array.isArray(shotMeta?.childHits)
       ? shotMeta.childHits : [];
@@ -884,19 +886,25 @@
       hits.push({ id: target.id, kind: target.kind, source: 'wizard-child', orbId: child.orbId,
         damage: 1, remainingHp: target.hp, defeated: !target.alive, scoreDelta });
     } });
-    const travelingSeen = new Set(hitIds);
-    for (const hit of (travelingAbility?.hits ?? []).slice(0, travelKind === 'slash' ? 1 : 2)) timeline.push({ time: hit.time, order: 4, apply() {
-      if (travelingSeen.has(hit.id)) return;
-      travelingSeen.add(hit.id);
-      const target = state.enemies.find(enemy => enemy.id === hit.id && enemy.alive && enemy.hp > 0);
+    const applyFixedAbilityHit = (id, source) => {
+      const target = state.enemies.find(enemy => enemy.id === id && enemy.alive && enemy.hp > 0);
       if (!target) return;
       const removed = Math.min(target.hp, 1);
       target.hp -= removed;
       target.alive = target.hp > 0;
       const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
       addScore(state, scoreDelta);
-      hits.push({ id: target.id, kind: target.kind, source: travelKind, damage: removed,
+      hits.push({ id: target.id, kind: target.kind, source, damage: removed,
         remainingHp: target.hp, defeated: !target.alive, scoreDelta });
+    };
+    const travelingSeen = new Set(hitIds);
+    for (const hit of (travelingAbility?.hits ?? []).slice(0, travelKind === 'slash' ? 1 : 2)) timeline.push({ time: hit.time, order: 4, apply() {
+      if (travelingSeen.has(hit.id)) return;
+      travelingSeen.add(hit.id);
+      applyFixedAbilityHit(hit.id, travelKind);
+    } });
+    if (cherryBomb) timeline.push({ time: cherryBomb.time, order: 4, apply() {
+      for (const id of [...new Set(cherryBomb.targetIds)].slice(0, 2)) applyFixedAbilityHit(id, 'cherry-bomb');
     } });
     if (freeze) timeline.push({ time: freeze.time, order: 4, apply() {
       if (lastDirectHitId !== freeze.sourceId) return;

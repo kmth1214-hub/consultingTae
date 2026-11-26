@@ -1,6 +1,18 @@
 import {buildPlayableBattlefield} from './battlefieldPlacement.js';
-import {planShot,shotDisruptionOptions,activatePlannedAbility} from './shotGeometry.js';
+import {planShot,shotDisruptionOptions,activatePlannedAbility,sampleAtDistance} from './shotGeometry.js';
 import { buildWindField, crossedWindZone } from './windField.js';
+import { STONE_STATS } from './signatureStones.js';
+
+function abilityDeadline(shot, signature) {
+  const firstContact = Math.min(...shot.contacts.filter(contact => contact.trigger === 'candy').map(contact => contact.time),
+    shot.hitIds.length || shot.impactKind === 'obstacle' ? shot.directHitTime : Infinity);
+  const landing = signature && shot.rollStartDistance !== null
+    ? sampleAtDistance(shot.path, shot.rollStartDistance).time
+    : shot.impactKind === 'ground' ? shot.path.durationSeconds : null;
+  if (landing !== null && landing + .5 < firstContact) return { time: landing + .5, source: 'auto-ground', landing };
+  if (Number.isFinite(firstContact)) return { time: firstContact, source: 'auto-contact', landing };
+  return { time: null, source: null, landing };
+}
 
 /** One canonical solution is shared by visible playback and combat resolution. */
 export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs = Date.now()) {
@@ -11,8 +23,9 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
     worldScale:run.studioWorldScale??run.battlefieldWorldScale??1,
     enemyScale:run.studioEnemyScale??1});
   const loaded=run.weapons.find(weapon=>weapon.instanceId===(run.weaponQueue?.[0]??run.currentWeaponId));
+  const signature = STONE_STATS[loaded?.id]?.manual;
   const abilityKind=!run.spearArmed && loaded?.id==='wizard-orb'?'split'
-    :!run.spearArmed && loaded?.id==='alchemist-candy'?'explosion':null;
+    :!run.spearArmed && loaded?.id==='alchemist-candy'?'explosion':!run.spearArmed ? signature ?? null : null;
   const windField=buildWindField({area:run.area,round:run.round,layoutSeed:run.layoutSeed??0,
     shotOrdinal:run.playerShotsFired??0,layout});
   const solution=planShot({layout,pull,enemies:run.enemies,piercing:run.spearArmed===true,
@@ -22,13 +35,12 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
     loadedCandyId:loaded?.id??null,loadedCandyGrade:loaded?.grade??'C',prototype:run.battlefieldPrototype??run.studioPrototype??null,
     toppledObstacleIds:run.toppledObstacleIds||[],
     windAvailable:loaded?.id==='wind-candy'&&run.windArmedMode==='homing'});
-  const firstContact=solution && Math.min(...(solution.contacts||[])
-    .filter(contact=>contact.trigger==='candy').map(contact=>contact.time),
-    solution.hitIds.length?solution.directHitTime:Infinity);
-  const abilityDeadlineTime=Number.isFinite(firstContact)?firstContact
-    :solution?.impactKind==='ground'?solution.path.durationSeconds+.5:null;
-  return solution ? {...solution,id:launchId,shotId,encounterId:run.encounterId,flightStartMs,
+  if (!solution) return null;
+  const deadline = abilityKind ? abilityDeadline(solution, Boolean(signature)) : null;
+  const abilityDeadlineTime = deadline?.time ?? null;
+  return {...solution,id:launchId,shotId,encounterId:run.encounterId,flightStartMs,
     powerRatio:pull.powerRatio,abilityKindPending:abilityKind,abilityDeadlineTime,
+    abilityDeadlineSource:deadline?.source ?? null, abilityLandingTime:deadline?.landing ?? null,
     simulationSeconds:abilityKind&&abilityDeadlineTime!==null
       ?Math.max(solution.simulationSeconds,abilityDeadlineTime):solution.simulationSeconds,
     durationMs:abilityKind&&abilityDeadlineTime!==null
@@ -38,7 +50,7 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
     enemyOrder:layout.enemies.slice().sort((a,b)=>a.collider.x-b.collider.x||a.id.localeCompare(b.id)).map(slot=>slot.id),
     loadedStoneId:loaded?.id??'basic-stone',
     candyRadius:solution.candyRadius,
-    fireball:run.fireballArmed,projectileKind:run.spearArmed?'spear':run.fireballArmed?'fireball':'normal'} : null;
+    fireball:run.fireballArmed,projectileKind:run.spearArmed?'spear':run.fireballArmed?'fireball':'normal'};
 }
 
 export function activatePhysicalFlight(run, baseFlight, { time, source, success = false } = {}) {
