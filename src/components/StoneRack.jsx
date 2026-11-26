@@ -30,7 +30,7 @@ export default function StoneRack({ run, disabled, onLoadStone }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [disabled, selected, available, onLoadStone]);
   return <aside ref={root} className="stone-rack" aria-label="스톤 보관함">
-    <h2>스톤 보관함 <small>A 위 · D 아래</small></h2>
+    <h2>스톤 보관함 <small><span>▲/▼ : A/D</span><span>장전: Space</span></small></h2>
     <div className="stone-rack-list">
       {run.weapons.map(stone => <button key={stone.instanceId} type="button"
         data-stone-instance={stone.instanceId} aria-label={`${stone.name} ${stone.grade}등급${run.currentWeaponId === stone.instanceId ? ' 장전됨' : ''}`}
@@ -45,7 +45,7 @@ export default function StoneRack({ run, disabled, onLoadStone }) {
     <details><summary>{selected ? `${selected.name} · ${selected.grade}` : '남은 스톤 없음'}</summary>
       <p>{details?.currentAbility}</p></details>
     <button type="button" className="stone-rack-load" disabled={disabled || !selected}
-      onClick={() => selected && onLoadStone(selected.instanceId)}>장전 <kbd>Space</kbd></button>
+      onClick={() => selected && onLoadStone(selected.instanceId)}>장전</button>
     <p className="sr-only" role="status">{run.weapons.find(stone => stone.instanceId === run.currentWeaponId)?.name ?? '남은 스톤 없음'} 장전</p>
   </aside>;
 }

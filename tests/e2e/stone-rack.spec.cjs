@@ -9,7 +9,7 @@ for (const phone of [false, true]) test(`stone rack supports ${phone ? 'phone' :
   const id = await buttons.nth(2).getAttribute('data-stone-instance');
   if (phone) {
     await buttons.nth(2).click();
-    await rack.getByRole('button', { name: /장전 Space/ }).click();
+    await rack.getByRole('button', { name: '장전', exact: true }).click();
   } else {
     await page.keyboard.press('d'); await page.keyboard.press('d'); await page.keyboard.press('Space');
   }

@@ -588,11 +588,12 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .wind-skill-status.is-armed{background:#d1f8df;animation:windSkillPulse 1.2s ease-in-out infinite alternate}
 @keyframes windSkillPulse{to{box-shadow:0 0 0 4px #65c99b88 inset}}
 @media (prefers-reduced-motion:reduce){.wind-skill-status.is-armed{animation:none;box-shadow:0 0 0 3px #65c99b inset}}
-.stone-controls { position: absolute; top: 20px; left: 20px; width: 215px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; max-height: 64%; }
-.stone-controls .consumable-hud { position: relative; inset: auto; width: 100%; flex-shrink: 0; }
+.stone-controls { position: absolute; top: 20px; left: 20px; width: 438px; display: flex; align-items: flex-start; gap: 8px; pointer-events: auto; max-height: 64%; }
+.stone-controls .consumable-hud { position: relative; inset: auto; width: 215px; flex-shrink: 0; }
+.stone-controls .stone-rack { width: 215px; flex-shrink: 0; }
 .stone-rack { min-height: 0; padding: 8px; border: 3px solid #bc864a; border-radius: 12px; background: repeating-linear-gradient(35deg,#f4d99b 0 16px,#e5be76 16px 20px); color: #51361f; box-shadow: 0 3px 0 #79512c; display: flex; flex-direction: column; gap: 5px; font-size: .68rem; }
-.stone-rack h2 { margin: 0; font-size: .76rem; display: flex; justify-content: space-between; gap: 4px; }
-.stone-rack h2 small { font-size: .56rem; }
+.stone-rack h2 { margin: 0; font-size: .76rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; }
+.stone-rack h2 small { display: flex; flex-direction: column; gap: 2px; font-size: .56rem; white-space: nowrap; }
 .stone-rack-list { min-height: 32px; max-height: 126px; overflow-y: auto; overscroll-behavior: contain; }
 .stone-rack-list button { display: flex; align-items: center; gap: 5px; width: 100%; min-height: 34px; border: 1px solid #c69456; border-radius: 6px; background: #fff7dc; padding: 3px 5px; font: inherit; text-align: left; }
 .stone-rack-list svg { width: 27px; height: 27px; flex-shrink: 0; }
@@ -602,8 +603,9 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .stone-rack details { font-size: .62rem; }
 .stone-rack details p { margin: 4px 0; }
 .stone-rack-load { align-self: flex-end; padding: 2px 8px; background: #fdf1cf; border: 1px solid #a9763c; border-radius: 6px; font: inherit; }
-@media(max-width:600px) { .stone-controls { top: 7px; left: 7px; width: 145px; max-height: 60%; } .stone-rack { padding: 4px; border-width: 2px; } .stone-rack-list { max-height: 72px; } .stone-rack h2 small { display: none; } }
-@media(max-height:500px) { .stone-controls { top: 7px; left: 7px; width: 190px; max-height: 68%; } .stone-rack-list { max-height: 45px; } .stone-rack details { display: none; } }
+@media(max-width:900px) { .stone-controls { width: 215px; flex-direction: column; align-items: stretch; } .stone-controls .consumable-hud, .stone-controls .stone-rack { width: 100%; } }
+@media(max-width:600px) { .stone-controls { top: 7px; left: 7px; width: 145px; max-height: 60%; } .stone-rack { padding: 4px; border-width: 2px; } .stone-rack-list { max-height: 72px; } }
+@media(max-height:500px) { .stone-controls { top: 7px; left: 7px; width: 190px; max-height: 68%; flex-direction: column; align-items: stretch; } .stone-controls .consumable-hud, .stone-controls .stone-rack { width: 100%; } .stone-rack-list { max-height: 45px; } .stone-rack details { display: none; } }
 .monster[data-movement="slide"] .monster-art { transform: rotate(calc(var(--patrol-facing, 1) * 7deg)); transition: transform 180ms ease-out; }
 .monster[data-movement="fly"] .monster-art { scale: var(--patrol-facing, 1) 1; transition: scale 160ms ease-out; }
 @media(prefers-reduced-motion:reduce) { .monster[data-movement] .monster-art { transition: none; } }

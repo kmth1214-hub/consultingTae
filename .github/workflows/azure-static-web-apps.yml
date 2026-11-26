@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'UI 문구·배치 수정용: 테스트를 생략하고 빌드·배포만 실행'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -34,15 +39,19 @@ jobs:
         run: npm ci
 
       - name: Run unit and API tests
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
         run: npm test
 
       - name: Install Chromium for browser tests
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
         run: npx playwright install --with-deps chrome
 
       - name: Run production browser tests
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
         run: npm run test:e2e
 
       - name: Run map studio tests
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
         run: npm run test:studio
 
       - name: Require tenant configuration before enabling deployment
