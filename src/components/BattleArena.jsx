@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ConsumableTable from './ConsumableTable.jsx';
+import StoneRack from './StoneRack.jsx';
 import MagicCandyCard from './MagicCandyCard.jsx';
 import MonsterGroup from './MonsterGroup.jsx';
 import ArenaScenery, { ContactEffect } from './ArenaScenery.jsx';
@@ -31,7 +32,7 @@ const INSTRUCTIONS = {
 export default function BattleArena({ run, lastEvent, enemyResponse, shotReview, onReviewComplete, bossTransition,
   onBossImpact, onBossComplete,
   onBeginShot, onCancelShot, onActivateFlightAbility,
-  onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef, studioDepthEnabled = false }) {
+  onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, onLoadStone, arenaRef, studioDepthEnabled = false }) {
   const rebuilt = import.meta.env.DEV && run.studioDepthPreview === true && studioDepthEnabled === true;
   const [RebuiltScene, setRebuiltScene] = useState(null);
   const [sceneLoadError, setSceneLoadError] = useState(null);
@@ -464,7 +465,11 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           onClick={() => activateAbility('click')}>
           {flight.abilityKindPending === 'cherry-bomb' ? '폭탄 설치' : '소용돌이 발동'}
         </button>}
-        <ConsumableTable run={hudRun} disabled={aiming || Boolean(enemyResponse || shotReview || bossTransition)} onConsumable={onConsumable} />
+        <div className="stone-controls">
+          <ConsumableTable run={hudRun} disabled={aiming || Boolean(enemyResponse || shotReview || bossTransition)} onConsumable={onConsumable} />
+          <StoneRack run={run} onLoadStone={onLoadStone}
+            disabled={aiming || Boolean(run.terminal || enemyResponse || shotReview || bossTransition || run.windArmedMode)} />
+        </div>
         <MagicCandyCard run={hudRun} hidden={state.phase === 'launching' || Boolean(shotReview || bossTransition
           || (run.studioMonsterPrototype === 'regional-monsters-v1' && enemyResponse))} />
       </div>

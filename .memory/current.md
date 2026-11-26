@@ -10,12 +10,12 @@
 
 ## Active Task
 
-[T02 세로 보관함과 A·D·Space 조작](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T02-stone-rack-interface.md)
+[T03 눈·도시 적 수와 이동 배치](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T03-snow-city-encounters.md)
 
 ## Status
 
-- T01 지정 검증 통과. done: 1/7.
+- T02 지정 검증 통과. done: 2/7.
 
 ## Next Step (IMPORTANT)
 
-T02 세로 보관함과 A·D·Space 조작 청사진을 읽고 구현한다.
+T03 눈·도시 적 수와 이동 배치 청사진을 읽고 구현한다.

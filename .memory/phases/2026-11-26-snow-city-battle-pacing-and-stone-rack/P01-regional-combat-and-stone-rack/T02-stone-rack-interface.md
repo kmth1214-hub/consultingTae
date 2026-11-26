@@ -1,6 +1,6 @@
 # Task: T02 세로 보관함과 A·D·Space 조작
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -64,9 +64,9 @@ BattleArena(props: ExistingBattleArenaProps & { onLoadStone: (instanceId: string
 
 ## Acceptance Criteria
 
-- [ ] 전장 왼쪽 보관함에서 모든 보유 스톤과 이번 라운드 사용 여부를 읽을 수 있다.
-- [ ] A/D/Space와 터치 장전이 같은 session action을 사용한다.
-- [ ] 장전 선택이 발사나 스톤 특수 능력을 중복 실행하지 않는다.
+- [x] 전장 왼쪽 보관함에서 모든 보유 스톤과 이번 라운드 사용 여부를 읽을 수 있다.
+- [x] A/D/Space와 터치 장전이 같은 session action을 사용한다.
+- [x] 장전 선택이 발사나 스톤 특수 능력을 중복 실행하지 않는다.
 
 ## Validation
 
@@ -89,6 +89,6 @@ Task: T02-stone-rack-interface
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

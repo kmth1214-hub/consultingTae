@@ -83,7 +83,7 @@ test('the last queue entry cannot invent the reshuffled next candy or consume ra
     Math.random = () => { throw new Error('HUD cannot consume random rolls'); };
     const details = getCandyDetails(state);
     assert.equal(details.next, null);
-    assert.equal(details.reshuffleNext, true);
+    assert.equal(details.reshuffleNext, false);
     assert.equal(getCandyDetails(null), null);
     assert.equal(getCandyDetails({ weapons: [] }), null);
     state.weapons[0].grade = 'unknown';

@@ -44,7 +44,7 @@ async function installGame(page, fixture = {}) {
         queueMicrotask(() => { if (!trace.lastAction) trace.run = structuredClone(run); });
         return run;
       };
-      for (const name of ['resolveProjectile', 'useConsumable', 'drawRewardChoices', 'spinRewardSlot', 'applyRewardChoice', 'advanceRound', 'chooseCampReward', 'finishCampSlot', 'startBonusRoute']) {
+      for (const name of ['loadStone', 'resolveProjectile', 'useConsumable', 'drawRewardChoices', 'spinRewardSlot', 'applyRewardChoice', 'advanceRound', 'chooseCampReward', 'finishCampSlot', 'startBonusRoute']) {
         api[name] = (...args) => {
           if (name === 'resolveProjectile' && config.fastCombat) args[1] = { ...args[1], damage: 1000,
             // Explicit abstract fixture for screen progression, not a physical shot.

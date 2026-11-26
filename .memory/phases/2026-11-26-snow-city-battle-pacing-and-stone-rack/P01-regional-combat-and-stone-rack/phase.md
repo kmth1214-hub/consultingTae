@@ -9,8 +9,8 @@
 | Task | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
 | T01 | `done` | 획득순 탄창과 장전 상태 | [T01](./T01-stone-queue-and-loading.md) |
-| T02 | `in_progress` | 세로 보관함과 A·D·Space 조작 | [T02](./T02-stone-rack-interface.md) |
-| T03 | `pending` | 눈·도시 적 수와 이동 배치 | [T03](./T03-snow-city-encounters.md) |
+| T02 | `done` | 세로 보관함과 A·D·Space 조작 | [T02](./T02-stone-rack-interface.md) |
+| T03 | `in_progress` | 눈·도시 적 수와 이동 배치 | [T03](./T03-snow-city-encounters.md) |
 | T04 | `pending` | 도시 상자의 범위 폭발과 연쇄 | [T04](./T04-city-blast-chain.md) |
 | T05 | `pending` | 오븐 환기구 명중과 과열 약화 | [T05](./T05-oven-vent-weakpoint.md) |
 | T06 | `pending` | 가속·회전 표시와 수동 폭발 보상 | [T06](./T06-signature-stone-feedback.md) |
@@ -18,4 +18,4 @@
 
 ## Progress
 
-- done: 1/7 (active: T02)
+- done: 2/7 (active: T03)

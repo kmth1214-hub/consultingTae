@@ -22,7 +22,7 @@ export default function MagicCandyCard({ run, hidden }) {
     {chips.length > 0 && <ul className="candy-status-chips" aria-label="적용 중인 상태 요약">{chips.map(text => <li key={text}>{text}</li>)}</ul>}
     <div className="next-candy" aria-label="다음 스톤">
       <span>다음</span>{next ? <><strong>{next.name}</strong><small>{next.grade} 등급</small></>
-        : <strong>{details.reshuffleNext ? '이번 발 후 다시 섞어요 · 다음 사탕 미정' : '다음 사탕 정보 없음'}</strong>}
+        : <strong>이번 라운드 마지막 스톤</strong>}
     </div>
     <details className="candy-passives"><summary>전용 능력 {passives.length}개{buffs.length ? ` · 강화 ${buffs.length}` : ''}</summary>
       <div className="candy-detail-body">
