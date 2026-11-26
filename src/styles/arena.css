@@ -218,6 +218,7 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .battle-arena[data-aim-phase="responding"] .launcher-button > span { visibility: hidden; }
 .attack-telegraph circle { fill: #fcf0c2; stroke: #a55435; stroke-width: 3; }
 .attack-telegraph text { fill: #9d3d2c; font-size: 30px; font-weight: 900; }
+.enemy-aim-arrow { fill: none; stroke: #ffde8e; stroke-width: 3px; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 2px #542a27); }
 .enemy-projectile { fill: var(--attack-color); stroke: #4b5245; stroke-width: 3; filter: drop-shadow(0 0 8px var(--attack-color)); visibility: hidden; }
 .enemy-response--travel .enemy-projectile { visibility: visible; }
 .enemy-projectile-trail { fill: none; stroke: var(--attack-color); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 13 15; opacity: .72; filter: drop-shadow(0 0 5px var(--attack-color)); visibility: hidden; }

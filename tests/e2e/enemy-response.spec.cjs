@@ -95,7 +95,10 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
   const attack = page.getByTestId('enemy-attack');
   const projectile = page.getByTestId('enemy-projectile');
   const trail = page.getByTestId('enemy-projectile-trail');
+  const aimArrow = page.getByTestId('enemy-aim-arrow');
   await expect(attack).toHaveAttribute('data-stage', 'windup');
+  await expect(aimArrow).toBeVisible();
+  const aimAngle = await aimArrow.evaluate(node => node.transform.baseVal.getItem(1).angle);
   await expect(trail).toHaveCount(1);
   await expect(trail).toHaveCSS('visibility', 'hidden');
   await expect(hp(page)).toHaveText('100');
@@ -108,10 +111,12 @@ test('enemy projectile travels from its attacker and HP changes at impact; map a
   await page.clock.runFor(400);
   await expect(projectile).toBeVisible();
   await expect(attack).toHaveAttribute('data-stage', 'travel');
+  await expect(aimArrow).toHaveCount(0);
   await expect(trail).toHaveCSS('visibility', 'visible');
   const coordinates = (await trail.getAttribute('data-trajectory')).match(/M(-?[\d.]+) (-?[\d.]+) Q(-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)/).slice(1).map(Number);
   const [sourceX, sourceY, controlX, controlY, targetX, targetY] = coordinates;
   expect(sourceX).toBeGreaterThan(targetX);
+  expect(aimAngle).toBeCloseTo(Math.atan2(targetY - sourceY, targetX - sourceX) * 180 / Math.PI, 4);
   expect(controlX).toBeCloseTo((sourceX + targetX) / 2, 5);
   const arcHeight = Math.max(200, Math.min(440, Math.abs(targetX - sourceX) * .12 + 150));
   expect(controlY).toBeCloseTo((sourceY + targetY) / 2 - arcHeight * 2, 5);

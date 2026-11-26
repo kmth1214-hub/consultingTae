@@ -3,6 +3,7 @@ import { MONSTER_NAMES, AIM_DISRUPTION_LABELS } from '../game/gameData.js';
 import { createEnemyProjectileArc, sampleEnemyProjectile, enemyTrailD } from '../game/enemyProjectileMotion.js';
 import EnemyProjectileArt from './EnemyProjectileArt.jsx';
 import { getEnemyAttackTarget } from '../game/enemyAttackPresentation.js';
+import { patrolX } from '../game/shotGeometry.js';
 
 export function attackStyle(attack) {
   const kind = attack.attackKind || attack.kind;
@@ -55,16 +56,24 @@ export function responseTravelMs(response, layout, reduced) {
   return Math.max(520, Math.min(1100, Math.abs((attacker?.x ?? layout.player.impact.x) - layout.player.impact.x) / 4));
 }
 
+function aimTransform(x, y, target) {
+  const angle = Math.atan2(target.y - y, target.x - x) * 180 / Math.PI;
+  return `translate(${x} ${y}) rotate(${angle})`;
+}
+
 export default function EnemyResponse({ response, layout, travelMs, onAdvance, onComplete }) {
   const projectile = useRef(null);
-  const projectileArt = useRef(null), trail = useRef(null);
+  const projectileArt = useRef(null), trail = useRef(null), aimArrow = useRef(null);
   const callbacks = useRef(null);
   callbacks.current = { onAdvance, onComplete };
   const { attack, stage, id } = response;
   const visual = attackStyle(attack);
   const attacker = layout.enemies.find(enemy => enemy.id === attack.enemyId);
-  const source = { x: attacker ? attacker.x - (visual.thrown ? attacker.size * .25 : 0) : layout.player.impact.x,
-    y: attacker ? attacker.y - attacker.size * (visual.thrown ? .65 : .55) : layout.player.impact.y };
+  const playerImpact = layout.player.impact;
+  const source = attacker ? {
+    x: attacker.x - (visual.thrown ? attacker.size * .25 : 0),
+    y: attacker.y - attacker.size * (visual.thrown ? .65 : .55)
+  } : playerImpact;
   const target = getEnemyAttackTarget(attack, layout);
   const arc = createEnemyProjectileArc({ source, target,
     height: visual.thrown ? undefined : visual.breath ? 0 : 75 });
@@ -84,6 +93,9 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
       if (canceled || done) return;
       const elapsed = time - started;
       const next = elapsed < windup ? 'windup' : elapsed < windup + travel ? 'travel' : 'impact';
+      if (next === 'windup' && attacker?.patrol) {
+        aimArrow.current?.setAttribute('transform', aimTransform(patrolX(attacker.patrol, Date.now()), source.y, playerImpact));
+      }
       // A suspended frame may cross both boundaries; publish them in order.
       if (previous === 'windup' && next !== 'windup') {
         callbacks.current.onAdvance(id, 'travel');
@@ -122,6 +134,12 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
     <svg viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true" style={{ '--attack-color': visual.color }}>
       {stage === 'windup' && <g className="attack-telegraph" transform={`translate(${source.x} ${source.y - 70})`}>
         <circle r="22" /><text y="9" textAnchor="middle">{attack.missed ? '?' : '!'}</text></g>}
+      {stage === 'windup' && attacker && <g ref={aimArrow} data-testid="enemy-aim-arrow"
+        transform={aimTransform(source.x, source.y, playerImpact)}>
+        <path className="enemy-aim-arrow" d="M0 0H100M70-22l30 22-30 22"
+          transform={`translate(${attacker.size * (visual.thrown ? .25 : .5) + 14} 0)`}
+          vectorEffect="non-scaling-stroke" />
+      </g>}
       {!visual.melee && <path ref={trail} data-testid="enemy-projectile-trail" className="enemy-projectile-trail"
         data-trajectory={arc.d} data-arc-height={arc.height}
         d={visual.thrown ? '' : arc.d}
