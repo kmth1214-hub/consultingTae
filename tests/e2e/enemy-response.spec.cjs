@@ -17,12 +17,12 @@ async function launchResponse(page, { paused = false, clockInstalled = false } =
   await expect(page.getByTestId('enemy-attack')).toBeVisible({ timeout: 10000 });
 }
 
-async function advanceToImpact(page) {
+async function advanceToImpact(page, stage = 'impact') {
   for(let i=0;i<200;i++) {
-    if(await page.getByTestId('enemy-attack').getAttribute('data-stage')==='impact') return;
+    if(await page.getByTestId('enemy-attack').getAttribute('data-stage')===stage) return;
     await page.clock.runFor(16);
   }
-  throw new Error('Enemy response did not reach impact');
+  throw new Error(`Enemy response did not reach ${stage}`);
 }
 
 test('shield intercepts a visible incoming attack from the actual enemy without losing HP', async ({ page }) => {
@@ -143,7 +143,8 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
       }
       const bossStartX = area === 'forest' ? (await page.locator('.monster-body').boundingBox()).x : null;
       await page.keyboard.press(blocked ? '3' : '4');
-      await launchResponse(page, { paused: area === 'city' });
+      const paused = area !== 'forest';
+      await launchResponse(page, { paused });
       const trace = await snapshot(page);
       const event = trace.lastEvent.enemyAttack;
       expect(event.attemptedSpecial).toBe(special);
@@ -151,6 +152,7 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
       expect(event.blocked).toBe(blocked);
       await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-special', special);
       if (special === 'frozen-breath') {
+        await advanceToImpact(page, 'travel');
         const attackLayer = page.getByTestId('enemy-attack');
         const trail = page.getByTestId('enemy-projectile-trail');
         await expect(attackLayer).toHaveAttribute('data-stage', 'travel');
@@ -164,11 +166,11 @@ for (const [area, special] of [['forest', 'boar-charge'], ['snow', 'frozen-breat
         await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'travel');
         await expect.poll(async () => (await body.boundingBox()).x, { intervals: [16] }).toBeLessThan(bossStartX - 40);
       }
-      if (area === 'city') await advanceToImpact(page);
+      if (paused) await advanceToImpact(page);
       await expect(page.getByTestId(blocked ? 'shield-impact' : 'player-impact')).toBeVisible();
       await expect(hp(page)).toHaveText(String(event.playerHpAfter));
       await page.screenshot({ path: `tmp/react-t06-${area}-${blocked ? 'blocked' : 'special'}.jpg` });
-      if (area === 'city') await page.clock.runFor(1000);
+      if (paused) await page.clock.runFor(1000);
       if (area === 'city' && !blocked) {
         await expect(page.getByRole('heading', { name: '다음엔 조금 더 멀리' })).toBeVisible();
       } else {

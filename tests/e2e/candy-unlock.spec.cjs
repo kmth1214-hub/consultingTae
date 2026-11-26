@@ -9,12 +9,12 @@ async function enterSelection(page) {
   await page.getByRole('button', { name: '모험 시작', exact: true }).click();
 }
 
-test('before Snow unlock only the first three cookies are selectable and slots use the unlocked pool', async ({ page }) => {
+test('before Snow unlock eight cookies are selectable and slots use the unlocked pool', async ({ page }) => {
   await installGame(page, { initial: { round: 3 }, fastCombat: true, random: 0 });
   await enterSelection(page);
-  for (const name of ['모험가맛', '연금술사맛', '마법사맛'])
+  for (const name of ['모험가맛', '연금술사맛', '마법사맛', '용감한', '딸기맛', '체리맛', '칠리맛', '에스프레소맛'])
     await expect(page.getByRole('button', { name: new RegExp(`^${name} 쿠키 `) })).toBeEnabled();
-  for (const name of ['우유맛', '바람궁수'])
+  for (const name of ['우유맛', '바람궁수', '바다요정', '서리여왕'])
     await expect(page.getByRole('button', { name: new RegExp(`^${name} 쿠키 `) })).toBeDisabled();
   await chooseStarter(page);
   await shoot(page, { short: true, finalHeading: '다음 전투의 보상' });
@@ -34,7 +34,8 @@ test('before Snow unlock only the first three cookies are selectable and slots u
 
 test('saved Snow unlock permits Milk and Wind and a Milk player can win Wind stone', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('cookie-roguelike.profile.v1', JSON.stringify({ version: 1, snowAreaCleared: true })));
-  await installGame(page, { initial: { round: 3 }, fastCombat: true, random: .999 });
+  // The unlocked pool has twelve entries. Draw its fifth entry, Wind Archer.
+  await installGame(page, { initial: { round: 3 }, fastCombat: true, random: .375 });
   await enterSelection(page);
   await expect(page.getByRole('button', { name: /^우유맛 쿠키 / })).toBeEnabled();
   await expect(page.getByRole('button', { name: /^바람궁수 쿠키 / })).toBeEnabled();

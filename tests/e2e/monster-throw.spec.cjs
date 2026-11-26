@@ -32,9 +32,16 @@ for (const [kind, area, ammo, arm] of [
   await expect(projectile).toHaveCSS('visibility', 'hidden');
   const body = page.locator('.monster.is-attacking .monster-body');
   await expect(body).toHaveCSS('animation-name', 'enemy-throw-load');
-  const startTransform = await body.evaluate(node => getComputedStyle(node).transform);
+  const [startTransform, loadedTransform] = await body.evaluate(node => {
+    const animation = node.getAnimations().find(item => item.animationName === 'enemy-throw-load');
+    animation.pause();
+    animation.currentTime = 0;
+    const start = getComputedStyle(node).transform;
+    animation.currentTime = 140;
+    return [start, getComputedStyle(node).transform];
+  });
+  expect(loadedTransform).not.toBe(startTransform);
   await page.clock.runFor(140);
-  expect(await body.evaluate(node => getComputedStyle(node).transform)).not.toBe(startTransform);
   await page.screenshot({ path: `tmp/${kind}-throw-prepare.png` });
   await page.clock.runFor(220);
   await expect(page.getByTestId('enemy-attack')).toHaveAttribute('data-stage', 'travel');

@@ -25,7 +25,9 @@ async function begin(page, options) {
   const shot = planShot({ layout, enemies, windField, pull: { ready: true, powerRatio: options.powerRatio,
     direction: { x: Math.cos(radians), y: -Math.sin(radians) } } });
   expect(shot.contacts.some(c => c.trigger === 'obstacle')).toBe(true);
-  await installGame(page, { layoutSeed: options.seed, stateOverride: { area: options.area, round: 1, enemies } });
+  const basic = { id: 'basic-stone', grade: 'C' };
+  await installGame(page, { layoutSeed: options.seed, initial: { weapons: [basic, basic, basic] },
+    stateOverride: { area: options.area, round: 1, enemies } });
   await start(page);
   await page.evaluate(() => {
     const resolve = window.BattleEngine.resolveProjectile;
