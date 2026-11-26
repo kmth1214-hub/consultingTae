@@ -73,6 +73,9 @@ export function isPlayableBattlefield(layout, enemies) {
     }
   }
   const fullRound = layout.enemies.map(slot => ({ id: slot.id, alive: true, hp: 1 }));
+  if (layout.area === 'city' && layout.round === 2 && !layout.obstacles.some((a, i) =>
+    layout.obstacles.slice(i + 1).some(b => Math.hypot(a.x + a.width / 2 - b.x - b.width / 2,
+      a.y + a.height / 2 - b.y - b.height / 2) <= 420))) return false;
   for (const slot of layout.enemies) {
     const c = slot.collider;
     if (slot.patrol) {

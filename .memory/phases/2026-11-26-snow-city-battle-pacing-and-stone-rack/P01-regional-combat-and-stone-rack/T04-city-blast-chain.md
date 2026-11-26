@@ -1,6 +1,6 @@
 # Task: T04 도시 상자의 범위 폭발과 연쇄
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -69,9 +69,9 @@ type ObstacleContact = ExistingObstacleContact & { trigger?: 'candy' | 'obstacle
 
 ## Acceptance Criteria
 
-- [ ] 도시 폭발 범위 밖 적은 피해와 점수를 만들지 않는다.
-- [ ] 전파/물체 충돌이 겹쳐도 상자는 한 번만 폭발한다.
-- [ ] 도시 round2에 실제로 시작 가능한 연쇄 쌍이 존재한다.
+- [x] 도시 폭발 범위 밖 적은 피해와 점수를 만들지 않는다.
+- [x] 전파/물체 충돌이 겹쳐도 상자는 한 번만 폭발한다.
+- [x] 도시 round2에 실제로 시작 가능한 연쇄 쌍이 존재한다.
 
 ## Validation
 
@@ -93,6 +93,6 @@ Task: T04-city-blast-chain
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

@@ -12,7 +12,10 @@ const cases = [
   { area: 'chaos', seed: 5, angleDeg: -10, powerRatio: .88 },
 ];
 async function begin(page, options) {
-  const enemies = BattleEngine.createRoundEnemies(options.area, 1, { rng: () => .5 });
+  let enemies = BattleEngine.createRoundEnemies(options.area, 1, { rng: () => .5 });
+  // Preserve the known chain geometry independently of regular encounter counts.
+  if (['snow', 'city'].includes(options.area)) enemies = Array.from({ length: options.area === 'snow' ? 5 : 9 },
+    (_, i) => ({ ...enemies[i % enemies.length], id: `chain-fixture-${i}` }));
   enemies.forEach(enemy => {
     enemy.hp = enemy.maxHp = 20;
     // Keep counterattack repair separate from the chain damage assertion.
@@ -24,7 +27,7 @@ async function begin(page, options) {
   const windField = buildWindField({ area: options.area, round: 1, layoutSeed: options.seed, shotOrdinal: 0, layout });
   const shot = planShot({ layout, enemies, windField, pull: { ready: true, powerRatio: options.powerRatio,
     direction: { x: Math.cos(radians), y: -Math.sin(radians) } } });
-  expect(shot.contacts.some(c => c.trigger === 'obstacle')).toBe(true);
+  expect(shot.contacts.some(c => c.trigger !== 'candy')).toBe(true);
   const basic = { id: 'basic-stone', grade: 'C' };
   await installGame(page, { layoutSeed: options.seed, initial: { weapons: [basic, basic, basic] },
     stateOverride: { area: options.area, round: 1, enemies } });
@@ -55,7 +58,7 @@ function playbackMs(clock, time) {
 
 for (const options of cases) test(`${options.area} physical contact topples a neighbour after the candy stops, once per prop`, async ({ page }) => {
   const { shot, layout, clock } = await begin(page, options);
-  const child = shot.contacts.find(c => c.trigger === 'obstacle');
+  const child = shot.contacts.find(c => c.trigger !== 'candy');
   const childNode = stack(page, child.obstacleId);
   const beforeMs = playbackMs(clock, child.time - .04);
   await page.clock.runFor(beforeMs);
@@ -84,11 +87,12 @@ for (const options of cases) test(`${options.area} physical contact topples a ne
   const untouched = layout.obstacles.filter(o => !shot.contacts.some(c => c.obstacleId === o.id));
   for (const prop of untouched) await expect(stack(page, prop.id)).toHaveAttribute('data-stack-state', 'standing');
   if (options.area === 'city') {
-    expect(event.obstacleEffects.every(effect => effect.hits.length === committed.run.enemies.length
-      && effect.hits.every(hit => hit.damage === 2))).toBe(true);
-    expect(committed.run.enemies.map(e => e.hp)).toEqual(committed.run.enemies.map(e =>
-      16 - (shot.hitIds.includes(e.id) ? 2 : 0)));
-    expect(committed.run.score).toBe(committed.run.enemies.length * 4 + shot.hitIds.length * 2);
+    for (const effect of event.obstacleEffects) {
+      const blast = shot.contacts.find(contact => contact.obstacleId === effect.obstacleId).blast;
+      expect(effect.hits.map(hit => hit.id)).toEqual(blast.targetIds);
+      expect(effect.hits.every(hit => hit.damage === 2)).toBe(true);
+    }
+    expect(committed.run.score).toBe(committed.run.enemies.reduce((sum, enemy) => sum + 20 - enemy.hp, 0));
   }
   if (options.area === 'snow') expect(event.enemyAttack.damageReduction).toBe(.5);
   await expect(page.getByTestId('enemy-attack')).toHaveCount(0);
@@ -110,7 +114,7 @@ test('mobile reduced motion preserves chain outcomes, material identity and the 
   await page.clock.runFor(100);
   await phase(page, 'reviewing');
   const nodes = page.locator('.stack--physical');
-  await expect(nodes).toHaveCount(2);
+  await expect(nodes).toHaveCount(shot.contacts.length);
   for (const node of await nodes.all()) {
     await expect(node).toHaveAttribute('data-obstacle-kind', 'crate');
     await expect(node).toHaveAttribute('data-motion-phase', 'settled');
@@ -123,5 +127,6 @@ test('mobile reduced motion preserves chain outcomes, material identity and the 
   await phase(page, 'idle');
   const trace = await snapshot(page);
   expect(trace.run.enemies.map(e => e.hp)).toEqual(trace.run.enemies.map(e =>
-    16 - (shot.hitIds.includes(e.id) ? 2 : 0)));
+    20 - shot.contacts.filter(c => c.blast.targetIds.includes(e.id)).length * 2
+      - (shot.hitIds.includes(e.id) ? 2 : 0)));
 });

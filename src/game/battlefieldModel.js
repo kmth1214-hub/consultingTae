@@ -87,7 +87,8 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     const x = Math.round(nominal + (random() * 2 - 1) * jitter);
     const size = (kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60) * worldScale * enemyScale;
     const flying = kind === 'clockwork-crow';
-    const sliding = area === 'snow' && round === 1 && kind === 'snowball' && i === enemies.length - 1;
+    const sliding = area === 'snow' && round === 1 && enemies.length === 3
+      && kind === 'snowball' && i === enemies.length - 1;
     const y = flying ? 900 - 240 - crowIndex++ % 2 * 80 : 900;
     const patrol = flying || sliding ? { centerX: x, range: 75 * worldScale,
       periodMs: sliding ? 3000 : 2100 + i % 3 * 300, phase: random() } : null;
@@ -157,6 +158,25 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
       lift = 80 * worldScale;
       launcherPlatform = { x: 28, y: BATTLEFIELD.groundY - lift, width: 330 * worldScale, height: lift };
     }
+  }
+  if (area === 'city' && round === 2 && !obstacles.some((a, i) => obstacles.slice(i + 1).some(b =>
+    Math.hypot(a.x + a.width / 2 - b.x - b.width / 2, a.y + a.height / 2 - b.y - b.height / 2) <= 420))) {
+    let extra = null;
+    for (const base of obstacles) {
+      for (const offset of [-280, 280, -360, 360]) {
+        const width = stackWidth, height = Math.round(regularSize * 1.7);
+        const x = base.x + base.width / 2 + offset - width / 2, y = BATTLEFIELD.groundY - height;
+        if (x < 560 || x + width > 3240
+          || obstacles.some(prop => x < prop.x + prop.width + 16 && x + width + 16 > prop.x)
+          || placements.some(slot => x < slot.x + slot.size / 2 + (slot.patrol?.range || 0) + 8
+            && x + width > slot.x - slot.size / 2 - (slot.patrol?.range || 0) - 8)) continue;
+        extra = { id: 'city-2-chain-crate', kind: 'crate', x, y, width, height,
+          polygon: SHAPES.crate.map(([u, v]) => ({ x: x + u * width, y: y + v * height })) };
+        break;
+      }
+      if (extra) break;
+    }
+    if (extra) obstacles.push(extra);
   }
   if (enemyLandingPositions) for (const [id, landing] of Object.entries(enemyLandingPositions)) {
     const slot = placements.find(item => item.id === id);

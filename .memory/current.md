@@ -10,12 +10,12 @@
 
 ## Active Task
 
-[T04 도시 상자의 범위 폭발과 연쇄](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T04-city-blast-chain.md)
+[T05 오븐 환기구 명중과 과열 약화](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T05-oven-vent-weakpoint.md)
 
 ## Status
 
-- T03 지정 검증 통과. done: 3/7.
+- T04 지정 검증 통과. done: 4/7.
 
 ## Next Step (IMPORTANT)
 
-T04 도시 상자의 범위 폭발과 연쇄 청사진을 읽고 구현한다.
+T05 오븐 환기구 명중과 과열 약화 청사진을 읽고 구현한다.

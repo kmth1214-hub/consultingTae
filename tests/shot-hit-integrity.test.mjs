@@ -10,6 +10,8 @@ function fixture(piercing=false) {
   {...E.WEAPON_CATALOG[0],grade:'A'},
   {...E.WEAPON_CATALOG.find(w=>w.id==='basic-stone'),grade:'C'},
   {...E.WEAPON_CATALOG.find(w=>w.id==='basic-stone'),grade:'C'}]});
+ // Preserve the original five-slot collision fixture independently of regional pacing.
+ run.enemies=Array.from({length:5},(_,i)=>({...run.enemies[0],id:`collision-${i}`,kind:i?'snowball':'dry-ice'}));
  const layout=buildPlayableBattlefield({area:'snow',round:1,enemies:run.enemies,seed:0});
  run.enemies.slice(2).forEach(e=>{e.hp=0;e.alive=false;});
  run.toppledObstacleIds=layout.obstacles.map(o=>o.id);

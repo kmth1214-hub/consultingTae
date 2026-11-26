@@ -38,13 +38,15 @@ export function FrostField({ contact }) {
 export function CityGroundBursts({ contact, layout }) {
   const visible = useEffectLifetime(contact.id);
   if (!visible) return null;
+  const blast = contact.blast;
+  const center = blast?.point ?? contact.point;
   const nearest = layout.enemies.reduce((best, enemy) =>
     !best || Math.abs(enemy.x - contact.point.x) < Math.abs(best.x - contact.point.x) ? enemy : best, null);
-  const direction = Math.sign((nearest?.x ?? contact.point.x + contact.direction) - contact.point.x) || contact.direction;
-  const reach = Math.min(600, Math.max(320, Math.abs((nearest?.x ?? contact.point.x + 420) - contact.point.x)));
+  const direction = blast ? 1 : Math.sign((nearest?.x ?? contact.point.x + contact.direction) - contact.point.x) || contact.direction;
+  const reach = blast ? blast.radius * 2 : Math.min(600, Math.max(320, Math.abs((nearest?.x ?? contact.point.x + 420) - contact.point.x)));
   return <g className="city-ground-chain" data-testid="city-ground-chain" aria-hidden="true">
     {Array.from({ length: 7 }, (_, i) => {
-      const x = Math.max(45, Math.min(layout.width - 45, contact.point.x + direction * reach * i / 6));
+      const x = Math.max(45, Math.min(layout.width - 45, center.x - (blast ? blast.radius : 0) + direction * reach * i / 6));
       return <g key={i} className="city-ground-burst" data-ground-y={layout.groundY}
         transform={`translate(${x} ${layout.groundY})`} style={{ '--burst-delay': `${i * 110}ms` }}>
         <ellipse className="city-burst-shadow" cy="3" rx="37" ry="8" fill="#6f4237" />

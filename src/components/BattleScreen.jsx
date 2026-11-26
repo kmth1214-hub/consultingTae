@@ -13,7 +13,7 @@ function combatMessage(event, area) {
   const obstacleMessage = area === 'chaos' ? getChaosEffectLabel(obstacle)
     : obstacle?.kind === 'log-strike' ? `통나무 충돌 · 적 피해 ${obstacle.hits.reduce((sum, hit) => sum + hit.damage, 0)}`
     : obstacle?.kind === 'ice-guard' ? '얼음 파괴 · 다음 적 공격 피해 50% 감소'
-      : obstacle?.kind === 'jar-burst' ? `항아리 폭발 · 전체 적 피해 ${obstacle.hits.reduce((sum, hit) => sum + hit.damage, 0)}`
+      : obstacle?.kind === 'jar-burst' ? `상자 폭발 · 주변 적 피해 ${obstacle.hits.reduce((sum, hit) => sum + hit.damage, 0)}`
         : obstacle?.kind === 'aim-inversion' ? '혼돈의 역풍 · 다음 한 발 조작 반전' : null;
   const chainMessage = effects.length > 1 ? `연쇄 충돌 ${effects.length}회 · 추가 피해 ${effectDamage}` : obstacleMessage;
   const action = chainMessage ? `${chainMessage}${damage > effectDamage ? ` · 직접 명중 ${damage - effectDamage}` : ''}`

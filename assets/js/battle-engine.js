@@ -797,7 +797,9 @@
         return { kind: 'ice-guard', hits: [], damageReduction: .5, armed: true };
       };
       const burst = () => {
-        for (const target of getLivingEnemies(state).slice()) {
+        const targets = getLivingEnemies(state).filter(enemy => state.area !== 'city'
+          || contact.blast?.targetIds.includes(enemy.id));
+        for (const target of targets) {
           const removed = Math.min(target.hp, randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 1, 2));
           target.hp -= removed;
           target.alive = target.hp > 0;
@@ -806,7 +808,8 @@
           effectHits.push({ id: target.id, kind: target.kind, damage: removed,
             remainingHp: target.hp, defeated: !target.alive, scoreDelta });
         }
-        return { kind: 'jar-burst', hits: effectHits };
+        return { kind: 'jar-burst', hits: effectHits,
+          ...(contact.blast ? { point: contact.blast.point, time: contact.blast.time, radius: contact.blast.radius } : {}) };
       };
       if (state.area === 'chaos') {
         const choice = randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 0, 3);

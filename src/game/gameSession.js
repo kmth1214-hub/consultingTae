@@ -373,9 +373,16 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
           && (contact.trigger === undefined || (
             [-1, 1].includes(contact.direction) && Number.isInteger(contact.chainDepth)
             && (contact.trigger === 'candy' ? contact.sourceObstacleId === null && contact.chainDepth === 0
-              : contact.trigger === 'obstacle' && contacts.slice(0, index).some(parent =>
+              : ['obstacle', 'blast'].includes(contact.trigger) && contacts.slice(0, index).some(parent =>
                 parent.obstacleId === contact.sourceObstacleId && parent.time < contact.time
                 && parent.chainDepth + 1 === contact.chainDepth))))
+          && (contact.blast === undefined || (state.run.area === 'city' && contact.obstacleKind === 'crate'
+            && contact.blast.obstacleId === contact.obstacleId && contact.blast.radius === 420
+            && contact.blast.time === contact.time
+            && [contact.blast.point?.x, contact.blast.point?.y].every(Number.isFinite)
+            && Array.isArray(contact.blast.targetIds)
+            && new Set(contact.blast.targetIds).size === contact.blast.targetIds.length
+            && contact.blast.targetIds.every(id => state.run.enemies.some(enemy => enemy.id === id))))
           && (contact.obstacleEndPose === undefined || (
             [contact.obstacleEndPose.x, contact.obstacleEndPose.y, contact.obstacleEndPose.angle].every(Number.isFinite)
             && contact.obstacleEndPose.x >= 0 && contact.obstacleEndPose.x <= 3600

@@ -438,7 +438,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
       layout, startTime: time }) : null;
     const contact = { obstacleId: obstacle.id, obstacleKind: obstacle.kind,
       point: { x: hitPoint.x, y: hitPoint.y }, time, rolling: isRolling,
-      trigger: source ? 'obstacle' : 'candy', sourceObstacleId: source?.obstacleId ?? null,
+      trigger: source ? source.blastTransfer ? 'blast' : 'obstacle' : 'candy', sourceObstacleId: source?.obstacleId ?? null,
       chainDepth: source ? source.chainDepth + 1 : 0, direction: Math.sign(impactVelocity.x) || 1,
       obstacleTargetIds: [...living].sort((a, b) => distance(hitPoint, a.collider)
         - distance(hitPoint, b.collider)).map(item => item.id),
@@ -446,11 +446,28 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
         ...(forestLog ? { logMotion: motion, logHit: motion.hit, logEndPose: motion.endPose } : {}),
         ...(riderMotion ? { riderMotion } : {}) } : {}) };
     contacts.push(contact);
+    if (layout.area === 'city' && obstacle.kind === 'crate') {
+      const center = { x: obstacle.x + obstacle.width / 2, y: obstacle.y + obstacle.height / 2 };
+      const radius = 420;
+      contact.blast = { obstacleId: obstacle.id, point: center, time, radius,
+        targetIds: living.filter(slot => distance(enemyCenterAt(slot, contacts, flightStartMs, time), center)
+          <= radius + slot.collider.radius).map(slot => slot.id) };
+      for (const other of layout.obstacles) {
+        if (other.kind !== 'crate' || ignored.has(other.id)) continue;
+        const polygon = other.polygon;
+        const touches = inside(center, polygon) || polygon.some((p, i) =>
+          pointEdgeDistance(center, p, polygon[(i + 1) % polygon.length]) <= radius);
+        if (touches) pending.push({ id: other.id, time: time + .18,
+          point: { x: other.x + other.width / 2, y: other.y + other.height / 2 },
+          velocity: { x: Math.sign(other.x - obstacle.x) * 320, y: -80 },
+          source: { ...contact, blastTransfer: true } });
+      }
+    }
     for (const hit of motion?.obstacleHits || []) pending.push({ ...hit, source: contact });
   };
   const advanceChains = until => {
     let changed = false;
-    pending.sort((a, b) => a.time - b.time);
+    pending.sort((a, b) => a.time - b.time || a.id.localeCompare(b.id));
     while (pending.length && pending[0].time <= until + EPS) {
       const hit = pending.shift();
       if (ignored.has(hit.id)) continue;

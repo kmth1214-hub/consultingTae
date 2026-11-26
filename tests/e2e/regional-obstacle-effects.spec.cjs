@@ -54,8 +54,10 @@ test('city contact makes staggered ground bursts and preserves all-enemy damage 
   await phase(page, 'idle');
   const trace = await snapshot(page);
   expect(trace.events.filter(event => event.name === 'resolveProjectile')).toHaveLength(1);
-  expect(trace.run.enemies.map(item => item.hp)).toEqual([18, 18, 18]);
-  expect(trace.run.score).toBe(6);
+  const hits = trace.lastEvent.obstacleEffects.flatMap(effect => effect.hits);
+  for (const enemy of trace.run.enemies) expect(enemy.hp).toBe(20 - hits.filter(hit => hit.id === enemy.id)
+    .reduce((sum, hit) => sum + hit.damage, 0));
+  expect(trace.run.score).toBe(hits.reduce((sum, hit) => sum + hit.damage, 0));
 });
 
 for (const area of ['snow', 'city']) test(`${area} mobile reduced-motion contact gives a static cue and cleans up`, async ({ page }) => {
