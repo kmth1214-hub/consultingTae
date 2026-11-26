@@ -55,15 +55,17 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   const slotKey = JSON.stringify(roster.map(({ id, kind, isBoss }) => [id, kind, isBoss]));
   const encounterPhase = reviewingSplit ? null : run.chaosBossPhase === 'split' ? 'split' : null;
   const landingKey = JSON.stringify(run.enemyLandingPositions || null);
+  const poseKey = JSON.stringify(!reviewingSplit ? run.enemyPositionOverrides : null);
   const layout = useMemo(() => buildPlayableBattlefield({ area: run.area, round: run.round,
     seed: run.layoutSeed ?? 0, encounterPhase,
     prototype: run.battlefieldPrototype ?? run.studioPrototype ?? null,
     worldScale: run.studioWorldScale ?? run.battlefieldWorldScale ?? 1,
     enemyScale: run.studioEnemyScale ?? 1,
     enemyLandingPositions: run.enemyLandingPositions ?? null,
+    enemyPositionOverrides: JSON.parse(poseKey ?? 'null'),
     enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss, alive: true, hp: 1 })) }),
   [run.area, run.round, run.layoutSeed, run.battlefieldPrototype, run.studioPrototype,
-    run.studioWorldScale, run.battlefieldWorldScale, run.studioEnemyScale, slotKey, encounterPhase, landingKey]);
+    run.studioWorldScale, run.battlefieldWorldScale, run.studioEnemyScale, slotKey, encounterPhase, landingKey, poseKey]);
   const splitSource = useMemo(() => bossTransition ? buildPlayableBattlefield({ area: run.area, round: run.round,
     seed: run.layoutSeed ?? 0, enemies: [bossTransition.split.fromEnemy],
     worldScale: run.studioWorldScale ?? run.battlefieldWorldScale ?? 1,

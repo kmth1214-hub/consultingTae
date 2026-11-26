@@ -48,7 +48,7 @@ function subtract(intervals, low, high) {
 }
 
 export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhase = null,
-  prototype = null, enemyLandingPositions = null, worldScale = 1, enemyScale = 1 } = {}) {
+  prototype = null, enemyLandingPositions = null, enemyPositionOverrides = null, worldScale = 1, enemyScale = 1 } = {}) {
   if (!['forest', 'snow', 'city', 'chaos'].includes(area) || !Number.isFinite(round)
     || !Array.isArray(enemies) || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff
     || ![1, 1.5].includes(worldScale) || ![1, 1.5].includes(enemyScale)
@@ -164,6 +164,24 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     slot.x = landing.x;
     slot.y = landing.y;
     slot.collider = { ...slot.collider, x: landing.x, y: landing.y - slot.size * .52 };
+    delete slot.supportObstacleId;
+    delete slot.elevation;
+  }
+  for (const [id, position] of Object.entries(enemyPositionOverrides ?? {})) {
+    const slot = placements.find(item => item.id === id);
+    if (!slot || slot.isBoss || !Number.isFinite(position?.x) || !Number.isFinite(position?.y)
+      || position.x < slot.size / 2 || position.x > BATTLEFIELD.width - slot.size / 2
+      || position.y < 0 || position.y > BATTLEFIELD.groundY) throw new TypeError('Invalid enemy position override');
+    slot.x = position.x;
+    slot.y = position.y;
+    if (slot.patrol && Number.isFinite(position.patrolCenterX)) {
+      slot.patrol = { ...slot.patrol, centerX: position.patrolCenterX };
+    }
+    if (position.y === BATTLEFIELD.groundY) {
+      delete slot.supportObstacleId;
+      delete slot.elevation;
+    }
+    slot.collider = { ...slot.collider, x: slot.x, y: slot.y - slot.size * .52 };
   }
   const playerX = 44, launcherX = 220 + (worldScale - 1) * 160;
   return { ...BATTLEFIELD, candyRadius: BATTLEFIELD.candyRadius * worldScale, worldScale, enemyScale,
@@ -171,7 +189,9 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss]), ...(prototype ? [prototype] : []),
     ...(worldScale !== 1 ? [worldScale] : []), ...(enemyScale !== 1 ? [{ enemyScale }] : []),
     ...(enemyLandingPositions && Object.keys(enemyLandingPositions).length
-      ? [Object.entries(enemyLandingPositions).sort(([a], [b]) => a.localeCompare(b))] : [])]), area, round,
+      ? [Object.entries(enemyLandingPositions).sort(([a], [b]) => a.localeCompare(b))] : []),
+    ...(enemyPositionOverrides && Object.keys(enemyPositionOverrides).length
+      ? [Object.entries(enemyPositionOverrides).sort(([a], [b]) => a.localeCompare(b))] : [])]), area, round,
   ...(prototype ? { prototype, launcherPlatform } : {}),
   // Presentation-only cookie bounds and canonical incoming-attack anchor.
   player: { x: playerX, y: 900 - lift - 152 * worldScale, width: 152 * worldScale, height: 152 * worldScale,

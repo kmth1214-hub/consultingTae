@@ -1,6 +1,6 @@
 # Task: T05 에스프레소 소용돌이와 지속되는 적 위치
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -86,6 +86,6 @@ Task: T05-espresso-vortex
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 지정 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 지정 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

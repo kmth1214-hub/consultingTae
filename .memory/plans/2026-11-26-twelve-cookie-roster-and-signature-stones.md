@@ -18,8 +18,8 @@
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
 | P01 | `done` | 7종 캐릭터 자산, 12종 명단, 스톤 카탈로그와 해금·슬롯 연결 | [P01](../phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P01-roster-and-catalog/phase.md) |
-| P02 | `in_progress` | 신규 스톤 7종의 경로·충돌·피해·상태를 예약 발사와 일치시킴 | [P02](../phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P02-stone-combat/phase.md) |
-| P03 | `pending` | 선택·HUD·발사 연출 연결과 통합 검증 | [P03](../phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P03-presentation-and-verification/phase.md) |
+| P02 | `done` | 신규 스톤 7종의 경로·충돌·피해·상태를 예약 발사와 일치시킴 | [P02](../phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P02-stone-combat/phase.md) |
+| P03 | `in_progress` | 선택·HUD·발사 연출 연결과 통합 검증 | [P03](../phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P03-presentation-and-verification/phase.md) |
 
 ## Delivery sequence
 

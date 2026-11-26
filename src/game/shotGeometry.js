@@ -307,30 +307,27 @@ export function findPatrolContact(path, slot, flightStartMs, elapsedSeconds, can
 
 /** First swept contact against a rider whose collider follows a falling log's clock. */
 export function findMovingRiderContact(path, slot, motion, elapsed, candyRadius) {
-  const samples = path.samples, radius = slot.collider.radius + candyRadius;
-  const riderAt = time => {
+  return findTimedEnemyContact(path, elapsed, slot.collider.radius + candyRadius, time => {
     const foot = sampleRiderMotion(motion, time);
     return { x: foot.x, y: foot.y - slot.size * .52 };
-  };
+  }, motion.samples.map(point => motion.startTime + point.time));
+}
+
+function findTimedEnemyContact(path, elapsed, radius, centerAt, breakpoints) {
+  const { samples } = path;
   for (let i = 1; i < samples.length; i++) {
     const a = samples[i - 1], b = samples[i];
     const cuts = [a.time, b.time];
-    for (const t of [motion.startTime - elapsed,
-      motion.startTime + motion.durationSeconds - elapsed]) {
+    for (const breakpoint of breakpoints) {
+      const t = breakpoint - elapsed;
       if (t > a.time + EPS && t < b.time - EPS) cuts.push(t);
-    }
-    const low = Math.max(a.time, motion.startTime - elapsed);
-    const high = Math.min(b.time, motion.startTime + motion.durationSeconds - elapsed);
-    if (low < high) for (const p of motion.samples) {
-      const t = motion.startTime + p.time - elapsed;
-      if (t > low + EPS && t < high - EPS) cuts.push(t);
     }
     cuts.sort((x, y) => x - y);
     for (let j = 1; j < cuts.length; j++) {
       const t0 = cuts[j - 1], t1 = cuts[j];
       const f0 = (t0 - a.time) / (b.time - a.time), f1 = (t1 - a.time) / (b.time - a.time);
       const p0 = lerp(a, b, f0), p1 = lerp(a, b, f1);
-      const r0 = riderAt(elapsed + t0), r1 = riderAt(elapsed + t1);
+      const r0 = centerAt(elapsed + t0), r1 = centerAt(elapsed + t1);
       const dx = p0.x - r0.x, dy = p0.y - r0.y;
       if (dx * dx + dy * dy <= radius * radius) return a.distance + (b.distance - a.distance) * f0;
       const vx = (p1.x - r1.x) - dx, vy = (p1.y - r1.y) - dy;
@@ -345,6 +342,24 @@ export function findMovingRiderContact(path, slot, motion, elapsed, candyRadius)
     }
   }
   return null;
+}
+
+export function sampleVortexPosition(move, time) {
+  if (move.fall && time >= move.fall.startTime) return sampleRiderMotion(move.fall, time);
+  const phase = clamp((time - move.startTime) / (move.pullEndTime - move.startTime), 0, 1);
+  const baseX = move.patrol ? patrolX(move.patrol, move.flightStartMs + time * 1000) : move.from.x;
+  return { x: baseX + move.shift * phase, y: move.from.y };
+}
+
+function forMovingEnemy(path, slot, move, fall, elapsed, radius) {
+  const falls = [move.fall, fall].filter(Boolean).sort((a, b) => a.startTime - b.startTime);
+  const cuts = [move.startTime, move.pullEndTime,
+    ...falls.flatMap(motion => motion.samples.map(sample => motion.startTime + sample.time))];
+  return findTimedEnemyContact(path, elapsed, slot.collider.radius + radius, time => {
+    const foot = falls[0] && time >= falls[0].startTime
+      ? sampleRiderMotion(falls[0], time) : sampleVortexPosition(move, time);
+    return { x: foot.x, y: foot.y - slot.size * .52 };
+  }, cuts);
 }
 
 export function getHomingPath({ start, target, obstacles, layout } = {}) {
@@ -384,7 +399,7 @@ export function getHomingPath({ start, target, obstacles, layout } = {}) {
 
 function planStackedShot({ layout, start, direction, powerRatio, living, piercing = false,
   abilityKind = null, previewFraction = .30, maxRollDiameters = BATTLEFIELD.maxRollDiameters,
-  flightStartMs = 0, windField = null, maxBounces = 1, dash = null }) {
+  flightStartMs = 0, windField = null, maxBounces = 1, dash = null, vortexMoves = [] }) {
   const initialSpeed = getLaunchSpeed(powerRatio);
   let velocity = { x: direction.x * initialSpeed, y: direction.y * initialSpeed };
   let position = start, rolling = false;
@@ -402,10 +417,21 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     if (ignored.has(obstacle.id)) return;
     ignored.add(obstacle.id);
     const forestLog = layout.area === 'forest' && obstacle.kind === 'log';
-    const rider = ['forest-elevated-v1', 'regional-elevated-v1'].includes(layout.prototype) && obstacle.supportsEnemyId
-      ? living.find(item => item.id === obstacle.supportsEnemyId) : null;
+    let rider = obstacle.supportsEnemyId ? living.find(item =>
+      item.id === obstacle.supportsEnemyId && item.supportObstacleId === obstacle.id) : null;
+    const riderMove = vortexMoves.find(move => move.enemyId === rider?.id);
+    if (riderMove?.fall && riderMove.fall.startTime <= time) rider = null;
+    else if (riderMove && time >= riderMove.startTime) rider = { ...rider, ...sampleVortexPosition(riderMove, time) };
     const motion = simulateObstacleMotion({ obstacle, point: hitPoint, velocity: impactVelocity,
       startTime: time, layout, enemies: forestLog ? living.filter(item => item.id !== rider?.id) : [],
+      enemyColliderAt: vortexMoves.length ? (slot, time) => {
+        const move = vortexMoves.find(item => item.enemyId === slot.id);
+        const fall = contacts.find(item => item.riderMotion?.enemyId === slot.id)?.riderMotion;
+        if (!move && !fall) return slot.collider;
+        const moved = fall && time >= fall.startTime && (!move?.fall || fall.startTime <= move.fall.startTime)
+          ? sampleRiderMotion(fall, time) : move ? sampleVortexPosition(move, time) : slot;
+        return { ...slot.collider, x: moved.x, y: moved.y - slot.size * .52 };
+      } : null,
       obstacles: layout.obstacles.filter(item => !ignored.has(item.id)), transfer: Boolean(source) });
     if (!motion && rider) throw new TypeError('Invalid supported obstacle motion');
     const riderMotion = rider ? simulateRiderFall({ supportMotion: motion, riderSlot: rider,
@@ -469,7 +495,10 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
     for (;;) {
       enemyHits = living.filter(item => !pierced.has(item.id)).map(item => {
         const riderMotion = contacts.find(contact => contact.riderMotion?.enemyId === item.id)?.riderMotion;
-        return { id: item.id, distance: riderMotion
+        const vortex = vortexMoves.find(move => move.enemyId === item.id);
+        return { id: item.id, distance: vortex
+          ? forMovingEnemy(segment, item, vortex, riderMotion, elapsed, layout.candyRadius)
+          : riderMotion
           ? findMovingRiderContact(segment, item, riderMotion, elapsed, layout.candyRadius)
           : findPatrolContact(segment, item, flightStartMs, elapsed, layout.candyRadius) };
       }).filter(hit => hit.distance !== null).sort((a, b) => a.distance - b.distance);
@@ -748,7 +777,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   toppledObstacleIds = [], piercing = false, loadedCandyId = null, loadedCandyGrade = 'C', prototype = null,
   maxPowerRatio = 1, previewFraction = .30,
   maxRollDiameters = BATTLEFIELD.maxRollDiameters, flightStartMs = 0, windField = null,
-  deferAbility = false } = {}) {
+  deferAbility = false, vortexMoves = [] } = {}) {
   if (!validLayout(layout) || !validObstacles(layout.obstacles)
     || !Array.isArray(layout.enemies) || !layout.enemies.every(e => validCircle(e?.collider))
     || !point(layout.launcher) || !Array.isArray(enemies) || !pull?.ready
@@ -804,14 +833,19 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   if (!target && (activeLayout.obstacles.some(item => item.kind) || abilityKind)) {
     const solution = planStackedShot({ layout: activeLayout, start, direction,
       powerRatio: pull.powerRatio, living, piercing, abilityKind, previewFraction, maxRollDiameters,
-      flightStartMs, windField, maxBounces, dash });
+      flightStartMs, windField, maxBounces, dash, vortexMoves });
     if (!solution) return null;
     const adjusted = { ...solution, ...physics };
     return abilityKind === 'split' ? withWizardSplit(adjusted, { layout: activeLayout, start,
       direction, powerRatio: pull.powerRatio, living, flightStartMs, windField }) : decorate(adjusted);
   }
   const hitsFor = candidate => target ? [{ id: target.id, distance: candidate.length }]
-    : living.map(e => ({ id: e.id, distance: findPatrolContact(candidate, e, flightStartMs, 0, layout.candyRadius) }))
+    : living.map(e => {
+      const vortex = vortexMoves.find(move => move.enemyId === e.id);
+      return { id: e.id, distance: vortex
+        ? forMovingEnemy(candidate, e, vortex, null, 0, layout.candyRadius)
+        : findPatrolContact(candidate, e, flightStartMs, 0, layout.candyRadius) };
+    })
       .filter(h => h.distance !== null)
       .sort((a, b) => a.distance - b.distance);
   let barrier = findObstacleContact(path, activeLayout.obstacles, layout.candyRadius);
@@ -860,15 +894,110 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     durationMs: clamp(sampleUnchecked(path, impactDistance).time * 1000, 420, 3200) });
 }
 
+function planVortexMoves({ layout, enemies, baseFlight, time, point, stone, grade }) {
+  const radius = stone.radius[grade] ?? stone.radius.C;
+  const maxDisplacement = stone.maxDisplacement[grade] ?? stone.maxDisplacement.C;
+  const pullEndTime = time + stone.duration;
+  const targetLimit = stone.targets[grade] ?? stone.targets.C;
+  const flightStartMs = baseFlight.flightStartMs ?? 0;
+  const impacts = baseFlight.contacts ?? [];
+  const impactByEnemy = new Map(impacts.filter(hit => hit.riderMotion && hit.time <= time)
+    .map(hit => [hit.riderMotion.enemyId, hit.riderMotion]));
+  const fallenObstacles = new Set([...(baseFlight.planOptions?.toppledObstacleIds ?? []),
+    ...impacts.filter(hit => hit.time <= time).map(hit => hit.obstacleId)]);
+  const barriers = layout.obstacles.filter(item => !fallenObstacles.has(item.id));
+  const livingIds = new Set(enemies.filter(enemy => enemy.alive && enemy.hp > 0).map(enemy => enemy.id));
+  const slots = layout.enemies.filter(slot => livingIds.has(slot.id));
+  const footAt = (slot, t) => {
+    const falling = impactByEnemy.get(slot.id);
+    if (falling) return sampleRiderMotion(falling, t);
+    return { x: slot.patrol ? patrolX(slot.patrol, flightStartMs + t * 1000) : slot.x, y: slot.y };
+  };
+  const nearby = slots.filter(slot => !slot.isBoss).map(slot => {
+    const from = footAt(slot, time);
+    return { slot, from, distance: distance(point, { x: from.x, y: from.y - slot.size * .52 }) };
+  }).filter(entry => entry.distance <= radius && !impactByEnemy.has(entry.slot.id))
+    .sort((a, b) => a.distance - b.distance || a.slot.id.localeCompare(b.slot.id)).slice(0, targetLimit);
+  const moves = [];
+  for (const { slot, from } of nearby) {
+    const half = slot.size / 2;
+    const bound = half + (slot.patrol?.range ?? 0);
+    const anchorX = slot.patrol?.centerX ?? from.x;
+    const maxShift = clamp(clamp(point.x - from.x, -maxDisplacement, maxDisplacement),
+      bound - anchorX, layout.width - bound - anchorX);
+    const support = barriers.find(item => item.id === slot.supportObstacleId);
+    const buildMove = shift => {
+      let fall = null;
+      if (support && (from.x + shift < support.x || from.x + shift > support.x + support.width)) {
+        const edge = shift > 0 ? support.x + support.width : support.x;
+        const takeoff = time + stone.duration * clamp((edge - from.x) / shift, 0, 1);
+        const supportMotion = { samples: [{ x: edge, time: 0 }, { x: edge + shift / stone.duration, time: 1 }] };
+        fall = simulateRiderFall({ supportMotion, riderSlot: { ...slot, x: edge, y: from.y }, layout, startTime: takeoff });
+      }
+      const endTime = Math.max(pullEndTime, fall ? fall.startTime + fall.durationSeconds : 0);
+      const move = { enemyId: slot.id, from, shift, startTime: time, pullEndTime, endTime,
+        supportLost: Boolean(fall), fall, patrol: slot.patrol ?? null, flightStartMs };
+      move.to = sampleVortexPosition(move, endTime);
+      move.position = slot.patrol
+        ? { x: anchorX + shift, y: from.y, patrolCenterX: anchorX + shift }
+        : { x: move.to.x, y: move.to.y };
+      return move;
+    };
+    const safe = move => {
+      if (Math.abs(move.shift) < EPS) return true;
+      let previous = { x: from.x, y: from.y - slot.size * .52 };
+      const checkUntil = move.endTime + (slot.patrol?.periodMs ?? 0) / 1000;
+      const samples = Math.max(1, Math.ceil((checkUntil - time) / .035));
+      for (let i = 1; i <= samples; i++) {
+        const t = time + (checkUntil - time) * i / samples;
+        const step = sampleVortexPosition(move, t);
+        const center = { x: step.x, y: step.y - slot.size * .52 };
+        if (step.x < half || step.x > layout.width - half
+          || barriers.some(item => item !== support && discSegmentTouches(previous, center, item.polygon, slot.collider.radius))) return false;
+        for (const other of slots) {
+          if (other.id === slot.id) continue;
+          const previousMove = moves.find(item => item.enemyId === other.id);
+          const otherFoot = previousMove ? sampleVortexPosition(previousMove, t) : footAt(other, t);
+          if (distance(center, { x: otherFoot.x, y: otherFoot.y - other.size * .52 })
+            < slot.collider.radius + other.collider.radius - EPS) return false;
+        }
+        previous = center;
+      }
+      return true;
+    };
+    for (let attempt = 0; attempt <= 12; attempt++) {
+      const move = buildMove(maxShift * (12 - attempt) / 12);
+      if (safe(move)) {
+        if (Math.abs(move.shift) >= EPS) moves.push(move);
+        break;
+      }
+    }
+  }
+  return { kind: 'vortex', time, duration: stone.duration, point, radius, maxDisplacement, moves };
+}
+
 /** Rebuild the reserved physical result at the one player-selected activation point. */
 export function activatePlannedAbility({ baseFlight, layout, enemies, kind, time, grade = 'C',
   success = false, source = 'click' } = {}) {
   if (!baseFlight?.path || !validLayout(layout) || !Array.isArray(enemies)
-    || !['split', 'explosion', 'cherry-bomb'].includes(kind) || !Number.isFinite(time)
+    || !['split', 'explosion', 'cherry-bomb', 'vortex'].includes(kind) || !Number.isFinite(time)
     || time < 0 || time > baseFlight.path.durationSeconds + .5 + EPS) return null;
   const boundedTime = Math.min(time, baseFlight.path.durationSeconds);
   const marker = sampleAtTime(baseFlight.path, boundedTime);
   const activation = { kind, time, point: { x: marker.x, y: marker.y }, source };
+  if (kind === 'vortex') {
+    const stone = STONE_STATS['espresso-vortex-stone'];
+    const anchor = source === 'auto-ground' && Number.isFinite(baseFlight.abilityLandingTime)
+      ? sampleAtTime(baseFlight.path, baseFlight.abilityLandingTime) : marker;
+    const point = { x: anchor.x, y: anchor.y };
+    const vortex = planVortexMoves({ layout, enemies, baseFlight, time, point, stone, grade });
+    const revised = vortex.moves.length
+      ? planShot({ ...baseFlight.planOptions, layout, enemies, vortexMoves: vortex.moves }) : baseFlight;
+    if (!revised) return null;
+    const completed = Math.max(revised.simulationSeconds, time + stone.duration, ...vortex.moves.map(move => move.endTime));
+    return { ...baseFlight, ...revised, vortex, abilityActivation: { ...activation, point },
+      simulationSeconds: completed, durationMs: Math.max(revised.durationMs, Math.round(completed * 1000)) };
+  }
   if (kind === 'cherry-bomb') {
     const stone = STONE_STATS['cherry-bomb-stone'];
     const anchor = source === 'auto-ground' && Number.isFinite(baseFlight.abilityLandingTime)

@@ -14,33 +14,40 @@ function abilityDeadline(shot, signature) {
   return { time: null, source: null, landing };
 }
 
-/** One canonical solution is shared by visible playback and combat resolution. */
-export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs = Date.now()) {
-  const layout=buildPlayableBattlefield({area:run.area,round:run.round,enemies:run.enemies,
+function layoutForRun(run) {
+  return buildPlayableBattlefield({area:run.area,round:run.round,enemies:run.enemies,
     seed:run.layoutSeed??0,encounterPhase:run.chaosBossPhase==='split'?'split':null,
     prototype:run.battlefieldPrototype??run.studioPrototype??null,
     enemyLandingPositions:run.enemyLandingPositions??null,
+    enemyPositionOverrides:run.enemyPositionOverrides??null,
     worldScale:run.studioWorldScale??run.battlefieldWorldScale??1,
     enemyScale:run.studioEnemyScale??1});
+}
+
+/** One canonical solution is shared by visible playback and combat resolution. */
+export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs = Date.now()) {
+  const layout = layoutForRun(run);
   const loaded=run.weapons.find(weapon=>weapon.instanceId===(run.weaponQueue?.[0]??run.currentWeaponId));
   const signature = STONE_STATS[loaded?.id]?.manual;
   const abilityKind=!run.spearArmed && loaded?.id==='wizard-orb'?'split'
     :!run.spearArmed && loaded?.id==='alchemist-candy'?'explosion':!run.spearArmed ? signature ?? null : null;
   const windField=buildWindField({area:run.area,round:run.round,layoutSeed:run.layoutSeed??0,
     shotOrdinal:run.playerShotsFired??0,layout});
-  const solution=planShot({layout,pull,enemies:run.enemies,piercing:run.spearArmed===true,
+  const planOptions={pull:{...pull,direction:{...pull.direction}},piercing:run.spearArmed===true,
     flightStartMs,
     windField,deferAbility:Boolean(abilityKind),
     ...shotDisruptionOptions(run),
     loadedCandyId:loaded?.id??null,loadedCandyGrade:loaded?.grade??'C',prototype:run.battlefieldPrototype??run.studioPrototype??null,
     toppledObstacleIds:run.toppledObstacleIds||[],
-    windAvailable:loaded?.id==='wind-candy'&&run.windArmedMode==='homing'});
+    windAvailable:loaded?.id==='wind-candy'&&run.windArmedMode==='homing'};
+  const solution=planShot({layout,enemies:run.enemies,...planOptions});
   if (!solution) return null;
   const deadline = abilityKind ? abilityDeadline(solution, Boolean(signature)) : null;
   const abilityDeadlineTime = deadline?.time ?? null;
   return {...solution,id:launchId,shotId,encounterId:run.encounterId,flightStartMs,
     powerRatio:pull.powerRatio,abilityKindPending:abilityKind,abilityDeadlineTime,
     abilityDeadlineSource:deadline?.source ?? null, abilityLandingTime:deadline?.landing ?? null,
+    ...(signature === 'vortex' ? { planOptions } : {}),
     simulationSeconds:abilityKind&&abilityDeadlineTime!==null
       ?Math.max(solution.simulationSeconds,abilityDeadlineTime):solution.simulationSeconds,
     durationMs:abilityKind&&abilityDeadlineTime!==null
@@ -54,12 +61,7 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
 }
 
 export function activatePhysicalFlight(run, baseFlight, { time, source, success = false } = {}) {
-  const layout=buildPlayableBattlefield({area:run.area,round:run.round,enemies:run.enemies,
-    seed:run.layoutSeed??0,encounterPhase:run.chaosBossPhase==='split'?'split':null,
-    prototype:run.battlefieldPrototype??run.studioPrototype??null,
-    enemyLandingPositions:run.enemyLandingPositions??null,
-    worldScale:run.studioWorldScale??run.battlefieldWorldScale??1,
-    enemyScale:run.studioEnemyScale??1});
+  const layout = layoutForRun(run);
   const revised=activatePlannedAbility({baseFlight,layout,enemies:run.enemies,
     kind:baseFlight.abilityKindPending,time,grade:baseFlight.weaponGrade,success,source});
   return revised ? {...revised,windCrossed:crossedWindZone(revised.path,revised.windField,revised.impactDistance),
@@ -80,6 +82,7 @@ export function flightResultPayload(flight) {
       ...(flight.enemyContacts?{enemyContacts:structuredClone(flight.enemyContacts)}:{}),
       ...(flight.abilityContacts?.length?{abilityContacts:structuredClone(flight.abilityContacts)}:{}),
       ...(flight.abilityActivation?{abilityActivation:structuredClone(flight.abilityActivation)}:{}),
+      ...(flight.vortex?{vortex:structuredClone(flight.vortex)}:{}),
       ...(flight.splitOrbs?{
         childHits:flight.splitOrbs.children.filter(child=>child.hit).map(child=>({orbId:child.id,
           enemyId:child.hit.enemyId,time:child.hit.time,point:child.hit.point})),

@@ -76,7 +76,7 @@ function sweepPolygon(a, b, local, target, radius) {
 
 /** World-space stack approximation. Samples own both hit testing and playback. */
 export function simulateObstacleMotion({ obstacle, point, velocity, startTime = 0, layout,
-  enemies = [], obstacles = [], transfer = false } = {}) {
+  enemies = [], obstacles = [], transfer = false, enemyColliderAt = null } = {}) {
   if (!obstacle || ![obstacle.x, obstacle.y, obstacle.width, obstacle.height, startTime,
     layout?.groundY, layout?.width].every(Number.isFinite) || obstacle.width <= 0 || obstacle.height <= 0
     || startTime < 0 || layout.width <= obstacle.width || !finitePoint(point) || !finitePoint(velocity)
@@ -150,7 +150,12 @@ export function simulateObstacleMotion({ obstacle, point, velocity, startTime = 
     if (!hit) {
       let first = null;
       for (const enemy of enemies) {
-        const fraction = sweep(prior, next, enemy.collider, hx, hy);
+        const firstCenter = enemyColliderAt?.(enemy, startTime + prior.time) ?? enemy.collider;
+        const secondCenter = enemyColliderAt?.(enemy, startTime + next.time) ?? enemy.collider;
+        // Move into the enemy's frame so a moving collider and a tilting log can share the same sweep.
+        const relativeEnd = { ...next, x: next.x - (secondCenter.x - firstCenter.x),
+          y: next.y - (secondCenter.y - firstCenter.y) };
+        const fraction = sweep(prior, relativeEnd, firstCenter, hx, hy);
         if (fraction !== null && (!first || fraction < first.fraction - .000001)) first = { enemy, fraction };
       }
       if (first) {

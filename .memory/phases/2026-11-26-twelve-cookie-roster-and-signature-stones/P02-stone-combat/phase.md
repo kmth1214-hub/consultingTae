@@ -12,8 +12,8 @@
 | T02 | `done` | 칠리맛 선분 베기·바다요정 지면 파도 | [T02](./T02-slash-and-ground-wave.md) |
 | T03 | `done` | 서리여왕 빙결 대상·다음 반격 건너뛰기 | [T03](./T03-frost-freeze-turn.md) |
 | T04 | `done` | 체리맛 수동·자동 폭탄 설치와 지연 폭발 | [T04](./T04-cherry-delayed-bomb.md) |
-| T05 | `in_progress` | 에스프레소 수동·자동 소용돌이와 적 위치 이동 | [T05](./T05-espresso-vortex.md) |
+| T05 | `done` | 에스프레소 수동·자동 소용돌이와 적 위치 이동 | [T05](./T05-espresso-vortex.md) |
 
 ## Progress
 
-- done: 4/5 (active: T05)
+- done: 5/5

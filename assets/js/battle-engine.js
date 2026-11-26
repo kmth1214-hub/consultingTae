@@ -201,7 +201,7 @@
       pendingAimInversion: false,
       ...(config.studioMonsterPrototype === 'regional-monsters-v1'
         ? { pendingAimDisruption: null } : {}),
-      toppledObstacleIds: [], forestLogDebris: [], obstacleDebris: []
+      toppledObstacleIds: [], forestLogDebris: [], obstacleDebris: [], enemyPositionOverrides: {}
     };
     refillWeaponQueue(state,config.rng);
     return state;
@@ -377,6 +377,7 @@
     state.chaosBossPhase = state.area === 'chaos' && state.round === 3 ? 'fused' : null;
     state.roundEffects={windHomingUsed:false};
     state.toppledObstacleIds=[];state.forestLogDebris=[];state.obstacleDebris=[];
+    state.enemyPositionOverrides = {};
     if (['forest-elevated-v1', 'regional-elevated-v1'].includes(state.battlefieldPrototype)
       || ['forest-elevated-v1', 'regional-elevated-v1'].includes(state.studioPrototype)) state.enemyLandingPositions = {};
     state.consumablesBlocked=false;state.consumablesBlockedTurns=0;state.pendingCampReward=null;
@@ -684,6 +685,8 @@
       ? shotMeta?.abilityContacts?.find(contact => contact.kind === 'freeze') : null;
     const cherryBomb = !spear && usedWeapon?.id === 'cherry-bomb-stone'
       ? shotMeta?.abilityContacts?.find(contact => contact.kind === 'cherry-bomb') : null;
+    const vortex = !spear && usedWeapon?.id === 'espresso-vortex-stone' && shotMeta?.vortex?.kind === 'vortex'
+      ? shotMeta.vortex : null;
     const frozenEnemyIds = [];
     const childHits = !spear && usedWeapon?.id === 'wizard-orb' && Array.isArray(shotMeta?.childHits)
       ? shotMeta.childHits : [];
@@ -851,6 +854,7 @@
           remainingHp: target.hp, defeated: !target.alive, scoreDelta });
         if (target.alive) (state.enemyLandingPositions || (state.enemyLandingPositions = {}))[target.id]
           = { x: fall.landing.x, y: fall.landing.y };
+        if (state.enemyPositionOverrides) delete state.enemyPositionOverrides[target.id];
       } });
     }
     if (hasContactStream) {
@@ -906,6 +910,25 @@
     if (cherryBomb) timeline.push({ time: cherryBomb.time, order: 4, apply() {
       for (const id of [...new Set(cherryBomb.targetIds)].slice(0, 2)) applyFixedAbilityHit(id, 'cherry-bomb');
     } });
+    for (const move of vortex?.moves ?? []) {
+      const topple = riderFalls.find(fall => fall.enemyId === move.enemyId);
+      if (topple && (!move.fall || topple.startTime <= move.fall.startTime)) continue;
+      const settleTime = move.fall ? move.fall.startTime + move.fall.durationSeconds : move.endTime;
+      timeline.push({ time: settleTime, order: 4, apply() {
+        const enemy = state.enemies.find(target => target.id === move.enemyId && target.alive && target.hp > 0 && !target.isBoss);
+        if (!enemy) return;
+        if (move.fall) {
+          const removed = Math.min(enemy.hp, move.fall.fallDamage);
+          enemy.hp -= removed;
+          enemy.alive = enemy.hp > 0;
+          const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+          addScore(state, scoreDelta);
+          hits.push({ id: enemy.id, kind: enemy.kind, source: 'rider-fall', damage: removed,
+            remainingHp: enemy.hp, defeated: !enemy.alive, scoreDelta });
+        }
+        if (enemy.alive) (state.enemyPositionOverrides ??= {})[enemy.id] = { ...move.position };
+      } });
+    }
     if (freeze) timeline.push({ time: freeze.time, order: 4, apply() {
       if (lastDirectHitId !== freeze.sourceId) return;
       for (const id of new Set(freeze.targetIds)) {

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createGameSession} from '../src/game/gameSession.js';
 import {BattleEngine as E} from '../src/game/battleEngine.js';
 import {buildPlayableBattlefield,findForestLogOpportunity} from '../src/game/battlefieldPlacement.js';
+import {findPhysicalShot} from './helpers/physical-shot.mjs';
 export const pullAt=(angle=90,powerRatio=1)=>({ready:true,powerRatio,direction:{x:Math.cos(angle*Math.PI/180),y:-Math.sin(angle*Math.PI/180)}});
 const make=options=>{
  const session=createGameSession({rng:()=>.5,layoutRng:()=>0,storage:{getItem:()=>null,setItem(){}},...options});
@@ -33,6 +34,34 @@ test('Cherry plants one timed bomb without truncating the reserved shot', () => 
  assert.equal(event.accepted, true);
  assert.equal(event.shotMeta.abilityContacts[0].kind, 'cherry-bomb');
  assert.equal(commit(s, reserved).accepted, false);
+});
+
+test('Espresso commits the actual movement and discards caller-supplied positions', () => {
+ const s = make({ engine: { ...E, createRunState: options => {
+   const run = E.createRunState({ ...options, characterId: 'espresso' });
+   run.weaponQueue = run.weapons.map(stone => stone.instanceId);
+   run.currentWeaponId = run.weaponQueue[0];
+   return run;
+ } } });
+ const reserved = findPhysicalShot(s, shot => shot.hitIds.length && !shot.contacts.length && shot.directHitTime > .4);
+ const { shotId, encounterId, flight } = reserved;
+ assert.equal(flight.abilityKindPending, 'vortex');
+ const activated = s.actions.activateFlightAbility({ shotId, encounterId, source: 'click', simulationTime: flight.directHitTime - .03 });
+ assert.equal(activated.accepted, true);
+ const move = activated.flight.vortex.moves[0];
+ assert.ok(move.from.x > move.to.x);
+ assert.equal(move.to.y, 900);
+ assert.ok(Math.abs(move.shift) <= 60);
+ const expected = { ...move.position };
+ move.position.x = 42;
+ const event = commit(s, reserved, { shotMeta: { vortex: { moves: [{ position: { x: 0, y: 0 } }] } } });
+ assert.equal(event.accepted, true);
+ const run = s.getSnapshot().run;
+ assert.deepEqual(run.enemyPositionOverrides[move.enemyId], expected);
+ const layout = buildPlayableBattlefield({ area: run.area, round: run.round, enemies: run.enemies, seed: run.layoutSeed,
+   prototype: run.battlefieldPrototype, worldScale: run.battlefieldWorldScale, enemyPositionOverrides: run.enemyPositionOverrides });
+ assert.equal(layout.enemies[0].collider.x, expected.x);
+ assert.equal(event.hits.some(hit => hit.source === 'vortex'), false);
 });
 
 test('the same real completed miss cannot spend ammo, roll damage or cause a second counterattack',()=>{

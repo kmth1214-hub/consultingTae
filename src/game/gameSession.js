@@ -278,6 +278,9 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       // shotMeta above is always copied from the pending flight, never from the caller.
       const validSignatureContacts = !state.run.spearArmed && pendingShot && signatureContactKind
         && abilityContacts?.length === 1 && abilityContacts[0].kind === signatureContactKind;
+      const validVortex = shotMeta?.vortex === undefined || (!state.run.spearArmed
+        && loadedCandy?.id === 'espresso-vortex-stone' && pendingShot?.flight?.vortex?.kind === 'vortex'
+        && Array.isArray(shotMeta.vortex.moves));
       const validAbilityContacts = abilityContacts === undefined || validSignatureContacts || (
         !state.run.spearArmed && loadedCandy?.id === 'alchemist-candy'
         && Array.isArray(abilityContacts)
@@ -380,7 +383,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         || (shotMeta.windCrossed !== undefined && typeof shotMeta.windCrossed !== 'boolean')
         || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')
         || new Set(shotMeta.obstacleTargetIds).size !== shotMeta.obstacleTargetIds.length
-        || !validContacts || !validEnemyContacts || !validRiderFalls || !validAbilityContacts || !validChildren
+        || !validContacts || !validEnemyContacts || !validRiderFalls || !validAbilityContacts || !validChildren || !validVortex
         || (contacts !== undefined
           ? (contacts.length ? shotMeta.obstacleId !== contacts[0].obstacleId
               || shotMeta.obstacleKind !== contacts[0].obstacleKind
