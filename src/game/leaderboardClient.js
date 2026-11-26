@@ -1,5 +1,7 @@
+import { CHARACTERS } from './gameData.js';
+
 const API_URL = '/api/leaderboard';
-const COOKIE_IDS = new Set(['adventurer', 'alchemist', 'wizard', 'milk', 'wind']);
+const COOKIE_IDS = new Set(CHARACTERS.map(character => character.id));
 
 export class LeaderboardRequestError extends Error {
   constructor(message, status = 0) {

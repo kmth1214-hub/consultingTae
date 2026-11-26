@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getLeaderboard, submitMainRunRecord, LeaderboardRequestError } from '../src/game/leaderboardClient.js';
+import { CHARACTERS } from '../src/game/gameData.js';
 
 const board = {
   entries: [{ rank: 1, displayName: 'Cookie Player', cookieId: 'adventurer', score: 980, round: 5, durationMs: 1200 }],
@@ -46,4 +47,33 @@ test('POST rejects a malformed save result and preserves status for retry messag
   const args = { summary: { finalScore: 10, furthestArea: 'forest', round: 1, durationMs: 1000 }, selectedCharacterId: 'adventurer' };
   await assert.rejects(submitMainRunRecord({ ...args, fetchImpl: async () => response({ saved: true }) }), /저장 응답 형식/);
   await assert.rejects(submitMainRunRecord({ ...args, fetchImpl: async () => response({ error: 'Unavailable' }, 503) }), error => error.status === 503);
+});
+
+test('every selectable cookie can submit a main-run record', async () => {
+  for (const { id } of CHARACTERS) {
+    let submitted = false;
+    const result = await submitMainRunRecord({
+      summary: { finalScore: 440, furthestArea: 'city', round: 3, durationMs: 88000 },
+      selectedCharacterId: id,
+      fetchImpl: async (_url, options) => {
+        submitted = true;
+        assert.equal(JSON.parse(options.body).cookieId, id);
+        return response({ saved: true, record: { rank: 1, cookieId: id, score: 440 } });
+      }
+    });
+    assert.equal(submitted, true, id);
+    assert.equal(result.record.cookieId, id);
+  }
+});
+
+test('new roster records do not prevent the company board or personal best from loading', async () => {
+  const entries = CHARACTERS.slice(2).map(({ id }, index) => ({
+    rank: index + 1, displayName: `Cookie Player ${index + 1}`, cookieId: id, score: 1000 - index
+  }));
+  const personalBest = { rank: 11, cookieId: 'strawberry', score: 10 };
+  assert.deepEqual(await getLeaderboard({ fetchImpl: async () => response({ entries, personalBest }) }),
+    { entries, personalBest });
+  await assert.rejects(getLeaderboard({ fetchImpl: async () => response({
+    entries: [{ ...entries[0], cookieId: 'unknown' }], personalBest: null
+  }) }), LeaderboardRequestError);
 });
