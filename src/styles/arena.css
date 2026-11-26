@@ -92,13 +92,19 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .bounce-dust__ring { fill: none; stroke-width: 7; }
 .bounce-hit-contact { fill: #ffe3a252; stroke: #ffcf76; stroke-width: 5; animation: spear-contact-flash 650ms ease-out both; pointer-events: none; filter: drop-shadow(0 0 12px #fff0b5); }
 .wizard-child-orb { filter: drop-shadow(0 0 7px #a7dbff); }
+.wizard-auto-split-layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 8; pointer-events: none; }
+.wizard-auto-split-burst { transform-box: fill-box; transform-origin: center; animation: wizard-auto-split-flash .58s .08s both; filter: drop-shadow(0 0 16px #b9eaff); }
+.wizard-auto-split-ring { fill: #c4f4ff55; stroke: #e9fbff; stroke-width: 10; }
+.wizard-auto-split-core { fill: #fff; stroke: #8dd9ff; stroke-width: 5; }
+.wizard-auto-split-burst path { fill: none; stroke: #b7eeff; stroke-width: 12; stroke-linecap: round; }
+@keyframes wizard-auto-split-flash { 0% { opacity: 0; scale: .3; } 28% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 1.35; } }
 .alchemist-splash circle:first-child { transform-box: fill-box; transform-origin: center; animation: studio-splash .55s ease-out forwards; }
 .alchemist-splash circle:last-child, .wizard-child-hit circle { animation: studio-hit-fade .5s ease-out forwards; }
 .candy-current-ability { color: #315d49; font-size: .72rem; line-height: 1.4; font-weight: 750; }
 @keyframes studio-stack-wobble { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-7deg); } 60% { transform: rotate(6deg); } }
 @keyframes studio-splash { from { transform: scale(.07); opacity: .95; } to { transform: scale(1); opacity: 0; } }
 @keyframes studio-hit-fade { from { opacity: 1; } to { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .stack-body.is-wobbling, .alchemist-splash circle, .wizard-child-hit circle { animation-duration: .01ms; } }
+@media (prefers-reduced-motion: reduce) { .stack-body.is-wobbling, .alchemist-splash circle, .wizard-child-hit circle { animation-duration: .01ms; } .wizard-auto-split-burst { animation-duration: .18s; animation-delay: 0s; } }
 .player-cookie { position: absolute; z-index: 7; pointer-events: none; }
 .player-cookie-body { position: absolute; inset: 0; display: grid; place-items: end center; transform-origin: 50% 92%; }
 .player-cookie-art { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 2px 1px #3c36204a); }

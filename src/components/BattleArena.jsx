@@ -139,6 +139,14 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     if (!result?.accepted) return null;
     activeFlight.current = result.flight;
     setFlight(result.flight);
+    if (source === 'auto-contact' && shot.loadedStoneId === 'wizard-orb'
+      && shot.impactKind === 'enemy' && Math.abs(simulationTime - shot.directHitTime) < 1e-3
+      && shot.hitIds.length > 0 && result.flight.splitOrbs) {
+      const point = result.flight.abilityActivation.point;
+      setVisualEnemyContacts(current => [...current, { id: shot.hitIds[0], point }]);
+      setVisualAbilities(current => [...current, { id: `${shot.id}-auto-split`,
+        kind: 'wizard-auto-split', point }]);
+    }
     return result;
   }
   useEffect(() => {
@@ -397,6 +405,16 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           hitEffectsEnabled={hitEffectsEnabled} showDefeatedHit={Boolean(shotReview)}
           studioMonsterPrototype={run.studioMonsterPrototype}
           lastEvent={lastEvent} response={activeResponse} selectedTargetId={solution?.selectedTargetId || flight?.selectedTargetId} />}
+        {visualAbilities.some(cue => cue.kind === 'wizard-auto-split') &&
+          <svg className="wizard-auto-split-layer" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
+            {visualAbilities.filter(cue => cue.kind === 'wizard-auto-split').map(cue =>
+              <g key={cue.id} data-testid="wizard-auto-split" className="wizard-auto-split-burst"
+                transform={`translate(${cue.point.x} ${cue.point.y})`}>
+                <circle className="wizard-auto-split-ring" r="46" />
+                <circle className="wizard-auto-split-core" r="20" />
+                <path d="M-22 0H-92M22 0H92M-12-12L-58-55M12-12L58-55M-12 12L-58 55M12 12L58 55" />
+              </g>)}
+          </svg>}
         {activeSplit && <BossSplitTransition transition={activeSplit} source={splitSource} layout={layout}
           onImpact={onBossImpact} onComplete={onBossComplete} />}
         {activeResponse && <EnemyResponse response={activeResponse} layout={layout} travelMs={travelMs}

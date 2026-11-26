@@ -576,7 +576,7 @@ function planStackedShot({ layout, start, direction, powerRatio, living, piercin
 }
 
 function withWizardSplit(solution, { layout, start, direction, powerRatio, living, flightStartMs = 0, windField = null,
-  activationTime = null }) {
+  activationTime = null, autoHitTargetId = null }) {
   if (!solution?.path || solution.path.kind !== 'ballistic') return solution;
   const speed = getLaunchSpeed(powerRatio), vx = direction.x * speed, vy = direction.y * speed;
   const firstContactTime = Math.min(solution.path.durationSeconds,
@@ -595,7 +595,7 @@ function withWizardSplit(solution, { layout, start, direction, powerRatio, livin
   const children = [];
   for (const [id, sign] of [['left', -1], ['right', 1]]) {
     const angle = sign * .19, dx = (marker.vx ?? vx) * .7,
-      dy = marker.y >= layout.groundY - layout.candyRadius - 2
+      dy = autoHitTargetId || marker.y >= layout.groundY - layout.candyRadius - 2
         ? -440 : (vy + BATTLEFIELD.gravity * Math.min(splitTime, solution.path.durationSeconds)) * .7;
     const child = ballisticFromVelocity(splitPoint, {
       x: dx * Math.cos(angle) - dy * Math.sin(angle),
@@ -606,7 +606,13 @@ function withWizardSplit(solution, { layout, start, direction, powerRatio, livin
     const capped = child.durationSeconds > limit ? makePath('ballistic', [
       ...child.samples.filter(sample => sample.time < limit - EPS), sampleAtTime(child, limit)], 'timeout') : child;
     const relative = capped;
-    const enemy = living.map(item => {
+    const enemy = living.filter(item => {
+      if (!autoHitTargetId) return true;
+      if (item.id === autoHitTargetId) return false;
+      const targetX = item.patrol
+        ? patrolX(item.patrol, flightStartMs + splitTime * 1000) : item.collider.x;
+      return direction.x >= 0 ? targetX > marker.x + EPS : targetX < marker.x - EPS;
+    }).map(item => {
       const motion = solution.contacts.find(contact => contact.riderMotion?.enemyId === item.id)?.riderMotion;
       return { id: item.id, distance: motion
         ? findMovingRiderContact(relative, item, motion, splitTime, layout.candyRadius * .62)
@@ -758,7 +764,9 @@ export function activatePlannedAbility({ baseFlight, layout, enemies, kind, time
     const revised = withWizardSplit(baseFlight, { layout, start: baseFlight.path.start,
       direction, powerRatio: baseFlight.powerRatio ?? .7, living,
       flightStartMs: baseFlight.flightStartMs ?? 0, windField: baseFlight.windField,
-      activationTime: time });
+      activationTime: time,
+      autoHitTargetId: source === 'auto-contact' && baseFlight.impactKind === 'enemy'
+        && Math.abs(time - baseFlight.directHitTime) < 1e-3 ? baseFlight.hitIds[0] ?? null : null });
     return { ...revised, abilityActivation: activation,
       simulationSeconds: Math.max(revised.simulationSeconds, time),
       durationMs: Math.max(revised.durationMs, Math.round(time * 1000)) };

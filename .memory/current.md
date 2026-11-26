@@ -2,23 +2,22 @@
 
 ## Active Plan
 
-[관리자 조준 전체 보기와 직전 발사 가이드](./plans/2026-11-11-studio-aim-overview-last-shot-guide.md)
+[마법사 스톤 직접 명중 후 자동 분열](./plans/2026-11-11-wizard-hit-auto-split.md)
 
 ## Active Phase
 
-[P01 관리자 조준 가이드](./phases/2026-11-11-studio-aim-overview-last-shot-guide/P01-studio-aim/phase.md)
+[P01 마법사 직접 명중 자동 분열](./phases/2026-11-11-wizard-hit-auto-split/P01-auto-split/phase.md)
 
 ## Active Task
 
-완료 (T02 커밋 `4c7098f`)
+완료 (T01 커밋 예정)
 
 ## Status
 
-- T01 `c5ed45a` 완료
-- T02 `4c7098f` 완료
-- P01 2/2 완료
-- 로컬에서는 변경 범위만 확인하고, 전체 테스트는 배포 시 수행
+- T01 구현 및 변경 범위 검증 완료
+- P01 1/1 완료
+- 로컬에서는 국소 테스트와 빌드만 확인하고, 전체 테스트는 배포 때 수행
 
 ## Next Step (IMPORTANT)
 
-배포 전 전체 테스트와 관리자 브라우저 시나리오를 재실행한다.
+다음 기능 요청이 오면 새 인터뷰·계획에서 진행한다. 전체 회귀는 배포 때 실행한다.

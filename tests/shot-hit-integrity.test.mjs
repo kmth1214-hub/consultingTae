@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {BattleEngine as E} from '../src/game/battleEngine.js';
 import {buildPlayableBattlefield} from '../src/game/battlefieldPlacement.js';
-import {planShot,sampleAtDistance} from '../src/game/shotGeometry.js';
+import {planShot,sampleAtDistance,activatePlannedAbility} from '../src/game/shotGeometry.js';
 import {buildBattlefield} from '../src/game/battlefieldModel.js';
-import {createStudioSession} from '../src/dev/createStudioSession.js';
+import {createStudioScenario,createStudioSession} from '../src/dev/createStudioSession.js';
 function fixture(piercing=false) {
  const run=E.createRunState({area:'snow',round:1,rng:()=>.5,inventory:{spear:1},weapons:[
   {...E.WEAPON_CATALOG[0],grade:'A'},
@@ -215,4 +215,50 @@ test('a reserved Wizard shot owns its two child trajectories and rejects fabrica
  assert.equal(event.shotMeta.splitTime,activated.flight.splitOrbs.splitTime);
  assert.deepEqual(session.getSnapshot().run.toppledObstacleIds,
   activated.flight.contacts.map(contact=>contact.obstacleId));
+});
+
+test('a direct Wizard hit automatically splits after impact and children pass the struck enemy', () => {
+ const session=createStudioSession({area:'forest',round:2,characterId:'wizard',seed:0},{rng:()=>.5});
+ const run=session.getSnapshot().run;
+ const exclusive=run.weapons.find(weapon=>weapon.id==='wizard-orb');
+ run.weaponQueue=[exclusive.instanceId,...run.weaponQueue.filter(id=>id!==exclusive.instanceId)];
+ run.currentWeaponId=exclusive.instanceId;
+ const radians=60*Math.PI/180;
+ const reserved=session.actions.beginShot({launchId:42,pull:{ready:true,powerRatio:.31,
+  direction:{x:Math.cos(radians),y:-Math.sin(radians)}}});
+ assert.equal(reserved.accepted,true);
+ const base=reserved.flight;
+ assert.equal(base.hitIds.length,1);
+ const initialHp=run.enemies.find(enemy=>enemy.id===base.hitIds[0]).hp;
+ assert.equal(base.abilityDeadlineTime,base.directHitTime);
+ assert.equal(base.splitOrbs,undefined);
+ const activated=session.actions.activateFlightAbility({shotId:reserved.shotId,
+  encounterId:reserved.encounterId,simulationTime:base.abilityDeadlineTime,source:'auto-contact'});
+ assert.equal(activated.accepted,true);
+ assert.equal(activated.flight.abilityActivation.source,'auto-contact');
+ assert.equal(activated.flight.splitOrbs.children.length,2);
+ assert.equal(activated.flight.splitOrbs.splitTime,base.directHitTime);
+ assert.ok(activated.flight.splitOrbs.children.every(child=>child.hit?.enemyId!==base.hitIds[0]));
+ const event=session.actions.fireShot({shotId:reserved.shotId,encounterId:reserved.encounterId});
+ assert.equal(event.accepted,true);
+ assert.ok(session.getSnapshot().run.enemies.find(enemy=>enemy.id===base.hitIds[0]).hp<initialHp);
+ assert.equal(event.shotMeta.abilityActivation.source,'auto-contact');
+ assert.ok(event.shotMeta.childHits.every(hit=>hit.enemyId!==base.hitIds[0]));
+});
+
+test('automatic Wizard split can physically strike an enemy behind the first target', () => {
+ const scenario=createStudioScenario({area:'forest',round:2,characterId:'wizard',seed:0});
+ const layout=structuredClone(scenario.layout);
+ const secondId=scenario.enemies[1].id;
+ const second=layout.enemies.find(enemy=>enemy.id===secondId);
+ second.collider={...second.collider,x:1078,y:798};
+ const radians=60*Math.PI/180,pull={ready:true,powerRatio:.31,
+  direction:{x:Math.cos(radians),y:-Math.sin(radians)}};
+ const base=planShot({layout,enemies:scenario.enemies,pull,loadedCandyId:'wizard-orb',deferAbility:true});
+ assert.deepEqual(base.hitIds,[scenario.enemies[0].id]);
+ const activated=activatePlannedAbility({baseFlight:{...base,powerRatio:pull.powerRatio,flightStartMs:0},
+  layout,enemies:scenario.enemies,kind:'split',time:base.directHitTime,source:'auto-contact'});
+ assert.equal(activated.splitOrbs.children.length,2);
+ assert.ok(activated.splitOrbs.children.some(child=>child.hit?.enemyId===secondId));
+ assert.ok(activated.splitOrbs.children.every(child=>child.hit?.enemyId!==base.hitIds[0]));
 });
