@@ -1,0 +1,12 @@
+.character-art--pending {
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #ebe3d0;
+  color: #64553b;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+@media (min-width: 951px) {
+  .screen-shell .character-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

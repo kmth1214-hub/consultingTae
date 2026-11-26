@@ -3,7 +3,14 @@ export const CHARACTERS = Object.freeze([
   { id: 'alchemist', name: '연금술사맛 쿠키', weaponId: 'alchemist-candy', asset: 'alchemist', note: '전용 스톤을 추가 입력으로 폭발' },
   { id: 'wizard', name: '마법사맛 쿠키', weaponId: 'wizard-orb', asset: 'wizard', note: '세 번째 명중에 추가 피해 +1' },
   { id: 'milk', name: '우유맛 쿠키', weaponId: 'milk-candy', asset: 'milk', note: '전용 스톤 명중 시 체력 5 회복 · 다음 발사 보호', locked: true },
-  { id: 'wind', name: '바람궁수 쿠키', weaponId: 'wind-candy', asset: 'wind', note: 'Q 자동 유도 · 바람 충전 후 연쇄 폭풍', locked: true }
+  { id: 'wind', name: '바람궁수 쿠키', weaponId: 'wind-candy', asset: 'wind', note: 'Q 자동 유도 · 바람 충전 후 연쇄 폭풍', locked: true },
+  { id: 'gingerBrave', name: '용감한 쿠키', weaponId: 'ginger-dash-stone', asset: 'gingerBrave', note: '발사 0.25초 뒤 수평 속도 증가' },
+  { id: 'strawberry', name: '딸기맛 쿠키', weaponId: 'strawberry-lollipop-stone', asset: 'strawberry', note: '회전하는 스톤의 충돌 반경 증가' },
+  { id: 'cherry', name: '체리 배달부 쿠키', weaponId: 'cherry-bomb-stone', asset: 'cherry', note: '비행 중 폭탄 설치 · 0.35초 뒤 폭발' },
+  { id: 'chiliPepper', name: '고추빛 제빵사 쿠키', weaponId: 'chili-slash-stone', asset: 'chiliPepper', note: '직접 맞힌 적 뒤를 베어 다른 적 1명에게 추가 피해' },
+  { id: 'espresso', name: '로스트 공방 쿠키', weaponId: 'espresso-vortex-stone', asset: 'espresso', note: '비행 중 소용돌이로 일반 몬스터 이동' },
+  { id: 'seaFairy', name: '파도 정찰대 쿠키', weaponId: 'sea-wave-stone', asset: 'seaFairy', note: '접촉 후 지면 파도로 지상 몬스터 최대 2명 타격', locked: true },
+  { id: 'frostQueen', name: '서리 파수꾼 쿠키', weaponId: 'frost-stone', asset: 'frostQueen', note: '직접 맞힌 적과 등급별 주변 적의 다음 반격 1회 빙결', locked: true }
 ]);
 
 export const REGIONS = Object.freeze({

@@ -3,6 +3,8 @@ import alchemist from '../../Cookie Run_ OvenBreak Fan Kit/01. Cookies/Alchemist
 import wizard from '../../Cookie Run_ OvenBreak Fan Kit/01. Cookies/Wizard Cookie.png';
 import milk from '../../Cookie Run_ OvenBreak Fan Kit/01. Cookies/Milk Cookie.png';
 import wind from '../../Cookie Run_ OvenBreak Fan Kit/01. Cookies/Wind Archer Cookie.png';
+import gingerBrave from '../../Cookie Run_ OvenBreak Fan Kit/01. Cookies/GingerBrave.png';
+import strawberry from '../../Cookie Run_ OvenBreak Fan Kit/01. Cookies/Strawberry Cookie.png';
 import distant from '../../assets/maps/forest-layers/distant.png';
 import midground from '../../assets/maps/forest-layers/midground.png';
 import path from '../../assets/maps/forest-layers/path.png';
@@ -51,8 +53,18 @@ import spear from '../../assets/items/candy-cane-staff-of-darkness.png';
 import defense from '../../assets/items/gigawatt-cube.png';
 import heal from '../../assets/items/mini-energy-potion.png';
 
+const optionalCharacterArt = import.meta.glob('../../assets/characters/*.png', {
+  eager: true, import: 'default', query: '?url'
+});
+
 export const ASSETS = Object.freeze({
-  characters: Object.freeze({ adventurer, alchemist, wizard, milk, wind }),
+  characters: Object.freeze({ adventurer, alchemist, wizard, milk, wind,
+    gingerBrave, strawberry,
+    cherry: optionalCharacterArt['../../assets/characters/cherry.png'],
+    chiliPepper: optionalCharacterArt['../../assets/characters/chili-pepper.png'],
+    espresso: optionalCharacterArt['../../assets/characters/espresso.png'],
+    seaFairy: optionalCharacterArt['../../assets/characters/sea-fairy.png'],
+    frostQueen: optionalCharacterArt['../../assets/characters/frost-queen.png'] }),
   forestLayers: Object.freeze({ distant, midground, path, foreground }),
   regionLayers: Object.freeze({
     snow: Object.freeze({ distant: Object.freeze({ west: snowDistantWest, east: snowDistantEast }), midground: Object.freeze({ west: snowMidgroundWest, east: snowMidgroundEast }), path: Object.freeze({ west: snowPathWest, east: snowPathEast }), foreground: Object.freeze({ west: snowForegroundWest, east: snowForegroundEast }), metadata: snowLayers }),

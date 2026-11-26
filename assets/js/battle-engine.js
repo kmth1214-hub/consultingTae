@@ -36,7 +36,14 @@
     { id:'alchemist-candy',name:'연금술사의 마법사탕',grade:'C',effect:'추가 입력으로 폭발 · 등급별 확률과 범위' },
     { id:'wizard-orb',name:'마력 구슬',grade:'C',effect:'세 번째 명중 피해 +1' },
     { id:'milk-candy',name:'우유맛 마법사탕',grade:'C',effect:'직접 명중 시 체력 5 회복·다음 발사 보호막',requiresSnowClear:true },
-    { id:'wind-candy',name:'바람궁수 마법사탕',grade:'C',effect:'라운드당 유도 사격',requiresSnowClear:true }
+    { id:'wind-candy',name:'바람궁수 마법사탕',grade:'C',effect:'라운드당 유도 사격',requiresSnowClear:true },
+    { id:'ginger-dash-stone',name:'용감한 돌진 스톤',grade:'C',effect:'발사 0.25초 뒤 수평 속도 증가' },
+    { id:'strawberry-lollipop-stone',name:'회전 롤리팝 스톤',grade:'C',effect:'등급별 충돌 반경 증가' },
+    { id:'cherry-bomb-stone',name:'체리 폭탄 스톤',grade:'C',effect:'추가 입력으로 폭탄 설치' },
+    { id:'chili-slash-stone',name:'칠리 베기 스톤',grade:'C',effect:'직접 명중 뒤 다른 적에게 베기' },
+    { id:'espresso-vortex-stone',name:'소용돌이 스톤',grade:'C',effect:'추가 입력으로 일반 몬스터 이동' },
+    { id:'sea-wave-stone',name:'파도 스톤',grade:'C',effect:'첫 접촉 뒤 지면 파도',requiresSnowClear:true },
+    { id:'frost-stone',name:'서리 스톤',grade:'C',effect:'적의 다음 반격을 한 번 빙결',requiresSnowClear:true }
   ]);
   const CONSUMABLE_CATALOG = Object.freeze([
     { id:'fireball',name:'불공',description:'다음 영구 무기 피해 2배' },
@@ -46,7 +53,10 @@
   ]);
   const CHARACTER_WEAPONS = Object.freeze({
     adventurer: 'adventurer-candy', alchemist: 'alchemist-candy', wizard: 'wizard-orb',
-    milk: 'milk-candy', wind: 'wind-candy'
+    milk: 'milk-candy', wind: 'wind-candy',
+    gingerBrave: 'ginger-dash-stone', strawberry: 'strawberry-lollipop-stone',
+    cherry: 'cherry-bomb-stone', chiliPepper: 'chili-slash-stone', espresso: 'espresso-vortex-stone',
+    seaFairy: 'sea-wave-stone', frostQueen: 'frost-stone'
   });
   const SLOT_SYMBOLS = Object.freeze(['star', 'leaf', 'moon', 'crown']);
   const SLOT_LINES = Object.freeze([[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 4, 8], [2, 4, 6]]);

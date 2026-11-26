@@ -2,22 +2,21 @@
 
 ## Active Plan
 
-[마법사 스톤 직접 명중 후 자동 분열](./plans/2026-11-11-wizard-hit-auto-split.md)
+[쿠키 12종과 전용 스톤 7종](./plans/2026-11-26-twelve-cookie-roster-and-signature-stones.md)
 
 ## Active Phase
 
-[P01 마법사 직접 명중 자동 분열](./phases/2026-11-11-wizard-hit-auto-split/P01-auto-split/phase.md)
+[P01-roster-and-catalog](./phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P01-roster-and-catalog/phase.md)
 
 ## Active Task
 
-완료 (T01 커밋 `2ed3f16`)
+[T02 전용 스톤 카탈로그와 해금·슬롯 보상](./phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P01-roster-and-catalog/T02-stone-catalog-and-unlocks.md)
 
 ## Status
 
-- T01 구현·변경 범위 검증·커밋 완료 (`2ed3f16`)
-- P01 1/1 완료
-- 로컬에서는 국소 테스트와 빌드만 확인하고, 전체 테스트는 배포 때 수행
+- T01 쿠키 그림과 12종 선택 명단 구현·지정 검증 완료.
+- 신규 캐릭터 일러스트 5종은 사용자 제공 자료로 후속 반영.
 
 ## Next Step (IMPORTANT)
 
-다음 기능 요청이 오면 새 인터뷰·계획에서 진행한다. 전체 회귀는 배포 때 실행한다.
+T02 전용 스톤 카탈로그와 해금·슬롯 보상 청사진을 읽고 이어서 구현한다.
