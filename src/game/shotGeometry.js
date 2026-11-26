@@ -657,6 +657,78 @@ export function shotDisruptionOptions(run) {
     maxRollDiameters: active === 'roll' ? 3 : BATTLEFIELD.maxRollDiameters };
 }
 
+function enemyCenterAt(slot, contacts, flightStartMs, time) {
+  const motion = contacts.find(contact => contact.riderMotion?.enemyId === slot.id)?.riderMotion;
+  if (motion && time >= motion.startTime) {
+    const foot = sampleRiderMotion(motion, time);
+    return { x: foot.x, y: foot.y - slot.size * .52 };
+  }
+  return slot.patrol ? { x: patrolX(slot.patrol, flightStartMs + time * 1000), y: slot.collider.y } : slot.collider;
+}
+
+function firstStoneContact(shot) {
+  const direct = shot.hitIds.length
+    ? { time: shot.directHitTime, point: sampleAtDistance(shot.path, shot.impactDistance), id: shot.hitIds[0] } : null;
+  const obstacle = shot.contacts?.find(contact => contact.trigger === 'candy')
+    ?? (shot.impactKind === 'obstacle' ? { time: shot.directHitTime,
+      point: sampleAtDistance(shot.path, shot.impactDistance), obstacleId: shot.obstacleId } : null);
+  const floor = shot.rollStartDistance !== null && shot.rollStartDistance <= shot.impactDistance
+    ? sampleAtDistance(shot.path, shot.rollStartDistance)
+    : shot.impactKind === 'ground' ? sampleAtDistance(shot.path, shot.impactDistance) : null;
+  return [direct, obstacle && { ...obstacle, id: obstacle.obstacleId },
+    floor && { time: floor.time, point: floor, id: null }].filter(Boolean).sort((a, b) => a.time - b.time)[0] ?? null;
+}
+
+function withTravelingAbility(shot, layout, living, stone, grade, direction, flightStartMs) {
+  const wave = stone.kind === 'ground-wave';
+  const contact = wave ? firstStoneContact(shot) : shot.hitIds.length
+    ? { time: shot.directHitTime, point: sampleAtDistance(shot.path, shot.impactDistance), id: shot.hitIds[0] } : null;
+  if (!contact || contact.point.x < 0 || contact.point.x > layout.width) return shot;
+  const maxDistance = stone.maxDistance[grade] ?? stone.maxDistance.C;
+  const incoming = unit({
+    x: contact.point.x - sampleAtTime(shot.path, Math.max(0, contact.time - .02)).x,
+    y: contact.point.y - sampleAtTime(shot.path, Math.max(0, contact.time - .02)).y
+  }) ?? direction;
+  const heading = wave ? { x: Math.sign(incoming.x), y: 0 } : incoming;
+  if (wave && !heading.x) return shot;
+  const point = { x: contact.point.x, y: wave ? layout.groundY - 28 : contact.point.y };
+  const extent = heading.x > EPS ? Math.min(maxDistance, (layout.width - point.x) / heading.x)
+    : heading.x < -EPS ? Math.min(maxDistance, -point.x / heading.x) : maxDistance;
+  if (extent <= EPS) return shot;
+  const speed = wave ? 1050 : 1600, radius = wave ? 18 : 0;
+  const at = d => ({ x: point.x + d * heading.x, y: point.y + d * heading.y, time: d / speed });
+  const sampleCount = Math.ceil(extent / 12);
+  const trail = makePath('ballistic', Array.from({ length: sampleCount + 1 }, (_, i) => at(extent * i / sampleCount)), 'ability');
+  const topples = shot.contacts ?? [];
+  const block = layout.obstacles.map(prop => findObstacleContact(trail, [prop], radius)).filter(Boolean)
+    .filter(hit => !topples.some(topple => topple.obstacleId === hit.id
+      && topple.time <= contact.time + hit.distance / speed + EPS))
+    .sort((a, b) => a.distance - b.distance)[0];
+  const candidates = living.filter(slot => !shot.hitIds.includes(slot.id) && !(wave && slot.patrol))
+    .map(slot => {
+      const motion = topples.find(entry => entry.riderMotion?.enemyId === slot.id)?.riderMotion;
+      const hit = motion ? findMovingRiderContact(trail, slot, motion, contact.time, radius)
+        : findPatrolContact(trail, slot, flightStartMs, contact.time, radius);
+      if (hit === null || hit >= (block?.distance ?? Infinity) - EPS) return null;
+      const time = contact.time + hit / speed;
+      const atGround = motion ? time >= motion.startTime + motion.durationSeconds - EPS
+        : !slot.supportObstacleId && (slot.y ?? layout.groundY) >= layout.groundY - EPS;
+      if (wave && !atGround) return null;
+      const { x, y } = at(hit);
+      return { id: slot.id, distance: hit, time, point: { x, y } };
+    }).filter(Boolean).sort((a, b) => a.distance - b.distance || a.id.localeCompare(b.id));
+  const hits = candidates.slice(0, wave ? 2 : 1);
+  const endDistance = hits.length === (wave ? 2 : 1) ? hits.at(-1).distance : block?.distance ?? extent;
+  const { x, y } = at(endDistance);
+  const endTime = contact.time + endDistance / speed;
+  return { ...shot, abilityContacts: [{ kind: stone.kind, time: contact.time, point,
+    sourceId: contact.id, targetIds: hits.map(hit => hit.id), hits, maxDistance,
+    blockedBy: block && Math.abs(endDistance - block.distance) < EPS ? block.id : null,
+    end: { x, y }, endTime }],
+  simulationSeconds: Math.max(shot.simulationSeconds, endTime),
+  durationMs: Math.max(shot.durationMs, Math.round(endTime * 1000)) };
+}
+
 export function planShot({ layout, pull, enemies, windAvailable = false,
   toppledObstacleIds = [], piercing = false, loadedCandyId = null, loadedCandyGrade = 'C', prototype = null,
   maxPowerRatio = 1, previewFraction = .30,
@@ -689,6 +761,8 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   if (!ballistic) return null;
   const alive = new Set(enemies.filter(e => e && e.alive === true && Number.isFinite(e.hp) && e.hp > 0).map(e => e.id));
   const living = layout.enemies.filter(e => alive.has(e.id));
+  const decorate = shot => ['slash', 'ground-wave'].includes(stone?.kind)
+    ? withTravelingAbility(shot, activeLayout, living, stone, loadedCandyGrade, direction, flightStartMs) : shot;
   let path = ballistic, target = null;
   if (windAvailable && !piercing && direction.x > 1e-4) {
     const candidates = living.filter(e => e.collider.x > start.x);
@@ -715,7 +789,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     if (!solution) return null;
     const adjusted = { ...solution, ...physics };
     return abilityKind === 'split' ? withWizardSplit(adjusted, { layout: activeLayout, start,
-      direction, powerRatio: pull.powerRatio, living, flightStartMs, windField }) : adjusted;
+      direction, powerRatio: pull.powerRatio, living, flightStartMs, windField }) : decorate(adjusted);
   }
   const hitsFor = candidate => target ? [{ id: target.id, distance: candidate.length }]
     : living.map(e => ({ id: e.id, distance: findPatrolContact(candidate, e, flightStartMs, 0, layout.candyRadius) }))
@@ -751,7 +825,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     .map(enemy => enemy.id) : [];
   // The visible flight ends at impactDistance. Only Spear travels through a hit.
   const resolvedHits = hits.filter(h => h.distance <= impactDistance + EPS).slice(0, piercing ? 3 : 1);
-  return { ...physics, path, hitIds: [...new Set(resolvedHits.map(h => h.id))], selectedTargetId: target?.id ?? null,
+  return decorate({ ...physics, path, hitIds: [...new Set(resolvedHits.map(h => h.id))], selectedTargetId: target?.id ?? null,
     ...(piercing ? { enemyContacts: resolvedHits.map(hit => {
       const p = sampleUnchecked(path, hit.distance);
       return { id: hit.id, point: { x: p.x, y: p.y }, time: p.time, distance: hit.distance };
@@ -764,7 +838,7 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
     reverse: direction.x < 0,
     directHitTime: sampleUnchecked(path, impactDistance).time,
     simulationSeconds: sampleUnchecked(path, impactDistance).time,
-    durationMs: clamp(sampleUnchecked(path, impactDistance).time * 1000, 420, 3200) };
+    durationMs: clamp(sampleUnchecked(path, impactDistance).time * 1000, 420, 3200) });
 }
 
 /** Rebuild the reserved physical result at the one player-selected activation point. */

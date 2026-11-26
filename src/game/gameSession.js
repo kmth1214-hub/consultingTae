@@ -278,7 +278,11 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const abilityContacts = shotMeta?.abilityContacts;
       const loadedCandy = state.run.weapons.find(item => item.instanceId ===
         (state.run.weaponQueue?.[0] ?? state.run.currentWeaponId));
-      const validAbilityContacts = abilityContacts === undefined || (
+      const signatureContactKind = ({ 'chili-slash-stone': 'slash', 'sea-wave-stone': 'ground-wave' })[loadedCandy?.id];
+      // shotMeta above is always copied from the pending flight, never from the caller.
+      const validSignatureContacts = !state.run.spearArmed && pendingShot && signatureContactKind
+        && abilityContacts?.length === 1 && abilityContacts[0].kind === signatureContactKind;
+      const validAbilityContacts = abilityContacts === undefined || validSignatureContacts || (
         !state.run.spearArmed && loadedCandy?.id === 'alchemist-candy'
         && Array.isArray(abilityContacts)
         && (abilityContacts.length === 1 && abilityContacts[0]?.kind === 'explosion'

@@ -53,6 +53,38 @@ test('the lollipop radius changes real contacts and remains unscaled for Spear',
   assert.equal(planShot({ ...input, loadedCandyGrade: 'A', piercing: true }).candyRadius, layout.candyRadius);
 });
 
+test('slash follows the actual impact direction, stops at a barrier and never re-hits the trigger target', () => {
+  const layout = { ...empty(), obstacles: [] }, pull = pullAt(35, .45);
+  const base = planShot({ layout, pull, enemies: [] });
+  layout.enemies = [circle('first', sampleAtTime(base.path, .5), 14)];
+  const stone = { layout, pull, enemies: living(['first', 'next']), loadedCandyId: 'chili-slash-stone' };
+  const [slash] = planShot(stone).abilityContacts;
+  assert.deepEqual(slash.targetIds, []);
+  const onSlash = fraction => ({
+    x: slash.point.x + (slash.end.x - slash.point.x) * fraction,
+    y: slash.point.y + (slash.end.y - slash.point.y) * fraction
+  });
+  layout.enemies.push(circle('next', onSlash(.75), 10));
+  assert.deepEqual(planShot(stone).abilityContacts[0].targetIds, ['next']);
+  const wall = onSlash(.55);
+  layout.obstacles.push(box('wall', wall.x - 5, wall.y - 15, 10, 30));
+  const [blocked] = planShot(stone).abilityContacts;
+  assert.deepEqual(blocked.targetIds, []);
+  assert.equal(blocked.blockedBy, 'wall');
+});
+
+test('a ground wave starts on landing and hits only the first two ground targets', () => {
+  const layout = { ...empty(), obstacles: [] }, pull = pullAt(25, .32);
+  const stone = { layout, pull, enemies: [], loadedCandyId: 'sea-wave-stone' };
+  const [wave] = planShot(stone).abilityContacts;
+  const direction = Math.sign(wave.end.x - wave.point.x);
+  layout.enemies = [circle('raised', { x: wave.point.x + direction * 180, y: wave.point.y - 70 }, 22),
+    ...[160, 240, 320].map((d, index) => circle(String(index), { x: wave.point.x + direction * d, y: wave.point.y }, 12))];
+  stone.enemies = living(layout.enemies.map(slot => slot.id));
+  assert.deepEqual(planShot(stone).abilityContacts[0].targetIds, ['0', '1']);
+  assert.equal(planShot({ ...stone, piercing: true }).abilityContacts, undefined);
+});
+
 test('scaled studio shot starts at the visibly scaled pouch and keeps five-diameter roll cap', () => {
   const layout = buildBattlefield({ area: 'forest', round: 1, enemies: [], worldScale: 1.5 });
   const pull = pullAt(32, .45);

@@ -671,6 +671,9 @@
       && Array.isArray(shotMeta?.riderFalls) ? shotMeta.riderFalls : [];
     const splashes = !spear && usedWeapon?.id === 'alchemist-candy' && Array.isArray(shotMeta?.abilityContacts)
       ? shotMeta.abilityContacts : [];
+    const travelKind = ({ 'chili-slash-stone': 'slash', 'sea-wave-stone': 'ground-wave' })[usedWeapon?.id];
+    const travelingAbility = !spear && travelKind
+      ? shotMeta?.abilityContacts?.find(contact => contact.kind === travelKind) : null;
     const childHits = !spear && usedWeapon?.id === 'wizard-orb' && Array.isArray(shotMeta?.childHits)
       ? shotMeta.childHits : [];
     const hasContactStream = Array.isArray(shotMeta?.contacts);
@@ -871,6 +874,20 @@
       addScore(state, scoreDelta);
       hits.push({ id: target.id, kind: target.kind, source: 'wizard-child', orbId: child.orbId,
         damage: 1, remainingHp: target.hp, defeated: !target.alive, scoreDelta });
+    } });
+    const travelingSeen = new Set(hitIds);
+    for (const hit of (travelingAbility?.hits ?? []).slice(0, travelKind === 'slash' ? 1 : 2)) timeline.push({ time: hit.time, order: 4, apply() {
+      if (travelingSeen.has(hit.id)) return;
+      travelingSeen.add(hit.id);
+      const target = state.enemies.find(enemy => enemy.id === hit.id && enemy.alive && enemy.hp > 0);
+      if (!target) return;
+      const removed = Math.min(target.hp, 1);
+      target.hp -= removed;
+      target.alive = target.hp > 0;
+      const scoreDelta = removed * (GRADE_MULTIPLIER[String(grade).toUpperCase()] || 1);
+      addScore(state, scoreDelta);
+      hits.push({ id: target.id, kind: target.kind, source: travelKind, damage: removed,
+        remainingHp: target.hp, defeated: !target.alive, scoreDelta });
     } });
     timeline.sort((a, b) => a.time - b.time || a.order - b.order).forEach(action => action.apply());
     if (windMode === 'storm' && directHitCount > 0) {
