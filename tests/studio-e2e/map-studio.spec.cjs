@@ -90,6 +90,7 @@ test('City preview and test play share enlarged monsters while grade selection s
   await page.getByLabel('테스트 스톤 등급').selectOption('A');
   await expect(page.locator('.studio-viewport .monster').first()).toHaveCSS('width', '207px');
   await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
+  await page.locator('[data-dev-tool="studio-battle-play"]').waitFor({ state: 'visible' });
   await expect(page.getByLabel('플레이 스톤 등급')).toHaveValue('A');
   await expect(page.locator('.battle-arena .monster').first()).toHaveCSS('width', '207px');
   await page.getByLabel('플레이 스톤 등급').selectOption('B');

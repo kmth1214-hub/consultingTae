@@ -12,7 +12,7 @@ async function enter(page, { area = 'forest', round = 1, characterId = 'adventur
   await page.getByLabel('테스트 쿠키').selectOption(characterId);
   if (special) await page.getByLabel('보스 특수 공격부터 확인').check();
   await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
-  await expect(page.locator('[data-dev-tool="studio-battle-play"]')).toBeVisible();
+  await page.locator('[data-dev-tool="studio-battle-play"]').waitFor({ state: 'visible' });
   await phase(page, 'idle');
 }
 
@@ -169,13 +169,15 @@ for (const area of ['snow', 'city']) test(`${area} obstacles play their real reg
   await dragPull(page, shot); await page.mouse.up();
   await expect(page.getByTestId(area === 'snow' ? 'obstacle-frost' : 'city-ground-chain').first()).toBeVisible();
   await page.screenshot({ path: `tmp/studio-play-${area}-effect.png` });
-  if (area === 'city') await expect(page.getByRole('heading', { name: '테스트 전투 완료', exact: true })).toBeVisible({ timeout: 20000 });
-  else await phase(page, 'idle');
+  await phase(page, 'idle');
   const trace = await snapshot(page);
   const event = trace.events.find(e => e.name === 'resolveProjectile').result;
   expect(event.obstacleEffects.some(effect => effect.kind === (area === 'snow' ? 'ice-guard' : 'jar-burst'))).toBe(true);
   if (area === 'snow') expect(event.enemyAttack.damageReduction).toBe(.5);
-  else expect(event.obstacleEffects.flatMap(effect => effect.hits).length).toBeGreaterThan(0);
+  else {
+    expect(event.obstacleEffects.flatMap(effect => effect.hits).length).toBeGreaterThan(0);
+    expect(trace.run.enemies.some(enemy=>enemy.alive)).toBe(true);
+  }
 });
 
 test('boss special can be the very next attack, and clearing a test never unlocks or submits real records', async ({ page }) => {
