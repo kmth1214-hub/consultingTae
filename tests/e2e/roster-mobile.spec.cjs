@@ -8,7 +8,7 @@ test('the expanded roster can launch and activate a Cherry bomb with touch', asy
   await page.getByRole('button', { name: '모험 시작' }).tap();
   await expect(page.locator('.character-card')).toHaveCount(12);
   await expect(page.locator('.character-card:disabled')).toHaveCount(4);
-  await page.getByRole('button', { name: /^체리 배달부 쿠키/ }).tap();
+  await page.getByRole('button', { name: /^체리맛 쿠키/ }).tap();
   const arena = page.getByRole('group', { name: '전투 맵' });
   await expect(arena.locator('.sling-loaded-candy [data-stone-id]')).toHaveAttribute('data-stone-id', 'cherry-bomb-stone');
   const bounds = await arena.boundingBox();
