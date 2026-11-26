@@ -6,7 +6,7 @@
 | :--- | :--- | :--- | :--- |
 | T01 | `done ✅` | 네 지역 2.5D 중경·길·전경 자산과 검증 계약 | [T01](./T01-studio-map-art.md) |
 | T02 | `done ✅` | 공통 입체 장면 렌더러와 관리자 미리보기 비교 | [T02](./T02-studio-preview-scene.md) |
-| T03 | `in_progress 🚀` | 관리자 테스트 플레이 연결과 전체 회귀 검증 | [T03](./T03-studio-play-and-validation.md) |
+| T03 | `done ✅` | 관리자 테스트 플레이 연결과 대상 검증 (전체 회귀는 배포 시) | [T03](./T03-studio-play-and-validation.md) |
 
 ## Progress
 
