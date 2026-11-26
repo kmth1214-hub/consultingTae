@@ -5,12 +5,12 @@ import { BattleEngine } from '../src/game/battleEngine.js';
 import { buildPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
 import { findPatrolContact, patrolX, planShot } from '../src/game/shotGeometry.js';
 
-test('city rounds replace exactly two robots without changing enemy totals or health', () => {
-  for (const [round, count] of [[1, 9], [2, 10]]) {
+test('city rounds use five/six enemies with one/two crows and unchanged health', () => {
+  for (const [round, count] of [[1, 5], [2, 6]]) {
     const enemies = BattleEngine.createRoundEnemies('city', round, { rng: () => .5 });
     assert.equal(enemies.length, count);
-    assert.equal(enemies.filter(enemy => enemy.kind === 'clockwork-crow').length, 2);
-    assert.equal(enemies.filter(enemy => enemy.kind === 'washing-robot').length, count - 2);
+    assert.equal(enemies.filter(enemy => enemy.kind === 'clockwork-crow').length, round);
+    assert.equal(enemies.filter(enemy => enemy.kind === 'washing-robot').length, count - round);
     assert.ok(enemies.every(enemy => enemy.hp === 4 && enemy.maxHp === 4 && !enemy.isBoss));
   }
   assert.equal(BattleEngine.createRoundEnemies('city', 3)[0].kind, 'oven-robot');
@@ -23,7 +23,7 @@ test('city crows are airborne, apart from obstacles and other enemies', () => {
     const layout = buildPlayableBattlefield({ area: 'city', round, enemies, seed,
       prototype: 'regional-elevated-v1', worldScale: 1.5 });
     const birds = layout.enemies.filter(enemy => enemy.kind === 'clockwork-crow');
-    assert.equal(birds.length, 2);
+    assert.equal(birds.length, round);
     for (const bird of birds) {
       assert.ok(bird.y < layout.groundY - bird.size);
       assert.equal(bird.supportObstacleId, undefined);

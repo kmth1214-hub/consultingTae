@@ -52,7 +52,8 @@ test('real obstacle contacts apply each regional effect with fixed RNG', async (
       expectedHp: [20 - ([3, 0, 2, 0][index])], expectedScore: 0, expectedBonus: [3, 0, 2, 0][index] }))
   ];
   for (const scenario of cases) {
-    await installGame(page, { random: scenario.random, layoutSeed: 4927, stateOverride: {
+    const basic={id:'basic-stone',name:'기본 스톤',grade:'C'};
+    await installGame(page, { random: scenario.random, layoutSeed: 4927, initial:{weapons:[basic,basic,basic]}, stateOverride: {
       area: scenario.area, round: scenario.round || 1, bonusMode: Boolean(scenario.bonusMode),
       enemies: scenario.enemies
     } });
@@ -69,9 +70,12 @@ test('real obstacle contacts apply each regional effect with fixed RNG', async (
     expect(trace.lastEvent.obstacleEffects.length).toBeGreaterThan(0);
     expect(trace.run.toppledObstacleIds.length).toBeGreaterThan(0);
     const expectedHp = scenario.area === 'forest' ? scenario.enemies.map(item =>
-      item.hp - (options.shot.contacts.some(c => c.logHit?.id === item.id) ? 3 : 0)) : scenario.expectedHp;
+      item.hp - (options.shot.contacts.some(c => c.logHit?.id === item.id) ? 3 : 0))
+      : scenario.area === 'city' ? scenario.enemies.map(item=>item.hp-2*options.shot.contacts
+        .filter(contact=>contact.blast?.targetIds.includes(item.id)).length) : scenario.expectedHp;
     expect(trace.run.enemies.map(item => item.hp)).toEqual(expectedHp);
-    expect(trace.run.score).toBe(scenario.expectedScore);
+    expect(trace.run.score).toBe(scenario.area==='city'
+      ? scenario.enemies.reduce((sum,item,index)=>sum+item.hp-expectedHp[index],0) : scenario.expectedScore);
     expect(trace.run.bonusScore).toBe(scenario.expectedBonus);
     if (scenario.effect === 'ice-guard') expect(trace.lastEvent.enemyAttack.damageReduction).toBe(.5);
     await page.reload();

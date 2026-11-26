@@ -62,6 +62,7 @@ test('borrowed Wind stones charge themselves and only use Q storm without cooldo
 
 test('chain starts at actual last Spear contact, uses Fireball damage, and falls to zero', () => {
   const state=run('wizard',['wind-candy','wind-candy'], 'city', 1);
+  state.enemies.push({...state.enemies[0],id:'chain-fixture-sixth',kind:'washing-robot'});
   state.windCharge=4;
   const ids=state.enemies.map(enemy=>enemy.id);
   assert.equal(engine.armWindSkill(state).mode,'storm');

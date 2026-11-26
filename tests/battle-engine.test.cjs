@@ -245,12 +245,14 @@ test('Snow ice halves the next attack once and a blocked attack consumes the gua
   assert.equal(state.nextAttackDamageMultiplier, null);
 });
 
-test('City jars deal injected 1–2 damage to every living enemy and score the actual HP removed', () => {
+test('City jars damage supplied in-range targets and score only the actual HP removed', () => {
   const state = engine.createRunState({ area: 'city', round: 1, rng: () => 0 });
   state.enemies = state.enemies.slice(0, 2);
   state.enemies[0].hp = 1;
   const event = engine.resolveProjectile(state, { hitIds: [], damage: 0, weaponGrade: 'C', rng: () => .999,
-    shotMeta: { impactKind: 'obstacle', obstacleId: 'jar-stack', obstacleKind: 'crate', obstacleTargetIds: [], rolling: false, reverse: false } });
+    shotMeta: { impactKind: 'obstacle', obstacleId: 'jar-stack', obstacleKind: 'crate', obstacleTargetIds: [], rolling: false, reverse: false,
+      contacts:[{obstacleId:'jar-stack',obstacleKind:'crate',time:1,
+        blast:{point:{x:1000,y:800},radius:420,time:1,targetIds:state.enemies.map(enemy=>enemy.id)}}] } });
   assert.equal(event.obstacleEffect.kind, 'jar-burst');
   assert.deepEqual(event.obstacleEffect.hits.map(hit => hit.damage), [1, 2]);
   assert.deepEqual(event.hits.map(hit => hit.scoreDelta), [1, 2]);
@@ -319,6 +321,8 @@ test('each new City chain prop bursts once, retains its pose, and Snow guards re
     const kind = area === 'city' ? 'crate' : 'ice';
     const contacts = ['a', 'b', 'b'].map((id, i) => ({ obstacleId: id, obstacleKind: kind,
       time: .2 + i * .2, obstacleTargetIds: [], obstacleEndPose: { x: 900 + i * 150, y: 860, angle: 1.57 } }));
+    if (area === 'city') contacts.forEach(contact => { contact.blast = {
+      point:{x:1000,y:800},radius:420,time:contact.time,targetIds:state.enemies.map(enemy=>enemy.id) }; });
     const options = { damage: 0, hitIds: [], rng: () => .5, shotMeta: { contacts, directHitTime: .3 } };
     const event = engine.resolveProjectile(state, options);
     assert.equal(event.obstacleEffects.length, 2);

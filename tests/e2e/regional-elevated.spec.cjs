@@ -2,6 +2,7 @@ const { test, expect, installGame, start, phase, snapshot, dragPull } = require(
 const { BattleEngine } = require('../../src/game/battleEngine.js');
 const { buildPlayableBattlefield } = require('../../src/game/battlefieldPlacement.js');
 const { planShot } = require('../../src/game/shotGeometry.js');
+const {preparePhysicalFlight}=require('../../src/game/shotResolution.js');
 
 for (const [area, round, expected] of [
   ['forest', 1, 0], ['forest', 2, 1], ['snow', 1, 0], ['snow', 2, 1],
@@ -27,13 +28,15 @@ test('a public Snow support hit drops its rider, applies frost guard and moves t
   const layout = buildPlayableBattlefield({ area: 'snow', round: 2, enemies, seed: 0,
     prototype: 'regional-elevated-v1', worldScale: 1.5 });
   const support = layout.obstacles.find(item => item.supportsEnemyId);
+  const planningRun=BattleEngine.createRunState({area:'snow',round:2,rng:()=>.5});
+  Object.assign(planningRun,{enemies,layoutSeed:0,battlefieldPrototype:'regional-elevated-v1',battlefieldWorldScale:1.5});
   let target;
   for (let angleDeg = 0; angleDeg <= 80 && !target; angleDeg += 2.5)
     for (let step = 1; step <= 20 && !target; step++) {
       const radians = angleDeg * Math.PI / 180;
       const powerRatio = step / 20;
-      const shot = planShot({ layout, enemies, pull: { ready: true, powerRatio,
-        direction: { x: Math.cos(radians), y: -Math.sin(radians) } } });
+      const shot = preparePhysicalFlight(planningRun,{ ready: true, powerRatio,
+        direction: { x: Math.cos(radians), y: -Math.sin(radians) } },1,1,1000);
       if (shot?.contacts.some(contact => contact.obstacleId === support.id && contact.riderMotion)
         && !shot.hitIds.length) target = { angleDeg, powerRatio };
     }

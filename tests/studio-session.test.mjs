@@ -107,7 +107,7 @@ test('studio City monsters alone gain a further 1.5 scale with matching hit coll
     const windField = buildWindField({ area: 'city', round, layoutSeed: run.layoutSeed,
       shotOrdinal: run.playerShotsFired, layout });
     const expected = planShot({ layout, pull, enemies: run.enemies, flightStartMs: 1000,
-      windField, deferAbility: true, prototype: run.studioPrototype,
+      windField, deferAbility: false, prototype: run.studioPrototype,
       loadedCandyId: loaded.id, loadedCandyGrade: loaded.grade });
     const flight = preparePhysicalFlight(run, pull, 1, 1, 1000);
     assert.deepEqual(flight.path, expected.path);

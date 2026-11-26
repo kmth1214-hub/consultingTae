@@ -73,7 +73,8 @@ test('Spear applies obstacle and enemy contacts in actual chronological order an
   engine.useConsumable(run,'spear');
   const [first,second]=run.enemies;
   const result=engine.resolveProjectile(run,{damage:4,hitIds:[first.id],rng:()=>.5,
-    shotMeta:{contacts:[{obstacleId:'jar',obstacleKind:'crate',time:2}],
+    shotMeta:{contacts:[{obstacleId:'jar',obstacleKind:'crate',time:2,
+      blast:{point:{x:1000,y:800},radius:420,time:2,targetIds:[second.id]}}],
       directHitTime:3,enemyContacts:[{id:first.id,time:1}]}});
   assert.equal(result.hits[0].id,first.id);assert.equal(result.hits[0].damage,1);
   assert.equal(run.enemies[1].hp,18); // only the jar's legitimate regional effect

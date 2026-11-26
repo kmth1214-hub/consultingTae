@@ -22,7 +22,7 @@ test('seeded round layouts stay stable, avoid overlaps and remain playable at de
           assert.equal(layout.width, 3600);
           assert.deepEqual(layout.player, { x: 44, y: 748, width: 152, height: 152,
             impact: { x: 120, y: 824 }, contact: { x: 170, y: 900 } });
-          assert.ok(layout.obstacles.length >= 2 && layout.obstacles.length <= 4);
+          assert.ok(layout.obstacles.length >= 2 && layout.obstacles.length <= (area === 'city' && round === 2 ? 5 : 4));
           assert.equal(new Set(layout.obstacles.map(o => o.id)).size, layout.obstacles.length);
           for (const [i, enemy] of layout.enemies.entries()) {
             assert.equal(enemy.kind, enemies[i].kind);
@@ -36,7 +36,8 @@ test('seeded round layouts stay stable, avoid overlaps and remain playable at de
           for (const [i, prop] of layout.obstacles.entries()) {
             assert.equal(prop.kind, area === 'chaos' ? ['log', 'ice', 'crate'][i % 3]
               : { forest: 'log', snow: 'ice', city: 'crate' }[area]);
-            assert.equal(prop.id, `${area}-${round}-obstacle-${i}`);
+            assert.ok(prop.id === `${area}-${round}-obstacle-${i}`
+              || area === 'city' && round === 2 && prop.id === 'city-2-chain-crate');
             assert.equal(prop.width, 80);
             assert.ok(prop.height >= (enemies.length <= 6 ? 92 : 60) * 1.5);
             assert.ok(prop.height <= (enemies.length <= 6 ? 92 : 60) * 2);

@@ -88,7 +88,7 @@ test('other regions use their own public elevated mode', () => {
     assert.equal(layout.prototype, 'regional-elevated-v1');
     const expected = round === 3 ? 0 : area === 'chaos' ? layout.enemies.length > 10 ? 3 : 2 : round === 2 ? 1 : 0;
     assert.equal(layout.enemies.filter(enemy => enemy.y < layout.groundY).length,
-      expected + (area === 'city' && round < 3 ? 2 : 0));
+      expected + (area === 'city' && round < 3 ? round : 0));
   }
 });
 

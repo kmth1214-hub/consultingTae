@@ -40,6 +40,7 @@ test('preview and committed flight use identical altered geometry and physical c
     const windField=buildWindField({area:run.area,round:run.round,layoutSeed:run.layoutSeed,
       shotOrdinal:run.playerShotsFired,layout});
     const preview = planShot({ layout, pull, enemies: run.enemies,
+      loadedCandyId:run.weapons[0].id,loadedCandyGrade:run.weapons[0].grade,
       windField,flightStartMs:1000,
       ...shotDisruptionOptions(run), toppledObstacleIds: run.toppledObstacleIds });
     const flight = preparePhysicalFlight(run, pull, 1, 1, 1000);

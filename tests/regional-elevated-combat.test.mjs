@@ -4,6 +4,7 @@ import { BattleEngine } from '../src/game/battleEngine.js';
 import { createGameSession } from '../src/game/gameSession.js';
 import { buildPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
 import { planShot } from '../src/game/shotGeometry.js';
+import { preparePhysicalFlight } from '../src/game/shotResolution.js';
 
 const sessionFor = (area, round, seed = 0) => {
   const session = createGameSession({ rng: () => .5, layoutRng: () => seed / 0x100000000,
@@ -18,12 +19,12 @@ const sessionFor = (area, round, seed = 0) => {
   return session;
 };
 
-const pullFor = (layout, enemies, supportId) => {
+const pullFor = (layout, enemies, supportId, run) => {
   for (let angle = 0; angle <= 80; angle += 2.5) for (let step = 1; step <= 20; step++) {
     const radians = angle * Math.PI / 180;
     const pull = { ready: true, powerRatio: step / 20,
       direction: { x: Math.cos(radians), y: -Math.sin(radians) } };
-    const shot = planShot({ layout, enemies, pull });
+    const shot = run ? preparePhysicalFlight(run,pull,1,1,1000) : planShot({ layout, enemies, pull });
     if (shot?.contacts.some(contact => contact.obstacleId === supportId && contact.riderMotion)
       && shot.hitIds.length === 0) return pull;
   }
@@ -39,7 +40,7 @@ test('actual public shots topple each regional support, cause one fall and retai
       worldScale: before.battlefieldWorldScale });
     const support = layout.obstacles.find(item => item.supportsEnemyId);
     assert.ok(support);
-    const pull = pullFor(layout, before.enemies, support.id);
+    const pull = pullFor(layout, before.enemies, support.id, before);
     const reservation = session.actions.beginShot({ launchId: 1, pull });
     assert.equal(reservation.accepted, true);
     const contact = reservation.flight.contacts.find(item => item.obstacleId === support.id);
@@ -67,7 +68,7 @@ test('a regional fall cannot be fabricated by the caller', () => {
     seed: before.layoutSeed, prototype: before.battlefieldPrototype,
     worldScale: before.battlefieldWorldScale });
   const support = layout.obstacles.find(item => item.supportsEnemyId);
-  const pull = pullFor(layout, before.enemies, support.id);
+  const pull = pullFor(layout, before.enemies, support.id, before);
   const reservation = session.actions.beginShot({ launchId: 1, pull });
   assert.equal(reservation.accepted, true);
   const event = session.actions.fireShot({ shotId: reservation.shotId, encounterId: reservation.encounterId,
