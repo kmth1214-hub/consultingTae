@@ -37,7 +37,7 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
     windField,windCrossed:crossedWindZone(solution.path,windField,solution.impactDistance),
     enemyOrder:layout.enemies.slice().sort((a,b)=>a.collider.x-b.collider.x||a.id.localeCompare(b.id)).map(slot=>slot.id),
     loadedStoneId:loaded?.id??'basic-stone',
-    candyRadius:layout.candyRadius,
+    candyRadius:solution.candyRadius,
     fireball:run.fireballArmed,projectileKind:run.spearArmed?'spear':run.fireballArmed?'fireball':'normal'} : null;
 }
 

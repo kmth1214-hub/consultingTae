@@ -1,6 +1,6 @@
 # Task: T01 용감한 가속과 딸기맛 확장 충돌
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -78,6 +78,6 @@ Task: T01-dash-and-wide-collider
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 지정 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 지정 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

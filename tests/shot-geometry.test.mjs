@@ -17,6 +17,42 @@ const box = (id, x, y, w, h) => ({ id, polygon: [{ x, y }, { x: x + w, y },
 const circle = (id, p, radius = 10) => ({ id, collider: { id, x: p.x, y: p.y, radius } });
 const living = ids => ids.map(id => ({ id, alive: true, hp: 4 }));
 
+test('dash preserves the pre-boost path and changes horizontal speed by grade in either direction', () => {
+  const layout = { ...empty(), obstacles: [] };
+  for (const angle of [35, 145]) {
+    const pull = pullAt(angle, .45);
+    const input = { layout, pull, enemies: [] };
+    const base = planShot(input);
+    const vx = pull.direction.x * getLaunchSpeed(pull.powerRatio);
+    for (const [grade, multiplier] of [['C', 1.12], ['B', 1.18], ['A', 1.24]]) {
+      const stone = { ...input, loadedCandyId: 'ginger-dash-stone', loadedCandyGrade: grade };
+      const shot = planShot(stone);
+      const before = sampleAtTime(base.path, .25), during = sampleAtTime(shot.path, .25);
+      close(during.x, before.x);
+      const boost = sampleAtTime(shot.path, .45);
+      close(boost.x - during.x, .20 * vx * multiplier);
+      close(boost.y, sampleAtTime(base.path, .45).y);
+      assert.equal(planShot({ ...stone, piercing: true }).physicsModifier, null);
+    }
+  }
+});
+
+test('the lollipop radius changes real contacts and remains unscaled for Spear', () => {
+  const layout = { ...empty(), obstacles: [] };
+  const pull = pullAt(35, .45);
+  const base = planShot({ layout, pull, enemies: [] });
+  const at = sampleAtTime(base.path, .5), after = sampleAtTime(base.path, .501);
+  const length = Math.hypot(after.y - at.y, after.x - at.x);
+  const offset = layout.candyRadius * 1.37 + 1;
+  const collider = circle('edge', { x: at.x - offset * (after.y - at.y) / length,
+    y: at.y + offset * (after.x - at.x) / length }, 1);
+  const input = { layout: { ...layout, enemies: [collider] }, pull, enemies: living(['edge']),
+    loadedCandyId: 'strawberry-lollipop-stone' };
+  assert.deepEqual(planShot({ ...input, loadedCandyGrade: 'B' }).hitIds, []);
+  assert.deepEqual(planShot({ ...input, loadedCandyGrade: 'A' }).hitIds, ['edge']);
+  assert.equal(planShot({ ...input, loadedCandyGrade: 'A', piercing: true }).candyRadius, layout.candyRadius);
+});
+
 test('scaled studio shot starts at the visibly scaled pouch and keeps five-diameter roll cap', () => {
   const layout = buildBattlefield({ area: 'forest', round: 1, enemies: [], worldScale: 1.5 });
   const pull = pullAt(32, .45);
