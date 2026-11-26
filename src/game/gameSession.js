@@ -25,6 +25,8 @@ const REASONS = {
   'wrong-stone': '바람궁수 전용 스톤을 장전해야 Q를 사용할 수 있어요.',
   'not-charged': '바람을 4점 모으면 연쇄 폭풍을 사용할 수 있어요.',
   cooldown: '바람 기술이 재사용 대기 중이에요.',
+  'stone-unavailable': '이번 라운드에 이미 사용한 스톤이에요.',
+  'wind-armed': '준비한 바람 기술을 발사한 뒤 장전을 바꿀 수 있어요.',
   'spear-armed': '창 관통을 준비한 발사에는 자동 유도를 사용할 수 없어요.',
   'profile-unavailable': '계정 기록을 확인하거나 저장하고 있어요. 잠시 후 다시 시도해 주세요.'
 };
@@ -186,6 +188,16 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       publish({ aim });
     },
     resetAim() { pendingShot = null; publish({ aim: initialAim() }); },
+    loadStone(instanceId) {
+      if (state.screen !== 'battle' || state.run?.terminal || state.aim.phase !== 'idle'
+        || pendingShot || state.shotReview || state.enemyResponse || state.bossTransition)
+        return reject('invalid-state');
+      const run = structuredClone(state.run);
+      const result = engine.loadStone(run, instanceId);
+      if (!result.accepted) return reject(result.reason);
+      publish({ run, notification: null });
+      return result;
+    },
     armWindSkill() {
       if (state.screen !== 'battle' || !state.run || state.enemyResponse || state.shotReview
         || state.bossTransition || pendingShot) return reject('invalid-state');

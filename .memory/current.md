@@ -2,21 +2,20 @@
 
 ## Active Plan
 
-[쿠키 12종과 전용 스톤 7종](./plans/2026-11-26-twelve-cookie-roster-and-signature-stones.md)
+[눈·도시 전투 개선과 스톤 보관함](./plans/2026-11-26-snow-city-battle-pacing-and-stone-rack.md)
 
 ## Active Phase
 
-[P03-presentation-and-verification](./phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P03-presentation-and-verification/phase.md)
+[P01 지역 전투와 스톤 보관함](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/phase.md)
 
 ## Active Task
 
-기능 구현 완료
+[T02 세로 보관함과 A·D·Space 조작](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T02-stone-rack-interface.md)
 
 ## Status
 
-- T02 12종 선택·슬롯·발사 통합 검증 구현·지정 검증 완료.
-- 사용자 제공 캐릭터 일러스트 5종을 선택·전투·결과 화면에 연결 완료.
+- T01 지정 검증 통과. done: 1/7.
 
 ## Next Step (IMPORTANT)
 
-로컬에서 캐릭터 선택·전투 화면을 검토한다.
+T02 세로 보관함과 A·D·Space 조작 청사진을 읽고 구현한다.

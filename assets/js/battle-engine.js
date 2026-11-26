@@ -204,6 +204,8 @@
       toppledObstacleIds: [], forestLogDebris: [], obstacleDebris: [], enemyPositionOverrides: {}
     };
     refillWeaponQueue(state,config.rng);
+    state.weaponQueue = state.weaponQueue.slice(0, state.ammo);
+    state.currentWeaponId = state.weaponQueue[0] || null;
     return state;
   }
 
@@ -213,10 +215,21 @@
     return result;
   }
   function refillWeaponQueue(state,rng) {
-    state.weaponQueue=shuffle(state.weapons.map(weapon=>weapon.instanceId),typeof rng==='function'?rng:Math.random);
+    state.weaponQueue=state.weapons.map(weapon=>weapon.instanceId);
     state.currentWeaponId=state.weaponQueue[0]||null;
   }
-  function getCurrentWeapon(state) { return state&&state.weapons.find(weapon=>weapon.instanceId===state.currentWeaponId)||state&&state.weapons[0]||null; }
+  function getCurrentWeapon(state) { return state?.weapons.find(weapon=>weapon.instanceId===state.currentWeaponId)||null; }
+
+  function loadStone(state, instanceId) {
+    if (!state || state.terminal || state.ammo <= 0) return { accepted: false, reason: 'invalid-state' };
+    if (state.windArmedMode) return { accepted: false, reason: 'wind-armed' };
+    if (!state.weaponQueue?.includes(instanceId)) return { accepted: false, reason: 'stone-unavailable' };
+    const available = new Set(state.weaponQueue);
+    state.weaponQueue = [instanceId, ...state.weapons.filter(weapon => available.has(weapon.instanceId)
+      && weapon.instanceId !== instanceId).map(weapon => weapon.instanceId)];
+    state.currentWeaponId = instanceId;
+    return { accepted: true, instanceId };
+  }
 
   function armWindSkill(state) {
     if (!state || state.terminal || state.ammo <= 0 || state.windArmedMode) return {accepted:false,reason:'invalid-state'};
@@ -574,6 +587,8 @@
     } else if (!event.blocked && special === 'oven-overheat') {
       const previousAmmo = state.ammo;
       state.ammo = Math.max(0, state.ammo - 1);
+      state.weaponQueue.shift();
+      state.currentWeaponId = state.weaponQueue[0] || null;
       event.ammoLost = previousAmmo - state.ammo;
       const previousHp = enemy.hp;
       enemy.hp = Math.min(enemy.maxHp, enemy.hp + 3);
@@ -632,12 +647,10 @@
     const permanent = config.source !== 'spear' && !spear;
     state.consumableUsedSinceShot = false;
     state.ammo = Math.max(0, state.ammo - 1);
-    if(!state.weaponQueue.length)refillWeaponQueue(state,config.rng);
     const usedWeaponId=state.weaponQueue.shift();
     const usedWeapon=state.weapons.find(weapon=>weapon.instanceId===usedWeaponId);
     const grade=config.weaponGrade||(usedWeapon&&usedWeapon.grade)||'C';
     state.currentWeaponId=state.weaponQueue[0]||null;
-    if(!state.weaponQueue.length)refillWeaponQueue(state,config.rng);
     state.turnNumber += 1;
     const rolledDamage = config.damage === undefined
       ? spear ? randomInt(typeof config.rng === 'function' ? config.rng : Math.random, 2, 5)
@@ -1033,6 +1046,7 @@
     createRoundEnemies,
     createRunState,
     getCurrentWeapon,
+    loadStone,
     grantWeapon,
     drawRewardChoices,
     spinRewardSlot,

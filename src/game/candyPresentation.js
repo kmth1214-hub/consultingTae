@@ -50,5 +50,5 @@ export function getCandyDetails(run) {
         && (!run.windCooldownShots || run.characterId !== 'wind')
         && (run.characterId === 'wind' || run.windCharge >= 4) } : null;
   return { current: describe(weapon), currentAbility, damage: { ...range, multiplier }, wind,
-    next: next ? describe(next) : null, reshuffleNext: queue.length <= 1, buffs, passives };
+    next: next ? describe(next) : null, reshuffleNext: false, buffs, passives };
 }

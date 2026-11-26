@@ -207,7 +207,7 @@ test('camp stone choice offers exactly two spins before next region', () => {
   assert.equal(session.getSnapshot().screen, 'battle');
   assert.equal(session.getSnapshot().run.area, 'snow');
   assert.equal(session.getSnapshot().run.ammo, beforeConfirm);
-  assert.ok(rolls > rollsBeforeConfirm);
+  assert.equal(rolls, rollsBeforeConfirm, 'acquisition-order loading does not consume shuffle RNG');
   const rollsAfterEntry = rolls;
   assert.equal(session.actions.continueAfterCampSlot().accepted, false);
   assert.equal(rolls, rollsAfterEntry);
