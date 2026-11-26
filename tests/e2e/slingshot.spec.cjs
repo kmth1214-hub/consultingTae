@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }, testInfo) => {
   const windCase = testInfo.title.startsWith('Wind bypasses');
   const basic = { id: 'basic-stone', name: '기본 스톤', grade: 'C' };
   const wind = { id: 'wind-candy', name: '바람궁수의 사탕', grade: 'C' };
-  await installGame(page, windCase ? { initial: { characterId: 'wind', weapons: [basic, basic, wind] } } : {});
+  await installGame(page, windCase ? { initial: { characterId: 'wind', weapons: [basic, wind, basic] } } : {});
   if (windCase) await page.addInitScript(() => localStorage.setItem('cookie-roguelike.profile.v1', JSON.stringify({ version: 1, snowAreaCleared: true })));
   await start(page, windCase ? '바람궁수 쿠키' : '모험가맛 쿠키');
 });

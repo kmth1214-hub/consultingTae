@@ -4,7 +4,8 @@ for (const [area, material] of [['forest', 'log'], ['snow', 'ice'], ['city', 'cr
   test(`${area} stack topples, keeps its regional effect, and remains as debris`, async ({ page }) => {
     await installGame(page, { initial: { area }, layoutSeed: 4927 });
     await start(page);
-    await dragPull(page, await stackShot({ area, seed: 4927, physical: area === 'forest' }));
+    const options = await stackShot({ area, seed: 4927, physical: area === 'forest' });
+    await dragPull(page, options);
     await page.mouse.up();
     await phase(page, 'launching');
     const battle = arena(page);
@@ -23,7 +24,15 @@ for (const [area, material] of [['forest', 'log'], ['snow', 'ice'], ['city', 'cr
     const effectHits = trace.lastEvent.obstacleEffects.flatMap(effect => effect.hits);
     if (area === 'forest') expect(effectHits[0].damage).toBe(3);
     if (area === 'snow') expect(trace.lastEvent.enemyAttack.damageReduction).toBe(.5);
-    if (area === 'city' || area === 'chaos') {
+    if (area === 'city') {
+      for (const effect of trace.lastEvent.obstacleEffects) {
+        const blast = options.shot.contacts.find(contact => contact.obstacleId === effect.obstacleId).blast;
+        expect(effect.hits.map(hit => hit.id)).toEqual(blast.targetIds);
+        expect(effect.hits.every(hit => hit.damage === 2)).toBe(true);
+      }
+      expect(effectHits.length).toBeLessThan(trace.run.enemies.length);
+    }
+    if (area === 'chaos') {
       expect(effectHits.map(hit => hit.damage)).toEqual(trace.run.enemies.map(() => 2));
     }
     expect(area === 'chaos' ? trace.run.bonusScore : trace.run.score)
