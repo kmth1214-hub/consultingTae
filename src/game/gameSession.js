@@ -116,7 +116,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       || Math.abs(simulationTime - base.abilityDeadlineTime) > 1e-3))
       return { accepted: false, reason: 'invalid-state' };
     let success = false;
-    if (base.abilityKindPending === 'explosion') {
+    if (base.abilityKindPending === 'explosion' && ['click', 'space'].includes(source)) success = true;
+    else if (base.abilityKindPending === 'explosion') {
       const chance = ({ C: .2, B: .45, A: .7 })[base.weaponGrade] ?? .2;
       const sample = Number(rng());
       if (!Number.isFinite(sample) || sample < 0 || sample >= 1) return { accepted: false, reason: 'invalid-state' };

@@ -14,6 +14,11 @@ function realShot(angle = -5, power = .6) {
 }
 
 test('signature effects follow their reserved flight timestamps and omit future positions', () => {
+  const dash={ physicsModifier:{kind:'dash',startTime:.25},directHitTime:1 };
+  assert.equal(getSignaturePlaybackFrame(dash,.249).dashBurstProgress,null);
+  assert.equal(getSignaturePlaybackFrame(dash,.25).dashBurstProgress,0);
+  assert.ok(Math.abs(getSignaturePlaybackFrame(dash,.4).dashBurstProgress-.5)<1e-9);
+  assert.equal(getSignaturePlaybackFrame(dash,.551).dashBurstProgress,null);
   const travel = { kind: 'ground-wave', time: .4, endTime: .8, point: { x: 0, y: 20 }, end: { x: 80, y: 20 } };
   assert.equal(getSignaturePlaybackFrame({ abilityContacts: [travel] }, .39).travelPoint, null);
   const head = getSignaturePlaybackFrame({ abilityContacts: [travel] }, .5).travelPoint;

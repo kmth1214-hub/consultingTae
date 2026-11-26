@@ -10,12 +10,12 @@
 
 ## Active Task
 
-[T06 가속·회전 표시와 수동 폭발 보상](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T06-signature-stone-feedback.md)
+[T07 전투 흐름 통합과 규칙 동기화](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T07-integration-and-rule-sync.md)
 
 ## Status
 
-- T05 지정 검증 통과. done: 5/7.
+- T06 지정 검증 통과. done: 6/7.
 
 ## Next Step (IMPORTANT)
 
-T06 가속·회전 표시와 수동 폭발 보상 청사진을 읽고 구현한다.
+T07 전투 흐름 통합과 규칙 동기화 청사진을 읽고 구현한다.

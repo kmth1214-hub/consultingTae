@@ -31,6 +31,12 @@ test('Wizard HUD describes split orb damage in the regular game', () => {
   assert.match(getCandyDetails(state).currentAbility, /공통 피해/);
 });
 
+test('Alchemist HUD distinguishes guaranteed manual explosion from automatic grade chance', () => {
+  const state=BattleEngine.createRunState({characterId:'alchemist',rng:()=>.5});
+  assert.match(getCandyDetails(state).currentAbility,/수동 폭발은 확정 성공/);
+  assert.match(getCandyDetails(state).currentAbility,/자동 폭발.*20%/);
+});
+
 test('HUD ranges use the actual engine roll endpoints for every grade and zero protection', () => {
   for (const [grade, expected] of [['C', [0, 4]], ['B', [1, 6]], ['A', [2, 10]]]) {
     const state = run(grade), details = getCandyDetails(state);

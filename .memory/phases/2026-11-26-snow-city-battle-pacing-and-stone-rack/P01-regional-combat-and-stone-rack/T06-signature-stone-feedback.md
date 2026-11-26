@@ -1,6 +1,6 @@
 # Task: T06 가속·회전 표시와 수동 폭발 보상
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -67,9 +67,9 @@ getSignaturePlaybackFrame(flight: PhysicalFlight, time: number): SignatureFrame;
 
 ## Acceptance Criteria
 
-- [ ] 연금술사 수동 폭발은 실제 범위 내 적에게만 피해 1을 확정한다.
-- [ ] 자동 성공률과 다른 쿠키의 발동 경로가 유지된다.
-- [ ] 가속과 실제 넓은 충돌 범위를 데스크톱·휴대폰에서 읽을 수 있다.
+- [x] 연금술사 수동 폭발은 실제 범위 내 적에게만 피해 1을 확정한다.
+- [x] 자동 성공률과 다른 쿠키의 발동 경로가 유지된다.
+- [x] 가속과 실제 넓은 충돌 범위를 데스크톱·휴대폰에서 읽을 수 있다.
 
 ## Validation
 
@@ -92,6 +92,6 @@ Task: T06-signature-stone-feedback
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

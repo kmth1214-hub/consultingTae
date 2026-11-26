@@ -141,8 +141,8 @@ test('only a reserved Alchemist activation can supply explosion contacts; Spear 
  assert.equal(spear.flight.abilityContacts,undefined);
 });
 
-test('Alchemist activation consumes the stone at its actual point, with one grade roll', () => {
- for (const [roll, success] of [[.1, true], [.9, false]]) {
+test('Alchemist manual activation consumes the stone at its actual point without a grade roll', () => {
+ for (const [roll, success] of [[.1, true], [.9, true]]) {
   let draws = 0;
   const session = createStudioSession({area:'forest',round:1,characterId:'alchemist',seed:0},
    {rng:()=>{draws++;return roll;},now:()=>1000});
@@ -159,7 +159,7 @@ test('Alchemist activation consumes the stone at its actual point, with one grad
   const activated=session.actions.activateFlightAbility({shotId:reserved.shotId,
    encounterId:reserved.encounterId,simulationTime:time,source:'click'});
   assert.equal(activated.accepted,true);
-  assert.equal(draws,before+1);
+  assert.equal(draws,before);
   assert.equal(activated.flight.abilityActivation.success,success);
   assert.equal(activated.flight.abilityActivation.radius,300);
   assert.equal(activated.flight.abilityContacts[0].success,success);
@@ -192,6 +192,27 @@ test('Alchemist auto contact and delayed ground activation obey the reserved dea
  assert.equal(event.shotMeta.abilityContacts[0].kind,'explosion');
  assert.equal(event.shotMeta.abilityContacts[0].success,false);
  assert.deepEqual(event.shotMeta.abilityContacts[0].targetIds,[]);
+});
+
+test('all Alchemist grades guarantee manual click/space while automatic boundaries roll once',()=>{
+ for(const [grade,chance,radius] of [['C',.2,300],['B',.45,375],['A',.7,450]])
+ for(const source of ['click','space','auto-ground']) for(const roll of [chance-.001,chance]){
+  let draws=0;
+  const session=createStudioSession({area:'forest',round:1,characterId:'alchemist',weaponGrade:grade,seed:0},
+   {rng:()=>{draws++;return roll;}});
+  const r=session.actions.beginShot({launchId:99,pull:{ready:true,powerRatio:.08,direction:{x:1,y:.1}}});
+  assert.equal(r.accepted,true);
+  const time=source==='auto-ground'?r.flight.abilityDeadlineTime:.01;
+  const before=draws;
+  const options={shotId:r.shotId,encounterId:r.encounterId,simulationTime:time,source};
+  const result=session.actions.activateFlightAbility(options);
+  assert.equal(result.accepted,true);
+  assert.equal(draws-before,source==='auto-ground'?1:0);
+  assert.equal(result.flight.abilityActivation.success,source!=='auto-ground'||roll<chance);
+  assert.equal(result.flight.abilityActivation.radius,radius);
+  assert.equal(session.actions.activateFlightAbility(options).accepted,false);
+  assert.equal(draws-before,source==='auto-ground'?1:0);
+ }
 });
 
 test('a reserved Wizard shot owns its two child trajectories and rejects fabricated child metadata', () => {

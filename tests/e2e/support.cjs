@@ -50,6 +50,7 @@ async function installGame(page, fixture = {}) {
             // Explicit abstract fixture for screen progression, not a physical shot.
             shotMeta: undefined, hitIds: real.getLivingEnemies(args[0]).map(enemy => enemy.id) };
           const result = real[name](...args);
+          if (name === 'resolveProjectile') trace.lastShotMeta = structuredClone(args[1]?.shotMeta);
           trace.run = structuredClone(args[0]);
           trace.lastAction = name;
           trace.lastEvent = structuredClone(result);

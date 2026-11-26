@@ -15,6 +15,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
   const rollDustRef = useRef(null);
   const rollShadowRef = useRef(null), dustDirectionRef = useRef(null);
   const childRefs = useRef(new Map()), bounceRef = useRef(null);
+  const dashRefs = useRef([]);
   const travelRef = useRef(null), bombRef = useRef(null), vortexRef = useRef(null);
   const travel = flight.abilityContacts?.find(cue => cue.kind === 'slash' || cue.kind === 'ground-wave');
   const complete = useRef(onComplete);
@@ -69,6 +70,19 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         if (trailGlowRef.current) trailGlowRef.current.style.visibility = candyFinished ? 'hidden' : '';
         candyRef.current.dataset.rolling = String(rolling);
         candyRef.current.dataset.dashActive = String(effects.dash);
+        candyRef.current.dataset.dashBurst = effects.dashBurstProgress === null ? '' : String(effects.dashBurstProgress);
+        for (const [index, ghost] of dashRefs.current.entries()) {
+          if (!ghost) continue;
+          const show = !candyFinished && effects.dashBurstProgress !== null;
+          ghost.style.visibility = show ? 'visible' : 'hidden';
+          if (show) {
+            const past = sampleAtTime(flight.path, Math.max(0, simulationTime - (index + 1) * .035));
+            ghost.setAttribute('transform', `translate(${past.x} ${past.y}) scale(${worldScale})`);
+            ghost.style.opacity = String(reduced ? .4 : (1 - effects.dashBurstProgress) * (.6 - index * .14));
+            // Reduced motion uses a stationary halo on the actual stone, not traveling ghosts.
+            if (reduced) ghost.style.visibility = 'hidden';
+          }
+        }
         if (travelRef.current) {
           travelRef.current.style.visibility = effects.travelPoint ? 'visible' : 'hidden';
           if (effects.travelPoint) travelRef.current.setAttribute('transform',
@@ -141,6 +155,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         if (rollDustRef.current) rollDustRef.current.style.display = 'none';
         if (trailRef.current) trailRef.current.style.visibility = 'hidden';
         if (trailGlowRef.current) trailGlowRef.current.style.visibility = 'hidden';
+        dashRefs.current.forEach(ghost => { if (ghost) ghost.style.visibility = 'hidden'; });
         complete.current.onComplete(flight);
       } else frame = requestAnimationFrame(tick);
     }
@@ -177,6 +192,11 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
     </g>}
     <ellipse ref={rollShadowRef} data-testid="roll-shadow" rx={13 * worldScale} ry={3 * worldScale}
       fill="#664729" opacity=".3" style={{ display: 'none' }} />
+    {flight.physicsModifier?.kind === 'dash' && Array.from({ length: 3 }, (_, index) => <g key={index}
+      ref={node => { dashRefs.current[index] = node; }} data-testid="dash-afterimage" aria-hidden="true"
+      className="dash-afterimage" style={{ visibility: 'hidden' }}>
+      <CandyProjectileArt stoneId={flight.loadedStoneId} variant={variant} />
+    </g>)}
     <g ref={candyRef} data-testid="projectile" className={flight.fireball ? 'projectile-candy is-fiery' : 'projectile-candy'}
     data-projectile-kind={variant} data-stone-id={flight.loadedStoneId || 'basic-stone'}
     transform={`translate(${flight.path?.start.x || 0} ${flight.path?.start.y || 0})`}>

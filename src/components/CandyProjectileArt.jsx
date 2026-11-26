@@ -46,6 +46,10 @@ export default function CandyProjectileArt({ variant = 'normal', stoneId = 'basi
         : stoneId === 'milk-candy' ? 'M0-7 6-4 5 3 0 7-5 3-6-4Z'
         : stoneId === 'wind-candy' ? 'M-6 4Q3-9 7-5Q4 5-6 4Z'
         : 'M-5-2Q0-8 5-2T-3 4')} fill="none" stroke="#fff9df" strokeWidth="2" strokeLinecap="round" />}
+    {stoneId === 'strawberry-lollipop-stone' && !spear && <g data-testid="strawberry-collision-rim" className="strawberry-collision-rim">
+      <circle r="10" fill="none" stroke="#fff5f2" strokeWidth="1.4" />
+      <path d="M0-10A10 10 0 0 1 10 0M0 10A10 10 0 0 1-10 0" fill="none" stroke="#f04492" strokeWidth="2" />
+    </g>}
     <circle cx="-3" cy="-4" r="2" fill="#fffde9" />
   </g>;
 }

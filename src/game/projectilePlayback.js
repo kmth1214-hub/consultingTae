@@ -5,6 +5,9 @@ export function getSignaturePlaybackFrame(flight, time) {
   const progress = travel && time >= travel.time
     ? Math.min(1, (time - travel.time) / Math.max(1e-6, travel.endTime - travel.time)) : null;
   return {
+    dashBurstProgress: flight.physicsModifier?.kind === 'dash' && time >= flight.physicsModifier.startTime
+      && time <= flight.physicsModifier.startTime + .3 && time <= flight.directHitTime
+      ? (time - flight.physicsModifier.startTime) / .3 : null,
     dash: flight.physicsModifier?.kind === 'dash' && time >= flight.physicsModifier.startTime && time <= flight.directHitTime,
     bombPlanted: Boolean(flight.bomb && time >= flight.bomb.plantedAt && time < flight.bomb.explodeAt),
     vortexActive: Boolean(flight.vortex && time >= flight.vortex.time && time < flight.vortex.time + flight.vortex.duration),

@@ -16,7 +16,7 @@ export function describeSignatureStone(id, grade) {
   if (!stone) return null;
   switch (id) {
     case 'ginger-dash-stone':
-      return `발사 0.25초 뒤 수평 속도 +${Math.round((stone.horizontalScale[grade] - 1) * 100)}%.`;
+      return `발사 ${stone.startTime}초 뒤 수평 속도 +${Math.round((stone.horizontalScale[grade] - 1) * 100)}% · 가속 잔상으로 확인.`;
     case 'strawberry-lollipop-stone':
       return `회전하는 스톤의 충돌 반경 ${stone.radiusScale[grade]}배.`;
     case 'chili-slash-stone':
