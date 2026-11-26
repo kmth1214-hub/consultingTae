@@ -207,6 +207,12 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     slot.collider = { ...slot.collider, x: slot.x, y: slot.y - slot.size * .52 };
   }
   const playerX = 44, launcherX = 220 + (worldScale - 1) * 160;
+  if (area === 'city' && round === 3) for (const slot of placements) {
+    const enemy = enemies.find(item => item.id === slot.id);
+    if (enemy.kind === 'oven-robot' && enemy.alive && !enemy.ventWeakened && ((enemy.attackCount || 0) + 1) % 3 === 0)
+      slot.vent = { enemyId: slot.id, x: slot.collider.x - slot.collider.radius,
+        y: slot.collider.y, radius: slot.size * .18 };
+  }
   return { ...BATTLEFIELD, candyRadius: BATTLEFIELD.candyRadius * worldScale, worldScale, enemyScale,
     encounterPhase, key: JSON.stringify([area, round, seed, encounterPhase,
     enemies.map(({ id, kind, isBoss }) => [id, kind, isBoss]), ...(prototype ? [prototype] : []),

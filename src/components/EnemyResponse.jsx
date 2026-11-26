@@ -165,7 +165,8 @@ export default function EnemyResponse({ response, layout, travelMs, onAdvance, o
           <path d="M0-62 15-25 47-42 30-8 66 5 29 18 46 51 8 33-13 64-22 28-57 38-34 4-62-18-23-19-24-54Z" />
           <text y="-100" textAnchor="middle">−{attack.damage}</text>
           {attack.special && <text className="special-impact-label" y="130" textAnchor="middle">
-            {attack.special === 'frozen-breath' ? '다음 턴 아이템 동결' : attack.special === 'oven-overheat' ? '사탕 −1 · 보스 회복' : '가시 돌진 명중'}</text>}
+            {attack.special === 'frozen-breath' ? '다음 턴 아이템 동결' : attack.special === 'oven-overheat'
+              ? attack.overheatWeakened ? '과열 약화 · 부가 효과 차단' : '사탕 −1 · 보스 회복' : '가시 돌진 명중'}</text>}
         </g>}
       </g>}
     </svg>

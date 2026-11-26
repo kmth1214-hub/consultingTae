@@ -10,12 +10,12 @@
 
 ## Active Task
 
-[T05 오븐 환기구 명중과 과열 약화](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T05-oven-vent-weakpoint.md)
+[T06 가속·회전 표시와 수동 폭발 보상](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T06-signature-stone-feedback.md)
 
 ## Status
 
-- T04 지정 검증 통과. done: 4/7.
+- T05 지정 검증 통과. done: 5/7.
 
 ## Next Step (IMPORTANT)
 
-T05 오븐 환기구 명중과 과열 약화 청사진을 읽고 구현한다.
+T06 가속·회전 표시와 수동 폭발 보상 청사진을 읽고 구현한다.

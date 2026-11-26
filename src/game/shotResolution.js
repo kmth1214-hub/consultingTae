@@ -24,6 +24,17 @@ function layoutForRun(run) {
     enemyScale:run.studioEnemyScale??1});
 }
 
+export function collectVentHits(layout, flight) {
+  const direct = flight.enemyContacts ?? (flight.hitIds.length ? [{ id: flight.hitIds[0],
+    point: sampleAtDistance(flight.path, flight.impactDistance), time: flight.directHitTime }] : []);
+  return layout.enemies.flatMap(slot => {
+    const hit = direct.find(contact => contact.id === slot.id && slot.vent
+      && Math.hypot(contact.point.x - slot.vent.x, contact.point.y - slot.vent.y)
+        <= slot.vent.radius + flight.candyRadius);
+    return hit ? [{ enemyId: slot.id, point: { x: hit.point.x, y: hit.point.y }, time: hit.time }] : [];
+  });
+}
+
 /** One canonical solution is shared by visible playback and combat resolution. */
 export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs = Date.now()) {
   const layout = layoutForRun(run);
@@ -44,7 +55,7 @@ export function preparePhysicalFlight(run, pull, launchId, shotId, flightStartMs
   if (!solution) return null;
   const deadline = abilityKind ? abilityDeadline(solution, Boolean(signature)) : null;
   const abilityDeadlineTime = deadline?.time ?? null;
-  return {...solution,id:launchId,shotId,encounterId:run.encounterId,flightStartMs,
+  return {...solution,ventHits:collectVentHits(layout, solution),id:launchId,shotId,encounterId:run.encounterId,flightStartMs,
     powerRatio:pull.powerRatio,abilityKindPending:abilityKind,abilityDeadlineTime,
     abilityDeadlineSource:deadline?.source ?? null, abilityLandingTime:deadline?.landing ?? null,
     ...(signature === 'vortex' ? { planOptions } : {}),
@@ -64,7 +75,7 @@ export function activatePhysicalFlight(run, baseFlight, { time, source, success 
   const layout = layoutForRun(run);
   const revised=activatePlannedAbility({baseFlight,layout,enemies:run.enemies,
     kind:baseFlight.abilityKindPending,time,grade:baseFlight.weaponGrade,success,source});
-  return revised ? {...revised,windCrossed:crossedWindZone(revised.path,revised.windField,revised.impactDistance),
+  return revised ? {...revised,ventHits:collectVentHits(layout, revised),windCrossed:crossedWindZone(revised.path,revised.windField,revised.impactDistance),
     abilityKindPending:null,abilityDeadlineTime:null} : null;
 }
 
@@ -79,6 +90,7 @@ export function flightResultPayload(flight) {
           landing:contact.riderMotion.landing,fallDamage:contact.riderMotion.fallDamage,
           elevation:contact.riderMotion.elevation}))}:{}),
       directHitTime:flight.directHitTime??flight.path.durationSeconds,
+      ventHits:structuredClone(flight.ventHits || []),
       ...(flight.enemyContacts?{enemyContacts:structuredClone(flight.enemyContacts)}:{}),
       ...(flight.abilityContacts?.length?{abilityContacts:structuredClone(flight.abilityContacts)}:{}),
       ...(flight.abilityActivation?{abilityActivation:structuredClone(flight.abilityActivation)}:{}),

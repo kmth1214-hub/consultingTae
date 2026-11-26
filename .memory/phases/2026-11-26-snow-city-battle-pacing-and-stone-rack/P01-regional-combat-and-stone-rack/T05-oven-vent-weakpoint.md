@@ -1,6 +1,6 @@
 # Task: T05 오븐 환기구 명중과 과열 약화
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -68,9 +68,9 @@ type Boss = ExistingEnemy & { ventWeakened?: boolean };
 
 ## Acceptance Criteria
 
-- [ ] 환기구가 세 번째 반격 전 플레이어 차례에만 노출된다.
-- [ ] 실제 환기구 직접 명중 후 다음 과열 피해가 절반이고 탄 손실·회복이 0이다.
-- [ ] 빙결·방어·처치와 함께 일관된 결과를 만든다.
+- [x] 환기구가 세 번째 반격 전 플레이어 차례에만 노출된다.
+- [x] 실제 환기구 직접 명중 후 다음 과열 피해가 절반이고 탄 손실·회복이 0이다.
+- [x] 빙결·방어·처치와 함께 일관된 결과를 만든다.
 
 ## Validation
 
@@ -92,6 +92,6 @@ Task: T05-oven-vent-weakpoint
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

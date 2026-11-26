@@ -2,6 +2,24 @@ const { test, expect, installGame, start, hp, ammo, phase, arena, snapshot, drag
 
 const inventory = { fireball: 1, spear: 1, defense: 1, heal: 3 };
 
+test('city oven exposes a clearly marked vent only on the turn before overheat', async ({ page }) => {
+  const bosses = require('../../src/game/battleEngine.js').BattleEngine.createRoundEnemies('city', 3);
+  bosses[0].attackCount = 2;
+  await installGame(page, { initial: { area: 'city', round: 3, inventory }, stateOverride: { enemies: bosses } });
+  await start(page);
+  const vent = page.getByTestId('oven-vent');
+  await expect(vent).toBeVisible();
+  await expect(vent).toContainText('과열 약점');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(vent).toHaveCSS('animation-name', 'none');
+  await dragPull(page, { angleDeg: 21, powerRatio: .99 });
+  await page.mouse.up();
+  await phase(page, 'idle');
+  expect((await snapshot(page)).lastEvent.enemyAttack.overheatWeakened).toBe(true);
+  expect((await snapshot(page)).lastEvent.enemyAttack.ammoLost).toBe(0);
+  await expect(vent).toHaveCount(0);
+});
+
 // Counterattacks now begin only after a real candy and its result review.
 async function launchResponse(page, { paused = false, clockInstalled = false } = {}) {
   if (paused && !clockInstalled) {

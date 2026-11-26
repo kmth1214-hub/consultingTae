@@ -574,8 +574,11 @@
         missStyle: sample < (enemy.isBoss ? .975 : .95) ? 'slip' : 'overshoot'
       };
     }
+    const overheatWeakened = state.area === 'city' && state.round === 3
+      && enemy.kind === 'oven-robot' && special === 'oven-overheat' && enemy.ventWeakened === true;
     const event = applyIncomingDamage(state, { enemyId: enemy.id, kind: enemy.kind, attackKind, fusionAttack,
-      special, attemptedSpecial: special }, sourceRng, minDamage, maxDamage, enemy.isBoss);
+      special, attemptedSpecial: special, overheatWeakened }, sourceRng, minDamage, maxDamage, enemy.isBoss);
+    if (overheatWeakened) enemy.ventWeakened = false;
     if (studioFusion && fusionAttack === 'disrupt' && !event.blocked && event.damage > 0) {
       event.aimDisruption = CHAOS_FUSION_DISRUPTIONS[enemy.kind];
       state.pendingAimDisruption = event.aimDisruption;
@@ -584,7 +587,7 @@
       state.consumablesBlockedTurns = 1;
       state.consumablesBlocked = true;
       event.consumablesBlocked = true;
-    } else if (!event.blocked && special === 'oven-overheat') {
+    } else if (!event.blocked && special === 'oven-overheat' && !overheatWeakened) {
       const previousAmmo = state.ammo;
       state.ammo = Math.max(0, state.ammo - 1);
       state.weaponQueue.shift();
@@ -607,7 +610,8 @@
     if (blockedBy === 'milk') state.milkShieldActive = false;
     const blocked = blockedBy !== null;
     state.defenseArmed = false;
-    const damageMultiplier = state.nextAttackDamageMultiplier === null ? 1 : state.nextAttackDamageMultiplier;
+    const damageMultiplier = (state.nextAttackDamageMultiplier === null ? 1 : state.nextAttackDamageMultiplier)
+      * (attack.overheatWeakened ? .5 : 1);
     state.nextAttackDamageMultiplier = null;
     const rawDamage = blocked ? 0 : randomInt(typeof rng === 'function' ? rng : Math.random, minDamage, maxDamage);
     const damage = blocked ? 0 : Math.floor(rawDamage * damageMultiplier);
@@ -683,6 +687,11 @@
     if (config.shotMeta && !spear && !rebounding) hitIds.splice(1);
     let bonusDamage = 0;
     const shotMeta = config.shotMeta;
+    if (state.area === 'city' && state.round === 3) for (const hit of shotMeta?.ventHits || []) {
+      const boss = state.enemies.find(enemy => enemy.id === hit.enemyId);
+      if (boss?.alive && boss.kind === 'oven-robot' && !boss.ventWeakened
+        && ((boss.attackCount || 0) + 1) % 3 === 0 && hitIds.includes(boss.id)) boss.ventWeakened = true;
+    }
     const windOrder = Array.isArray(shotMeta?.enemyOrder) ? shotMeta.enemyOrder
       : state.enemies.map(enemy=>enemy.id);
     const livingWindOrder = windOrder.filter(id=>state.enemies.some(enemy=>enemy.id===id&&enemy.alive&&enemy.hp>0));

@@ -360,6 +360,11 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
           && [hit.point?.x, hit.point?.y, hit.time, hit.distance, shotMeta.directHitTime].every(Number.isFinite)
           && hit.time >= 0 && hit.time <= shotMeta.directHitTime + 1e-6 && hit.distance >= 0
           && (!index || (hit.time >= enemyContacts[index-1].time && hit.distance >= enemyContacts[index-1].distance))));
+      const validVents = shotMeta?.ventHits === undefined || (Array.isArray(shotMeta.ventHits)
+        && new Set(shotMeta.ventHits.map(hit => hit?.enemyId)).size === shotMeta.ventHits.length
+        && shotMeta.ventHits.every(hit => hitIds.includes(hit?.enemyId)
+          && [hit?.point?.x, hit?.point?.y, hit?.time].every(Number.isFinite)
+          && hit.time >= 0 && hit.time <= shotMeta.directHitTime + 1e-6));
       const validContacts = contacts === undefined || (Array.isArray(contacts)
         && contacts.every((contact, index) => contact && typeof contact.obstacleId === 'string'
           && contact.obstacleId.length > 0 && obstacleKinds.includes(contact.obstacleKind)
@@ -404,7 +409,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
         || (shotMeta.windCrossed !== undefined && typeof shotMeta.windCrossed !== 'boolean')
         || !Array.isArray(shotMeta.obstacleTargetIds) || shotMeta.obstacleTargetIds.some(id => typeof id !== 'string')
         || new Set(shotMeta.obstacleTargetIds).size !== shotMeta.obstacleTargetIds.length
-        || !validContacts || !validEnemyContacts || !validRiderFalls || !validAbilityContacts || !validChildren || !validVortex
+        || !validContacts || !validEnemyContacts || !validRiderFalls || !validAbilityContacts || !validChildren || !validVortex || !validVents
         || (contacts !== undefined
           ? (contacts.length ? shotMeta.obstacleId !== contacts[0].obstacleId
               || shotMeta.obstacleKind !== contacts[0].obstacleKind

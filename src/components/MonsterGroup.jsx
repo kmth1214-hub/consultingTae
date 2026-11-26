@@ -143,6 +143,11 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
             && <BossArmor kind={enemy.kind} />}
           {attacking && response.attack.missed && response.stage === 'windup' && <span className="monster-mistake" aria-hidden="true">?!</span>}
         </span>
+        {placement.vent && live.alive && !live.ventWeakened && <span className="oven-vent" data-testid="oven-vent"
+          aria-label="과열 직전: 환기구를 맞히면 다음 과열 약화"
+          style={{ left: placement.vent.x - enemy.x + enemy.size / 2,
+            top: placement.vent.y - enemy.y + enemy.size, width: placement.vent.radius * 2,
+            height: placement.vent.radius * 2 }}>과열 약점</span>}
         {hitNow && <span key={`burst-${lastEvent.id}`} className="monster-hit-burst" data-testid="monster-hit-burst"
           data-hit-kind={lastEvent.visualKey || 'candy'} aria-hidden="true">
           <i className="monster-hit-ring" />{Array.from({ length: 5 }, (_, index) => <i key={index} className="monster-hit-crumb" />)}

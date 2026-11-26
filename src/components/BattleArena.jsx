@@ -57,6 +57,8 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   const encounterPhase = reviewingSplit ? null : run.chaosBossPhase === 'split' ? 'split' : null;
   const landingKey = JSON.stringify(run.enemyLandingPositions || null);
   const poseKey = JSON.stringify(!reviewingSplit ? run.enemyPositionOverrides : null);
+  const ventStateKey = JSON.stringify(run.area === 'city' && run.round === 3
+    ? run.enemies.map(enemy => [enemy.id, enemy.attackCount || 0, Boolean(enemy.ventWeakened), enemy.alive]) : []);
   const layout = useMemo(() => buildPlayableBattlefield({ area: run.area, round: run.round,
     seed: run.layoutSeed ?? 0, encounterPhase,
     prototype: run.battlefieldPrototype ?? run.studioPrototype ?? null,
@@ -64,9 +66,13 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     enemyScale: run.studioEnemyScale ?? 1,
     enemyLandingPositions: run.enemyLandingPositions ?? null,
     enemyPositionOverrides: JSON.parse(poseKey ?? 'null'),
-    enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => ({ id, kind, isBoss, alive: true, hp: 1 })) }),
+    enemies: JSON.parse(slotKey).map(([id, kind, isBoss]) => {
+      const vent = JSON.parse(ventStateKey).find(item => item[0] === id);
+      return { id, kind, isBoss, alive: vent ? vent[3] : true, hp: 1,
+        attackCount: vent?.[1] || 0, ventWeakened: vent?.[2] || false };
+    }) }),
   [run.area, run.round, run.layoutSeed, run.battlefieldPrototype, run.studioPrototype,
-    run.studioWorldScale, run.battlefieldWorldScale, run.studioEnemyScale, slotKey, encounterPhase, landingKey, poseKey]);
+    run.studioWorldScale, run.battlefieldWorldScale, run.studioEnemyScale, slotKey, encounterPhase, landingKey, poseKey, ventStateKey]);
   const splitSource = useMemo(() => bossTransition ? buildPlayableBattlefield({ area: run.area, round: run.round,
     seed: run.layoutSeed ?? 0, enemies: [bossTransition.split.fromEnemy],
     worldScale: run.studioWorldScale ?? run.battlefieldWorldScale ?? 1,
