@@ -88,14 +88,14 @@ test('City preview and test play share enlarged monsters while grade selection s
   await page.getByLabel('지역 선택').selectOption('city');
   await page.getByLabel('테스트 라운드').selectOption('2');
   await page.getByLabel('테스트 스톤 등급').selectOption('A');
-  await expect(page.locator('.studio-viewport .monster').first()).toHaveCSS('width', '135px');
+  await expect(page.locator('.studio-viewport .monster').first()).toHaveCSS('width', '207px');
   await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();
   await expect(page.getByLabel('플레이 스톤 등급')).toHaveValue('A');
-  await expect(page.locator('.battle-arena .monster').first()).toHaveCSS('width', '135px');
+  await expect(page.locator('.battle-arena .monster').first()).toHaveCSS('width', '207px');
   await page.getByLabel('플레이 스톤 등급').selectOption('B');
   await page.getByRole('button', { name: '선택한 전투 시작' }).click();
   await expect(page.getByLabel('플레이 스톤 등급')).toHaveValue('B');
-  await expect(page.locator('.battle-arena .monster').first()).toHaveCSS('width', '135px');
+  await expect(page.locator('.battle-arena .monster').first()).toHaveCSS('width', '207px');
 });
 
 test('narrow studio opens near the launcher with readable enemies and offers a true full-map reset', async ({ page }) => {
@@ -135,7 +135,8 @@ test('Snow and City studio preview and play use the same detailed monster art', 
       for (const kind of kinds) {
         const art = page.locator(`.studio-viewport img[data-monster-art="${kind}"]`).first();
         await expect(art).toBeVisible();
-        await expect.poll(() => art.evaluate(node => node.naturalWidth)).toBeGreaterThan(0);
+        await art.evaluate(node => node.decode());
+        expect(await art.evaluate(node => node.naturalWidth)).toBeGreaterThan(0);
       }
       if (round === 3) await expect(page.locator('.studio-viewport .boss-armor')).toHaveCount(0);
       await page.screenshot({ path: `tmp/studio-${area}-round-${round}-art.png` });

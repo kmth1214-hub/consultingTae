@@ -52,7 +52,8 @@ test('Chaos studio preview and play share the three painted fusion enemies', asy
     for (const kind of ['frost-gear-snake', 'oven-snow-boar', 'jelly-cloud-robot']) {
       const art = preview.locator(`img[data-monster-art="${kind}"]`).first();
       await expect(art).toBeVisible();
-      await expect.poll(() => art.evaluate(node => node.naturalWidth)).toBeGreaterThan(0);
+      await art.evaluate(node => node.decode());
+      expect(await art.evaluate(node => node.naturalWidth)).toBeGreaterThan(0);
     }
     await page.screenshot({ path: `tmp/studio-chaos-round-${round}-fusions.png` });
     await page.getByRole('button', { name: '테스트 플레이', exact: true }).click();

@@ -4,7 +4,8 @@ const {aimedShot}=require('../e2e/spear-support.cjs');
 test('studio Chaos final uses the fused special and real split without persisting or submitting records',async({page})=>{
   const requests=[];page.on('request',r=>{if(r.url().includes('/api/'))requests.push(r.url());});
   const enemy={id:'chaos-fused-boss',kind:'chaos-fused-boss',hp:29,maxHp:56,isBoss:true,attackCount:0,normalAttackCount:0,alive:true};
-  await installGame(page,{stateOverride:{enemies:[enemy]}});
+  const basic={id:'basic-stone',name:'기본 스톤',grade:'C'};
+  await installGame(page,{initial:{weapons:[basic,basic,basic]},stateOverride:{enemies:[enemy]}});
   await page.addInitScript(()=>localStorage.setItem('cookie-roguelike.profile.v1','{"version":1,"snowAreaCleared":false}'));
   await page.goto('/__dev/maps');
   await page.getByLabel('지역 선택').selectOption('chaos');
