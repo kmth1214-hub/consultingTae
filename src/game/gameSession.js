@@ -4,6 +4,8 @@ import { loadProfile, markSnowCleared, saveProfile } from './profileStore.js';
 import { preparePhysicalFlight, activatePhysicalFlight, flightResultPayload } from './shotResolution.js';
 
 const initialAim = () => ({ angle: 0, power: 0, phase: 'idle', selectedTargetId: null });
+const snowUnlockMessage = `눈 지역 클리어! ${CHARACTERS.filter(character => character.locked)
+  .map(character => character.name.replace(/ 쿠키$/, '')).join(' · ')} 쿠키와 마법사탕이 해금됐어요.`;
 const defaultLayoutRng = () => globalThis.crypto?.getRandomValues
   ? globalThis.crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000
   : Math.random();
@@ -66,7 +68,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     const profile = markSnowCleared();
     const saved = saveProfile(profile, storage);
     return { profile, notification: { id: ++sequence, kind: 'success', message: saved
-      ? '눈 지역 클리어! 우유맛 · 바람궁수 쿠키와 마법사탕이 해금됐어요.'
+      ? snowUnlockMessage
       : '쿠키와 마법사탕이 해금됐어요. 브라우저 저장을 사용할 수 없어 새로고침하면 초기화돼요.' } };
   }
   function finishCombatRouting(run, patch) {
@@ -145,7 +147,7 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       profileSave = profileClient.unlockSnow().then(profile => {
         if (!profile.snowAreaCleared) throw new Error('unlock-not-confirmed');
         publish({ profile, profileStatus: 'ready', profileSaveRequired: false,
-          notification: { id: ++sequence, kind: 'success', message: '눈 지역 클리어! 우유맛 · 바람궁수 쿠키와 마법사탕이 해금됐어요.' } });
+          notification: { id: ++sequence, kind: 'success', message: snowUnlockMessage } });
         return { accepted: true, profile };
       }).catch(() => {
         publish({ profileStatus: 'save-error' });

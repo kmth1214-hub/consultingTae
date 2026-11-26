@@ -1,58 +1,69 @@
-﻿# Cookie Roguelike — Working Interview Brief
+# Cookie Expedition — 현재 게임 규칙
 
-> Status: Requirements interview complete. This is the decision snapshot, not the implementation roadmap. See `.memory/decisions/2026-09-29-cookie-roguelike.md` for the durable interview record.
+> 기준은 2026-11-26 로컬 코드다. 12종 쿠키와 신규 전용 스톤의 세부 작업은 [실행 계획](.memory/plans/2026-11-26-twelve-cookie-roster-and-signature-stones.md)에 있다. 운영 배포 시점은 Azure 배포 기록을 확인한다.
 
-## Confirmed product direction
+## 게임 구성과 접근
 
-- React web app restricted to users in the company's single Microsoft Entra tenant.
-- The company leaderboard displays the top 10 entries.
-- All ended runs, including defeats and clears, are eligible for leaderboard records. The leaderboard shows at most one entry per user: that user's best score. Show the selected CookieRun character alongside the score; keep weapon loadout and consumable inventory private. Users outside the top 10 can still see their own best score and rank separately.
-- Game board is an operator-managed catalog: list and game introduction, then play on a dedicated game page. Only members of a designated Entra admin group may manage catalog entries through an in-app admin screen. No user-created game posts or comments in the first version.
-- Keep player navigation focused on the game board and game page; do not show the prototype's stage tabs in the player UI. Character selection, combat, round rewards, area transitions, results, and the bonus route are sequential states within the game page, with no direct stage jumping. Starting the game opens character selection; selecting a Cookie immediately starts combat.
-- Desktop web first. The game is turn-based and uses a catapult-style launcher rather than real-time pinball flippers.
-- A run proceeds through Forest, Snow, and City. Each area starts with 5 rounds, configurable down to 3; the boss appears on the area's final configured round. At 3 rounds, preserve existing round 1 and 2 counts and move the boss to round 3.
-- Defeat ends the run. Show the run results and score; the player chooses when to start a fresh run at Forest round 1. Personal best records and a company-wide leaderboard are retained.
-- After every cleared round, including a boss round, show the standard round reward before continuing. After the Forest and Snow boss rewards, show the separate area-transition reward choice; the City boss reward is followed by the clear-results popup and its leaderboard/bonus choices. Keep these steps inside the game display rather than as top-level navigation screens.
-- Defeating the City boss grants the standard round reward (one permanent weapon and one consumable choice), then shows a clear-results popup with score, furthest area/round, selected character, play time, and personal-best update status. The popup offers viewing the leaderboard or continuing into the bonus area. The continue button is labeled "숨겨진 도전 이어하기"; do not reveal the QR reward ahead of time. Viewing the leaderboard returns to the clear-results popup, where the player can still choose to continue. This is the only standard reward associated with the bonus route; no additional reward is granted on bonus entry or after bonus rounds 1–2. The bonus area has three rounds on a chaotic mixed-area background, mixing Forest, Snow, and City monsters. Bonus rounds 1–2 contain 9–13 regular monsters each, randomly drawn from all five regular enemy types; some types may be absent from a round. Bonus round 3 contains the three previously encountered area bosses simultaneously, each with 50% more HP than its main-run version, rounded up: 15, 18, and 23 HP. The Oven Robot can heal up to 26 HP in this encounter. Clearing all three reveals a Banana Milk gift-coupon QR image supplied by the owner later. Bonus score is tracked separately using the normal score formula and does not add to the company leaderboard score. After QR display, show the final results screen and end the run. Only the first player globally to clear the bonus rounds receives the QR; record that it has been claimed so later clears do not reveal it.
+- 게임은 Vite·React 단일 페이지 앱이다. 홈 → 쿠키 선택 → 전투 → 보상/야영지 → 결과 화면으로 진행한다. 플레이어 화면에는 스테이지를 건너뛰는 탭이 없다.
+- Azure Static Web Apps 배포에서는 회사 Microsoft Entra 로그인으로 접근하고, 리더보드와 해금 기록은 각각 Azure Table Storage에 저장한다. Cosmos DB는 사용하지 않는다. 로컬 개발은 테스트용 프로필·저장소 경로를 사용한다.
+- 지도 검토 화면 `/__dev/maps`는 개발 환경에서만 열린다. 현재 배포 빌드에서는 이 경로에 관리자 기능을 제공하지 않는다.
+- 계정 프로필을 불러오지 못하면 게임 시작을 막고 재시도를 표시한다. 눈 지역 해금 저장에 실패하면 결과 화면에서 재시도할 때까지 다음 지역 진행을 막는다.
 
-## Character and weapon direction
+## 지역·라운드·적
 
-- Use CookieRun: OvenBreak characters: 탐험가맛 쿠키, 연금술사맛 쿠키, 마법사맛 쿠키, 우유맛 쿠키, and 바람궁수 쿠키. 우유맛 and 바람궁수 are locked until the player has a Snow-area clear record; clearing Snow once permanently unlocks them for that account and future runs.
-- Each selected character starts with one character-specific C-grade permanent weapon themed after that Cookie's Magic Candy. At each round start, shuffle owned permanent weapons into a queue and use them in order; reshuffle after the queue is exhausted. Show the next weapon. Ammo resets to 9 at the start of every round; unused shots are discarded. Character differences come from the starting weapon; no separate passive ability. 탐험가맛 쿠키's weapon grants +10 bonus score on every third permanent-weapon hit. 연금술사맛 쿠키's Magic Candy grants +10 bonus score each time the player uses a consumable. 마법사맛 쿠키's Magic Candy adds +1 damage on every third permanent-weapon projectile collision; a 0-damage collision counts. 우유맛 쿠키's Magic Candy heals 1 HP every third permanent-weapon projectile collision and blocks one enemy attack per boss round. These hit counters persist across rounds and regions and reset on a new run. 바람궁수's Magic Candy, after the player selects a target, automatically adjusts aim on one projectile per round to guarantee a hit and adds +1 damage to bosses; it prioritizes the selected target before passing any remaining damage along the trajectory. Weapon effects do not otherwise modify consumable attacks.
-- Permanent weapon fusion: when a matching duplicate is gained, immediately ask whether to combine two identical C items into one B or two identical B items into one A. C damage range is 0–4; each grade increase raises both minimum and maximum damage by 1, so B is 1–5 and A is 2–6, with the same relative damage probabilities. B weapons score 2x and A weapons score 4x. A is the highest grade; multiple A copies can be held but do not merge.
-- All five character-specific weapon types may appear in round reward choices regardless of the selected character. Every owned weapon's special effect is active, including weapons from other characters. Duplicate copies do not stack their special effects. Fusion increases damage range and score multiplier only; the weapon's special effect stays the same.
+| 지역 | 1라운드 | 2라운드 | 3라운드 |
+| --- | --- | --- | --- |
+| 숲 | 일반 적 1마리 | 일반 적 2마리 | 뾰족 멧돼지 보스 1마리 |
+| 눈 | 일반 적 5마리 | 일반 적 6마리 | 겁쟁이 눈사람 보스 1마리 |
+| 도시 | 일반 적 9마리 | 일반 적 10마리 | 오븐 로봇 보스 1마리 |
+| 혼돈 | 일반 적 9~13마리 | 일반 적 9~13마리 | 융합 보스 전투 |
 
-## Turn-based combat and scoring
+- 본편은 숲 → 눈 → 도시 순서다. 도시 보스 클리어 후 본편 결과를 보고 원하면 혼돈 지역의 세 전투에 이어서 도전한다. 혼돈 점수는 본편·회사 리더보드 점수에 합산하지 않는다. QR 쿠폰이나 선착순 추가 보상은 현재 구현에 없다.
+- 일반 적 체력은 4. 숲 보스 체력 10, 눈 보스 12, 도시 보스 시작 체력 15다. 도시 1·2라운드에서는 세탁 로봇 중 2마리가 공중을 순찰하는 태엽 까마귀로 바뀐다.
+- 혼돈 일반전은 숲·눈·도시 일반 몬스터 계열을 섞어 소환한다. 혼돈 보스는 체력 56의 융합체로 시작한다. 남은 체력이 50% 이하가 되면 기존 세 보스로 분리하고 남은 체력을 비율대로 나눈다. 분리 착지 충격은 플레이어에게 1~3 피해를 한 번 주며 방어 효과가 적용된다. 융합체가 그 발사로 완전히 처치되면 분리하지 않는다.
+- 네 지역 모두 적·물체 배치에 고저차가 있다. 일부 일반 적은 쓰러질 수 있는 받침 위에 서고, 받침이 무너지면 높이에 따라 1~3 낙하 피해를 받는다. 보스는 바닥에 배치한다. 라운드 시작 시 배치가 정해지고 발사 중에는 실제 적 위치로 충돌을 계산한다.
 
-- Each player turn: aim angle and launch strength with the mouse, then fire one projectile. Firing consumes the assigned permanent weapon even if the shot misses. Its trajectory resolves automatically. Monsters are hit in the order the projectile encounters them along its path. If a hit defeats a monster, any remaining damage carries over to the next monster along the path; a hit that does not defeat its target does not carry damage onward. 바람궁수's once-per-round homing shot prioritizes its selected target, then carries any remaining damage onward along the trajectory.
-- After each player action, one living monster attacks, cycling in order. Regular enemies deal uniformly random integer damage from 1–8; bosses deal uniformly random integer damage from 3–15. A consumable or character weapon can block an enemy attack.
-- Player HP and projectile count are separate resources. A fresh run starts at maximum HP 100; HP carries across rounds and healing items exist. Every round start, including the initial and boss rounds, sets ammo to 9; unused ammo is discarded. If all 9 shots are used while any enemy remains alive, the run ends in defeat. After each cleared main-run round, the player receives the normal round reward. Bonus rounds do not give standard rewards. After the Forest and Snow bosses only, the player also chooses between restoring 60 HP (capped at 100) and a weapon enhancement.
-- Ordinary monsters have 4 HP each. Boss HP starts at Forest 10, Snow 12, and City 15, subject to later playtesting. Roll base damage once per projectile: 0 (2%), 1 (40%), 2 (40%), 3 (10%), or 4 (8%). Hide these probabilities from the player. Carry unused damage from a defeated monster to the next monster along the trajectory; stop if the current monster survives. No more than two zero-damage rolls per round in any area; subsequent zero rolls become at least 1 damage.
-- Leaderboard score is primarily the run score, with furthest round as the first tie-breaker and shorter play time as the second. Permanent-weapon score is based on HP actually removed, multiplied by weapon grade (C 1x, B 2x, A 4x). Damage that spills over and removes HP from the next monster also scores; excess damage beyond the final target does not. Spear damage adds points for actual HP removed at 1x, without a weapon-grade multiplier. Each unused consumable contributes 1 point at run end; consumables do not fuse or gain score multipliers. Show the Entra display name on the company leaderboard; hide email.
+## 쿠키·스톤·탄수
 
-## Background art direction
+- 쿠키는 모험가맛, 연금술사맛, 마법사맛, 우유맛, 바람궁수, 용감한, 딸기맛, 체리 배달부, 고추빛 제빵사, 로스트 공방, 파도 정찰대, 서리 파수꾼까지 12종이다. 우유맛·바람궁수·파도 정찰대·서리 파수꾼은 **눈 지역을 한 번 클리어한 계정**에서 해금된다. 회사 로그인 상태의 해금은 계정 프로필에 저장하며, 로컬 개발에서는 브라우저 기록을 사용한다.
+- 시작 스톤은 선택 쿠키의 전용 C등급 스톤 **1개 + 기본 스톤 2개 = 총 3발**이다. 소유한 스톤 인스턴스를 셔플해 발사 순서를 정하고, 사용한 스톤을 큐에서 소비한다. 다음 라운드의 탄수는 그때 보유한 스톤 수이며, 새 보상 스톤 1개는 다음 라운드부터 1발을 늘린다. 슬롯 보상에서 같은 스톤이 나와도 자동 합성하지 않는다.
+- 현재 전용 능력: 모험가맛은 적·바닥 접촉 후 C/B/A 각각 최대 1/2/3회 튕기고, 적에게 다시 닿을 때마다 해당 등급 피해를 새로 추첨한다. 연금술사맛은 비행 중 추가 클릭·Space로 폭발하며 C/B/A 성공률 20/45/70%, 범위 300/375/450에서 성공 시 주변 적마다 피해 1이다. 마법사맛은 추가 클릭·Space 또는 적 직접 명중 시 자동 분열하고, 작은 구슬이 실제로 닿은 적에게 피해 1을 준다. 마법사 스톤의 세 번째 직접 충돌에는 추가 피해 1이 붙는다.
+- 우유맛 전용 스톤이 적에게 직접 닿으면 체력 5를 즉시 회복하고 **다음 발사 뒤 첫 적 공격**을 막는 보호막을 준비한다. 바람궁수는 전용 스톤 장전 시 Q로 자동 유도를 준비할 수 있다. 자동 유도를 사용한 뒤에는 플레이어가 스톤 3발을 더 던져야 다시 사용할 수 있다. 바람 충전 4점이면 Q가 연쇄 폭풍으로 강화된다. 바람궁수는 기본 스톤, 다른 쿠키는 보유한 바람궁수 전용 스톤이 바람 구간을 지나면 1점, 그 뒤 적을 직접 맞히면 그 발사에서 총 2점을 충전한다. 연쇄 폭풍은 실제로 맞힌 적 앞쪽의 적들에게 거리 순서대로 감소하는 피해를 준다.
+- 다른 쿠키가 슬롯 보상으로 얻은 전용 스톤도 사용할 수 있다. 바람궁수의 자동 유도는 본인만 쓰고, 다른 쿠키는 바람궁수 스톤으로 4점을 모았을 때 연쇄 폭풍만 사용한다.
 
-- Use the CookieRun: OvenBreak Fan Kit Land illustrations as the area background art: Forest uses Land 2; Snow uses both Land 6-1 and Land 6-2 as stage variants; City uses Land 8.
-- Chaos bonus area mixes the Forest Land 2, Snow Land 6-1/6-2, and City Land 8 illustrations.
+| 신규 스톤 | 전용 능력 |
+| --- | --- |
+| 용감한 돌진 스톤 | 발사 0.25초 뒤 C/B/A 수평 속도 +12/+18/+24%. |
+| 회전 롤리팝 스톤 | C/B/A 충돌 반경 1.25/1.35/1.45배. |
+| 체리 폭탄 스톤 | 스톤은 계속 비행하고 설치한 폭탄은 0.35초 후 폭발한다. C/B/A 반경 150/180/210 안 적 최대 2명에게 피해 1. |
+| 칠리 베기 스톤 | 직접 맞힌 적 뒤로 180/240/300 거리까지 베기를 보내 다른 적 1명에게 피해 1. 장애물이 막을 수 있다. |
+| 소용돌이 스톤 | 0.7초 동안 일반 적을 끌어당긴다. C/B/A 반경 170/210/250, 최대 이동 60/80/100, 최대 대상 2/2/3명. 이동 위치는 이번 라운드에 유지된다. |
+| 파도 스톤 | 첫 접촉 지점에서 420/560/700 거리까지 지상으로 파도를 보내 지상 적 최대 2명에게 피해 1. |
+| 서리 스톤 | 직접 맞힌 적과 등급에 따른 주변 적의 다음 반격을 각각 한 번 건너뛴다. C는 직접 맞힌 적, B는 반경 180에서 1명 추가, A는 반경 240에서 2명 추가. |
 
-## Areas and enemies
+체리 폭탄과 소용돌이는 발사 후 클릭, Space 또는 화면의 발동 버튼으로 쓴다. 입력하지 않으면 적·장애물 접촉이나 착지 0.5초 뒤 발동한다.
 
-- Forest regulars: snake and boar; in rounds 1–4, spawn one snake and fill remaining slots with boars. Counts: 1, 2, 2, 3. Boss (alone): Pointy Boar (뾰족한 멧돼지).
-- Snow regulars: dry ice and snowball monsters; in rounds 1–4, spawn one dry ice monster and fill remaining slots with snowballs. Counts: 5, 6, 6, 7. Boss (alone): Cowardly Snowman (비겁한 눈사람).
-- City regular: washing-machine robot. Counts: 9, 10, 10, 11. Boss (alone): Cocky Oven Robot (건방진 오븐 로봇).
-- Boss rounds contain only the boss, with no regular monsters.
-- Each area boss has a unique special pattern that replaces its normal attack every third time that individual boss attacks. In the bonus trio fight, each boss has an independent attack counter reset to 0 on entering the encounter. Forest boss Pointy Boar's pattern, "뾰족한 돌진", deals 8–15 damage. Snow boss Cowardly Snowman uses "얼어붙는 숨결" to deal 3–15 damage and block consumable use on the player's next turn. City boss Cocky Oven Robot uses "오븐 과열" to deal 3–15 damage, remove 1 ammo, and restore 3 HP to itself; its HP can reach 18 despite starting at 15.
-- Story: 탐험가맛 쿠키 escapes the oven and travels through the forest into a snowy region. There, the player rescues frozen 우유맛 쿠키 and 바람궁수 쿠키; together they head to the city to destroy the oven.
+## 조작·전투 판정
 
-## Rewards and items
+- 전장 어디든 누른 지점에서 마우스를 드래그해 새총을 당기고, 놓으면 발사한다. 드래그의 반대 방향으로 날아가므로 역발사도 가능하다. 각도·파워의 숫자 값은 플레이어에게 보여주지 않는다. 조준 중 짧은 궤적 안내와 발사 후 사탕을 따라가는 카메라가 있다.
+- 발사한 스톤은 실제 궤적에서 적·장애물과 충돌한다. 바닥에 닿으면 마찰에 따라 최대 스톤 지름의 5배까지 굴러갈 수 있다. 맵 밖으로 날아가면 빗나감으로 처리한다. 적 직접 피해 외에도 물체 충돌·낙하·전용 스톤의 허용된 추가 효과로 적 체력이 줄 수 있다.
+- 살아 있는 적이 남고 탄수와 플레이어 체력이 있으면 **발사 한 번 뒤 적 한 마리**가 반격한다. 일반 적 공격 피해는 1~8, 보스는 3~15다. 투사체 계열 적의 일반 공격은 가끔 미끄러지거나 빗나갈 수 있다. 보스는 자신의 세 번째 공격마다 지역 특수기를 쓴다. 소모품 사용 자체는 반격 턴을 소비하지 않으며, 한 발 사이에 소모품은 최대 한 번만 사용한다.
+- 체력 100으로 시작해 지역 사이에 유지한다. 살아 있는 적이 있는데 체력 또는 해당 라운드 탄수가 0이면 패배한다. 마지막 발사로 적을 모두 처치하면 클리어가 우선이다.
 
-- Each cleared main-run round offers 3 randomly drawn permanent-weapon choices and 3 consumable choices, without duplicate items in either choice list; the player picks one from each category. This includes the City boss reward before its clear-results popup; bonus rounds do not give these rewards.
-- The same item may reappear across rounds. A-grade copies may be held more than once; A copies do not merge.
-- After the Forest and Snow bosses, the weapon-enhancement choice rolls once: 90% grants 2 random C-grade weapons; 10% grants 1 random B-grade weapon. The player chooses this or restoring 60 HP (capped at 100).
-- The run starts with one random consumable. The initial consumable catalog has four types: Fireball (doubles the next permanent-weapon projectile's damage, including any damage carried to following monsters; does not affect Spear; a 0 roll stays 0; additional Fireballs do not stack), Spear (pierces up to 3 monsters even if an earlier target survives; rolls 2–5 damage on the first target and loses 1 damage per monster hit; character-weapon effects do not apply), Defense (blocks the next enemy attack, canceling damage and all special effects), and Heal (restores 25 HP). Consumables are selected and activated by number keys 1–4. Using one consumes the player's turn; no shot is fired, and a monster responds (unless the item blocks that attack). Same types stack in a slot up to 3 items. If no slot or stack capacity is available for a consumable reward, skip that reward rather than discard or defer existing items.
+## 피해·점수
 
-## Implementation inputs to supply later
+- 기본 스톤 피해는 발사 때 가중 무작위로 결정된다. 등급별 피해 후보는 C `0·1·2·3·4`, B `1·2·3·5·6`, A `2·4·6·8·10`이고 각 후보의 확률은 순서대로 `2%·40%·40%·10%·8%`다. C등급에서 한 라운드의 0 피해가 두 번 나오면 이후 0 추첨은 1로 바뀐다.
+- 실제로 감소시킨 적 HP만 점수가 된다. 스톤 등급 배율은 C 1배, B 2배, A 4배다. 발사·물체·별도 능력 피해의 기록은 실제 타격과 제거 HP를 기준으로 계산한다. 창 관통 피해의 점수는 등급과 관계없이 실제 감소 HP만큼 1배다. 쿠키를 선택했다는 이유만으로 주는 점수 보너스는 없다.
+- 본편 최종 점수는 전투 점수에 **남은 소모품 개수 × 1점**을 더한다. 리더보드는 종료한 본편 원정(클리어·패배)의 계정별 최고 기록 하나만 저장한다. 상위 10명과 상위 10위 밖인 본인 기록을 보여준다. 동점 정렬은 점수 → 도달 라운드 → 짧은 플레이 시간 순서지만 화면에 기준은 표시하지 않는다. 화면에는 순위·쿠키·표시 이름·점수만 보이고 이메일은 보이지 않는다.
 
-- Microsoft Entra tenant ID and designated admin group ID.
-- Banana Milk gift-coupon QR image asset.
-- Any balance adjustments after the first playable build.
+## 보상·소모품·물체
+
+- 다음 전투가 있는 라운드 클리어 뒤 3×3 스톤 슬롯을 **1회** 돌린다. 가로 3줄 또는 대각선 2줄 중 같은 기호 3개가 있으면 현재 해금된 쿠키 전용 스톤 중 하나를 무작위로 C등급 지급하고, 없으면 기본 스톤 1개를 준다. 본편은 이어서 소모품 선택을 한다. 도시 보스 뒤에도 혼돈 도전을 위해 보상을 받고 본편 결과로 간다. 혼돈 1·2라운드는 스톤 슬롯과 소모품 슬롯을 각각 1회 돌리며, 소모품 슬롯 실패 시 소모품을 받지 않는다. 혼돈 최종 보스 뒤에는 보상이 없다.
+- 숲·눈 보스 뒤 야영지에서는 체력 최대 60 회복 또는 스톤 슬롯 2회 중 하나를 고른다. 그다음 지역으로 이동한다.
+- 소모품은 불공(다음 발사의 직접 피해 강화), 창(다음 발사에서 최대 3명 관통·기본 피해 2~5에서 대상마다 1 감소), 방어(다음 적 공격 차단), 회복(체력 25 회복) 네 종류다. 숫자키 1~4 또는 화면 버튼으로 사용하며 종류별 최대 3개 보유한다. 창을 준비한 발사에서는 전용 스톤 효과 대신 창 관통을 적용한다.
+- 숲 통나무는 실제로 적을 치면 대상 1명에게 피해 3, 눈 얼음은 다음 적 공격 피해 50% 감소, 도시 상자는 살아 있는 전체 적에게 각 1~2 피해를 준다. 혼돈 물체는 이 세 효과와 다음 한 발 새총 조작 반전 중 하나를 무작위로 일으킨다. 물체는 서로 부딪혀 연쇄 반응할 수 있다.
+
+## 이어질 작업
+
+- 신규 일러스트 5종은 사용자 제공 자료가 도착한 뒤 교체한다. 로컬 선택 카드에는 임시 표시가 있다.
+- 개발 중에는 해당 Task에 필요한 제한된 테스트와 빌드만 실행하고, 전체 회귀 테스트는 배포할 때 실행한다.

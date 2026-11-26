@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }, testInfo) => {
   await start(page, windCase ? '바람궁수 쿠키' : '모험가맛 쿠키');
 });
 
-test('any map point starts primary mouse drag while HUD, touch and secondary inputs remain independent', async ({ page }) => {
+test('any map point starts primary mouse drag while HUD and nonprimary inputs remain independent', async ({ page }) => {
   const origin = await grabMap(page);
   await dragPull(page, { origin, powerRatio: .3 });
   await expect(page.getByTestId('trajectory-preview')).toBeVisible();
@@ -24,7 +24,7 @@ test('any map point starts primary mouse drag while HUD, touch and secondary inp
   await page.getByRole('button', { name: '방어 사용', exact: true }).click(); await phase(page, 'idle');
   await page.getByRole('button', { name: '새총 잡기' }).click({ button: 'right' });
   await phase(page, 'idle');
-  await arena(page).dispatchEvent('pointerdown', { pointerType: 'touch', isPrimary: true, pointerId: 8, button: 0 });
+  await arena(page).dispatchEvent('pointerdown', { pointerType: 'touch', isPrimary: false, pointerId: 8, button: 0 });
   await phase(page, 'idle');
   await arena(page).dispatchEvent('pointerdown', { pointerType: 'mouse', isPrimary: false, pointerId: 9, button: 0 });
   await phase(page, 'idle');

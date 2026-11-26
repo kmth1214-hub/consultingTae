@@ -9,8 +9,8 @@
 | Task | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
 | T01 | `done` | 스톤별 그림·능력 HUD·입력 버튼·화면 효과 | [T01](./T01-stone-visuals-and-controls.md) |
-| T02 | `in_progress` | 12종 선택·슬롯·발사 경계와 기존 규칙 통합 검증 | [T02](./T02-integration-and-regression.md) |
+| T02 | `done` | 12종 선택·슬롯·발사 경계와 기존 규칙 통합 검증 | [T02](./T02-integration-and-regression.md) |
 
 ## Progress
 
-- done: 1/2 (active: T02)
+- done: 2/2

@@ -1,6 +1,6 @@
 # Task: T02 12종 선택·슬롯·발사 통합 검증
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -56,6 +56,12 @@
 
 - `node --test tests/game-session.test.mjs tests/shot-hit-integrity.test.mjs tests/slot-rewards.test.mjs tests/candy-unlock.test.mjs tests/grade-damage.test.mjs tests/candy-presentation.test.mjs tests/player-presentation.test.mjs` — 요청 기능의 제한된 통합 검증.
 - `npm.cmd run build` — 누락 자산/번들 오류 확인.
+- `npm.cmd run test:e2e -- tests/e2e/roster-mobile.spec.cjs` — 390px 화면의 실제 터치 드래그·발사·능력 버튼 단일 동작 확인.
+
+### 통합 확인 중 발견한 수정
+
+- `src/game/useAimController.js`가 기존에 마우스 입력만 허용했다. 주 입력인 터치·펜도 같은 조준·발사 경로를 사용하도록 연결했다. 멀티터치의 보조 입력은 계속 무시한다.
+- 현재 기능은 일러스트 없이 검토 가능하다. 신규 5종은 사용자 공급 일러스트를 받을 때까지 임시 이름 및 시각 표시를 쓴다.
 
 ## Commit Message
 
@@ -72,6 +78,6 @@ Task: T02-integration-and-regression
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 지정 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 지정 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

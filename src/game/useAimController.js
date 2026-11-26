@@ -54,7 +54,7 @@ export function useAimController({ arenaRef, ammo, disabled, invertDirection = f
     if (event.pointerType === 'mouse' && event.button === 2 && state.current.phase === 'dragging') {
       event.preventDefault(); cancelAim(); return;
     }
-    if (event.pointerType !== 'mouse' || !event.isPrimary || event.button !== 0
+    if (!['mouse', 'touch', 'pen'].includes(event.pointerType) || !event.isPrimary || event.button !== 0
       || state.current.phase !== 'idle' || latest.current.disabled || latest.current.ammo <= 0
       || event.target.closest('.arena-hud')) return;
     const rect = arenaRef.current?.getBoundingClientRect();
