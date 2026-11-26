@@ -10,7 +10,7 @@ test('current and known next candy match the real queue, with owned abilities an
   await expect(card(page).locator('.candy-damage')).toContainText('0–4');
   await expect(card(page).locator('.next-candy')).toContainText(weapon(initial.weaponQueue[1]).name);
   await card(page).locator('summary').click();
-  await expect(card(page).locator('.owned-passives li')).toHaveCount(5);
+  await expect(card(page).locator('.owned-passives li')).toHaveCount(12);
   await expect(card(page)).toContainText('전용 능력은 해당 스톤을 발사할 때 적용돼요.');
   await page.screenshot({ path: 'tmp/candy-details-expanded.png' });
   await page.keyboard.press('1'); await phase(page, 'idle');

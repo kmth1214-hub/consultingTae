@@ -1,5 +1,20 @@
 import { sampleAtDistance, sampleAtTime } from './shotGeometry.js';
 
+export function getSignaturePlaybackFrame(flight, time) {
+  const travel = flight.abilityContacts?.find(cue => cue.kind === 'slash' || cue.kind === 'ground-wave');
+  const progress = travel && time >= travel.time
+    ? Math.min(1, (time - travel.time) / Math.max(1e-6, travel.endTime - travel.time)) : null;
+  return {
+    dash: flight.physicsModifier?.kind === 'dash' && time >= flight.physicsModifier.startTime && time <= flight.directHitTime,
+    bombPlanted: Boolean(flight.bomb && time >= flight.bomb.plantedAt && time < flight.bomb.explodeAt),
+    vortexActive: Boolean(flight.vortex && time >= flight.vortex.time && time < flight.vortex.time + flight.vortex.duration),
+    travelPoint: progress === null ? null : {
+      x: travel.point.x + (travel.end.x - travel.point.x) * progress,
+      y: travel.point.y + (travel.end.y - travel.point.y) * progress
+    }
+  };
+}
+
 /** Presentation time only: never change the path, collision order, or simulation timestamps. */
 export function createProjectilePlayback(flight, { reducedMotion = false } = {}) {
   const total = flight.simulationSeconds ?? flight.directHitTime ?? flight.path.durationSeconds;

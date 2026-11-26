@@ -1,6 +1,6 @@
 # Task: T01 새 스톤 그림·능력 HUD·발동 연출
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -81,6 +81,6 @@ Task: T01-stone-visuals-and-controls
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 지정 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 지정 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

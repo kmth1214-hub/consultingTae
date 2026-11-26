@@ -10,13 +10,13 @@
 
 ## Active Task
 
-[T01 새 스톤 그림·능력 HUD·발동 연출](./phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P03-presentation-and-verification/T01-stone-visuals-and-controls.md)
+[T02 12종 선택·슬롯·발사 통합 검증](./phases/2026-11-26-twelve-cookie-roster-and-signature-stones/P03-presentation-and-verification/T02-integration-and-regression.md)
 
 ## Status
 
-- T05 에스프레소 소용돌이와 지속되는 적 위치 구현·지정 검증 완료.
+- T01 새 스톤 그림·능력 HUD·발동 연출 구현·지정 검증 완료.
 - 신규 캐릭터 일러스트 5종은 사용자 제공 자료로 후속 반영.
 
 ## Next Step (IMPORTANT)
 
-T01 새 스톤 그림·능력 HUD·발동 연출 청사진을 읽고 이어서 구현한다.
+T02 12종 선택·슬롯·발사 통합 검증 청사진을 읽고 이어서 구현한다.

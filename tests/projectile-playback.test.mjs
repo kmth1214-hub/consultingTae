@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createProjectilePlayback } from '../src/game/projectilePlayback.js';
+import { createProjectilePlayback, getSignaturePlaybackFrame } from '../src/game/projectilePlayback.js';
 import { planShot, sampleAtDistance } from '../src/game/shotGeometry.js';
 import { buildPlayableBattlefield } from '../src/game/battlefieldPlacement.js';
 import { BattleEngine } from '../src/game/battleEngine.js';
@@ -12,6 +12,19 @@ function realShot(angle = -5, power = .6) {
   return planShot({ layout, enemies, pull: { ready: true, powerRatio: power,
     direction: { x: Math.cos(radians), y: -Math.sin(radians) } } });
 }
+
+test('signature effects follow their reserved flight timestamps and omit future positions', () => {
+  const travel = { kind: 'ground-wave', time: .4, endTime: .8, point: { x: 0, y: 20 }, end: { x: 80, y: 20 } };
+  assert.equal(getSignaturePlaybackFrame({ abilityContacts: [travel] }, .39).travelPoint, null);
+  const head = getSignaturePlaybackFrame({ abilityContacts: [travel] }, .5).travelPoint;
+  assert.ok(Math.abs(head.x - 20) < 1e-8);
+  assert.equal(head.y, 20);
+  const manual = { bomb: { plantedAt: .3, explodeAt: .65 }, vortex: { time: .4, duration: .7 } };
+  assert.equal(getSignaturePlaybackFrame(manual, .4).bombPlanted, true);
+  assert.equal(getSignaturePlaybackFrame(manual, .65).bombPlanted, false);
+  assert.equal(getSignaturePlaybackFrame(manual, .8).vortexActive, true);
+  assert.equal(getSignaturePlaybackFrame(manual, 1.1).vortexActive, false);
+});
 
 test('readable playback extends actual ground time without altering geometry, flight timing or log follow-through', () => {
   const shot = realShot(), frozen = JSON.stringify(shot);

@@ -56,7 +56,7 @@ test('owned passive abilities are deduplicated with actual counters and availabl
   state.roundEffects = { windHomingUsed: true };
   state.pendingAimInversion = true; state.defenseArmed = true; state.nextAttackDamageMultiplier = .5;
   const before = structuredClone(state), details = getCandyDetails(state);
-  assert.equal(details.passives.length, 5);
+  assert.equal(details.passives.length, 12);
   assert.match(details.passives[0].text, /튀어/);
   assert.match(details.passives.find(p => p.id === 'wizard-orb').text, /2\/3/);
   assert.match(details.passives.find(p => p.id === 'wind-candy').text, /4점/);
@@ -64,6 +64,17 @@ test('owned passive abilities are deduplicated with actual counters and availabl
   assert.equal(details.next.id, 'wizard-orb');
   assert.equal(details.reshuffleNext, false);
   assert.deepEqual(state, before);
+});
+
+test('signature HUD describes the loaded grade and the manual control that can activate it', () => {
+  const state = run('A');
+  const stone = BattleEngine.WEAPON_CATALOG.find(item => item.id === 'cherry-bomb-stone');
+  Object.assign(state.weapons[0], { ...stone, grade: 'A' });
+  const details = getCandyDetails(state);
+  assert.match(details.currentAbility, /210/);
+  assert.match(details.currentAbility, /Space·발동 버튼/);
+  state.spearArmed = true;
+  assert.match(getCandyDetails(state).currentAbility, /창 관통/);
 });
 
 test('the last queue entry cannot invent the reshuffled next candy or consume randomness', () => {

@@ -12,7 +12,7 @@ import ProjectileFlight from './ProjectileFlight.jsx';
 import EnemyResponse, { EnemyResponseNotice, responseTravelMs } from './EnemyResponse.jsx';
 import BattlefieldMinimap from './BattlefieldMinimap.jsx';
 import { buildPlayableBattlefield } from '../game/battlefieldPlacement.js';
-import { pathPrefixD, planShot, sampleAtDistance, shotDisruptionOptions } from '../game/shotGeometry.js';
+import { pathPrefixD, planShot, sampleAtDistance, sampleVortexPosition, shotDisruptionOptions } from '../game/shotGeometry.js';
 import { AIM_DISRUPTION_LABELS } from '../game/gameData.js';
 import { useAimController } from '../game/useAimController.js';
 import { useBattlefieldCamera } from '../game/useBattlefieldCamera.js';
@@ -48,6 +48,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   const worldRef = useRef(null), launcherRef = useRef(null), enemyGroupRef = useRef(null), focusRef = useRef(null);
   const sceneryRef = useRef(null);
   const crowTimeRef = useRef(null);
+  const movedEnemyRef = useRef(new Map());
   const reviewingSplit = Boolean(bossTransition && shotReview);
   const activeSplit = bossTransition && !shotReview ? bossTransition : null;
   const roster = reviewingSplit ? [bossTransition.split.fromEnemy] : run.enemies;
@@ -113,6 +114,11 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id === 'wind-candy' && run.windArmedMode === 'homing' });
   function clearFlight() {
     if (activeFlight.current) onCancelShot(activeFlight.current.shotId);
+    for (const [id] of movedEnemyRef.current) {
+      const slot = layout.enemies.find(enemy => enemy.id === id);
+      if (slot) moveEnemyMarker(id, slot);
+    }
+    movedEnemyRef.current.clear();
     activeFlight.current = null; flightTimeRef.current = 0; crowTimeRef.current = null; setFlight(null); setVisualContacts([]); setVisualEnemyContacts([]);
     setVisualAbilities([]); triggeredAbilities.current.clear();
     triggeredContacts.current.clear(); triggeredEnemies.current.clear();
@@ -228,6 +234,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     focusRef.current = motionEnd || sampleAtDistance(shot.path, shot.impactDistance);
     activeFlight.current = null;
     crowTimeRef.current = null;
+    movedEnemyRef.current.clear();
     controller.completeLaunch(shot.id, () => {
       setImpact(shot.contacts?.length && shot.impactKind !== 'enemy' ? null
         : { id: shot.id, point: sampleAtDistance(shot.path, shot.impactDistance), kind: shot.impactKind,
@@ -269,21 +276,36 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     }
   }
   function moveFallingRiders(shot, time) {
+    for (const move of shot.vortex?.moves ?? []) {
+      if (time < move.startTime) continue;
+      const position = sampleVortexPosition(move, time);
+      movedEnemyRef.current.set(move.enemyId, position);
+      moveEnemyMarker(move.enemyId, position);
+    }
     for (const contact of shot.contacts || []) {
       const motion = contact.riderMotion;
       if (!motion || time < motion.startTime) continue;
-      const position = sampleRiderMotion(motion, time);
-      const monster = [...enemyGroupRef.current?.querySelectorAll('[data-enemy-id]') || []]
-        .find(node => node.dataset.enemyId === motion.enemyId);
-      if (monster) { monster.style.left = `${position.x}px`; monster.style.top = `${position.y}px`; }
-      const marker = [...arenaRef.current?.querySelectorAll('[data-minimap-enemy]') || []]
-        .find(node => node.dataset.minimapEnemy === motion.enemyId);
-      if (marker) {
-        marker.style.left = `${position.x / layout.width * 100}%`;
-        marker.style.top = `${(position.y - layout.enemies.find(enemy => enemy.id === motion.enemyId).size * .42) / layout.height * 100}%`;
-      }
+      const vortexFall = shot.vortex?.moves.find(move => move.enemyId === motion.enemyId)?.fall;
+      if (vortexFall && vortexFall.startTime < motion.startTime) continue;
+      moveEnemyMarker(motion.enemyId, sampleRiderMotion(motion, time));
     }
   }
+  function moveEnemyMarker(id, position) {
+    const slot = layout.enemies.find(enemy => enemy.id === id);
+    if (!slot) return;
+    const monster = [...enemyGroupRef.current?.querySelectorAll('[data-enemy-id]') || []]
+      .find(node => node.dataset.enemyId === id);
+    if (monster) { monster.style.left = `${position.x}px`; monster.style.top = `${position.y}px`; }
+    const marker = [...arenaRef.current?.querySelectorAll('[data-minimap-enemy]') || []]
+      .find(node => node.dataset.minimapEnemy === id);
+    if (marker) {
+      marker.style.left = `${position.x / layout.width * 100}%`;
+      marker.style.top = `${(position.y - slot.size * .42) / layout.height * 100}%`;
+    }
+  }
+  const manualStone = ['cherry-bomb', 'vortex'].includes(flight?.abilityKindPending);
+  const frozenCueIds = flight && !shotReview ? (visualAbilities.find(cue => cue.kind === 'freeze')?.targetIds ?? [])
+    : shotReview ? (lastEvent?.frozenEnemyIds ?? []) : [];
   if (rebuilt && sceneLoadError) throw sceneLoadError;
   return <>
     <div ref={arenaRef} className={`battle-arena battle-arena--${run.area}`} tabIndex={0} role="group" aria-label="전투 맵"
@@ -394,6 +416,11 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
             data-testid="wizard-child-hit" className="wizard-child-hit" transform={`translate(${cue.point.x} ${cue.point.y})`}>
             <circle r="24" fill="none" stroke="#b6eaff" strokeWidth="5" />
           </g>)}
+          {visualAbilities.filter(cue => cue.kind === 'cherry-bomb').map(cue => <g key={cue.id}
+            className="cherry-blast" data-testid="cherry-blast" transform={`translate(${cue.point.x} ${cue.point.y})`}>
+            <circle r={cue.radius} />
+            <path d="M0-68 11-21 58-34 27 0 58 32 9 21 0 68-12 21-54 37-26 0-56-31-13-21Z" />
+          </g>)}
           {run.area === 'city' && visualContacts.map(contact =>
             <CityGroundBursts key={contact.id} contact={contact} layout={layout} />)}
           {chaosCues.map(cue => cue.kind === 'jar-burst'
@@ -402,7 +429,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
           {lastImpact && <ContactEffect key={lastImpact.id} impact={lastImpact} effect={lastEvent?.obstacleEffect} obstacles={layout.obstacles} />}
         </svg>
         {!activeSplit && <MonsterGroup groupRef={enemyGroupRef} enemies={visibleEnemies} placements={layout.enemies} layout={layout} travelMs={travelMs}
-          patrolTimeRef={crowTimeRef}
+          patrolTimeRef={crowTimeRef} movedEnemyRef={movedEnemyRef} frozenCueIds={frozenCueIds}
           hitEffectsEnabled={hitEffectsEnabled} showDefeatedHit={Boolean(shotReview)}
           studioMonsterPrototype={run.studioMonsterPrototype}
           lastEvent={lastEvent} response={activeResponse} selectedTargetId={solution?.selectedTargetId || flight?.selectedTargetId} />}
@@ -427,19 +454,26 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
         {chaosCues.map(cue => <ChaosObstacleNotice key={cue.id} cue={cue} />)}
       </div>}
       {!run.terminal && !bossTransition && <BattlefieldMinimap layout={layout} enemies={run.enemies} aim={state}
-        toppledObstacleIds={[...(run.toppledObstacleIds || []), ...visualContacts.map(contact => contact.obstacleId)]} />}
+        toppledObstacleIds={[...(run.toppledObstacleIds || []), ...visualContacts.map(contact => contact.obstacleId)]}
+        movedEnemyRef={movedEnemyRef} patrolTimeRef={crowTimeRef} />}
       {activeResponse && <EnemyResponseNotice response={activeResponse} />}
       {activeSplit && <div className="boss-split-notice" role="status">{activeSplit.stage === 'flight'
         ? '융합 붕괴! 세 보스가 흩어집니다' : activeSplit.split.shock.blocked
           ? '착지 충격을 막았어요!' : `착지 충격 · 체력 −${activeSplit.split.shock.damage}${activeSplit.split.shock.damageReduction ? ' · 얼음 보호 50% 감소' : ''}`}</div>}
       <div className="arena-hud">
+        {manualStone && !shotReview && <button type="button" className="signature-activation"
+          onKeyDown={event => { if (event.code === 'Space') event.stopPropagation(); }}
+          onClick={() => activateAbility('click')}>
+          {flight.abilityKindPending === 'cherry-bomb' ? '폭탄 설치' : '소용돌이 발동'}
+        </button>}
         <ConsumableTable run={hudRun} disabled={aiming || Boolean(enemyResponse || shotReview || bossTransition)} onConsumable={onConsumable} />
         <MagicCandyCard run={hudRun} hidden={state.phase === 'launching' || Boolean(shotReview || bossTransition
           || (run.studioMonsterPrototype === 'regional-monsters-v1' && enemyResponse))} />
       </div>
     </div>
     <p id="aim-instructions" className="aim-instructions" role="status" aria-live="polite">{shotReview
-      ? '발사 결과 확인 중 · 잠시 후 다음 턴으로 이어집니다.' : activeSplit ? '보스 분리 중 · 착지가 끝나면 다시 조준할 수 있어요.' : enemyResponse
+      ? lastEvent?.enemyAttack?.frozenSkip ? '빙결된 적이 반격을 한 번 건너뛰었어요.' : '발사 결과 확인 중 · 잠시 후 다음 턴으로 이어집니다.'
+      : activeSplit ? '보스 분리 중 · 착지가 끝나면 다시 조준할 수 있어요.' : enemyResponse
       ? '적의 반격 중 · 쉴드는 적의 공격과 특수 효과를 막아줍니다.' : retry || (run.pendingAimDisruption
         ? `${AIM_DISRUPTION_LABELS[run.pendingAimDisruption]} · ${INSTRUCTIONS[state.phase]}` : run.pendingAimInversion
         ? state.phase === 'dragging' ? '혼돈의 역풍 · 드래그 방향이 양 축 모두 반대로 적용 중 · 놓으면 발사' : '혼돈의 역풍 · 다음 한 발 조작 반전'

@@ -1,10 +1,13 @@
 import React, { useEffect, useId, useState } from 'react';
 import { BATTLEFIELD, getDragDraw } from '../game/battlefieldModel.js';
 import CandyProjectileArt from './CandyProjectileArt.jsx';
+import { STONE_STATS } from '../game/signatureStones.js';
 
 export default function Slingshot({ aim, run, launcherRef, layout }) {
-  const loadedStoneId = run.weapons.find(weapon => weapon.instanceId ===
-    (run.weaponQueue?.[0] ?? run.currentWeaponId))?.id ?? 'basic-stone';
+  const loadedStone = run.weapons.find(weapon => weapon.instanceId ===
+    (run.weaponQueue?.[0] ?? run.currentWeaponId));
+  const loadedStoneId = loadedStone?.id ?? 'basic-stone';
+  const loadedScale = run.spearArmed ? 1 : STONE_STATS[loadedStoneId]?.radiusScale?.[loadedStone?.grade] ?? 1;
   const id = `sling-${useId().replace(/:/g, '')}`;
   const active = !['idle', 'launching'].includes(aim.phase);
   const launching = aim.phase === 'launching';
@@ -97,7 +100,7 @@ export default function Slingshot({ aim, run, launcherRef, layout }) {
         <g className="slingshot-pouch" transform={`translate(${pouch.x} ${pouch.y})`}>
           <ellipse rx="14" ry="11" fill={`url(#${id}-leather)`} stroke="#4e3026" strokeWidth="2" />
           {!launching && <g className="sling-loaded-candy" data-testid="loaded-candy"
-            transform={`rotate(${Math.atan2(aim.direction.y, aim.direction.x) * 180 / Math.PI})`}>
+            transform={`rotate(${Math.atan2(aim.direction.y, aim.direction.x) * 180 / Math.PI}) scale(${loadedScale})`}>
             <CandyProjectileArt variant={run.spearArmed ? 'spear' : run.fireballArmed ? 'fireball' : 'normal'} stoneId={loadedStoneId} />
           </g>}
           <path d="M-14 2Q0 10 14 2L12 11Q0 18-12 11Z" fill={`url(#${id}-leather)`} stroke="#4e3026" strokeWidth="1.5" />

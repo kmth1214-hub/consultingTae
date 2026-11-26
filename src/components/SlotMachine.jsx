@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BattleEngine } from '../game/battleEngine.js';
+import CandyProjectileArt from './CandyProjectileArt.jsx';
 
 const LABELS = { star: '별', leaf: '잎', moon: '달', crown: '왕관',
   fireball: '불공', spear: '창', defense: '방어', heal: '회복' };
@@ -96,6 +97,8 @@ export default function SlotMachine({ kind, remaining, results, onSpin, disabled
       </div>
     </div>
     {visibleResults.map((result, index) => <p key={index} className="slot-machine__result" role="status">
+      {kind === 'stone' && result.prizeId && <svg className="slot-stone-art" width="28" height="28"
+        viewBox="-18 -18 36 36" aria-hidden="true"><CandyProjectileArt stoneId={result.prizeId} /></svg>}
       {index + 1}회: {result.prizeId ? `${result.winningLine ? '당첨' : '기본 지급'} · ${prizeName(result.prizeId)}`
         : '빗나감 · 소모품 없음'}
     </p>)}

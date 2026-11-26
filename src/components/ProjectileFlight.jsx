@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { sampleAtDistance, sampleAtTime } from '../game/shotGeometry.js';
-import { createProjectilePlayback } from '../game/projectilePlayback.js';
+import { createProjectilePlayback, getSignaturePlaybackFrame } from '../game/projectilePlayback.js';
 import { BATTLEFIELD } from '../game/battlefieldModel.js';
 import CandyProjectileArt from './CandyProjectileArt.jsx';
 
@@ -15,6 +15,8 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
   const rollDustRef = useRef(null);
   const rollShadowRef = useRef(null), dustDirectionRef = useRef(null);
   const childRefs = useRef(new Map()), bounceRef = useRef(null);
+  const travelRef = useRef(null), bombRef = useRef(null), vortexRef = useRef(null);
+  const travel = flight.abilityContacts?.find(cue => cue.kind === 'slash' || cue.kind === 'ground-wave');
   const complete = useRef(onComplete);
   complete.current = { onComplete, onProgress, onFailure };
   const flightRef = useRef(flight);
@@ -49,20 +51,31 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
       try {
         const candyTime = flight.directHitTime ?? sampleAtDistance(flight.path, flight.impactDistance).time;
         const simulationTime = clock.sampleTime(Math.max(0, elapsed - playbackOffset));
-        const point = sampleAtTime(flight.path, simulationTime);
+        const point = sampleAtTime(flight.path, Math.min(simulationTime, candyTime));
         const distance = Math.min(flight.impactDistance, point.distance);
         const candyFinished = !flight.abilityKindPending && simulationTime > candyTime;
         const rolling = Number.isFinite(flight.rollStartDistance) && distance > flight.rollStartDistance;
         const activeChild = flight.splitOrbs?.children.find(child => simulationTime >= flight.splitOrbs.splitTime
           && simulationTime <= child.impactTime);
+        const effects = getSignaturePlaybackFrame(flight, simulationTime);
         const focusPoint = candyFinished && activeChild
-          ? sampleAtTime(activeChild.path, simulationTime - flight.splitOrbs.splitTime) : point;
+          ? sampleAtTime(activeChild.path, simulationTime - flight.splitOrbs.splitTime)
+          : candyFinished ? effects.travelPoint ?? (effects.vortexActive ? flight.vortex.point : null)
+            ?? flight.bomb?.point ?? point : point;
         const activation = complete.current.onProgress?.({ id: flight.id, point, focusPoint, distance, time: simulationTime });
         if (activation?.flight) flightRef.current = activation.flight;
         candyRef.current.style.visibility = candyFinished ? 'hidden' : '';
         if (trailRef.current) trailRef.current.style.visibility = candyFinished ? 'hidden' : '';
         if (trailGlowRef.current) trailGlowRef.current.style.visibility = candyFinished ? 'hidden' : '';
         candyRef.current.dataset.rolling = String(rolling);
+        candyRef.current.dataset.dashActive = String(effects.dash);
+        if (travelRef.current) {
+          travelRef.current.style.visibility = effects.travelPoint ? 'visible' : 'hidden';
+          if (effects.travelPoint) travelRef.current.setAttribute('transform',
+            `translate(${effects.travelPoint.x} ${effects.travelPoint.y}) scale(${flight.reverse ? -1 : 1} 1)`);
+        }
+        if (bombRef.current) bombRef.current.style.visibility = effects.bombPlanted ? 'visible' : 'hidden';
+        if (vortexRef.current) vortexRef.current.style.visibility = effects.vortexActive ? 'visible' : 'hidden';
         const before = sampleAtDistance(flight.path, Math.max(0, distance - 2));
         const after = sampleAtDistance(flight.path, Math.min(flight.path.length, distance + 2));
         const rotation = !rolling && variant !== 'normal' ? Math.atan2(after.y-before.y, after.x-before.x) * 180 / Math.PI : reduced ? 0 : rolling
@@ -103,7 +116,7 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
         }
         if (!reduced) {
           // Decorative wake samples only the path already flown; never reveal the landing point.
-          const tailStart = Math.max(0, distance - 86);
+          const tailStart = Math.max(0, distance - (effects.dash ? 155 : 86));
           const points = Array.from({ length: 7 }, (_, i) => sampleAtDistance(flight.path, tailStart + (distance - tailStart) * i / 6));
           const d = points.map((p, i) => `${i ? 'L' : 'M'}${p.x} ${p.y}`).join(' ');
           trailRef.current?.setAttribute('d', d);
@@ -145,6 +158,23 @@ export default function ProjectileFlight({ flight, onProgress, onComplete, onFai
     <g className={`projectile-trail ${flight.fireball ? 'is-fiery' : ''}`} fill="none" stroke={`url(#${id}-trail)`} strokeLinecap="round" strokeLinejoin="round">
       <path ref={trailGlowRef} strokeWidth={18 * worldScale} opacity=".18" /><path ref={trailRef} strokeWidth={6 * worldScale} opacity=".9" />
     </g>
+    {travel && <g ref={travelRef} className={`signature-travel signature-travel--${travel.kind}`}
+      data-testid={travel.kind} style={{ visibility: 'hidden' }}>
+      {travel.kind === 'slash'
+        ? <path d="M-55 24Q-16-18 48-35 19-25-2 22-33 38-55 24Z" />
+        : <path d="M-79 16Q-61-12-34 3-10 15 5-8 19-36 45-24 24-19 32 0 39 12 58 11L74 17Z" />}
+    </g>}
+    {flight.bomb && <g ref={bombRef} className="cherry-planted-bomb" data-testid="cherry-planted-bomb"
+      transform={`translate(${flight.bomb.point.x} ${flight.bomb.point.y})`} style={{ visibility: 'hidden' }}>
+      <circle r="23" /><path d="M4-20Q5-37 20-33M18-39L22-28M14-32L26-35" />
+    </g>}
+    {flight.vortex && <g ref={vortexRef} transform={`translate(${flight.vortex.point.x} ${flight.vortex.point.y})`}
+      data-testid="espresso-vortex" className="espresso-vortex" style={{ visibility: 'hidden' }}>
+      <circle r={flight.vortex.radius} />
+      <g className="espresso-vortex__spiral" transform={`scale(${flight.vortex.radius / 140})`}>
+        <path d="M-135 4C-103-118 89-100 103 4 114 86-26 115-73 40-117-30-24-72 31-45 74-23 58 30 18 42-10 52-51 13-28-5 4-29 21-10 15 9" />
+      </g>
+    </g>}
     <ellipse ref={rollShadowRef} data-testid="roll-shadow" rx={13 * worldScale} ry={3 * worldScale}
       fill="#664729" opacity=".3" style={{ display: 'none' }} />
     <g ref={candyRef} data-testid="projectile" className={flight.fireball ? 'projectile-candy is-fiery' : 'projectile-candy'}

@@ -1,6 +1,25 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { patrolX } from '../game/shotGeometry.js';
 
-export default function BattlefieldMinimap({ layout, enemies, aim, toppledObstacleIds = [] }) {
+export default function BattlefieldMinimap({ layout, enemies, aim, toppledObstacleIds = [], movedEnemyRef, patrolTimeRef }) {
+  const markers = useRef(new Map());
+  useEffect(() => {
+    const birds = layout.enemies.filter(slot => slot.patrol);
+    if (!birds.length) return;
+    let frame;
+    const tick = () => {
+      const time = patrolTimeRef?.current ?? Date.now();
+      for (const bird of birds) {
+        const marker = markers.current.get(bird.id);
+        if (!marker) continue;
+        const x = movedEnemyRef?.current.get(bird.id)?.x ?? patrolX(bird.patrol, time);
+        marker.style.left = `${x / layout.width * 100}%`;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [layout, movedEnemyRef, patrolTimeRef]);
   const living = layout.enemies.filter(slot => enemies.some(enemy => enemy.id === slot.id && enemy.alive));
   const player = { x: layout.launcher.impact.x, y: layout.launcher.contact.y - 34 };
   const nearestEnemy = Math.min(...living.map(enemy => Math.hypot(enemy.x - player.x,
@@ -24,6 +43,7 @@ export default function BattlefieldMinimap({ layout, enemies, aim, toppledObstac
     </svg>}
     <span className="minimap-enemy-count" aria-hidden="true">적 {living.length}</span>
     {living.map(enemy => <span key={enemy.id} className={`minimap-enemy${enemy.isBoss ? ' is-boss' : ''}`}
+      ref={node => { if (node) markers.current.set(enemy.id, node); else markers.current.delete(enemy.id); }}
       data-minimap-enemy={enemy.id} aria-hidden="true"
       style={{ left: `${enemy.x / layout.width * 100}%`, top: `${(enemy.y - enemy.size * .42) / layout.height * 100}%` }}>
       <svg viewBox="0 0 24 24" focusable="false">

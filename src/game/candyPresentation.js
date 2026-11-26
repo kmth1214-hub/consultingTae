@@ -1,4 +1,5 @@
 import { BattleEngine } from './battleEngine.js';
+import { describeSignatureStone } from './signatureStones.js';
 
 const describe = weapon => ({ id: weapon.id, name: weapon.name, grade: weapon.grade });
 const progress = count => Math.max(0, Number(count) || 0) % 3;
@@ -22,6 +23,7 @@ export function getCandyDetails(run) {
   else if (weapon.id === 'wind-candy') currentAbility = run.characterId === 'wind'
     ? 'Q로 자동 유도, 바람 4점이면 연쇄 폭풍. 발사 전 유도 궤도는 보이지 않아요.'
     : '바람 4점을 모은 뒤 Q로 연쇄 폭풍. 자동 유도는 바람궁수만 사용해요.';
+  else currentAbility = describeSignatureStone(weapon.id, weapon.grade);
   if (run.fireballArmed) buffs.push(`불공 · 큰 스톤 직접 피해 ×2 (${range.min * 2}–${range.max * 2}), 파동·작은 구슬 피해는 그대로`);
   if (run.spearArmed) buffs.push('창 · 실제 닿은 적 최대 3마리 관통 · 관통마다 피해 1 감소 · 이번 발사는 창 피해만 적용');
   if (run.pendingAimInversion) buffs.push('혼돈의 역풍 · 다음 한 발 조작 반전');
@@ -31,7 +33,7 @@ export function getCandyDetails(run) {
   const counters = run.effectCounters || {}, effects = run.roundEffects || {};
   const collision = progress(counters.projectileCollisions);
   const descriptions = {
-    'adventurer-candy': '전용 스톤은 적·바닥 충돌 후 등급별로 튕기며 직접 맞은 적마다 피해를 따로 추첨합니다.',
+    'adventurer-candy': '전용 스톤은 적·바닥 충돌 후 등급별로 튀어 오르며 직접 맞은 적마다 피해를 따로 추첨합니다.',
     'alchemist-candy': '추가 클릭·Space로 폭발합니다. 적·장애물 충돌 시 자동 발동합니다.',
     'wizard-orb': `사탕이 적에게 3회 닿을 때마다 추가 피해 +1 · 현재 ${collision}/3`,
     'milk-candy': `직접 명중 시 체력 +5와 다음 발사 보호막 · ${run.milkShieldPending ? '보호막 대기 중' : '명중 대기 중'}`,
@@ -39,8 +41,9 @@ export function getCandyDetails(run) {
       ? '기본 스톤이 바람을 지나면 +1, 그 뒤 적에게 직접 닿으면 총 +2. Q 유도 후 3발 재사용 대기.'
       : '바람궁수 스톤이 바람을 지나면 +1, 그 뒤 적에게 직접 닿으면 총 +2. 4점이면 Q 연쇄 폭풍.'
   };
-  const passives = [...new Set(run.weapons.map(item => item.id))]
-    .filter(id => descriptions[id]).map(id => ({ id, text: descriptions[id] }));
+  const passives = [...new Map(run.weapons.map(item => [item.id, item])).values()]
+    .map(item => ({ id: item.id, text: descriptions[item.id] ?? describeSignatureStone(item.id, item.grade) }))
+    .filter(item => item.text);
   const wind = run.characterId === 'wind' || run.weapons.some(item => item.id === 'wind-candy')
     ? { charge: Math.max(0, Math.min(4, run.windCharge || 0)), cooldown: run.windCooldownShots || 0,
       armed: run.windArmedMode || null, canUse: weapon.id === 'wind-candy'

@@ -87,7 +87,8 @@ function MonsterArt({ enemy, studioMonsterPrototype }) {
 }
 
 export default function MonsterGroup({ enemies, placements, selectedTargetId, lastEvent, response, groupRef, layout, travelMs,
-  hitEffectsEnabled = false, showDefeatedHit = false, studioMonsterPrototype = null, patrolTimeRef = null }) {
+  hitEffectsEnabled = false, showDefeatedHit = false, studioMonsterPrototype = null, patrolTimeRef = null,
+  movedEnemyRef, frozenCueIds = [] }) {
   React.useEffect(() => {
     const birds = placements.filter(slot => slot.patrol);
     if (!birds.length) return undefined;
@@ -98,7 +99,7 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
         const node = [...(groupRef?.current?.querySelectorAll('[data-enemy-id]') || [])]
           .find(item => item.dataset.enemyId === bird.id);
         if (!node) continue;
-        const x = patrolX(bird.patrol, time);
+        const x = movedEnemyRef?.current.get(bird.id)?.x ?? patrolX(bird.patrol, time);
         node.style.left = `${x}px`;
         node.style.setProperty('--strike-x', `${(layout.player.contact.x - x) / bird.size * 100}%`);
       }
@@ -106,7 +107,7 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [placements, layout.player.contact.x, groupRef, patrolTimeRef]);
+  }, [placements, layout.player.contact.x, groupRef, patrolTimeRef, movedEnemyRef]);
   return <div ref={groupRef} className="monster-group" role="group" aria-label={`몬스터 ${enemies.filter(enemy => enemy.alive).length}마리`}>
     {placements.map(placement => {
       const live = enemies.find(e => e.id === placement.id);
@@ -121,12 +122,14 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
       const visual = attacking ? attackStyle(response.attack) : null;
       const melee = visual?.melee;
       const hp = attacking && response.stage !== 'impact' ? enemy.hp - response.attack.healedEnemy : enemy.hp;
+      const frozen = enemy.frozenNextAttack || frozenCueIds.includes(enemy.id);
       return <div role="img" className={`monster ${enemy.isBoss ? 'monster--boss' : ''} ${enemy.kind === 'clockwork-crow' ? 'monster--crow' : ''} ${selectedTargetId === enemy.id ? 'is-targeted' : ''} ${attacking ? 'is-attacking' : ''} ${hitNow ? 'is-hit' : ''} ${!enemy.alive ? 'is-defeated-hit' : ''}`}
         data-attack-phase={attacking ? response.stage : undefined} data-melee={melee || undefined}
         data-throwing={visual?.thrown || undefined}
         data-miss-style={attacking ? response.attack.missStyle || undefined : undefined}
         key={enemy.id} data-enemy-id={enemy.id}
-        aria-label={`${MONSTER_NAMES[enemy.kind]}, 체력 ${hp}/${enemy.maxHp}${selectedTargetId === enemy.id ? ', 바람 유도 목표' : ''}`}
+        data-frozen={frozen || undefined}
+        aria-label={`${MONSTER_NAMES[enemy.kind]}, 체력 ${hp}/${enemy.maxHp}${selectedTargetId === enemy.id ? ', 바람 유도 목표' : ''}${frozen ? ', 빙결' : ''}`}
         style={{ left: enemy.x, top: enemy.y, width: enemy.size,
           '--attack-travel': `${travelMs}ms`,
           '--strike-x': `${(layout.player.contact.x - enemy.x) / enemy.size * 100}%`,
@@ -146,6 +149,7 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
           <span className="boss-health-track"><span style={{ width: `${Math.max(0, Math.min(100, hp / enemy.maxHp * 100))}%` }} /></span>
           <small>{hp} / {enemy.maxHp}</small>
         </span> : <span className="monster-health">{hp}<span className="sr-only"> / {enemy.maxHp}</span></span>}
+        {frozen && <span className="monster-frozen" aria-hidden="true">❄</span>}
         {visual?.thrown && response.stage === 'windup' && <svg className="monster-throw-rig" viewBox="0 0 100 100" aria-hidden="true"
           style={{ '--ammo-color': visual.color }}>
           <g className={['snake', 'dry-ice'].includes(response.attack.attackKind || enemy.kind) ? 'monster-ammo-gather' : 'monster-throw-grip'}>
