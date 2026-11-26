@@ -29,7 +29,8 @@ test('seeded round layouts stay stable, avoid overlaps and remain playable at de
             assert.equal(enemy.isBoss, enemies[i].isBoss);
             assert.equal('hp' in enemy, false);
             assert.equal('alive' in enemy, false);
-            assert.equal(enemy.y, enemy.kind === 'clockwork-crow' ? 900 - 240 - (i % 2) * 80 : 900);
+            const crowIndex = layout.enemies.slice(0, i).filter(slot => slot.kind === 'clockwork-crow').length;
+            assert.equal(enemy.y, enemy.kind === 'clockwork-crow' ? 900 - 240 - (crowIndex % 2) * 80 : 900);
             assert.equal(enemy.size, enemy.kind === 'chaos-fused-boss' ? 414 : enemy.isBoss ? 276 : enemies.length <= 6 ? 92 : 60);
           }
           for (const [i, prop] of layout.obstacles.entries()) {

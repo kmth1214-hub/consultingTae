@@ -78,6 +78,7 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
   }
   const random = randomFromSeed(seed);
   const stackWidth = STACK_WIDTH * worldScale;
+  let crowIndex = 0;
   const placements = enemies.map(({ id, kind, isBoss }, i) => {
     const nominal = enemies.length === 1 ? 2438
       : area === 'chaos' && elevated(area, prototype) && round < 3
@@ -85,10 +86,12 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
     const jitter = enemies.length > 10 ? 24 : enemies.length > 6 ? 42 : 135;
     const x = Math.round(nominal + (random() * 2 - 1) * jitter);
     const size = (kind === 'chaos-fused-boss' ? 92 * 4.5 : isBoss ? 92 * 3 : enemies.length <= 6 ? 92 : 60) * worldScale * enemyScale;
-    const y = kind === 'clockwork-crow' ? 900 - 240 - (i % 2) * 80 : 900;
-    const patrol = kind === 'clockwork-crow' ? { centerX: x, range: 75 * worldScale,
-      periodMs: 2100 + i % 3 * 300, phase: random() } : null;
-    return { id, kind, isBoss, x, y, size, ...(patrol ? { patrol } : {}),
+    const flying = kind === 'clockwork-crow';
+    const sliding = area === 'snow' && round === 1 && kind === 'snowball' && i === enemies.length - 1;
+    const y = flying ? 900 - 240 - crowIndex++ % 2 * 80 : 900;
+    const patrol = flying || sliding ? { centerX: x, range: 75 * worldScale,
+      periodMs: sliding ? 3000 : 2100 + i % 3 * 300, phase: random() } : null;
+    return { id, kind, isBoss, x, y, size, ...(patrol ? { patrol, movement: flying ? 'fly' : 'slide' } : {}),
       collider: { id, x, y: y - size * .52, radius: size * .42 } };
   });
   let free = [[560, 3240]];
@@ -122,7 +125,7 @@ export function buildBattlefield({ area, round, enemies, seed = 0, encounterPhas
   let lift = 0;
   if (elevated(area, prototype)) {
     const required = riderCount(area, round, placements.length);
-    const groundIndices = placements.flatMap((slot, index) => slot.kind === 'clockwork-crow' ? [] : [index]);
+    const groundIndices = placements.flatMap((slot, index) => slot.patrol ? [] : [index]);
     const riderIndices = area === 'chaos' && required
       ? (required === 3 ? [1, Math.floor(placements.length / 2), placements.length - 2]
         : [1, placements.length - 2]) : required ? [groundIndices[Math.floor(random() * groundIndices.length)]] : [];

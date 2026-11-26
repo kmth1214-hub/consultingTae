@@ -1,6 +1,6 @@
 # Task: T03 눈·도시 적 수와 이동 배치
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -67,9 +67,9 @@ type EnemySlot = ExistingEnemySlot & { patrol?: Patrol; movement?: 'slide' | 'fl
 
 ## Acceptance Criteria
 
-- [ ] 눈 3·4, 도시 5·6마리가 실제 전투와 관리자에서 동일하다.
-- [ ] 눈덩이와 까마귀의 표시 위치에서만 실제 충돌한다.
-- [ ] 눈 round2 낙하와 얼음 보호가 함께 동작한다.
+- [x] 눈 3·4, 도시 5·6마리가 실제 전투와 관리자에서 동일하다.
+- [x] 눈덩이와 까마귀의 표시 위치에서만 실제 충돌한다.
+- [x] 눈 round2 낙하와 얼음 보호가 함께 동작한다.
 
 ## Validation
 
@@ -91,6 +91,6 @@ Task: T03-snow-city-encounters
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

@@ -596,3 +596,6 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 .stone-rack-load { align-self: flex-end; padding: 2px 8px; background: #fdf1cf; border: 1px solid #a9763c; border-radius: 6px; font: inherit; }
 @media(max-width:600px) { .stone-controls { top: 7px; left: 7px; width: 145px; max-height: 60%; } .stone-rack { padding: 4px; border-width: 2px; } .stone-rack-list { max-height: 72px; } .stone-rack h2 small { display: none; } }
 @media(max-height:500px) { .stone-controls { top: 7px; left: 7px; width: 190px; max-height: 68%; } .stone-rack-list { max-height: 45px; } .stone-rack details { display: none; } }
+.monster[data-movement="slide"] .monster-art { transform: rotate(calc(var(--patrol-facing, 1) * 7deg)); transition: transform 180ms ease-out; }
+.monster[data-movement="fly"] .monster-art { scale: var(--patrol-facing, 1) 1; transition: scale 160ms ease-out; }
+@media(prefers-reduced-motion:reduce) { .monster[data-movement] .monster-art { transition: none; } }

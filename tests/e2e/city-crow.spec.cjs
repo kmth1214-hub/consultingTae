@@ -3,10 +3,10 @@ const { test, expect, installGame, start, arena, dragPull, phase, snapshot } = r
 test('city crows patrol in air, dive on counterattack and return without duplicate damage', async ({ page }) => {
   test.setTimeout(45000);
   await installGame(page, { initial: { area: 'city', round: 1 },
-    stateOverride: { enemyTurnIndex: 3 } });
+    stateOverride: { enemyTurnIndex: 1 } });
   await start(page);
   const birds = arena(page).locator('.monster--crow');
-  await expect(birds).toHaveCount(2);
+  await expect(birds).toHaveCount(1);
   await expect(birds.first().locator('img')).toHaveJSProperty('naturalWidth', 1536);
   const originalX = await birds.first().evaluate(node => Number.parseFloat(node.style.left));
   await expect.poll(() => birds.first().evaluate(node => Number.parseFloat(node.style.left)))

@@ -733,7 +733,7 @@ function withTravelingAbility(shot, layout, living, stone, grade, direction, fli
     .filter(hit => !topples.some(topple => topple.obstacleId === hit.id
       && topple.time <= contact.time + hit.distance / speed + EPS))
     .sort((a, b) => a.distance - b.distance)[0];
-  const candidates = living.filter(slot => !shot.hitIds.includes(slot.id) && !(wave && slot.patrol))
+  const candidates = living.filter(slot => !shot.hitIds.includes(slot.id) && !(wave && slot.movement === 'fly'))
     .map(slot => {
       const motion = topples.find(entry => entry.riderMotion?.enemyId === slot.id)?.riderMotion;
       const hit = motion ? findMovingRiderContact(trail, slot, motion, contact.time, radius)

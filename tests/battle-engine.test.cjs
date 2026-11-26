@@ -532,7 +532,7 @@ test('camp healing enters Snow round 1 with refreshed ammo and preserved run pro
   assert.equal(state.playerHp, 100);
   assert.equal(state.ammo, 4);
   assert.equal(state.score, 100);
-  assert.equal(state.enemies.length, 5);
+  assert.equal(state.enemies.length, 3);
 });
 
 test('City boss reward completion produces a live clear summary', () => {

@@ -18,8 +18,8 @@
   });
   const REGULAR_COUNTS = Object.freeze({
     forest: Object.freeze([1, 2, 2, 3]),
-    snow: Object.freeze([5, 6, 6, 7]),
-    city: Object.freeze([9, 10, 10, 11])
+    snow: Object.freeze([3, 4, 4, 5]),
+    city: Object.freeze([5, 6, 6, 7])
   });
   const CHAOS_FUSION_KINDS = Object.freeze(['frost-gear-snake', 'oven-snow-boar', 'jelly-cloud-robot']);
   const CHAOS_FUSION_ATTACKS = Object.freeze({
@@ -130,7 +130,7 @@
         ? ['dry-ice', ...Array.from({ length: Math.max(0, count - 1) }, () => 'snowball')]
         : area === 'city'
           ? Array.from({ length: count }, (_, index) =>
-            index === Math.floor(count / 3) || index === Math.floor(count * 2 / 3)
+            index === Math.floor(count / 3) || (roundNumber === 2 && index === Math.floor(count * 2 / 3))
               ? 'clockwork-crow' : 'washing-robot')
           : Array.from({ length: count }, () => ['snake', 'boar', 'dry-ice', 'snowball', 'washing-robot'][randomInt(rng, 0, 4)]);
     return kinds.map((kind, index) => ({

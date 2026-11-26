@@ -15,7 +15,7 @@ for (const [area, round, expected] of [
   const supports = page.locator('.battle-arena [data-supports-enemy]');
   await expect(supports).toHaveCount(expected);
   const y = await page.locator('.battle-arena .monster').evaluateAll(nodes => nodes.map(node => Number.parseFloat(node.style.top)));
-  const flyers = area === 'city' && round <= 2 ? 2 : 0;
+  const flyers = area === 'city' && round <= 2 ? round : 0;
   expect(y.filter(value => value < 900)).toHaveLength(expected + flyers);
   expect(y.filter(value => value === 900)).toHaveLength(y.length - expected - flyers);
   await expect(page.locator('.minimap-enemy')).toHaveCount(y.length);

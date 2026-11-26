@@ -101,6 +101,9 @@ export default function MonsterGroup({ enemies, placements, selectedTargetId, la
         if (!node) continue;
         const x = movedEnemyRef?.current.get(bird.id)?.x ?? patrolX(bird.patrol, time);
         node.style.left = `${x}px`;
+        node.dataset.movement = bird.movement;
+        const futureX = patrolX(bird.patrol, time + 16);
+        node.style.setProperty('--patrol-facing', futureX < x ? '1' : '-1');
         node.style.setProperty('--strike-x', `${(layout.player.contact.x - x) / bird.size * 100}%`);
       }
       frame = requestAnimationFrame(tick);

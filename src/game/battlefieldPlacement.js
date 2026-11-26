@@ -1,5 +1,5 @@
 import { buildBattlefield, getDragDraw, getLaunchSpeed } from './battlefieldModel.js';
-import { planShot } from './shotGeometry.js';
+import { planShot, patrolX } from './shotGeometry.js';
 
 const ANGLES = [45, 55, 35, 65, 25, 70, 15, 75];
 const asPull = (angle, powerRatio) => {
@@ -8,7 +8,7 @@ const asPull = (angle, powerRatio) => {
     angleDeg: angle, powerRatio, ready: true };
 };
 
-function witnessAt(layout, enemies, x, y, matches) {
+function witnessAt(layout, enemies, x, y, matches, flightStartMs = 0) {
   for (const angle of ANGLES) {
     const pullAt = power => asPull(angle, power);
     const error = power => {
@@ -27,7 +27,7 @@ function witnessAt(layout, enemies, x, y, matches) {
       if (error(mid) > 0) low = mid;
       else high = mid;
     }
-    const shot = planShot({ layout, pull: pullAt((low + high) / 2), enemies });
+    const shot = planShot({ layout, pull: pullAt((low + high) / 2), enemies, flightStartMs });
     if (matches(shot)) return { shot, pull: pullAt((low + high) / 2) };
   }
   return false;
@@ -75,6 +75,14 @@ export function isPlayableBattlefield(layout, enemies) {
   const fullRound = layout.enemies.map(slot => ({ id: slot.id, alive: true, hp: 1 }));
   for (const slot of layout.enemies) {
     const c = slot.collider;
+    if (slot.patrol) {
+      if (![0, .25, .5, .75].some(phase => {
+        const time = phase * slot.patrol.periodMs;
+        return witnessAt(layout, fullRound, patrolX(slot.patrol, time), c.y,
+          shot => shot?.hitIds.includes(slot.id), time);
+      })) return false;
+      continue;
+    }
     if (![c.y, c.y - c.radius * .5, c.y + c.radius * .5].some(y =>
       witnessAt(layout, fullRound, c.x, y, shot => shot?.impactKind === 'enemy'
         && shot.hitIds[0] === slot.id))) return false;
