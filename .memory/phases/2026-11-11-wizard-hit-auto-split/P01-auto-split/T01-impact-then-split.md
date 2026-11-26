@@ -77,4 +77,4 @@ Task: T01-impact-then-split
 
 - [x] 구현 완료
 - [x] 변경 범위 국소 테스트·빌드 검증 완료 (브라우저·전체 회귀는 배포 시 확인)
-- commit: pending
+- commit: `2ed3f16`
