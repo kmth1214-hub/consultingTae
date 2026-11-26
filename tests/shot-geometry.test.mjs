@@ -85,6 +85,21 @@ test('a ground wave starts on landing and hits only the first two ground targets
   assert.equal(planShot({ ...stone, piercing: true }).abilityContacts, undefined);
 });
 
+test('frost uses the struck monster as its center and picks the nearest living neighbors by grade', () => {
+  const layout = { ...empty(), obstacles: [] }, pull = pullAt(35, .45);
+  const base = planShot({ layout, pull, enemies: [] });
+  const center = sampleAtTime(base.path, .65);
+  layout.enemies = [circle('direct', center, 18),
+    circle('near', { x: center.x + 60, y: center.y + 75 }),
+    circle('second', { x: center.x + 175, y: center.y + 120 }),
+    circle('out', { x: center.x + 175, y: center.y + 180 })];
+  for (const [grade, ids] of [['C', ['direct']], ['B', ['direct', 'near']], ['A', ['direct', 'near', 'second']]]) {
+    const shot = planShot({ layout, pull, enemies: living(layout.enemies.map(slot => slot.id)),
+      loadedCandyId: 'frost-stone', loadedCandyGrade: grade });
+    assert.deepEqual(shot.abilityContacts[0].targetIds, ids);
+  }
+});
+
 test('scaled studio shot starts at the visibly scaled pouch and keeps five-diameter roll cap', () => {
   const layout = buildBattlefield({ area: 'forest', round: 1, enemies: [], worldScale: 1.5 });
   const pull = pullAt(32, .45);

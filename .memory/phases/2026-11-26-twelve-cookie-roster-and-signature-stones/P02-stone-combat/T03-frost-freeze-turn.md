@@ -1,6 +1,6 @@
 # Task: T03 서리여왕 빙결과 적 반격 건너뛰기
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -76,6 +76,6 @@ Task: T03-frost-freeze-turn
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 지정 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 지정 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

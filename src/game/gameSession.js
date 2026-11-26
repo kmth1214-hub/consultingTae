@@ -87,12 +87,12 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
     const patch = { run, lastEvent: { ...event, id,
       visualKey: event.modifier || event.key || (state.run.fireballArmed ? 'fireball' : 'weapon') },
       aim: { ...state.aim, phase: 'idle' }, notification: null, ...persistUnlock(run),
-      enemyResponse: event.enemyAttack ? { id, stage: 'windup', attack: event.enemyAttack } : null,
+      enemyResponse: event.enemyAttack && !event.enemyAttack.frozenSkip ? { id, stage: 'windup', attack: event.enemyAttack } : null,
       bossTransition: event.bossSplit ? { id, stage: 'flight', split: event.bossSplit } : null,
       shotReview: reviewResult ? { id } : null };
     // Damage resolves once in the engine. Playback only reveals that committed result.
     // Keep fatal hits on the arena until the player has seen what hit them.
-    publish(reviewResult || event.enemyAttack || event.bossSplit ? patch : finishCombatRouting(run, patch));
+    publish(reviewResult || patch.enemyResponse || event.bossSplit ? patch : finishCombatRouting(run, patch));
     if (profileClient && state.profileSaveRequired && state.profileStatus === 'saving' && !profileSave)
       void actions.retryProfileSave();
     return event;
@@ -278,7 +278,8 @@ export function createGameSession({ rng = Math.random, layoutRng = defaultLayout
       const abilityContacts = shotMeta?.abilityContacts;
       const loadedCandy = state.run.weapons.find(item => item.instanceId ===
         (state.run.weaponQueue?.[0] ?? state.run.currentWeaponId));
-      const signatureContactKind = ({ 'chili-slash-stone': 'slash', 'sea-wave-stone': 'ground-wave' })[loadedCandy?.id];
+      const signatureContactKind = ({ 'chili-slash-stone': 'slash', 'sea-wave-stone': 'ground-wave',
+        'frost-stone': 'freeze' })[loadedCandy?.id];
       // shotMeta above is always copied from the pending flight, never from the caller.
       const validSignatureContacts = !state.run.spearArmed && pendingShot && signatureContactKind
         && abilityContacts?.length === 1 && abilityContacts[0].kind === signatureContactKind;

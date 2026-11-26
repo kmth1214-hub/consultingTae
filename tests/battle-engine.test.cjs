@@ -7,6 +7,27 @@ function loadStone(state, id) {
   state.currentWeaponId = stone.instanceId;
 }
 
+test('frost skips exactly a boss’s next attack without consuming defense or the special counter', () => {
+  const state = engine.createRunState({ characterId: 'frostQueen', area: 'snow', round: 3, rng: () => 0 });
+  loadStone(state, 'frost-stone');
+  const [boss] = state.enemies;
+  boss.attackCount = 2;
+  state.defenseArmed = true;
+  const event = engine.resolveProjectile(state, { hitIds: [boss.id], damage: 1, rng: () => 0,
+    shotMeta: { directHitTime: .4, contacts: [], abilityContacts: [
+      { kind: 'freeze', sourceId: boss.id, time: .4, targetIds: [boss.id] }
+    ] } });
+  assert.equal(event.enemyAttack.frozenSkip, true);
+  assert.deepEqual(event.frozenEnemyIds, [boss.id]);
+  assert.equal(boss.frozenNextAttack, false);
+  assert.equal(boss.attackCount, 2);
+  assert.equal(state.defenseArmed, true);
+  assert.equal(state.score, 1);
+  const next = engine.resolveEnemyTurn(state, () => 0);
+  assert.equal(next.attemptedSpecial, 'frozen-breath');
+  assert.equal(next.blocked, true);
+});
+
 test('creates a fresh Forest run with one snake, 100 HP, and three stones', () => {
   const state = engine.createRunState({ area: 'forest', round: 1 });
   assert.equal(state.playerHp, 100);

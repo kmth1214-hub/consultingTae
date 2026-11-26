@@ -85,7 +85,7 @@
     return {
       id: `${area}-${boss.id}`, kind: boss.kind, hp,
       maxHp: boss.kind === 'oven-robot' ? (bonus ? 26 : 18) : hp,
-      isBoss: true, attackCount: 0, alive: true
+      isBoss: true, attackCount: 0, alive: true, frozenNextAttack: false
     };
   }
 
@@ -110,7 +110,7 @@
     const roundNumber = round;
     if (area === 'chaos' && roundNumber === 3) {
       return [{ id: 'chaos-fused-boss', kind: 'chaos-fused-boss', hp: 56, maxHp: 56,
-        isBoss: true, attackCount: 0, normalAttackCount: 0, alive: true }];
+        isBoss: true, attackCount: 0, normalAttackCount: 0, alive: true, frozenNextAttack: false }];
     }
     if (roundNumber === MAIN_REGION_ROUND_COUNT && AREA_BOSSES[area]) {
       return [createBoss(AREA_BOSSES[area], area, false)];
@@ -140,7 +140,8 @@
       maxHp: 4,
       isBoss: false,
       attackCount: 0,
-      alive: true
+      alive: true,
+      frozenNextAttack: false
     }));
   }
 
@@ -512,6 +513,11 @@
     const enemy = state.enemies[index];
     state.enemyTurnIndex = (index + 1) % size;
     state.turnNumber += 1;
+    if (enemy.frozenNextAttack) {
+      enemy.frozenNextAttack = false;
+      return { enemyId: enemy.id, kind: enemy.kind, frozenSkip: true, damage: 0,
+        special: null, playerHpBefore: state.playerHp, playerHpAfter: state.playerHp };
+    }
 
     const sourceRng = typeof rng === 'function' ? rng : Math.random;
     let special = null, attackKind = enemy.kind, fusionAttack = null;
@@ -674,6 +680,9 @@
     const travelKind = ({ 'chili-slash-stone': 'slash', 'sea-wave-stone': 'ground-wave' })[usedWeapon?.id];
     const travelingAbility = !spear && travelKind
       ? shotMeta?.abilityContacts?.find(contact => contact.kind === travelKind) : null;
+    const freeze = !spear && usedWeapon?.id === 'frost-stone'
+      ? shotMeta?.abilityContacts?.find(contact => contact.kind === 'freeze') : null;
+    const frozenEnemyIds = [];
     const childHits = !spear && usedWeapon?.id === 'wizard-orb' && Array.isArray(shotMeta?.childHits)
       ? shotMeta.childHits : [];
     const hasContactStream = Array.isArray(shotMeta?.contacts);
@@ -889,6 +898,15 @@
       hits.push({ id: target.id, kind: target.kind, source: travelKind, damage: removed,
         remainingHp: target.hp, defeated: !target.alive, scoreDelta });
     } });
+    if (freeze) timeline.push({ time: freeze.time, order: 4, apply() {
+      if (lastDirectHitId !== freeze.sourceId) return;
+      for (const id of new Set(freeze.targetIds)) {
+        const target = state.enemies.find(enemy => enemy.id === id && enemy.alive && enemy.hp > 0);
+        if (!target) continue;
+        target.frozenNextAttack = true;
+        frozenEnemyIds.push(id);
+      }
+    } });
     timeline.sort((a, b) => a.time - b.time || a.order - b.order).forEach(action => action.apply());
     if (windMode === 'storm' && directHitCount > 0) {
       const anchorIndex = livingWindOrder.indexOf(lastDirectHitId);
@@ -921,6 +939,7 @@
       missed: hits.length === 0 && !obstacleEffects.some(effect =>
         ['ice-guard', 'aim-inversion'].includes(effect.kind)),
       scoreDelta: activeScore(state) - scoreBefore, enemyAttack: null,
+      ...(frozenEnemyIds.length ? { frozenEnemyIds } : {}),
       obstacleEffects, obstacleEffect: obstacleEffects.at(-1) || null,
       roundCleared: false, runDefeated: false
     };

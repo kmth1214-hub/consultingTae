@@ -729,6 +729,21 @@ function withTravelingAbility(shot, layout, living, stone, grade, direction, fli
   durationMs: Math.max(shot.durationMs, Math.round(endTime * 1000)) };
 }
 
+function withFreeze(shot, living, stone, grade, flightStartMs) {
+  const source = living.find(slot => slot.id === shot.hitIds[0]);
+  if (!source) return shot;
+  const time = shot.directHitTime;
+  const atContact = slot => enemyCenterAt(slot, shot.contacts ?? [], flightStartMs, time);
+  const point = atContact(source);
+  const radius = stone.radius[grade] ?? stone.radius.C;
+  const nearby = living.filter(slot => slot !== source)
+    .map(slot => ({ id: slot.id, distance: distance(atContact(slot), point) }))
+    .filter(entry => entry.distance <= radius)
+    .sort((a, b) => a.distance - b.distance || a.id.localeCompare(b.id));
+  const targetIds = [source.id, ...nearby.slice(0, stone.extraTargets[grade] ?? 0).map(entry => entry.id)];
+  return { ...shot, abilityContacts: [{ kind: 'freeze', time, point, sourceId: source.id, targetIds, radius }] };
+}
+
 export function planShot({ layout, pull, enemies, windAvailable = false,
   toppledObstacleIds = [], piercing = false, loadedCandyId = null, loadedCandyGrade = 'C', prototype = null,
   maxPowerRatio = 1, previewFraction = .30,
@@ -761,8 +776,12 @@ export function planShot({ layout, pull, enemies, windAvailable = false,
   if (!ballistic) return null;
   const alive = new Set(enemies.filter(e => e && e.alive === true && Number.isFinite(e.hp) && e.hp > 0).map(e => e.id));
   const living = layout.enemies.filter(e => alive.has(e.id));
-  const decorate = shot => ['slash', 'ground-wave'].includes(stone?.kind)
-    ? withTravelingAbility(shot, activeLayout, living, stone, loadedCandyGrade, direction, flightStartMs) : shot;
+  const decorate = shot => {
+    if (stone?.kind === 'freeze') return withFreeze(shot, living, stone, loadedCandyGrade, flightStartMs);
+    if (stone?.kind === 'slash' || stone?.kind === 'ground-wave')
+      return withTravelingAbility(shot, activeLayout, living, stone, loadedCandyGrade, direction, flightStartMs);
+    return shot;
+  };
   let path = ballistic, target = null;
   if (windAvailable && !piercing && direction.x > 1e-4) {
     const candidates = living.filter(e => e.collider.x > start.x);
