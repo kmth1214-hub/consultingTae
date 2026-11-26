@@ -32,7 +32,6 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
   onBossImpact, onBossComplete,
   onBeginShot, onCancelShot, onActivateFlightAbility,
   onEnemyAdvance, onEnemyComplete, setAim, onFire, onConsumable, arenaRef, studioDepthEnabled = false }) {
-  const studioAimEnabled = import.meta.env.DEV && run.studioDepthPreview === true;
   const rebuilt = import.meta.env.DEV && run.studioDepthPreview === true && studioDepthEnabled === true;
   const [RebuiltScene, setRebuiltScene] = useState(null);
   const [sceneLoadError, setSceneLoadError] = useState(null);
@@ -183,7 +182,6 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     previousAimPhase.current = state.phase;
   }, [state.phase]);
   useEffect(() => {
-    if (!studioAimEnabled) { setOverviewHeld(false); return undefined; }
     const onKeyDown = event => {
       if (event.code !== 'KeyV' || event.repeat || event.ctrlKey || event.metaKey || event.altKey
         || /INPUT|TEXTAREA|SELECT|BUTTON/.test(event.target?.tagName)) return;
@@ -199,9 +197,9 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [studioAimEnabled]);
+  }, []);
   const mode = activeSplit ? 'split' : shotReview ? 'follow' : enemyResponse ? 'enemy' : flight ? 'follow'
-    : state.phase === 'dragging' ? studioAimEnabled && overviewHeld ? 'overview' : 'aim' : 'overview';
+    : state.phase === 'dragging' && !overviewHeld ? 'aim' : 'overview';
   const camera = useBattlefieldCamera({ arenaRef, worldRef, layout, mode, focusRef, attackerId: enemyResponse?.attack.enemyId });
   const solution = state.phase === 'dragging' && state.ready ? makeSolution(state) : null;
   const aiming = state.phase !== 'idle';
@@ -218,14 +216,14 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
     consumablesBlocked: enemyResponse.attack.consumablesBlocked ? false : run.consumablesBlocked } : run;
   function completeFlight(shot) {
     if (activeFlight.current?.shotId !== shot.shotId) return;
-    if (studioAimEnabled && shot.path && Number.isFinite(shot.path.length) && shot.path.length > 0) {
+    if (shot.path && Number.isFinite(shot.path.length) && shot.path.length > 0) {
       const endpoints = [shot.impactDistance, shot.rollStartDistance, shot.blockerDistance,
         ...(shot.enemyContacts || []).map(contact => contact.distance),
         ...(shot.contacts || []).filter(contact => contact.trigger === 'candy').map(contact => contact.distance)]
         .filter(distance => Number.isFinite(distance) && distance >= 0 && distance <= shot.path.length);
       const distance = endpoints.length ? Math.min(...endpoints) : shot.path.length;
       const point = sampleAtDistance(shot.path, distance);
-      setLastShotGuide({ encounterKey, path: shot.path, distance, point,
+      setLastShotGuide({ encounterKey, point,
         previewD: pathPrefixD(shot.path, distance * .8) });
     }
     const lastMotion = shot.contacts?.map(contact => contact.obstacleMotion || contact.logMotion).filter(Boolean)
@@ -354,13 +352,13 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
               || Boolean(bossTransition && bossTransition.stage !== 'impact' && bossTransition.split.shock.blockedBy === 'defense')
               || Boolean(shotReview && enemyResponse?.attack.blockedBy === 'defense')} lastEvent={lastEvent} />
         <svg className="projectile-layer" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true">
-          {studioAimEnabled && state.phase === 'dragging' && !shotReview && !enemyResponse
+          {state.phase === 'dragging' && !shotReview && !enemyResponse
             && lastShotGuide?.encounterKey === encounterKey && <>
-              <path data-testid="last-shot-guide" className="studio-last-shot-arc" d={lastShotGuide.previewD}
+              <path data-testid="last-shot-guide" className="last-shot-arc" d={lastShotGuide.previewD}
                 fill="none" vectorEffect="non-scaling-stroke" />
               {lastShotGuide.point.x >= 0 && lastShotGuide.point.x <= layout.width
                 && lastShotGuide.point.y >= 0 && lastShotGuide.point.y <= layout.height &&
-                <g data-testid="last-shot-impact" className="studio-last-shot-impact"
+                <g data-testid="last-shot-impact" className="last-shot-impact"
                   transform={`translate(${lastShotGuide.point.x} ${lastShotGuide.point.y})`}>
                   <circle r="19" fill="none" vectorEffect="non-scaling-stroke" />
                   <path d="M-9 0H9M0 -9V9" vectorEffect="non-scaling-stroke" />
@@ -477,7 +475,7 @@ export default function BattleArena({ run, lastEvent, enemyResponse, shotReview,
       ? '적의 반격 중 · 쉴드는 적의 공격과 특수 효과를 막아줍니다.' : retry || (run.pendingAimDisruption
         ? `${AIM_DISRUPTION_LABELS[run.pendingAimDisruption]} · ${INSTRUCTIONS[state.phase]}` : run.pendingAimInversion
         ? state.phase === 'dragging' ? '혼돈의 역풍 · 드래그 방향이 양 축 모두 반대로 적용 중 · 놓으면 발사' : '혼돈의 역풍 · 다음 한 발 조작 반전'
-        : INSTRUCTIONS[state.phase])}{studioAimEnabled && state.phase === 'dragging' && !shotReview && !enemyResponse
+        : INSTRUCTIONS[state.phase])}{state.phase === 'dragging' && !shotReview && !enemyResponse
         ? ' · V를 누르는 동안 전체 전장 보기' : ''}</p>
   </>;
 }

@@ -326,6 +326,8 @@ kbd { display: inline-grid; place-items: center; width: 22px; height: 24px; bord
 /* SVG vector-effect does not cancel an ancestor's CSS camera transform in Chrome. */
 .trajectory-outline { stroke: #294538; stroke-width: calc(7px / var(--camera-scale, 1)); opacity: .7; }
 .trajectory-arc { stroke: #fff4c6; stroke-width: calc(3.5px / var(--camera-scale, 1)); opacity: .92; }
+.last-shot-arc { stroke: #9ee9ff; stroke-width: 3px; stroke-dasharray: 3px 9px; stroke-linecap: round; opacity: .8; filter: drop-shadow(0 1px 2px #173548); }
+.last-shot-impact { stroke: #9ee9ff; stroke-width: 2.5px; fill: none; opacity: .95; filter: drop-shadow(0 1px 2px #173548); }
 .battle-arena[data-aim-phase="idle"] { cursor: crosshair; }
 .hud-surface { cursor: default; }
 .projectile-candy { filter: drop-shadow(0 2px 3px #55392b70); }

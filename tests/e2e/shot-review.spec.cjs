@@ -15,6 +15,42 @@ async function beginReview(page, fixture = {}, pull = { angleDeg: -5, powerRatio
   await phase(page, 'reviewing');
 }
 
+test('holding V shows the whole battlefield without changing the current aim', async ({ page }) => {
+  await installGame(page);
+  await start(page);
+  await dragPull(page, { angleDeg: 35, powerRatio: .45 });
+  await expect(arena(page)).toHaveAttribute('data-camera-mode', 'aim');
+  const trajectory = page.getByTestId('trajectory-preview');
+  const currentArc = await trajectory.getAttribute('d');
+  await page.keyboard.down('v');
+  await expect(arena(page)).toHaveAttribute('data-camera-mode', 'overview');
+  await expect(trajectory).toHaveAttribute('d', currentArc);
+  await page.keyboard.up('v');
+  await expect(arena(page)).toHaveAttribute('data-camera-mode', 'aim');
+  await page.keyboard.press('Escape');
+  await page.mouse.up();
+});
+
+test('the previous shot guide and contact point are visible on the next aim', async ({ page }) => {
+  await beginReview(page, {}, { angleDeg: -5, powerRatio: .12 });
+  const previousArc = page.getByTestId('last-shot-guide');
+  const contact = page.getByTestId('last-shot-impact');
+  await expect(previousArc).toHaveCount(0);
+  await page.clock.runFor(5000);
+  await phase(page, 'idle');
+  await expect(contact).toHaveCount(0);
+  await dragPull(page, { angleDeg: 25, powerRatio: .3 });
+  await page.keyboard.down('v');
+  await expect(previousArc).toBeVisible();
+  await expect(previousArc).toHaveCSS('stroke', 'rgb(158, 233, 255)');
+  await expect(contact).toBeVisible();
+  await expect(contact).toHaveCSS('stroke', 'rgb(158, 233, 255)');
+  await page.keyboard.up('v');
+  await page.keyboard.press('Escape');
+  await page.mouse.up();
+  await expect(previousArc).toHaveCount(0);
+});
+
 test('camera holds the committed landing result for two seconds before the enemy response', async ({ page }) => {
   await beginReview(page);
   const before = await snapshot(page);
