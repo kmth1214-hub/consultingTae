@@ -55,6 +55,7 @@ jobs:
         if: env.ENTRA_TENANT_ID != ''
         env:
           VITE_REQUIRE_ACCOUNT_PROFILE: 'true'
+          VITE_MAINTENANCE_MODE: 'true'
         run: npm run build:azure
 
       - name: Build local-safe artifact when Azure is not configured
