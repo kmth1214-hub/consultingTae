@@ -1,6 +1,6 @@
 # Task: T02 전용 스톤 카탈로그와 해금·슬롯 보상
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -91,6 +91,6 @@ Task: T02-stone-catalog-and-unlocks
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 지정 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 지정 검증 통과
+- commit: 이 문서를 포함한 Task 커밋

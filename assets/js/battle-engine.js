@@ -318,6 +318,7 @@
     if (kind==='stone') {
       if (winningLine) {
         const pool=unlockedSlotStoneIds(state);
+        if (!pool.length) return { accepted:false, reason:'no-reward' };
         const sample=Number(sourceRng());
         if (!Number.isFinite(sample) || sample<0 || sample>=1) throw new RangeError('Invalid slot RNG');
         prizeId=pool[Math.floor(sample*pool.length)];

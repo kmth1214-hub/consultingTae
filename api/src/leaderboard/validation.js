@@ -1,4 +1,5 @@
-const COOKIE_IDS = new Set(['adventurer', 'alchemist', 'wizard', 'milk', 'wind']);
+const COOKIE_IDS = new Set(['adventurer', 'alchemist', 'wizard', 'milk', 'wind',
+  'gingerBrave', 'strawberry', 'cherry', 'chiliPepper', 'espresso', 'seaFairy', 'frostQueen']);
 const AREAS = new Set(['forest', 'snow', 'city']);
 const SUBMISSION_FIELDS = ['score', 'cookieId', 'furthestArea', 'round', 'durationMs'];
 

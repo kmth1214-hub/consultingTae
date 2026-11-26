@@ -8,7 +8,7 @@
 
 | Task | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| T01 | `pending` | 용감한 가속·딸기맛 확장 충돌 반경 | [T01](./T01-dash-and-wide-collider.md) |
+| T01 | `in_progress` | 용감한 가속·딸기맛 확장 충돌 반경 | [T01](./T01-dash-and-wide-collider.md) |
 | T02 | `pending` | 칠리맛 선분 베기·바다요정 지면 파도 | [T02](./T02-slash-and-ground-wave.md) |
 | T03 | `pending` | 서리여왕 빙결 대상·다음 반격 건너뛰기 | [T03](./T03-frost-freeze-turn.md) |
 | T04 | `pending` | 체리맛 수동·자동 폭탄 설치와 지연 폭발 | [T04](./T04-cherry-delayed-bomb.md) |
@@ -16,4 +16,4 @@
 
 ## Progress
 
-- done: 0/5
+- done: 0/5 (active: T01)

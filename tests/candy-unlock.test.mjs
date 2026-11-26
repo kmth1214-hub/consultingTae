@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { BattleEngine as engine } from '../src/game/battleEngine.js';
 import { createGameSession } from '../src/game/gameSession.js';
 import { createStudioSession } from '../src/dev/createStudioSession.js';
+import { CHARACTERS } from '../src/game/gameData.js';
 
 const storage = cleared => {
   const data = new Map([['cookie-roguelike.profile.v1', JSON.stringify({ version: 1, snowAreaCleared: cleared })]]);
@@ -46,14 +47,19 @@ test('legacy weapon reward selection cannot bypass the slot-only grant rule', ()
 test('stored Snow unlock controls cookie selection in a fresh run', () => {
   for (const cleared of [false, true]) {
     const local = storage(cleared);
-    for (const characterId of ['adventurer', 'alchemist', 'wizard', 'milk', 'wind']) {
+    assert.equal(CHARACTERS.length, 12);
+    assert.equal(CHARACTERS.filter(character => character.locked).length, 4);
+    for (const { id: characterId, locked, weaponId } of CHARACTERS) {
       const session = createGameSession({ storage: local, rng: () => .5 });
       session.actions.startCharacterSelect();
       const result = session.actions.startRun(characterId);
-      assert.equal(result.accepted, cleared || !['milk', 'wind'].includes(characterId));
+      assert.equal(result.accepted, cleared || !locked);
       if (!result.accepted) continue;
       assert.equal(session.getSnapshot().run.snowRewardsUnlocked, cleared);
       assert.equal(session.getSnapshot().run.snowAreaCleared, false);
+      assert.equal(session.getSnapshot().run.ammo, 3);
+      assert.deepEqual(session.getSnapshot().run.weapons.map(weapon => [weapon.id, weapon.grade]),
+        [[weaponId, 'C'], ['basic-stone', 'C'], ['basic-stone', 'C']]);
     }
   }
   assert.equal(engine.createRunState({ snowRewardsUnlocked: 'true' }).snowRewardsUnlocked, false);

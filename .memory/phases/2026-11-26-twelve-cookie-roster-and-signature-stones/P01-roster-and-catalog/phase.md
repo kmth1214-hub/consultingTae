@@ -9,8 +9,8 @@
 | Task | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
 | T01 | `done` | 캐릭터 그림 7종을 준비하고 자산·선택 카드에 연결 | [T01](./T01-cookie-art-and-roster.md) |
-| T02 | `in_progress` | 전용 스톤 7종의 카탈로그, 시작 지급, 눈 지역 해금, 슬롯 보상 | [T02](./T02-stone-catalog-and-unlocks.md) |
+| T02 | `done` | 전용 스톤 7종의 카탈로그, 시작 지급, 눈 지역 해금, 슬롯 보상 | [T02](./T02-stone-catalog-and-unlocks.md) |
 
 ## Progress
 
-- done: 1/2 (active: T02)
+- done: 2/2

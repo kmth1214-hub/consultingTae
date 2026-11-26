@@ -31,22 +31,24 @@ test('horizontal and diagonal matches award one exclusive stone, vertical alone 
 });
 
 test('winning reward samples every unlocked stone uniformly, including other cookies', () => {
-  const firstThree = ['adventurer-candy', 'alchemist-candy', 'wizard-orb'];
-  for (let index = 0; index < firstThree.length; index++) {
+  const published = ['adventurer-candy', 'alchemist-candy', 'wizard-orb', 'ginger-dash-stone',
+    'strawberry-lollipop-stone', 'cherry-bomb-stone', 'chili-slash-stone', 'espresso-vortex-stone'];
+  for (let index = 0; index < published.length; index++) {
     const state = ready();
-    const result = BattleEngine.spinRewardSlot(state, 'stone', sequence([...win, (index + .5) / 3]));
-    assert.equal(result.result.prizeId, firstThree[index]);
+    const result = BattleEngine.spinRewardSlot(state, 'stone', sequence([...win, (index + .5) / published.length]));
+    assert.equal(result.result.prizeId, published[index]);
     assert.equal(state.weapons.at(-1).grade, 'C');
   }
-  const allFive = [...firstThree, 'milk-candy', 'wind-candy'];
-  for (let index = 0; index < allFive.length; index++) {
+  const unlocked = [...published.slice(0, 3), 'milk-candy', 'wind-candy',
+    ...published.slice(3), 'sea-wave-stone', 'frost-stone'];
+  for (let index = 0; index < unlocked.length; index++) {
     const state = BattleEngine.createRunState({ characterId: 'adventurer', area: 'forest', rng: () => .5,
       snowRewardsUnlocked: true, inventory: {} });
     state.terminal = 'round-clear';
     BattleEngine.drawRewardChoices(state, () => .5);
-    const result = BattleEngine.spinRewardSlot(state, 'stone', sequence([...win, (index + .5) / 5]));
-    assert.equal(result.result.prizeId, allFive[index]);
-    assert.equal(state.weapons.at(-1).id, allFive[index]);
+    const result = BattleEngine.spinRewardSlot(state, 'stone', sequence([...win, (index + .5) / unlocked.length]));
+    assert.equal(result.result.prizeId, unlocked[index]);
+    assert.equal(state.weapons.at(-1).id, unlocked[index]);
   }
 });
 
@@ -60,7 +62,7 @@ test('a borrowed stone is one new instance and invalid prize RNG grants nothing'
   assert.equal(state.weapons.length, before);
   assert.equal(state.slotReward.stoneSpinsRemaining, 1);
   const result = BattleEngine.spinRewardSlot(state, 'stone', sequence([...win, .99]));
-  assert.equal(result.result.prizeId, 'wind-candy');
+  assert.equal(result.result.prizeId, 'frost-stone');
   assert.equal(state.weapons.length, before + 1);
   assert.equal(state.weapons.at(-1).grade, 'C');
 });
