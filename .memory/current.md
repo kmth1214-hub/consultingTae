@@ -10,12 +10,12 @@
 
 ## Active Task
 
-[T07 전투 흐름 통합과 규칙 동기화](./phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/T07-integration-and-rule-sync.md)
+전체 Task 구현 완료
 
 ## Status
 
-- T06 지정 검증 통과. done: 6/7.
+- T07 지정 검증 통과. done: 7/7.
 
 ## Next Step (IMPORTANT)
 
-T07 전투 흐름 통합과 규칙 동기화 청사진을 읽고 구현한다.
+로컬 검토를 진행하고 배포 요청 시 전체 검증 후 배포한다.

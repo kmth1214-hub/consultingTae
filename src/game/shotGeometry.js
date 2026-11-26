@@ -644,7 +644,7 @@ function withWizardSplit(solution, { layout, start, direction, powerRatio, livin
     : sampleAtDistance(solution.path, sampleAtTime(solution.path, firstContactTime).distance / 3)
     : sampleAtTime(solution.path, Math.min(activationTime, solution.path.durationSeconds));
   const splitTime = activationTime === null ? marker.time : activationTime;
-  if (!Number.isFinite(splitTime) || splitTime <= EPS
+  if (!Number.isFinite(splitTime) || (activationTime === null ? splitTime <= EPS : splitTime < 0)
     || (activationTime === null && splitTime >= firstContactTime - EPS)
     || splitTime >= BATTLEFIELD.maxSeconds || marker.y > layout.groundY - layout.candyRadius + EPS
     || marker.x < 0 || marker.x > layout.width) return solution;

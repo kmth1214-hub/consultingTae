@@ -240,6 +240,14 @@ test('a reserved Wizard shot owns its two child trajectories and rejects fabrica
   activated.flight.contacts.map(contact=>contact.obstacleId));
 });
 
+test('Wizard manual input on the first flight frame produces children instead of spending a silent ability',()=>{
+ const session=createStudioSession({area:'forest',round:1,characterId:'wizard',seed:0},{rng:()=>.5});
+ const r=session.actions.beginShot({launchId:101,pull:{ready:true,powerRatio:1,direction:{x:.17,y:-.985}}});
+ const result=session.actions.activateFlightAbility({shotId:r.shotId,encounterId:r.encounterId,
+  simulationTime:0,source:'space'});
+ assert.equal(result.accepted,true);assert.equal(result.flight.splitOrbs.children.length,2);
+});
+
 test('a direct Wizard hit automatically splits after impact and children pass the struck enemy', () => {
  const session=createStudioSession({area:'forest',round:2,characterId:'wizard',seed:0},{rng:()=>.5});
  const run=session.getSnapshot().run;

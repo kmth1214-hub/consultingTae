@@ -16,7 +16,7 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 지역 전투와 보관함의 공통 발사 규칙·표시·검증 | [P01](../phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/phase.md) |
+| P01 | `done` | 지역 전투와 보관함의 공통 발사 규칙·표시·검증 | [P01](../phases/2026-11-26-snow-city-battle-pacing-and-stone-rack/P01-regional-combat-and-stone-rack/phase.md) |
 
 ## Task 순서
 

@@ -59,7 +59,7 @@
 .signature-activation:hover { background: #684981; }
 .slot-stone-art { display: inline-block; margin-inline-end: 6px; vertical-align: middle; }
 @container (max-width: 500px) {
-  .signature-activation { left: 10px; bottom: 6px; transform: none; padding-inline: 12px; }
+  .signature-activation { left: auto; right: 10px; bottom: 10px; z-index: 2; transform: none; padding-inline: 12px; }
 }
 .projectile-candy[data-dash-active="true"] { filter: drop-shadow(0 0 12px #ffb85b); }
 .dash-afterimage { pointer-events: none; filter: drop-shadow(0 0 8px #ffc665); }

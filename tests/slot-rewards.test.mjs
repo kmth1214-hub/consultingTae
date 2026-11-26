@@ -76,12 +76,14 @@ test('slot stone is permanent and the next round refills the expanded deck', () 
   assert.equal(BattleEngine.advanceRound(state, { rng: () => .5 }).accepted, true);
   assert.equal(state.ammo, 4);
   assert.equal(state.weapons.length, 4);
+  assert.deepEqual(state.weaponQueue,state.weapons.map(stone=>stone.instanceId));
   state.terminal = 'round-clear';
   BattleEngine.drawRewardChoices(state, () => .5);
   BattleEngine.spinRewardSlot(state, 'stone', sequence(miss));
   BattleEngine.applyRewardChoice(state, 'consumable', state.rewardChoices.consumables[0].choiceId);
   BattleEngine.advanceRound(state, { rng: () => .5 });
   assert.equal(state.ammo, 5);
+  assert.deepEqual(state.weaponQueue,state.weapons.map(stone=>stone.instanceId));
 });
 
 test('chaos has independent stone and consumable spins; a miss gives no item', () => {

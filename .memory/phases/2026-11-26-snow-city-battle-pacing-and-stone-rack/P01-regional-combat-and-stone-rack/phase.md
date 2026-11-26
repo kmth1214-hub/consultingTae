@@ -14,8 +14,8 @@
 | T04 | `done` | 도시 상자의 범위 폭발과 연쇄 | [T04](./T04-city-blast-chain.md) |
 | T05 | `done` | 오븐 환기구 명중과 과열 약화 | [T05](./T05-oven-vent-weakpoint.md) |
 | T06 | `done` | 가속·회전 표시와 수동 폭발 보상 | [T06](./T06-signature-stone-feedback.md) |
-| T07 | `in_progress` | 전투 흐름 통합과 규칙 동기화 | [T07](./T07-integration-and-rule-sync.md) |
+| T07 | `done` | 전투 흐름 통합과 규칙 동기화 | [T07](./T07-integration-and-rule-sync.md) |
 
 ## Progress
 
-- done: 6/7 (active: T07)
+- done: 7/7 (active: complete)

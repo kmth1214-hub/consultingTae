@@ -23,3 +23,19 @@ for (const phone of [false, true]) test(`stone rack supports ${phone ? 'phone' :
   await expect(buttons.nth(2)).toBeDisabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(phone ? 390 : 1440);
 });
+
+test('Space loads a rack stone at rest and activates Wizard split only after launch', async ({ page }) => {
+  await installGame(page,{initial:{inventory:{}}});await start(page,'마법사맛 쿠키');
+  await page.keyboard.press('d');await page.keyboard.press('Space');
+  expect((await snapshot(page)).run.ammo).toBe(3);
+  await page.keyboard.press('a');await page.keyboard.press('Space');
+  const before=(await snapshot(page)).run;
+  expect(before.weapons.find(stone=>stone.instanceId===before.currentWeaponId).id).toBe('wizard-orb');
+  await dragPull(page,{angleDeg:80,powerRatio:1});await page.mouse.up();
+  await phase(page,'launching');await page.keyboard.press('Space');
+  await expect(page.getByTestId('wizard-child-orb')).toHaveCount(2);
+  await phase(page,'idle');
+  const after=await snapshot(page);
+  expect(after.lastShotMeta.abilityActivation.source).toBe('space');
+  expect(after.run.ammo).toBe(2);
+});
